@@ -134,6 +134,7 @@ export function useAssemblyInteraction(
       grip.removeEventListener('pointerup', up);
       grip.removeEventListener('pointercancel', cancel);
       grip.removeEventListener('lostpointercapture', cancel);
+      if (grip.hasPointerCapture(pointerId)) grip.releasePointerCapture(pointerId);
       setDrag(null);
       if (active && drop && state.target)
         reorder(moveId(taskIds, state.id, state.target, state.after));

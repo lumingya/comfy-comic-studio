@@ -48,6 +48,7 @@ export default function StoryboardEditor() {
   const menu = useContextMenu<DesktopContext>();
   const editorRef = useRef<HTMLDivElement>(null);
   const pendingFocus = useRef<{ id: string; target: 'prompt' | 'list' } | null>(null);
+  const scrollToFrame = useRef<string | null>(null);
   const used = useMemo(
     () => variableUsage(panels.flatMap((p) => [promptOf(p), p.overrides.raw_negative ?? ''])),
     [panels],
@@ -62,9 +63,15 @@ export default function StoryboardEditor() {
     contextOpen: !!menu.state,
     onExit: selection.clear,
     onOpen: (id) => {
+      if (editorRef.current?.matches('.resizable-split[data-stacked]')) {
+        if (active?.id === id) {
+          editorRef.current.querySelector('.workshop-page')?.scrollIntoView?.({ block: 'start' });
+          return;
+        }
+        scrollToFrame.current = id;
+      }
       void choose(id).then((changed) => {
-        if (changed && editorRef.current?.closest('.resizable-split[data-stacked]'))
-          editorRef.current.querySelector('.workshop-page')?.scrollIntoView({ block: 'start' });
+        if (!changed && scrollToFrame.current === id) scrollToFrame.current = null;
       });
     },
     onDelete: (ids) => {
@@ -77,6 +84,10 @@ export default function StoryboardEditor() {
     if (active?.id && !selection.ids.length) selection.anchorAt(active.id);
   }, [active?.id, selection.ids.length, selection.anchorAt]);
   useLayoutEffect(() => {
+    if (scrollToFrame.current && scrollToFrame.current === active?.id) {
+      scrollToFrame.current = null;
+      editorRef.current?.querySelector('.workshop-page')?.scrollIntoView?.({ block: 'start' });
+    }
     const focus = pendingFocus.current;
     if (!focus || focus.id !== active?.id) return;
     pendingFocus.current = null;

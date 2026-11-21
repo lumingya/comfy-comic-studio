@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkflowConfig } from '../../api/types';
 import type { WorkflowLoraControls } from '../../api/workflowLoras';
@@ -27,19 +28,27 @@ export function WorkflowDefaultLoras({
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
-  const groups = controls?.groups.filter((group) => group.loras.length) ?? [];
-  if (!groups.length) return null;
+  const groups = useMemo(
+    () => controls?.groups.filter((group) => group.loras.length) ?? [],
+    [controls],
+  );
   const slots = object(config?.slot_overrides);
   const patches = entries(slots.groups);
   const savedSlots = object(savedConfig.slot_overrides);
   const savedPatches = entries(savedSlots.groups);
-  const value = groups.map((group) => ({
-    key: group.key,
-    loras: group.loras.map((source) => {
-      const patch = find(entries(find(patches, group.key)?.loras), source.key);
-      return patch?.name === source.name ? { ...source, ...patch } : source;
-    }),
-  }));
+  const value = groups.map((group) => {
+    const changed = new Map(
+      entries(find(patches, group.key)?.loras).map((patch) => [patch.key, patch]),
+    );
+    return {
+      key: group.key,
+      loras: group.loras.map((source) => {
+        const patch = changed.get(source.key);
+        return patch?.name === source.name ? { ...source, ...patch } : source;
+      }),
+    };
+  });
+  if (!groups.length) return null;
   const changeGroups = (next: unknown) => {
     if (!config) return;
     const slot_overrides = { ...slots };

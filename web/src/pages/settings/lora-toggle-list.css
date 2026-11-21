@@ -119,6 +119,11 @@
   gap: 10px;
 }
 
+.lora-toggle-scroll .lora-toggle-row:not(:focus-within) {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 112px;
+}
+
 .lora-toggle-clip {
   min-width: 0;
 }

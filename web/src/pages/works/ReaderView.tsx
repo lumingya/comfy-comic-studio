@@ -71,6 +71,7 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
     panel,
   } = reader;
   const filmstrip = useRef<HTMLDivElement>(null);
+  const infoToggle = useRef<HTMLButtonElement>(null);
   const filmOpen = (film || layout === 'gallery') && nativeStage;
   useEffect(() => {
     if (!filmOpen) return;
@@ -148,7 +149,7 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
         if (panel) navigate(`${base}${keep}`);
         else if (info) {
           setInfo(false);
-          ref.current?.querySelector<HTMLButtonElement>('.room-open-details')?.focus();
+          infoToggle.current?.focus();
         } else if (film && nativeStage) {
           setFilm(false);
           ref.current
@@ -396,6 +397,7 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
                 <Icon name="list" />
               </button>
               <button
+                ref={infoToggle}
                 type="button"
                 className="ibtn"
                 title={t('reader.info')}
