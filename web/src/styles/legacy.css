@@ -5098,8 +5098,8 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
 }
 @media (max-width: 760px), (max-width: 950px) and (hover: none) and (pointer: coarse) {
   html[data-nav-collapsed] #sidebar .nav-item {
-    flex: 1 0 66px;
-    min-width: 66px;
+    flex: 1 0 44px;
+    min-width: 44px;
   }
 }
 .mio-anchor {

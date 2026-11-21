@@ -40,6 +40,7 @@
   scrollbar-width: thin;
 }
 .assembly-review-navigation [role='tab'] {
+  position: relative;
   display: flex;
   align-items: center;
   flex: 0 0 auto;

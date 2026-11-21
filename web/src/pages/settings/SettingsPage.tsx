@@ -1,4 +1,11 @@
-import { Fragment, useState, type ComponentType, type KeyboardEvent } from 'react';
+import {
+  Fragment,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type KeyboardEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useImportBundle, usePatchSettings, useSettings } from '../../api/system';
@@ -227,6 +234,21 @@ export default function SettingsPage() {
   const asked = params.get('tab') ?? '';
   const requested = (MERGED[asked] ?? asked) as Tab;
   const tab: Tab = TABS.includes(requested) ? requested : 'workspace';
+  const nav = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const reveal = () => {
+      const list = nav.current;
+      const active = list?.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (!list || !active || list.scrollWidth <= list.clientWidth) return;
+      const outer = list.getBoundingClientRect();
+      const inner = active.getBoundingClientRect();
+      if (inner.left < outer.left) list.scrollLeft -= outer.left - inner.left;
+      else if (inner.right > outer.right) list.scrollLeft += inner.right - outer.right;
+    };
+    reveal();
+    window.addEventListener('resize', reveal);
+    return () => window.removeEventListener('resize', reveal);
+  }, [tab]);
   const open = (id: Tab) => setParams({ tab: id }, { replace: true });
   usePageTitle(t(`legacy.settings.tabs.${tab}`), t('legacy.nav.settings'));
 
@@ -246,6 +268,7 @@ export default function SettingsPage() {
       <h1 className="sr-only">{t('legacy.nav.settings')}</h1>
       <div className="settings-layout">
         <nav
+          ref={nav}
           className="settings-nav"
           role="tablist"
           aria-orientation="vertical"
