@@ -165,6 +165,17 @@ button.production-grip {
   background: none;
   touch-action: none;
 }
+.production-card-title {
+  user-select: none;
+}
+.production-card-title input {
+  user-select: text;
+}
+@media (pointer: fine) {
+  .production-card-title > h2 {
+    cursor: grab;
+  }
+}
 body.production-reordering,
 body.production-reordering .production-card,
 body.production-reordering .production-grip {

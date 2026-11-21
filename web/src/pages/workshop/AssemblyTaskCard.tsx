@@ -1,4 +1,4 @@
-import { useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -83,6 +83,7 @@ export function AssemblyTaskCard({
   const control = useJobControl();
   const retry = useRetryJob();
   const [renaming, setRenaming] = useState(false);
+  const renameButton = useRef<HTMLButtonElement>(null);
   const panels = useMemo(
     () => [...(episode?.panels ?? [])].sort((a, b) => a.order - b.order),
     [episode?.panels],
@@ -175,7 +176,10 @@ export function AssemblyTaskCard({
           {renaming ? (
             <InlineTitle
               autoFocus
-              onCancel={() => setRenaming(false)}
+              onCancel={() => {
+                setRenaming(false);
+                renameButton.current?.focus({ preventScroll: true });
+              }}
               onFinish={() => setRenaming(false)}
               value={album.title}
               label={t('ws.queue.rename')}
@@ -188,6 +192,7 @@ export function AssemblyTaskCard({
             <h2>{album.title}</h2>
           )}
           <button
+            ref={renameButton}
             type="button"
             className="ibtn production-rename"
             title={t('ws.queue.rename')}

@@ -119,6 +119,21 @@ function mount(path = '/workshop/presets?kit=kit') {
 }
 
 describe('workshop creation-kit sources', () => {
+  it('cancels a storyboard rename with Escape and returns focus without saving', async () => {
+    const calls = mockFetch(routes());
+    mount('/workshop/story/kit_board?kit=kit');
+    const trigger = await screen.findByRole('button', { name: '重命名' });
+    fireEvent.click(trigger);
+    const editor = screen.getByRole('textbox', { name: '分镜名称' });
+    expect(editor).toHaveFocus();
+    fireEvent.change(editor, { target: { value: 'Unsaved story title' } });
+    fireEvent.keyDown(editor, { key: 'Escape' });
+    expect(screen.queryByRole('textbox', { name: '分镜名称' })).toBeNull();
+    expect(trigger).toHaveFocus();
+    expect(board.title).toBe('Kit story');
+    expect(calls.some((call) => call.method === 'PATCH')).toBe(false);
+  });
+
   it('waits for a kit save before switching, preserves the default library and does not reuse the draft', async () => {
     let finish!: () => void;
     const calls = mockFetch(

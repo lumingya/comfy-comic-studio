@@ -239,6 +239,7 @@ function StoryTabContent() {
   const [renaming, setRenaming] = useState(false);
   const [checkpointsOpen, setCheckpointsOpen] = useState(false);
   const cancelRename = useRef(false);
+  const renameButton = useRef<HTMLButtonElement>(null);
   const titleDraft = useAutoDraft(episode.data?.title ?? '', async (value) => {
     const title = value.trim();
     if (!title) throw new Error(t('workshopSource.titleRequired'));
@@ -370,15 +371,17 @@ function StoryTabContent() {
               onChange={(e) => titleDraft.change(e.target.value)}
               onBlur={saveTitle}
               onKeyDown={(e) => {
-                if (e.nativeEvent.isComposing) return;
+                if (e.nativeEvent.isComposing || e.keyCode === 229) return;
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  e.currentTarget.blur();
+                  e.stopPropagation();
+                  renameButton.current?.focus({ preventScroll: true });
                 }
                 if (e.key === 'Escape') {
                   e.preventDefault();
+                  e.stopPropagation();
                   cancelRename.current = true;
-                  saveTitle();
+                  renameButton.current?.focus({ preventScroll: true });
                 }
               }}
             />
@@ -410,6 +413,7 @@ function StoryTabContent() {
             actions={[{ label: t('recovery.title'), onSelect: () => setCheckpointsOpen(true) }]}
           />
           <button
+            ref={renameButton}
             type="button"
             className="btn"
             onClick={() => {

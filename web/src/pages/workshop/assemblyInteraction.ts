@@ -93,8 +93,10 @@ export function useAssemblyInteraction(
     const grip = e.currentTarget;
     const { pointerId, clientX, clientY } = e;
     const fromHandle = grip.matches('.production-grip');
+    // Native selection can start before the lifted-card class reaches the DOM.
+    // Prevent it at press time so a canceled drag can be retried from the title.
+    e.preventDefault();
     if (fromHandle) {
-      e.preventDefault();
       e.stopPropagation();
     }
     grip.setPointerCapture(e.pointerId);
@@ -112,6 +114,7 @@ export function useAssemblyInteraction(
       if (!active) {
         if (Math.hypot(ev.clientX - clientX, ev.clientY - clientY) < 6) return;
         active = true;
+        document.getSelection()?.removeAllRanges();
         menu.close();
       }
       const hit = document
