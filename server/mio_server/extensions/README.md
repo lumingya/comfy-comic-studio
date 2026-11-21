@@ -376,8 +376,25 @@ def activate(mio):
 
 协议版本为 `1`。面板从 `location.hash` 的 `mio-session` 读取会话 nonce，然后向 `parent` 发送
 `{type:"mio:panel:ready", version:1, session}`。父窗口返回同会话的 `mio:panel:init`，包含
-`context:{episode_id?,series_id?}`、`requests` 与 `limits`。面板也必须检查 `event.source === parent`
+`context:{episode_id?,series_id?}`、`appearance:{tokens,theme,locale}`、`requests` 与 `limits`。面板也必须检查 `event.source === parent`
 和会话。只有用户明确点击操作时，发送：
+
+应用外观会在 `mio:panel:init` 中提供，并在明暗主题或界面语言改变时通过 `mio:panel:appearance` 更新：
+
+```json
+{
+  "type": "mio:panel:appearance",
+  "version": 1,
+  "session": "当前 iframe 会话值",
+  "appearance": {
+    "tokens": { "bg": "#17191b", "accent": "#e0a070" },
+    "theme": "dark",
+    "locale": "zh-CN"
+  }
+}
+```
+
+`tokens` 只包含已知颜色令牌，未定义的值省略；`theme` 为 `dark`、`light` 或 `null`，`locale` 例如 `zh-CN` / `en`。这是只读显示上下文，不会进入面板 API 请求或业务 `context`。面板仍须校验 session 与 `event.source === parent`。
 
 ```js
 parent.postMessage({

@@ -18,6 +18,7 @@ ALIASES = (
     "FloatingPosition",
     "PanelRequestSpec",
     "PanelContext",
+    "PanelAppearance",
     "PanelBridgeRequest",
     "PanelBridgeResponse",
     "PanelFromFrame",

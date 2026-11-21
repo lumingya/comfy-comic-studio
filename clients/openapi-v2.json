@@ -5720,6 +5720,77 @@
     "title": "Manifest",
     "type": "object"
    },
+   "MioContract_PanelAppearance": {
+    "additionalProperties": false,
+    "description": "Current host appearance, kept separate from business/API request context.",
+    "properties": {
+     "locale": {
+      "default": "zh-CN",
+      "maxLength": 32,
+      "minLength": 2,
+      "title": "Locale",
+      "type": "string"
+     },
+     "theme": {
+      "anyOf": [
+       {
+        "enum": [
+         "dark",
+         "light"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Theme"
+     },
+     "tokens": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "maxProperties": 28,
+      "title": "Tokens",
+      "type": "object"
+     }
+    },
+    "title": "PanelAppearance",
+    "type": "object"
+   },
+   "MioContract_PanelAppearanceMessage": {
+    "additionalProperties": false,
+    "properties": {
+     "appearance": {
+      "$ref": "#/components/schemas/MioContract_PanelAppearance"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:panel:appearance",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "appearance"
+    ],
+    "title": "PanelAppearanceMessage",
+    "type": "object"
+   },
    "MioContract_PanelBridgeRequest": {
     "additionalProperties": false,
     "properties": {
@@ -5859,6 +5930,9 @@
    "MioContract_PanelInit": {
     "additionalProperties": false,
     "properties": {
+     "appearance": {
+      "$ref": "#/components/schemas/MioContract_PanelAppearance"
+     },
      "context": {
       "$ref": "#/components/schemas/MioContract_PanelContext"
      },
@@ -5894,6 +5968,7 @@
      "version",
      "type",
      "context",
+     "appearance",
      "requests",
      "limits"
     ],
@@ -6311,6 +6386,9 @@
     "anyOf": [
      {
       "$ref": "#/components/schemas/MioContract_PanelInit"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_PanelAppearanceMessage"
      },
      {
       "$ref": "#/components/schemas/MioContract_PanelResponseMessage"
@@ -8179,7 +8257,7 @@
    },
    "PanelMotion-Input": {
     "additionalProperties": false,
-    "description": "Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).",
+    "description": "Dynamic-comic camera and transition for this panel (``auto`` move uses shot context).",
     "properties": {
      "hold": {
       "anyOf": [
@@ -8209,6 +8287,17 @@
        "shake"
       ],
       "title": "Move",
+      "type": "string"
+     },
+     "transition": {
+      "default": "fade",
+      "description": "Transition into this panel; fade preserves the existing default.",
+      "enum": [
+       "cut",
+       "fade",
+       "slide"
+      ],
+      "title": "Transition",
       "type": "string"
      }
     },
@@ -8217,7 +8306,7 @@
    },
    "PanelMotion-Output": {
     "additionalProperties": false,
-    "description": "Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).",
+    "description": "Dynamic-comic camera and transition for this panel (``auto`` move uses shot context).",
     "properties": {
      "hold": {
       "anyOf": [
@@ -8248,10 +8337,22 @@
       ],
       "title": "Move",
       "type": "string"
+     },
+     "transition": {
+      "default": "fade",
+      "description": "Transition into this panel; fade preserves the existing default.",
+      "enum": [
+       "cut",
+       "fade",
+       "slide"
+      ],
+      "title": "Transition",
+      "type": "string"
      }
     },
     "required": [
      "move",
+     "transition",
      "hold"
     ],
     "title": "PanelMotion",

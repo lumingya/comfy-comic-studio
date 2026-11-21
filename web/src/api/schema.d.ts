@@ -5897,7 +5897,7 @@ export interface components {
         };
         /**
          * PanelMotion
-         * @description Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).
+         * @description Dynamic-comic camera and transition for this panel (``auto`` move uses shot context).
          */
         "PanelMotion-Input": {
             /**
@@ -5907,6 +5907,13 @@ export interface components {
              */
             move?: "auto" | "still" | "push_in" | "pull_out" | "pan_left" | "pan_right" | "pan_up" | "pan_down" | "shake";
             /**
+             * Transition
+             * @description Transition into this panel; fade preserves the existing default.
+             * @default fade
+             * @enum {string}
+             */
+            transition?: "cut" | "fade" | "slide";
+            /**
              * Hold
              * @description Seconds on screen; None = from reading time
              */
@@ -5914,7 +5921,7 @@ export interface components {
         };
         /**
          * PanelMotion
-         * @description Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).
+         * @description Dynamic-comic camera and transition for this panel (``auto`` move uses shot context).
          */
         "PanelMotion-Output": {
             /**
@@ -5923,6 +5930,13 @@ export interface components {
              * @enum {string}
              */
             move: "auto" | "still" | "push_in" | "pull_out" | "pan_left" | "pan_right" | "pan_up" | "pan_down" | "shake";
+            /**
+             * Transition
+             * @description Transition into this panel; fade preserves the existing default.
+             * @default fade
+             * @enum {string}
+             */
+            transition: "cut" | "fade" | "slide";
             /**
              * Hold
              * @description Seconds on screen; None = from reading time
@@ -8370,6 +8384,42 @@ export interface components {
             backup?: string | null;
             contributes?: components["schemas"]["MioContract_Contributes"];
         };
+        /**
+         * PanelAppearance
+         * @description Current host appearance, kept separate from business/API request context.
+         */
+        MioContract_PanelAppearance: {
+            /** Tokens */
+            tokens?: {
+                [key: string]: string;
+            };
+            /**
+             * Theme
+             * @default null
+             */
+            theme?: ("dark" | "light") | null;
+            /**
+             * Locale
+             * @default zh-CN
+             */
+            locale?: string;
+        };
+        /** PanelAppearanceMessage */
+        MioContract_PanelAppearanceMessage: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:panel:appearance";
+            appearance: components["schemas"]["MioContract_PanelAppearance"];
+        };
         /** PanelBridgeRequest */
         MioContract_PanelBridgeRequest: {
             /** Activation */
@@ -8427,6 +8477,7 @@ export interface components {
              */
             type: "mio:panel:init";
             context: components["schemas"]["MioContract_PanelContext"];
+            appearance: components["schemas"]["MioContract_PanelAppearance"];
             /** Requests */
             requests: components["schemas"]["MioContract_PanelRequestSpec"][];
             limits: components["schemas"]["MioContract_PanelLimits"];
@@ -8610,7 +8661,7 @@ export interface components {
             subscriptions?: ("creation.context.changed" | "selection.changed")[];
         };
         /** PanelToFrame */
-        MioContract_PanelToFrame: components["schemas"]["MioContract_PanelInit"] | components["schemas"]["MioContract_PanelResponseMessage"] | components["schemas"]["MioContract_PanelMediaMessage"];
+        MioContract_PanelToFrame: components["schemas"]["MioContract_PanelInit"] | components["schemas"]["MioContract_PanelAppearanceMessage"] | components["schemas"]["MioContract_PanelResponseMessage"] | components["schemas"]["MioContract_PanelMediaMessage"];
         /** SlicePresetSpec */
         MioContract_SlicePresetSpec: {
             /** Id */

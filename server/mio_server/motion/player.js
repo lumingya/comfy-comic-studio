@@ -197,6 +197,18 @@
     var layer = layers[state.flip];
     var other = layers[1 - state.flip];
     state.flip = 1 - state.flip;
+    var transition = shot.transition || 'fade';
+    [layer, other].forEach(function (item) {
+      item.root.classList.add('prepare-transition');
+      item.root.dataset.transition = transition;
+    });
+    layer.root.dataset.transitionRole = 'incoming';
+    other.root.dataset.transitionRole = 'outgoing';
+    // Put both layers in their transition start positions before enabling the animation.
+    void layer.root.offsetWidth;
+    void other.root.offsetWidth;
+    layer.root.classList.remove('prepare-transition');
+    other.root.classList.remove('prepare-transition');
     layer.backdrop.style.backgroundImage = 'url("' + shot.image + '")';
     layer.img.src = shot.image;
     if (layer.anim) layer.anim.cancel();

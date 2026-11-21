@@ -44,6 +44,29 @@ body {
 .layer.on {
   opacity: 1;
 }
+.layer.prepare-transition {
+  transition: none !important;
+}
+.layer[data-transition='cut'] {
+  transition: none;
+}
+.layer[data-transition='slide'] {
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
+}
+.layer[data-transition='slide'][data-transition-role='incoming'] {
+  transform: translateX(4%);
+}
+.layer[data-transition='slide'][data-transition-role='incoming'].on {
+  transform: translateX(0);
+}
+.layer[data-transition='slide'][data-transition-role='outgoing'] {
+  transform: translateX(0);
+}
+.layer[data-transition='slide'][data-transition-role='outgoing']:not(.on) {
+  transform: translateX(-4%);
+}
 .layer .backdrop {
   position: absolute;
   inset: -8%;

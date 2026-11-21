@@ -19,6 +19,7 @@ from ..models import DialogueKind, Gender, Panel, Series, parse_ratio
 from ..pipeline import variables as V
 
 MOVES = ("still", "push_in", "pull_out", "pan_left", "pan_right", "pan_up", "pan_down", "shake")
+TRANSITIONS = ("cut", "fade", "slide")
 MIN_HOLD, MAX_HOLD = 2.0, 14.0
 BASE_HOLD = 1.6  # time to take in the picture before reading
 LINE_PAUSE = 0.35
@@ -107,6 +108,7 @@ def plan_panel(series: Series, panel: Panel, index: int) -> dict:
         "panel_id": panel.id,
         "index": index,
         "move": automatic if chosen_move == "auto" else chosen_move,
+        "transition": motion.transition if motion else "fade",
         "auto_move": automatic,
         "move_overridden": chosen_move != "auto",
         "hold": motion.hold if motion and motion.hold else hold,

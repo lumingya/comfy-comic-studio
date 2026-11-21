@@ -9,7 +9,7 @@ from fastapi import Response
 from pydantic import BaseModel, Field
 
 from ..motion.export import MotionOptions, episode_motion
-from ..motion.plan import MOVES, plan_episode
+from ..motion.plan import MOVES, TRANSITIONS, plan_episode
 from .deps import Ctx
 from .operations import Router as APIRouter
 
@@ -38,6 +38,7 @@ def motion_plan(ctx: Ctx, episode_id: str, variant_id: str | None = None) -> dic
     playable = [s for s in shots if s["has_image"]]
     return {
         "moves": list(MOVES),
+        "transitions": list(TRANSITIONS),
         "shots": shots,
         "total_seconds": round(sum(s["hold"] for s in playable), 1),
     }

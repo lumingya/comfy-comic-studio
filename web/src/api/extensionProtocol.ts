@@ -16,6 +16,7 @@ export const BRIDGE = {
     types: {
       ready: 'mio:panel:ready',
       init: 'mio:panel:init',
+      appearance: 'mio:panel:appearance',
       request: 'mio:panel:request',
       response: 'mio:panel:response',
       release: 'mio:panel:release',
@@ -109,6 +110,7 @@ export type Manifest = components['schemas']['MioContract_Manifest'];
 export type FloatingPosition = components['schemas']['MioContract_FloatingPosition'];
 export type PanelRequestSpec = components['schemas']['MioContract_PanelRequestSpec'];
 export type PanelContext = components['schemas']['MioContract_PanelContext'];
+export type PanelAppearance = components['schemas']['MioContract_PanelAppearance'];
 export type PanelBridgeRequest = components['schemas']['MioContract_PanelBridgeRequest'];
 export type PanelBridgeResponse = components['schemas']['MioContract_PanelBridgeResponse'];
 export type PanelFromFrame = components['schemas']['MioContract_PanelFromFrame'];

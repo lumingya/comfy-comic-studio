@@ -64,7 +64,7 @@ class PlanTests(unittest.TestCase):
         s = series()
         panels = [
             panel(0, lines=[("lin", "走吧", SPEECH), (None, "雨停了", DialogueKind.narration)]),
-            panel(1, motion=PanelMotion(move="pan_up", hold=6)),
+            panel(1, motion=PanelMotion(move="pan_up", hold=6, transition="slide")),
             panel(2, lines=[(None, "咚", DialogueKind.sfx)], motion=PanelMotion(move="auto")),
         ]
         plan = plan_episode(s, panels)
@@ -73,6 +73,8 @@ class PlanTests(unittest.TestCase):
         self.assertEqual([ln["speaker"] for ln in plan[0]["lines"]], ["林", ""])
         self.assertEqual(plan[0]["lines"][1]["voice"]["id"], "narrator")
         self.assertEqual((plan[1]["move"], plan[1]["hold"]), ("pan_up", 6))
+        self.assertEqual(plan[1]["transition"], "slide")
+        self.assertEqual(plan[0]["transition"], "fade")
         self.assertTrue(plan[1]["move_overridden"])
         self.assertEqual(plan[1]["auto_move"], "pull_out")
         self.assertEqual(plan[2]["lines"], [])  # SFX are drawn, not read
@@ -98,7 +100,9 @@ def timeline(lines=()) -> dict:
 
 class PlayerTests(unittest.TestCase):
     def test_offline_and_escaped(self):
-        doc = render_motion(timeline(), MotionOptions(aspect="landscape"))
+        source = timeline()
+        source["shots"][0]["transition"] = "cut"
+        doc = render_motion(source, MotionOptions(aspect="landscape"))
         head = doc.split("</head>")[0]
         nonce = re.search(r"script-src 'nonce-([0-9a-f]+)'", head).group(1)
         self.assertEqual(doc.count(f'<script nonce="{nonce}">'), 1)
@@ -107,8 +111,13 @@ class PlayerTests(unittest.TestCase):
         self.assertIn("--ar:16/9", head)
         self.assertNotIn("<script>alert", doc)
         raw = re.search(r'id="mio-motion">(.*?)</script>', doc, re.S).group(1)
-        self.assertEqual(json.loads(raw)["title"], timeline()["title"])
+        payload = json.loads(raw)
+        self.assertEqual(payload["title"], timeline()["title"])
+        self.assertEqual(payload["shots"][0]["transition"], "cut")
         self.assertNotRegex(doc, r"https?://(?!www\.w3)")
+        self.assertIn("data-transition='cut'", doc)
+        self.assertIn("data-transition='slide'", doc)
+        self.assertIn("data-transition-role='incoming'", doc)
         with self.assertRaises(ValueError):
             render_motion(timeline(), MotionOptions(aspect="square"))
 
@@ -132,14 +141,18 @@ class MotionApiTests(ApiCase):
 
         ep = self.adopt_all(ep)
         first = ep["panels"][0]["id"]
-        changes = {"changes": {"motion": {"move": "pan_left", "hold": 4.5}}}
+        changes = {"changes": {"motion": {"move": "pan_left", "hold": 4.5, "transition": "slide"}}}
         self.ok(self.client.patch(f"/api/episodes/{ep['id']}/panels/{first}", json=changes))
         bad = {"changes": {"motion": {"move": "spin"}}}
         res = self.client.patch(f"/api/episodes/{ep['id']}/panels/{first}", json=bad)
         self.assertIn(res.status_code, (400, 422))
+        bad_transition = {"changes": {"motion": {"transition": "wipe"}}}
+        res = self.client.patch(f"/api/episodes/{ep['id']}/panels/{first}", json=bad_transition)
+        self.assertIn(res.status_code, (400, 422))
         plan = self.ok(self.client.get(f"/api/episodes/{ep['id']}/motion-plan"))
         shot = next(s for s in plan["shots"] if s["panel_id"] == first)
         self.assertEqual((shot["move"], shot["hold"]), ("pan_left", 4.5))
+        self.assertEqual(shot["transition"], "slide")
         self.assertGreater(plan["total_seconds"], 4.5)
         self.assertTrue(all(shot["has_image"] for shot in plan["shots"]))
         self.assertAlmostEqual(plan["total_seconds"], sum(shot["hold"] for shot in plan["shots"]))
@@ -153,6 +166,7 @@ class MotionApiTests(ApiCase):
         self.assertEqual(data["schema"], "mio.motion.v1")
         self.assertEqual(len(data["shots"]), len(ep["panels"]))
         self.assertEqual(data["shots"][0]["move"], "pan_left")
+        self.assertEqual(data["shots"][0]["transition"], "slide")
         self.assertEqual(
             [shot["hold"] for shot in data["shots"]], [s["hold"] for s in plan["shots"]]
         )

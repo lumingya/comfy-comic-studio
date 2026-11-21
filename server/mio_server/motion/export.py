@@ -62,6 +62,7 @@ def episode_motion(ctx, episode_id: str, variant_id: str | None, opts: MotionOpt
                 "width": im.width,
                 "height": im.height,
                 "move": plan["move"],
+                "transition": plan["transition"],
                 "hold": plan["hold"],
                 "lines": plan["lines"],
             }

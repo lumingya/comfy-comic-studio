@@ -13,6 +13,7 @@ from mio_server.extensions.panel_bridge import PanelBridgeRequest
 from mio_server.extensions.protocol import (
     CONTRACT_VERSION,
     PanelFromFrame,
+    PanelToFrame,
     SurfaceLifecycle,
     ThemeSettingsFromFrame,
     WorkspaceFromFrame,
@@ -113,6 +114,42 @@ class ExtensionContractModelTests(TestCase):
             )
         with self.assertRaises(ValidationError):
             ThemeSettingsFromFrame.model_validate({**theme, "settings": []})
+        appearance = {
+            "tokens": {"bg": "#17191b", "accent": "#e0a070"},
+            "theme": "dark",
+            "locale": "zh-CN",
+        }
+        init = {
+            "session": "s",
+            "version": constants["panel"]["version"],
+            "type": constants["panel"]["types"]["init"],
+            "context": {"episode_id": "episode"},
+            "appearance": appearance,
+            "requests": [],
+            "limits": {
+                "requestBytes": 1,
+                "responseBytes": 1,
+                "concurrent": 1,
+                "imageBytes": 1,
+                "downloadBytes": 1,
+                "mediaBytes": 1,
+                "mediaItems": 1,
+            },
+        }
+        PanelToFrame.model_validate(init)
+        changed = {
+            "session": "s",
+            "version": constants["panel"]["version"],
+            "type": constants["panel"]["types"]["appearance"],
+            "appearance": {**appearance, "theme": "light", "locale": "en"},
+        }
+        PanelToFrame.model_validate(changed)
+        with self.assertRaises(ValidationError):
+            PanelToFrame.model_validate(
+                {**changed, "appearance": {**appearance, "tokens": {"evil": "red"}}}
+            )
+        with self.assertRaises(ValidationError):
+            PanelFromFrame.model_validate({**panel, "appearance": appearance})
         for state in SurfaceLifecycle:
             WorkspaceLifecycle.model_validate(
                 {

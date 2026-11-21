@@ -37,6 +37,7 @@ FiniteNumber = Annotated[FiniteFloat, Field(strict=True)]
 class PanelTag(str, Enum):
     ready = "mio:panel:ready"
     init = "mio:panel:init"
+    appearance = "mio:panel:appearance"
     request = "mio:panel:request"
     response = "mio:panel:response"
     release = "mio:panel:release"
@@ -88,6 +89,21 @@ class SessionMessage(StrictModel):
 class PanelContext(StrictModel):
     episode_id: str | None = Field(default=None, max_length=160)
     series_id: str | None = Field(default=None, max_length=160)
+
+
+class PanelAppearance(StrictModel):
+    """Current host appearance, kept separate from business/API request context."""
+
+    tokens: dict[str, str] = Field(default_factory=dict, max_length=len(COLOR_TOKENS))
+    theme: Literal["dark", "light"] | None = None
+    locale: str = Field(default="zh-CN", min_length=2, max_length=32)
+
+    @field_validator("tokens")
+    @classmethod
+    def known_tokens(cls, value: dict[str, str]) -> dict[str, str]:
+        if any(name not in COLOR_TOKENS or len(token) > 256 for name, token in value.items()):
+            raise ValueError("panel appearance contains an unknown or oversized color token")
+        return value
 
 
 class CreationSelection(StrictModel):
@@ -197,8 +213,14 @@ class PanelReleaseMessage(PanelMessage):
 class PanelInit(PanelMessage):
     type: Literal[PanelTag.init]
     context: PanelContext
+    appearance: PanelAppearance
     requests: list[PanelRequestSpec]
     limits: PanelLimits
+
+
+class PanelAppearanceMessage(PanelMessage):
+    type: Literal[PanelTag.appearance]
+    appearance: PanelAppearance
 
 
 class PanelResponseMessage(PanelMessage):
@@ -223,7 +245,9 @@ class PanelFromFrame(RootModel[PanelReady | PanelRequestMessage | PanelReleaseMe
     pass
 
 
-class PanelToFrame(RootModel[PanelInit | PanelResponseMessage | PanelMediaMessage]):
+class PanelToFrame(
+    RootModel[PanelInit | PanelAppearanceMessage | PanelResponseMessage | PanelMediaMessage]
+):
     pass
 
 

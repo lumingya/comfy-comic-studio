@@ -267,12 +267,17 @@ class ControlInput(StrictModel):
 MotionMove = Literal[
     "auto", "still", "push_in", "pull_out", "pan_left", "pan_right", "pan_up", "pan_down", "shake"
 ]
+MotionTransition = Literal["cut", "fade", "slide"]
 
 
 class PanelMotion(StrictModel):
-    """Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text)."""
+    """Dynamic-comic camera and transition for this panel (``auto`` move uses shot context)."""
 
     move: MotionMove = "auto"
+    transition: MotionTransition = Field(
+        default="fade",
+        description="Transition into this panel; fade preserves the existing default.",
+    )
     hold: float | None = Field(
         default=None, ge=0.5, le=30, description="Seconds on screen; None = from reading time"
     )
