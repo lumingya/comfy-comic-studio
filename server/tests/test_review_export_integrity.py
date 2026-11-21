@@ -381,6 +381,113 @@ class ExportIntegrityTests(ApiCase):
                 assets = AlbumImages(document).images
                 with Image.open(io.BytesIO(assets[tail["image"]["$mioImage"]])) as image:
                     self.assertEqual(image.size, (width, 1))
+                folder = Path(self.tmp) / f"preview-roundtrip-{width}" / "albums" / "neutral"
+                folder.mkdir(parents=True)
+                album["id"] = f"preview-roundtrip-{width}"
+                for i, step in enumerate(album["steps"]):
+                    name = f"{i}.jpg"
+                    (folder / name).write_bytes(assets[step["image"]["$mioImage"]])
+                    step["image"] = name
+                (folder / "album.json").write_text(json.dumps(album), encoding="utf-8")
+                report = LegacyImporter(
+                    self.ctx.store, folder.parents[1], self.ctx.assets
+                ).import_albums()
+                imported = self.ctx.store.get_episode(report.episodes[0])
+                self.assertTrue(imported.strip.rasterized)
+                self.assertEqual(imported.strip.height, 3201)
+                self.assertEqual(
+                    imported.strip.panel_boxes[imported.panels[-1].id], (0, 3200, 800, 3201)
+                )
+
+    def test_thin_ratio_exception_requires_complete_image_backed_composition(self):
+        folder = Path(self.tmp) / "strict-ratio" / "albums" / "neutral"
+        folder.mkdir(parents=True)
+        with Image.new("RGB", (400, 1), "#7799bb") as image:
+            image.save(folder / "tail.png")
+        valid = {
+            "id": "strict-ratio",
+            "composition": {"width": 400, "height": 1},
+            "steps": [
+                {
+                    "stepIndex": 0,
+                    "width": 400,
+                    "height": 1,
+                    "sourceRegion": [0, 0, 400, 1],
+                    "image": "tail.png",
+                }
+            ],
+        }
+        for case in (
+            "no-composition",
+            "missing-region",
+            "incomplete",
+            "missing-image",
+            "wrong-size",
+        ):
+            with self.subTest(case=case):
+                album = json.loads(json.dumps(valid))
+                if case == "no-composition":
+                    album.pop("composition")
+                elif case == "missing-region":
+                    album["steps"][0].pop("sourceRegion")
+                elif case == "incomplete":
+                    album["composition"]["height"] = 2
+                elif case == "missing-image":
+                    album["steps"][0]["image"] = "missing.png"
+                else:
+                    album["steps"][0].update(width=1, height=100)
+                (folder / "album.json").write_text(json.dumps(album), encoding="utf-8")
+                before = self.ctx.store.asset_ids()
+                with self.assertRaises(ValueError):
+                    LegacyImporter(
+                        self.ctx.store, folder.parents[1], self.ctx.assets
+                    ).import_albums()
+                self.assertEqual(self.ctx.store.asset_ids(), before)
+        (folder / "album.json").write_text(json.dumps(valid), encoding="utf-8")
+        report = LegacyImporter(self.ctx.store, folder.parents[1], self.ctx.assets).import_albums()
+        imported = self.ctx.store.get_episode(report.episodes[0])
+        self.assertTrue(imported.strip.rasterized)
+        self.assertEqual(imported.strip.height, 1)
+        self.assertEqual((imported.takes[0].width, imported.takes[0].height), (400, 1))
+
+    def test_forged_thin_source_region_cannot_overwrite_regular_album(self):
+        folder = Path(self.tmp) / "forged-ratio" / "albums" / "neutral"
+        folder.mkdir(parents=True)
+        with Image.new("RGB", (400, 100), "#7799bb") as image:
+            image.save(folder / "original.png")
+        original = {
+            "id": "forged-ratio",
+            "title": "Original",
+            "steps": [{"width": 400, "height": 100, "image": "original.png"}],
+        }
+        path = folder / "album.json"
+        path.write_text(json.dumps(original), encoding="utf-8")
+        importer = LegacyImporter(self.ctx.store, folder.parents[1], self.ctx.assets)
+        report = importer.import_albums()
+        series_id, episode_id = report.series[0], report.episodes[0]
+        before_series = self.ctx.store.get_series(series_id).model_dump(mode="json")
+        before_episode = self.ctx.store.get_episode(episode_id).model_dump(mode="json")
+        before_assets = self.ctx.store.asset_ids()
+        with Image.new("RGB", (1, 100), "#334455") as image:
+            image.save(folder / "tall.png")
+        forged = {
+            "id": "forged-ratio",
+            "title": "Replacement",
+            "composition": {"width": 400, "height": 1},
+            "steps": [
+                {"width": 1, "height": 100, "image": "tall.png", "sourceRegion": [0, 0, 400, 1]}
+            ],
+        }
+        path.write_text(json.dumps(forged), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            importer.import_albums(overwrite=True)
+        self.assertEqual(
+            self.ctx.store.get_series(series_id).model_dump(mode="json"), before_series
+        )
+        self.assertEqual(
+            self.ctx.store.get_episode(episode_id).model_dump(mode="json"), before_episode
+        )
+        self.assertEqual(self.ctx.store.asset_ids(), before_assets)
 
     def test_odd_origin_sfx_and_fractional_glyphs_join_on_global_pixel_grid(self):
         def edit(ep):

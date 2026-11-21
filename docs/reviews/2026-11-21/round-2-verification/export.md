@@ -4,7 +4,7 @@
 
 **R1-EXP-01 通过，可关闭。** 本复审者未参与原审、规划或实现；审查对象为 `HEAD=125e07f1600464b93736392c04f7d0ae8412c63d` 上的当前 working tree，而非仅检查 HEAD。已读 AGENTS、README、ROADMAP、共享台账、原 SPEC-02、导出规划及作者收口报告。
 
-实际反证中发现两处新的小边界，均已交作者修复，并由本复审者使用原输入窄复验通过：普通气泡的半像素取整、极薄尾段缩放为零高度。作者另行发现并修复了 1 行尾段的旧目录导入比例限制；本复审也独立核对了真实往返。当前没有遗留的已确认导出缺陷。
+实际反证中发现的普通气泡半像素取整、极薄尾段缩放为零高度，以及最终补核中发现的伪造源带比例例外，均已交作者修复，并由本复审者使用原输入窄复验通过。作者另行发现并修复了 1 行尾段的旧目录导入比例限制；全量门禁随后捕获的普通导入回归也已收紧并独立补核，详见下文最终复验。当前没有遗留的已确认导出缺陷。
 
 范围内只写本报告；没有修改生产代码、测试或其他报告，没有提交、推送或委派。实验均为 TEMP 中性色块和临时 AppContext，没有访问个人运行数据、模型、真实云端或付费 API。
 
@@ -25,7 +25,7 @@
 - 修前实际：前两段正常，最后 `800 × 1` 调整为宽 320/400 时，高度舍入为 0，抛出 `ValueError: height and width must be > 0`；clean 与默认 1400 宽预览正常。这是合法请求导致整个导出失败，并非字节相等的误用。
 - 修后同输入：320 宽输出 `320×640 / 320×640 / 320×1`；400 宽输出 `400×800 / 400×800 / 400×1`。尾段 `sourceRegion` 始终为 `[0,3200,800,3201]`。
 - 又走真实 HTML API：clean 和 preview320 均返回 200；解析产物 v1 图片、落入真实旧目录、导入并再导出，均保留 `rasterized=true`、总高 3201 和最后 1 行。clean 的完整重建与原画布逐像素相同。
-- 作者自查的导入比例缺陷也独立确认已闭合：`importer.ratio_of` 对超出逻辑 Panel 比例范围的带使用有效逻辑默认值，实际 Take 尺寸、完整 `sourceRegion` 和布局盒不变，末行没有被合并或丢弃。
+- 作者自查的导入比例缺陷也独立确认已闭合：普通 `importer.ratio_of` 保持原拒绝语义；只有完整分区、图像声明与实际尺寸相同、且匹配源区域缩放关系的 `rasterized_band` 才可使用有效逻辑默认比例。实际 Take 尺寸、完整 `sourceRegion` 和布局盒不变，末行没有被合并或丢弃。此处最终收紧经过下文补核。
 
 ## 完整构图与跨格式像素证据
 
@@ -67,6 +67,37 @@ Ran 12 tests in 18.661s — OK
 每组都检查三段真实图片可解码、目录条目数、目录进入时焦点、选中末段与 Escape 关闭的焦点恢复、显式单页可见 1 段/双页可见 2 段、灯箱 Enter 打开、Shift+Tab/Tab 焦点约束、方向键换图、放大、Escape 关闭后恢复原触发器及移除背景 inert。默认、双页和弹窗关闭后均无 document 横向溢出；每组 pageerror 与 console error 均为零。
 
 保存过 12 组默认阅读截图及三模板手机深色灯箱截图；通过实际 `view_image` 查看桌面/手机联络图与三张灯箱原图，不以 DOM 断言冒充视觉检查。画布内容完整 contain，显式放大时允许在灯箱 viewport 内滚动。全部截图、联络图和初始检查图均按确切路径删除，并确认本复审 TEMP 目录已无 PNG；没有把截图写入仓库。作者提供的三份 HTML 属于共享输入，未擅自删除。
+
+## 全量门禁后的最终薄带导入复验
+
+主控全量 1559 项捕获了旧导入四项事务断言回归：早期薄带修复曾把普通 `ratio_of(1,100)` 一并降为默认比例，使普通 album/project 的坏比例不再报错。最终复验对象为 `HEAD=66d98b663e672918e3b2cee14ee189ed92f15522` 上的 importer working tree；未重跑整批 123 项、全仓门禁或 Chrome 十二组。
+
+当前代码把例外限制在 album 分支。`_composition_regions` 先验证全部 sourceRegion 为连续、全宽、无重叠且完整的分区；随后逐张读取图像，核对 step 声明尺寸与实际资产尺寸，不保留整套编码图片。普通 project 调用的 `convert_frame` 不授予 `rasterized_band`。普通 album 缺少有效依据时同样继续使用原比例验证。
+
+独立追加探针在已有合法画册上执行覆盖导入，逐项比较 `series`、`episodes`、`documents`、`assets`、`episode_snapshots` 五张表：
+
+| 反例 | 最终结果 |
+| --- | --- |
+| 普通画册含一张可入库新图，随后遇到 `width=1,height=100` | 抛 ValidationError；五表与旧作品完全不变，新资产元数据未发布 |
+| 薄带缺 sourceRegion | 拒绝；五表不变 |
+| composition 总高比完整源带多 1 行 | 拒绝；五表不变 |
+| 两段 sourceRegion 重叠 | 拒绝；五表不变 |
+| sourceRegion 完整但图片缺失 | 拒绝；五表不变 |
+| step 声明尺寸不等于真实图片 | 拒绝；五表不变 |
+| 真实图 `1×100`、step 也声明 `1×100`，却伪造 `composition=400×1` / `sourceRegion=[0,0,400,1]` | 最终拒绝；五表不变 |
+
+最后一项是本次独立补核发现的新缺陷：第一次收紧仅核对声明尺寸与实际图片，仍允许该伪造输入取得 `rasterized=true` 并覆盖旧作。已通知作者修复，再用同一探针原样重跑。当前还要求编码图高满足 `actual_h == max(1, round(source_region_h × actual_w / composition_w))`，使纵向长图不能冒充横向薄带；最终七个反例均抛 ValidationError 且五表完全不变。该规则保留合法预览的 1 行高度下限，没有重新放宽全局比例验证。
+
+正例为独立真实 API 矩阵：源宽 400 / 800、总高 3201，分别执行 clean1400、preview320、preview400，共六组。每组均从实际 HTML 解引用 v1 图片并写入真实旧目录，随后导入、读取 strip 和 Take、再导出；全部返回 200 并保留 `rasterized=true`、总高 3201 与源尾区间 `[0,3200,源宽,3201]`。clean 尾图分别为 `400×1`、`800×1`，preview 尾图为 `320×1` / `400×1`；clean 全图重建与原画布仍为零像素差异。
+
+在最后的缩放关系校验落地后，独立集中运行以下九项，**9 项 / 6.529 秒，OK**：
+
+- `test_other_engine_review.LegacyOverwriteReviewTests` 两项：普通 project / album 的 `1×100` 覆盖拒绝与旧内容保护。
+- `test_other_final_recheck.OtherFinalImporterTests.test_run_late_failure_rolls_back_album_recipe_and_asset_batch`。
+- `test_other_fresh_recheck.OtherFreshImporterTests.test_failed_album_overwrite_does_not_publish_asset_metadata`。
+- `test_review_export_integrity` 的五项：1 行尾带往返、preview320/400 真实 HTML→目录导入、严格完整分区例外、伪造源带覆盖拒绝、正常 v1 无缝往返。
+
+此前七项窄测通过并未阻止继续验证伪造路径；最终结论依据上述原输入反证、修复后重跑与最终九项，不以作者的 32 项结果代替独立证据。自有 TEMP 探针与临时素材均已清理，本次只更新本报告。
 
 ## 结论的适用边界
 

@@ -63,20 +63,16 @@ SCENE_PARAMS = {"seed", "steps", "cfg", "denoise", "width", "height", "sampler",
 FRAME_DEFAULTS = {"steps": 24, "cfg": 7, "denoise": 1}
 
 
-def composition_strip(album, steps, panels, takes):
-    """Restore a v1 canvas as seamless raster bands, never claim editable lettering.
-
-    Only complete contiguous full-width partitions qualify. Missing/malformed metadata
-    uses the ordinary legacy frame import, rather than creating a half-empty canvas.
-    """
+def _composition_regions(album, steps):
+    """Validate the entire source partition before permitting raster-band semantics."""
     composition = album.get("composition")
-    if not isinstance(composition, dict) or not steps or len(takes) != len(steps):
+    if not isinstance(composition, dict) or not steps:
         return None
     width, height = composition.get("width"), composition.get("height")
     if type(width) is not int or not 320 <= width <= 2400 or type(height) is not int or height <= 0:
         return None
-    boxes, cursor = {}, 0
-    for step, panel in zip(steps, panels, strict=True):
+    regions, cursor = [], 0
+    for step in steps:
         region = step.get("sourceRegion")
         if not isinstance(region, (list, tuple)) or len(region) != 4:
             return None
@@ -85,10 +81,20 @@ def composition_strip(album, steps, panels, takes):
         x0, y0, x1, y1 = region
         if (x0, y0, x1) != (0, cursor, width) or not cursor < y1 <= height:
             return None
-        boxes[panel.id] = tuple(region)
+        regions.append(tuple(region))
         cursor = y1
     if cursor != height:
         return None
+    return width, height, regions
+
+
+def composition_strip(album, steps, panels, takes):
+    """Restore a complete v1 canvas as seamless raster bands, not editable lettering."""
+    partition = _composition_regions(album, steps)
+    if partition is None or len(takes) != len(steps):
+        return None
+    width, height, regions = partition
+    boxes = {p.id: region for p, region in zip(panels, regions, strict=True)}
     # Album steps may be preview/publish resized. Explicit full-image crops prevent a
     # second aspect-ratio crop when the encoded band's rounded dimensions differ.
     return Strip(
@@ -142,9 +148,7 @@ def ratio_of(width, height) -> str:
         w, h = int(width), int(height)
     except (TypeError, ValueError):
         return "2:3"
-    # A complete canvas may end with a one-pixel band. Logical panel proportions
-    # are constrained, while imported image dimensions/sourceRegion must stay exact.
-    if w <= 0 or h <= 0 or not 0.1 <= w / h <= 10:
+    if w <= 0 or h <= 0:
         return "2:3"
     g = math.gcd(w, h)
     w, h = w // g, h // g
@@ -228,7 +232,12 @@ def convert_workflow(data: dict) -> tuple[WorkflowDoc, dict[str, str], list[str]
 
 
 def convert_frame(
-    frame: dict, order: int, binding_ptrs: dict[str, str], warnings: list[str]
+    frame: dict,
+    order: int,
+    binding_ptrs: dict[str, str],
+    warnings: list[str],
+    *,
+    rasterized_band: bool = False,
 ) -> Panel:
     values = {
         k: frame[k]
@@ -256,11 +265,16 @@ def convert_frame(
         node_overrides=node_overrides,
     )
     caption = str(frame.get("caption") or "").strip()
+    ratio = ratio_of(width, height)
+    if rasterized_band and width and height and not 0.1 <= width / height <= 10:
+        # Only a fully validated, image-backed composition may contain a thin tail band.
+        # This affects logical panel proportions, never its image or source coordinates.
+        ratio = "2:3"
     return Panel(
         order=order,
         shot=shot_of(frame.get("camera", "")),
         description=str(frame.get("name") or ""),
-        aspect_ratio=ratio_of(width, height),
+        aspect_ratio=ratio,
         dialogues=[Dialogue(text=caption, kind=DialogueKind.narration)] if caption else [],
         overrides=overrides,
     )
@@ -381,16 +395,53 @@ class LegacyImporter:
             key=lambda s: s.get("stepIndex") if isinstance(s.get("stepIndex"), int) else 0,
         )
         panels, takes = [], []
+        band_assets = {}
+        partition = _composition_regions(album, steps)
+        if partition is not None:
+            # Keep only asset metadata, never the episode's encoded image bytes. Validate
+            # every image before granting the narrow exception to logical panel ratios.
+            for order, step in enumerate(steps):
+                blob = self._image(folder, step.get("image"))
+                if blob is None or step.get("offlineFallback"):
+                    break
+                band_assets[order] = self.assets.put(
+                    blob, source="legacy", filename=Path(step["image"]).name
+                )
+            del blob
+        rasterized = partition is not None and len(band_assets) == len(steps)
+        if rasterized:
+            rasterized = all(
+                type(step.get("width")) is int
+                and type(step.get("height")) is int
+                and step.get("width") == band_assets[i].width
+                and step.get("height") == band_assets[i].height
+                # Encoded bands must be uniformly scaled from their claimed source,
+                # including preview's one-row minimum for thin tail regions.
+                and band_assets[i].height
+                == max(
+                    1,
+                    round(
+                        (partition[2][i][3] - partition[2][i][1])
+                        * band_assets[i].width
+                        / partition[0]
+                    ),
+                )
+                for i, step in enumerate(steps)
+            )
         stamp = _iso(album.get("updatedAt")) or _iso(album.get("createdAt"))
         for order, step in enumerate(steps):
-            panel = convert_frame(step, order, {}, report.warnings)
+            panel = convert_frame(step, order, {}, report.warnings, rasterized_band=rasterized)
             panels.append(panel)
-            blob = self._image(folder, step.get("image"))
-            if step.get("image") and blob is None:
-                report.warnings.append(f"画册「{album.get('title')}」第 {order + 1} 幕：找不到图片")
-            if blob is None or step.get("offlineFallback"):
-                continue
-            asset = self.assets.put(blob, source="legacy", filename=Path(step["image"]).name)
+            asset = band_assets.get(order)
+            if asset is None:
+                blob = self._image(folder, step.get("image"))
+                if step.get("image") and blob is None:
+                    report.warnings.append(
+                        f"画册「{album.get('title')}」第 {order + 1} 幕：找不到图片"
+                    )
+                if blob is None or step.get("offlineFallback"):
+                    continue
+                asset = self.assets.put(blob, source="legacy", filename=Path(step["image"]).name)
             takes.append(
                 Take(
                     panel_id=panel.id,
@@ -431,7 +482,8 @@ class LegacyImporter:
             synopsis=series.subtitle,
             panels=panels,
             takes=takes,
-            strip=composition_strip(album, steps, panels, takes) or Strip(),
+            strip=(composition_strip(album, steps, panels, takes) if rasterized else None)
+            or Strip(),
         )
         with self.store.tx():
             if existing:
