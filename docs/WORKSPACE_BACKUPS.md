@@ -53,7 +53,7 @@ python -m mio_server.backups install --data /path/to/workspace
 ## 范围与恢复目录
 
 - 包含作品库、任务库、创作存档、创作套装、回收站、所有已登记素材、独立主题包，以及 SDK 保存的 `extensions_data/<id>/settings.json` 设置；不包含扩展程序包、模型、ComfyUI 插件、外部服务文件、更新包、缓存与临时文件。扩展设置只允许合法名称、顶层 JSON 对象和每文件不超过 1 MiB；默认检测到嵌入凭据则拒绝导出，需要明确选择包含凭据。扩展代码重新安装后可读取保留的设置，备份恢复不会自动启用代码。
-- 主题私有设置 `theme_data/<id>/preferences.json`、浮窗偏好 `extensions_data/<id>/preferences.json` 和用户壁纸 `theme_data/<id>/wallpapers/` 同样参与内容版本、快照、恢复预检和重启恢复，包括内置主题、用户令牌主题、独立包、扩展贡献及卸载后保留的数据。偏好每文件上限 1 MiB，壁纸每文件上限 1 GiB，媒体与元数据必须匹配；偏好中的嵌入凭据遵循同一明确授权规则。私人壁纸进入工作区备份，但不进入可分享的主题 ZIP。
+- 主题私有设置 `theme_data/<id>/preferences.json`、浮窗偏好 `extensions_data/<id>/preferences.json` 和用户壁纸 `theme_data/<id>/wallpapers/` 同样参与内容版本、快照、恢复预检和重启恢复，包括内置主题、用户令牌主题、独立包、扩展贡献及卸载后保留的数据。偏好每文件上限 1 MiB，壁纸每文件上限 5 GiB，媒体与元数据必须匹配；偏好中的嵌入凭据遵循同一明确授权规则。私人壁纸进入工作区备份，但不进入可分享的主题 ZIP。
 - 已有 `extension_data/<id>/preferences.json` 与 `themes/<id>/user_wallpapers/` 不自动迁移或删除：新位置优先、旧位置回退；备份和 head 同时携带新旧物理来源，包括被新值遮蔽的旧值。显式删除媒体或所属私有数据时才清理相应副本，避免旧数据在删除后复活。SDK 的 `settings.json` 和宿主的 `preferences.json` 均为宿主保留文件，扩展备份参与者不得抢占或改写。
 - 当前只接受同数据库结构版本的核心表，另以必填的 `jobs_schema_version: 2` 标记执行器身份表。缺失或不支持该标识的旧包会明确拒绝，不为旧任务推断执行器身份。扩展自行创建的数据库表会使验证拒绝，避免默默丢失扩展数据；扩展应使用 SDK 设置、核心文档或自有明确的导入导出协议保存数据。
 - ZIP 上限 12 GiB、展开后总量 16 GiB、单个数据库 256 MiB。主题媒体通过分块磁盘 I/O 纳入备份，不会整文件载入内存。更大的工作区可停服后完整复制实际数据目录；不要只复制数据库而漏掉素材。

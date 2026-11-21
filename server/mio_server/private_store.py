@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 MAX_PRIVATE_JSON = 1024 * 1024
 MAX_JSON_DEPTH = 64
-MAX_WALLPAPER_BYTES = 1024 * 1024 * 1024
+MAX_WALLPAPER_BYTES = 5 * 1024 * 1024 * 1024
 MAX_WALLPAPER_RECORD = 16 * 1024
 IDENTIFIER = re.compile(r"[a-z0-9][a-z0-9_-]{1,47}")
 WALLPAPER_ID = re.compile(r"wallpaper_[a-f0-9]{32}\Z")
