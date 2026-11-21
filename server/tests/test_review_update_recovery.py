@@ -13,7 +13,7 @@ import threading
 import unittest
 import venv
 import zipfile
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from unittest import mock
 
 from mio_server.update import UpdateError, Updater, verify_manifest
@@ -435,7 +435,8 @@ class UpdateRecoveryTests(unittest.TestCase):
         self.assertFalse((self.root / ".mio-update").exists())
 
     def test_workspace_aliases_cannot_hide_program_overlap(self):
-        aliases = [self.root / "data/../web/private-workspace"]
+        original_root = self.root
+        aliases = [(self.root, self.root / "data/../web/private-workspace")]
         if os.name == "nt":
             import ctypes
 
@@ -448,9 +449,19 @@ class UpdateRecoveryTests(unittest.TestCase):
             self.assertGreater(short_path(str(self.root), buffer, size), 0)
             short_root = Path(buffer.value)
             if short_root != self.root:  # Some Windows volumes disable 8.3 aliases.
-                aliases.append(short_root / "web/private-workspace")
-        for data in aliases:
-            with self.subTest(data=data):
+                aliases.append((self.root, short_root / "web/private-workspace"))
+            extended_root = Path("\\\\?\\" + str(self.root))
+            aliases.extend(
+                (root, data_root / "web/private-workspace")
+                for root, data_root in (
+                    (self.root, extended_root),
+                    (extended_root, self.root),
+                    (extended_root, extended_root),
+                )
+            )
+        for root, data in aliases:
+            with self.subTest(root=root, data=data):
+                self.root = root
                 updater = self.stage(data=data)
                 marker = updater.dir.parent / "private.txt"
                 marker.write_text("keep-private", encoding="utf-8")
@@ -461,6 +472,48 @@ class UpdateRecoveryTests(unittest.TestCase):
                 self.assertEqual((updater.dir / "pending.json").read_bytes(), pending)
                 self.assert_version("4.0.0")
                 updater.cancel_pending()
+        self.root = original_root
+
+    def test_path_aliases_share_installation_lease_and_recovery(self):
+        aliases = [self.root / "data/.."]
+        if os.name == "nt":
+            aliases.append(Path("\\\\?\\" + str(self.root)))
+            for name, expected in (
+                (r"\\?\C:\album", r"C:\album"),
+                (r"\\?\UNC\server\share\album", r"\\server\share\album"),
+            ):
+                path = mock.Mock()
+                path.resolve.return_value = PureWindowsPath(name)
+                self.assertEqual(host._path_identity(path), PureWindowsPath(expected))
+            for name in (r"\\?\GLOBALROOT\Device\Volume\album", r"\\.\pipe\mio"):
+                path = mock.Mock()
+                path.resolve.return_value = PureWindowsPath(name)
+                with self.assertRaises(host.RecoveryError):
+                    host._path_identity(path)
+        for alias in aliases:
+            with self.subTest(alias=alias):
+                updater = self.stage()
+                self.run_child("apply", "move:3", expected=71)
+                with host.installation_lease(self.root), host.installation_lease(alias):
+                    self.assertTrue(host.recover(alias))
+                self.assert_version("4.0.0")
+                self.assertIsNotNone(updater.pending())
+                updater.cancel_pending()
+
+    def test_long_installation_and_workspace_paths_remain_supported(self):
+        base = Path("\\\\?\\" + str(self.base)) if os.name == "nt" else self.base
+        deep = base / ("a" * 100) / ("b" * 100) / ("c" * 100)
+        deep.mkdir(parents=True)
+        root = deep / "studio"
+        self.root.rename(root)
+        self.root = root
+        self.data = deep / "workspace"
+        self.data.mkdir()
+        (self.data / "private.txt").write_text("chosen-private", encoding="utf-8")
+        updater = self.stage()
+        updater.apply_pending()
+        self.assert_version("4.1.0")
+        self.assertIsNone(updater.pending())
 
     def test_real_launcher_forwards_data_forms_and_preserves_stable_host_on_downgrade(self):
         # A TEMP venv plus no-op bootstrap: no pip, real app, network or service.

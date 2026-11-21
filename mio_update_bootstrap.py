@@ -21,7 +21,7 @@ import threading
 import uuid
 import zipfile
 from contextlib import contextmanager
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 PRESERVE = {
     "data",
@@ -77,6 +77,22 @@ def _workspace(data: Path) -> Path:
     return data.resolve()
 
 
+def _path_identity(path: Path):
+    resolved = path.resolve()
+    if os.name != "nt":
+        return resolved
+    name = str(resolved)
+    if name[:8].lower() == "\\\\?\\unc\\":
+        name = "\\\\" + name[8:]
+    elif re.match(r"^\\\\\?\\[a-z]:\\", name, re.IGNORECASE):
+        name = name[4:]
+    elif name.startswith(("\\\\?\\", "\\\\.\\")):
+        raise RecoveryError("更新路径不支持设备命名空间")
+    # Identity only: keep the original extended path for all filesystem I/O so
+    # genuine long paths remain supported. WindowsPath compares case-insensitively.
+    return PureWindowsPath(name)
+
+
 def workspace_updates(data: Path) -> Path:
     data = _workspace(Path(data).absolute())
     updates = _plain(data / "updates", data)
@@ -95,7 +111,7 @@ def _plain(path: Path, root: Path) -> Path:
             raise RecoveryError("更新路径不能包含链接")
         if part == root:
             break
-    if not path.resolve().is_relative_to(root.resolve()):
+    if not _path_identity(path).is_relative_to(_path_identity(root)):
         raise RecoveryError("更新路径归属不正确")
     return path
 
@@ -103,7 +119,7 @@ def _plain(path: Path, root: Path) -> Path:
 @contextmanager
 def installation_lease(root: Path):
     root = Path(root).resolve()
-    key, owner = str(root), threading.get_ident()
+    key, owner = os.path.normcase(str(_path_identity(root))), threading.get_ident()
     with _owners_guard:
         previous = _owners.get(key)
         if previous:
@@ -250,7 +266,8 @@ def _journal(root: Path) -> tuple[Path, dict] | None:
         value = json.loads(path.read_text("utf-8"))
         valid = (
             value["schema"] == 1
-            and value["root"] == str(root)
+            and Path(value["root"]).is_absolute()
+            and _path_identity(Path(value["root"])) == _path_identity(root)
             and re.fullmatch(r"tx-[a-f0-9]{32}", value["transaction"])
             and value["phase"] in {"installing", "committed"}
             and isinstance(value["entries"], list)
@@ -269,7 +286,7 @@ def _journal(root: Path) -> tuple[Path, dict] | None:
             seen.add(rel)
             _plain(root / rel, root)
             data = _workspace(Path(value["data"]))
-            if data == root / rel or data.is_relative_to(root / rel):
+            if _path_identity(data).is_relative_to(_path_identity(root / rel)):
                 raise ValueError("workspace overlaps program")
         transaction = _plain(root / ".mio-update" / value["transaction"], root)
         for item in value["entries"]:
@@ -352,7 +369,7 @@ def apply_pending(root: Path, data: Path, verify, validate=None) -> dict | None:
         items = []
         for rel in entries(source):
             target = _plain(root / rel, root)
-            if data == target or data.is_relative_to(target):
+            if _path_identity(data).is_relative_to(_path_identity(target)):
                 raise InstallError("工作区不能位于待替换的程序目录中")
             items.append({"path": rel, "existed": target.exists()})
         value = {
