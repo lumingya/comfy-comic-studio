@@ -288,6 +288,49 @@ class SemanticBindingsTests(unittest.TestCase):
         graph["select"]["inputs"]["enabled"] = "dynamic"
         self.assertEqual(targets(graph, "prompt"), set())
 
+    def test_dynamic_image_switch_keeps_seed_batch_controls_but_not_distinct_prompts(self):
+        graph = modern_graph()
+        graph["other_text"] = node("CLIPTextEncode", clip=["clip", 0], text="different branch")
+        graph["other_latent"] = node("UnseenLatent", width=768, height=1024, batch_size=1)
+        graph["other_sample"] = node(
+            "UnseenSampler",
+            model=["model", 0],
+            positive=["other_text", 0],
+            latent_image=["other_latent", 0],
+            noise_seed=8,
+        )
+        graph["other_decode"] = node("UnseenDecode", samples=["other_sample", 0])
+        graph["decision"] = node("UnseenRuntimeBoolean", model=["model", 0])
+        graph["image_switch"] = node(
+            "UnseenImageSwitch",
+            boolean=["decision", 0],
+            on_true=["decode", 0],
+            on_false=["other_decode", 0],
+        )
+        graph["out"]["inputs"]["images"] = ["image_switch", 0]
+        before = copy.deepcopy(graph)
+        bound, _ = B.resolve(graph)
+        self.assertEqual(
+            targets(graph, "seed"), {("seed", "value"), ("other_sample", "noise_seed")}
+        )
+        self.assertEqual(
+            targets(graph, "batch"), {("latent", "batch_size"), ("other_latent", "batch_size")}
+        )
+        self.assertEqual(targets(graph, "prompt"), set())
+        changed = B.apply_values(graph, bound, {"seed": 99, "batch": 2, "prompt": "new"})
+        self.assertEqual(changed["seed"]["inputs"]["value"], 99)
+        self.assertEqual(changed["other_sample"]["inputs"]["noise_seed"], 99)
+        self.assertEqual(changed["latent"]["inputs"]["batch_size"], 2)
+        self.assertEqual(changed["other_latent"]["inputs"]["batch_size"], 2)
+        self.assertEqual(changed["text"], graph["text"])
+        self.assertEqual(changed["other_text"], graph["other_text"])
+        self.assertEqual(changed["image_switch"], graph["image_switch"])
+        self.assertEqual(graph, before)
+        graph["image_switch"]["inputs"]["boolean"] = False
+        self.assertEqual(targets(graph, "seed"), {("other_sample", "noise_seed")})
+        self.assertEqual(targets(graph, "batch"), {("other_latent", "batch_size")})
+        self.assertEqual(targets(graph, "prompt"), {("other_text", "text")})
+
     def test_manual_and_tagged_targets_are_kept_ahead_of_generic_candidates(self):
         graph = modern_graph()
         graph["editor"] = node("UnseenEditor", content="manual", width=5, height=5)

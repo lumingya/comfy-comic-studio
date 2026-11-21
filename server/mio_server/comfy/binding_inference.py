@@ -105,7 +105,7 @@ class _Inference:
             pending.extend(
                 v[0]
                 for k, v in self.inputs(nid).items()
-                if _link(v, graph) and (k not in branches or k == selected)
+                if _link(v, graph) and (selected is None or k not in branches or k == selected)
             )
         self.users = {}
         for nid in self.scope:
@@ -331,6 +331,11 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
     # Positive dependencies include fixed regions which intentionally have no auto binding.
     positive_literals = engine.positive_literals(engine.prompt_owners(sites, primary_only=False))
     text_targets["negative"] = [t for t in text_targets["negative"] if t not in positive_literals]
+    # Unresolved output switches retain all possible scalar control sites. Different text
+    # origins across those possible generation branches still require an explicit choice.
+    for kind, targets in text_targets.items():
+        if len({engine.inputs(nid).get(field) for nid, field in targets}) > 1:
+            text_targets[kind] = []
     found.extend((kind, n, f) for kind, targets in text_targets.items() for n, f in targets)
     for nid in graph:
         if nid not in engine.scope:
