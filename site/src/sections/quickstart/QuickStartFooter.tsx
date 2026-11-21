@@ -457,7 +457,7 @@ export function QuickStartFooter({ locale }: SectionProps) {
         </div>
         <div className="qs-faq__list">
           {text.faqs.map(({ question, answer }, index) => (
-            <details className="qs-faq__item" key={question}>
+            <details className="qs-faq__item" key={index}>
               <summary>
                 <span className="qs-faq__number" aria-hidden="true">
                   {String(index + 1).padStart(2, '0')}

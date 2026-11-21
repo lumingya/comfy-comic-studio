@@ -21,7 +21,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      pages: read
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -29,8 +28,6 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: site/package-lock.json
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
       - name: Resolve repository deployment path
         id: target
         env:
@@ -68,6 +65,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
       - name: Deploy website artifact
         id: deployment
         uses: actions/deploy-pages@v4

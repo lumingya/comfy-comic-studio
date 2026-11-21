@@ -21,7 +21,8 @@ describe('WorkflowShowcase', () => {
     );
     expect(container.querySelector('[data-node="lora"]')).toHaveClass('is-active');
     expect(container.querySelector('[data-node="mapping"]')).not.toHaveClass('is-active');
-    expect(screen.getByText('每颗 LoRA，各有分寸。')).toBeVisible();
+    expect(screen.getByText('按槽位能力，分别设置。')).toBeVisible();
+    expect(screen.getByText(/能否独立关闭取决于槽位能力，特殊形态需适配器/)).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: '查看 出图来源' }));
     expect(screen.getByRole('button', { name: '出图来源' })).toHaveAttribute(
@@ -90,6 +91,11 @@ describe('WorkflowShowcase', () => {
       screen.getByText(
         /Special submission protocols or browser-script dependencies need an adapter/,
       ),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Independent LoRA' }));
+    expect(
+      screen.getByText(/Whether a slot can be disabled independently depends on its capabilities/),
     ).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: 'Cloud channel' }));

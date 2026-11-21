@@ -56,4 +56,4 @@ POSIX shell 可写为 `VITE_BASE_PATH=/comfy-comic-studio/ VITE_SITE_URL=https:/
 
 工作流根据 `GITHUB_REPOSITORY` 自动计算地址：普通仓库使用 `https://owner.github.io/repository/` 和 `/repository/`；仓库名为 `owner.github.io` 时使用站点根路径 `/`，无需硬编码仓库名。可在仓库 **Settings → Secrets and variables → Actions → Variables** 中设置可选的 `VITE_SITE_URL`，覆盖公开域名；其路径必须和计算的 base 相同。自定义根域名网站可直接以 `VITE_BASE_PATH=/` 和公开 URL 构建，再把 `site/dist/` 部署到任意静态托管；GitHub 自定义域名本身仍须在 Pages 设置中配置。
 
-构建任务只有读取仓库与 Pages 配置的权限，部署任务仅有 `pages: write` 和 `id-token: write`；同一时间只进行一轮发布。流程使用 GitHub 官方的 `configure-pages`、`upload-pages-artifact` 和 `deploy-pages`，详见[自定义 Pages 工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
+构建任务只有读取仓库的权限，可在 Pages 尚未启用时完成质量检查和 artifact 上传。Pages 配置检查留在部署任务，该任务仅有 `pages: write` 和 `id-token: write`；同一时间只进行一轮发布。流程使用 GitHub 官方的 `configure-pages`、`upload-pages-artifact` 和 `deploy-pages`，详见[自定义 Pages 工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。

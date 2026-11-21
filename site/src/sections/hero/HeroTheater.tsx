@@ -293,17 +293,27 @@ export function HeroTheater({ locale }: SectionProps) {
   useEffect(() => {
     if (!window.IntersectionObserver || !window.matchMedia) return;
     const wideScreen = window.matchMedia('(min-width: 901px)');
+    const stageVisibility = new Map<Element, number>();
     let observer: IntersectionObserver | undefined;
 
     const observeStages = () => {
       observer?.disconnect();
+      stageVisibility.clear();
       if (!wideScreen.matches) return;
       observer = new IntersectionObserver(
         (entries) => {
-          const visible = entries
-            .filter((entry) => entry.isIntersecting)
-            .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-          if (visible) setActive(Number((visible.target as HTMLElement).dataset.stage));
+          entries.forEach((entry) => {
+            stageVisibility.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0);
+          });
+          const ratios = stageRefs.current.map((stage) =>
+            stage ? (stageVisibility.get(stage) ?? 0) : 0,
+          );
+          const largestRatio = Math.max(...ratios);
+          if (largestRatio > 0) {
+            setActive((previous) =>
+              ratios[previous] === largestRatio ? previous : ratios.indexOf(largestRatio),
+            );
+          }
         },
         { rootMargin: '-130px 0px -130px 0px', threshold: [0, 0.3, 0.6] },
       );
@@ -459,7 +469,7 @@ export function HeroTheater({ locale }: SectionProps) {
         <div className="theater-tabs" role="tablist" aria-label={text.stageNav}>
           {text.stages.map((stage, index) => (
             <button
-              key={stage.title}
+              key={index}
               ref={(node) => {
                 tabRefs.current[index] = node;
               }}
@@ -486,7 +496,7 @@ export function HeroTheater({ locale }: SectionProps) {
             {text.stages.map((stage, index) => (
               <article
                 className={`theater-step${active === index ? ' is-active' : ''}`}
-                key={stage.title}
+                key={index}
                 ref={(node) => {
                   stageRefs.current[index] = node;
                 }}

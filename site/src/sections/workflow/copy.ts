@@ -11,8 +11,8 @@ export const workflowCopy = {
       },
       {
         label: '独立 LoRA',
-        title: '每颗 LoRA，各有分寸。',
-        body: '每个槽位分别开关、调整权重。试试图中的角色 LoRA：关闭时绕过这个槽位，再开启时保留你调好的数值。',
+        title: '按槽位能力，分别设置。',
+        body: '对已识别且支持调节的槽位分别设置；能否独立关闭取决于槽位能力，特殊形态需适配器。图中的角色 LoRA 是支持开关与权重调节的示例。',
       },
       {
         label: '出图来源',
@@ -45,7 +45,7 @@ export const workflowCopy = {
       weight: '有效权重',
       inspect: '查看',
     },
-    loraControl: '一个 LoRA 槽位，独立调节',
+    loraControl: '示例：可调节的 LoRA 槽位',
     enable: '启用角色 LoRA',
     weightLabel: 'LoRA 权重',
     routeLabel: '当前路径',
@@ -71,8 +71,8 @@ export const workflowCopy = {
       },
       {
         label: 'Independent LoRA',
-        title: 'Give each LoRA its own say.',
-        body: 'Toggle each slot and adjust its weight separately. Try the character LoRA here: turn it off to bypass the slot, then back on to restore your chosen weight.',
+        title: 'Separate settings, where supported.',
+        body: 'Configure recognized, adjustable slots separately. Whether a slot can be disabled independently depends on its capabilities; special forms need an adapter. The character LoRA shown here supports both toggling and weight adjustment.',
       },
       {
         label: 'Image source',
@@ -105,7 +105,7 @@ export const workflowCopy = {
       weight: 'Effective weight',
       inspect: 'Explore',
     },
-    loraControl: 'One LoRA slot. Its own settings.',
+    loraControl: 'Example: an adjustable LoRA slot',
     enable: 'Enable character LoRA',
     weightLabel: 'LoRA weight',
     routeLabel: 'Current route',

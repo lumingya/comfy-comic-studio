@@ -243,10 +243,17 @@
 
 .hero-cover-title small {
   display: block;
+  width: fit-content;
+  max-width: 100%;
   margin-top: 12px;
+  padding: 4px 7px;
+  color: var(--ink);
+  background: var(--paper);
   font-family: var(--font-body);
   font-size: 9px;
+  line-height: 1.5;
   letter-spacing: 0.08em;
+  text-shadow: none;
 }
 
 .hero-art-annotation {

@@ -153,6 +153,29 @@ describe('QuickStartFooter', () => {
     expect(faq.querySelectorAll('details')).toHaveLength(5);
   });
 
+  it('preserves each FAQ disclosure state when the locale changes', () => {
+    const { rerender } = render(<QuickStartFooter locale="zh-CN" />);
+    const firstQuestion = screen.getByText('在线试玩，会真的生成图片吗？');
+    const firstDetails = firstQuestion.closest('details');
+    const secondDetails = screen.getByText('Mio 免费吗？会产生什么费用？').closest('details');
+    fireEvent.click(firstQuestion);
+
+    rerender(<QuickStartFooter locale="en" />);
+
+    expect(
+      screen.getByText('Does the online playground generate real images?').closest('details'),
+    ).toBe(firstDetails);
+    expect(firstDetails).toHaveAttribute('open');
+    expect(screen.getByText(/The website uses prepared example artwork/)).toBeVisible();
+    expect(secondDetails).not.toHaveAttribute('open');
+
+    rerender(<QuickStartFooter locale="zh-CN" />);
+
+    expect(screen.getByText('在线试玩，会真的生成图片吗？').closest('details')).toBe(firstDetails);
+    expect(firstDetails).toHaveAttribute('open');
+    expect(secondDetails).not.toHaveAttribute('open');
+  });
+
   it('localizes the full guide, source setup, and footer navigation', () => {
     render(<QuickStartFooter locale="en" />);
     fireEvent.click(screen.getByRole('button', { name: 'I have ComfyUI' }));
