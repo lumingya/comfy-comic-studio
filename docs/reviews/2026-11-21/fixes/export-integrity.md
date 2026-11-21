@@ -62,6 +62,21 @@ required saved composition: 400 x 3500, INTERLUDE box y=1000..1060
 
 同一独立复审者随后用实际 PNG `1 × 100`、声明 `1 × 100`、伪造 composition `400 × 1` / sourceRegion `[0,0,400,1]`，确认只对照声明与实际尺寸仍可取得例外。新增真实旧作覆盖回归先红（`ValueError not raised`）；最终追加上述源区域统一缩放关系校验后，该输入拒绝且原 series / episode / asset_ids 全部保持。只重跑旧四项、新伪造覆盖、严格例外、clean 1px 往返、实际 preview 320 / 400 HTML 往返与正常 v1，共 9 项全部通过（6.459 秒）；没有重新跑 123 项或扩展抽象。同一复审者仅需用原输入再次窄验。
 
+## R4-RENDER-FONT-01：内存字体的跨平台回归
+
+主控 CI run `44856357629` 的 Ubuntu / Python 3.11 暴露 `regions._RegionDraw.text` 使用 `copy(font)` 会经 `FreeTypeFont.__setstate__` 重开 `font.path`。系统文件字体通常可重开；Pillow 自带默认字体与 BytesIO TTF 的流已在 EOF，因而抛出 `OSError: cannot open resource`。本机用 `ImageFont.load_default(size=24)` 即真实复现，不需要 Linux、安装字体或跳过测试。
+
+修复仅涉及 `regions.py`、新增 `test_review_region_memory_font.py` 与本报告：
+
+- 删除字体复制。每次绘制创建 `_PhaseFont` 轻量视图，仅保留原字体与不可变相位，委托原 `getmask2` 并保留 Pillow 的 FreeType 类型识别与 mask offset；不重开字体、不临时改写原字体的方法或属性。
+- 单行仍使用全局字形相位。多行使用 Pillow 自身的行布局，每行单独计算相位，保留对齐、间距、描边和锚点。旧版递归式 multiline dispatch 透传原字体与原坐标，避免层层代理把相位覆盖。
+- 新测试覆盖默认内存字体、BytesIO TTF、文件 TTF，禁止调用字体构造器重开；分带含奇数 257 原点和负局部字形位置，与 native ImageDraw 整图逐像素对照。8 个线程共享同一字体，绘制前后原 `getmask2` 与 `__dict__` 不变，各相位结果与串行参考相同。
+- 另覆盖左 / 中 / 右对齐多行文本、无系统字体且含多行标题的完整 compositor、旧递归 dispatch 的原字体透传。旧版分发是本机模拟路径测试，没有声称安装并实跑其他 Pillow 版本。
+
+修前新增首批 5 项测试全红：默认内存、BytesIO / 共享字体与无系统字体 compositor 得到真实 OSError，禁止重开断言也失败；追加的多行对齐三组进一步捕获逐行相位复用偏差。修后新增 7 项与 `test_region_export`、`test_review_export_integrity` 共 31 项全部通过（37.009 秒），Python lint / 格式 / 编译、UTF-8 及 diff 检查通过。未改其他稳定代码或提交推送；全新代理仅对本项进行独立窄复验，最终跨平台 CI 由主控重跑。
+
+全新 `verify_memory_fonts` 独立复验新 7 项全部通过、无跳过；其额外脚本对默认内存 / BytesIO / 文件字体的单行、三行 text 与 multiline_text，遍历 3 个 x 原点和 3 个 y 分带，共 162 个 phase view，并拦截 copy / deepcopy、FreeTypeFont 构造器及文件 open、断言 source 不为代理。结果无复制、重开或代理嵌套，原 `getmask2` / 字体字典不变，每组与 native 绘制的 bytes 完全一致；独立结论建议关闭 R4-RENDER-FONT-01，跨平台 CI 仍由主控确认。
+
 ## 明确边界
 
 - 逐像素相等针对同宽 clean / archive 的栅格 composition；preview / publish 是有损 / 缩放档，不能据此宣称像素字节相等。

@@ -56,3 +56,4 @@
 | SET-AI-03 P2 | 删除会话404的pending污染new并卡住 | [会话epoch隔离](fixes/ai-drafts.md) | [设置/AI复核](round-4-adjacent-verification/settings-ai.md) | 已关闭 |
 | SET-AI-04 P3 | 保存成功吞后续编辑/模式changed卸载宿主 | [保存快照及模式切换禁用](fixes/ai-drafts.md) | [真实宿主窄验](round-4-adjacent-verification/settings-ai.md) | 已关闭 |
 | R4-SET-UI-01 P2 | arrive动画保留identity transform，使fixed保存条落到视口外 | [实际CSS/bbox反证](round-4-adjacent-verification/settings-ai.md) | backwards fill后桌面/窄屏浅深8图及坐标点击 | 已关闭 |
+| R4-RENDER-FONT-01 P1 | Ubuntu无系统字体时复制Pillow内存字体失败，分带导出不可用 | 远端Ubuntu/Python3.11实际回归 | [局部字体相位代理](fixes/export-integrity.md)，31项相关回归 | [新字体复核](round-4-adjacent-verification/memory-fonts.md)，162个phase view | 已关闭，远端整合另核对 |

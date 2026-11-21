@@ -10,9 +10,8 @@ from __future__ import annotations
 import io
 import math
 from collections.abc import Mapping
-from copy import copy
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 from ..models import PanelWidth
 from . import backdrop as BD
@@ -35,6 +34,32 @@ def _shift(layer, x, y):
     )
 
 
+class _PhaseFont(ImageFont.FreeTypeFont):
+    """A per-draw phase view of an already loaded font, without copying or reopening it.
+
+    Pillow checks FreeTypeFont's type to retain glyph-mask offsets. All other access is
+    delegated to the original font; only getmask2's start fraction belongs to this view.
+    No attribute or method of the shared font is temporarily replaced.
+    """
+
+    def __init__(self, font, phase):
+        self._source = font
+        self._phase = phase
+
+    def __getattribute__(self, name):
+        if name in ("_source", "_phase", "getmask2"):
+            return object.__getattribute__(self, name)
+        return getattr(object.__getattribute__(self, "_source"), name)
+
+    def getmask2(self, *args, **kwargs):
+        values = list(args)
+        if len(values) > 8:
+            values[8] = self._phase
+        else:
+            kwargs["start"] = self._phase
+        return self._source.getmask2(*values, **kwargs)
+
+
 class _RegionDraw(ImageDraw.ImageDraw):
     """Keep Pillow's fractional glyph origin on the global canvas at band seams.
 
@@ -48,21 +73,49 @@ class _RegionDraw(ImageDraw.ImageDraw):
         self.origin = origin
 
     def text(self, xy, text, fill=None, font=None, *args, **kwargs):
-        if font is None or not hasattr(font, "getmask2"):
+        if not isinstance(font, ImageFont.FreeTypeFont):
             return super().text(xy, text, fill, font, *args, **kwargs)
+        if (isinstance(text, str) and "\n" in text) or (isinstance(text, bytes) and b"\n" in text):
+            layout = getattr(ImageDraw, "ImageText", None)
+            if layout is None:
+                # Older Pillow lays out multiline text by recursively calling self.text.
+                # Pass the original font/coordinates so each line gets its own phase view.
+                return super().multiline_text(xy, text, fill, font, *args, **kwargs)
+            names = (
+                "anchor",
+                "spacing",
+                "align",
+                "direction",
+                "features",
+                "language",
+                "stroke_width",
+                "stroke_fill",
+                "embedded_color",
+            )
+            options = {**dict(zip(names, args)), **kwargs}
+            block = layout.Text(
+                text,
+                font,
+                self.mode,
+                options.get("spacing", 4),
+                options.get("direction"),
+                options.get("features"),
+                options.get("language"),
+            )
+            if options.get("embedded_color"):
+                block.embed_color()
+            if options.get("stroke_width"):
+                block.stroke(options["stroke_width"], options.get("stroke_fill"))
+            # Newer Pillow splits internally instead of recursing through self.text.
+            # Reuse its native layout, then apply the phase independently to each line.
+            for line in block._split(xy, options.get("anchor"), options.get("align", "left")):
+                self.text(
+                    (line.x, line.y), line.text, fill, font, **{**options, "anchor": line.anchor}
+                )
+            return
         gx, gy = xy[0] + self.origin[0], xy[1] + self.origin[1]
         phase = (math.modf(gx)[0], math.modf(gy)[0])
-        local_font = copy(font)
-
-        def getmask2(*mask_args, **mask_kwargs):
-            values = list(mask_args)
-            if len(values) > 8:
-                values[8] = phase
-            else:
-                mask_kwargs["start"] = phase
-            return font.getmask2(*values, **mask_kwargs)
-
-        local_font.getmask2 = getmask2
+        local_font = _PhaseFont(font, phase)
         position = (int(gx) - self.origin[0], int(gy) - self.origin[1])
         return super().text(position, text, fill, local_font, *args, **kwargs)
 
