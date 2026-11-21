@@ -251,7 +251,11 @@ def inspect_link(root: Path, source: Path, link: Link, routes, cache) -> tuple[s
         return "embedded", "inline resource"
     if url.scheme or url.netloc:
         return "external", "not fetched"
-    if re.search(r"\{[^}]*\}|<[^>]+>|\$\{|%[A-Z_]+%", unquote(target)):
+    # Raw placeholders can contain escapes (%BA in %BASE_URL%); hex-only names can
+    # instead overlap real encoded bytes, such as %BA%BA in a UTF-8 filename.
+    if re.search(r"%[A-Z_]*[G-Z_][A-Z_]*%", target) or re.search(
+        r"\{[^}]*\}|<[^>]+>|\$\{|%[A-Z_]+%", unquote(target)
+    ):
         return "template", "requires substitution; not a concrete path"
     path, fragment = unquote(url.path), unquote(url.fragment)
     if path in routes["application"]:
@@ -354,6 +358,25 @@ def self_test() -> None:
             path = directory / "index.md"
             path.write_text("[missing](missing.md)", encoding="utf-8")
             assert len(check(root, [path])["problems"]) == 1
+        (root / "with space.svg").write_text("<svg/>", encoding="utf-8")
+        (root / "人.svg").write_text("<svg/>", encoding="utf-8")
+        source = root / "vite.html"
+        source.write_text(
+            '<link href="%BASE_URL%favicon.svg">\n'
+            '<link href="%BASE_URL%assets/app.css">\n'
+            '<link href="%25BASE_URL%25favicon.svg">\n'
+            '<link href="%25BASE_URL%25assets/app.css">\n'
+            '<a href="packages/%7Bid%7D/README.md">Encoded template</a>\n'
+            '<img src="with%20space.svg"><img src="%E4%BA%BA.svg">\n'
+            '<img src="missing%20space.svg"><img src="%E4%BA%BA-missing.svg">\n',
+            encoding="utf-8",
+        )
+        report = check(root, [source])
+        assert report["counts"] == {"checked": 2, "missing-path": 2, "template": 5}, report
+        assert {row["target"] for row in report["problems"]} == {
+            "missing%20space.svg",
+            "%E4%BA%BA-missing.svg",
+        }, report
     print("Document link checker self-test passed")
 
 

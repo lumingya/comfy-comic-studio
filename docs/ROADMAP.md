@@ -225,7 +225,7 @@ Job / Attempt：统一任务引擎
 - [x] 中英切换、五款精选画册风格试阅、预设变量展开、同图对比、工作流映射与 LoRA 演示、扩展生态、分平台上手指南。
 - [x] GitHub Pages Actions 部署、根路径与项目子路径资源校验、分享元信息与站点地图。发布前须在仓库设置启用 Pages 的 GitHub Actions 来源。
 
-范围与设计证据见 [DESIGN_DIRECTION.md](DESIGN_DIRECTION.md)，操作步骤见 [site/README.md](../site/README.md)。浏览器演示不调用图像服务，不宣称在网页内真实生图。
+范围与设计证据见 [DESIGN_DIRECTION.md](DESIGN_DIRECTION.md)，操作步骤见 [site/README.md](../site/README.md)，五位独立复审与发布记录见 [WEBSITE_ACCEPTANCE.md](WEBSITE_ACCEPTANCE.md)。浏览器演示不调用图像服务，不宣称在网页内真实生图。
 
 ### 对抗性审查跟进（2026-11-21）
 
