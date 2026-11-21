@@ -25,12 +25,19 @@ const geometry = {
 };
 let metadata = geometry;
 
-function mount(mode = 'single', layout = 'webtoon', suffix = '') {
+function mount(mode = 'single', layout = 'webtoon', suffix = '', episodeFailure?: Response) {
   localStorage.setItem('mio.reader.mode', mode);
   localStorage.setItem('mio.reader.layout', layout);
   const calls = mockFetch({
     'GET /api/series/ser_1': series,
-    'GET /api/series/ser_1/episodes': { items: [{ id: 'ep_1', title: '第一话' }] },
+    'GET /api/series/ser_1/episodes': () => {
+      if (episodeFailure) {
+        const response = episodeFailure;
+        episodeFailure = undefined;
+        return response;
+      }
+      return { items: [{ id: 'ep_1', title: '第一话' }] };
+    },
     'GET /api/episodes/ep_1': () => currentEpisode,
     'GET /api/episodes/ep_1/reading': () => metadata,
     'GET /api/album-templates': [
@@ -92,6 +99,35 @@ afterEach(() => {
 });
 
 describe('saved reading composition', () => {
+  it('retries a failed chapter list without presenting it as an empty album', async () => {
+    const { calls } = mount(
+      'single',
+      'webtoon',
+      '',
+      Response.json({ detail: 'chapter request temporarily failed' }, { status: 503 }),
+    );
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('chapter request temporarily failed');
+    expect(document.querySelector('.room-empty')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '重试' }));
+    await screen.findByAltText('第 1 格');
+    expect(calls.filter((call) => call.url === '/api/series/ser_1')).toHaveLength(1);
+    expect(calls.filter((call) => call.url.startsWith('/api/series/ser_1/episodes'))).toHaveLength(
+      2,
+    );
+  });
+
+  it('closes an expanded filmstrip before leaving the reader', async () => {
+    mount();
+    await screen.findByAltText('第 1 格');
+    const film = document.querySelector<HTMLButtonElement>('[aria-controls="room-filmstrip"]')!;
+    fireEvent.click(film);
+    expect(document.querySelector('#room-filmstrip')).toBeVisible();
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { bubbles: true, cancelable: true }));
+    expect(document.querySelector('#room-filmstrip')).not.toBeVisible();
+    expect(film).toHaveFocus();
+    expect(screen.getByRole('dialog')).toBeVisible();
+  });
   it('falls back to Monograph when the saved template is no longer installed', async () => {
     localStorage.setItem('mio.reader.look', 'removed-template');
     const { calls } = mount();

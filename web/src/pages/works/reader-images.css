@@ -62,6 +62,13 @@
   }
 }
 
+.room-canvas .room-empty {
+  color: var(--text);
+  background: var(--panel);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+}
+
 #reader-canvas .room-scroll .reader-saved-strip {
   position: relative;
   width: 100%;
