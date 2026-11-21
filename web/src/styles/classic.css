@@ -1,25 +1,11 @@
 /*
  * Classic Mio skin — the legacy "Graphite & Sage" look (legacy/styles.css is the reference):
  * a deep graphite rail, 64px top bar and 29px status bar, 3:4 book covers floating on soft
- * shadows, parchment placeholders, faint border glow and breathing status lights.
+ * shadows, parchment placeholders, and faint border glow.
  * Loaded last so it can restyle the shared primitives without touching their markup.
  */
 
 /* ---------------------------------------------------------------- motion */
-@keyframes pulse {
-  50% {
-    opacity: 0.5;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 10%, transparent);
-  }
-}
-
-@keyframes task-beacon {
-  50% {
-    opacity: 0.5;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--live) 15%, transparent);
-  }
-}
-
 @keyframes production-breathe {
   50% {
     opacity: 0.35;
@@ -47,15 +33,6 @@
   }
 }
 
-@keyframes shimmer {
-  from {
-    background-position: -200% 0;
-  }
-  to {
-    background-position: 200% 0;
-  }
-}
-
 @keyframes scan {
   from {
     transform: translateY(-100%);
@@ -65,24 +42,10 @@
   }
 }
 
-@keyframes glow-breathe {
-  50% {
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
-      0 0 32px color-mix(in srgb, var(--accent) 38%, transparent);
-  }
-}
-
 @keyframes drawer-in {
   from {
     opacity: 0;
     transform: translateX(18px);
-  }
-}
-
-@keyframes float {
-  50% {
-    transform: translateY(-5px);
   }
 }
 
@@ -317,7 +280,6 @@
 
 .work-status.status-active .dot {
   background: var(--live);
-  animation: pulse 2.4s ease-in-out infinite;
 }
 
 .work-status.status-active,
@@ -440,10 +402,6 @@
   filter: drop-shadow(0 14px 18px rgb(var(--shadow-rgb) / 0.4));
 }
 
-.hero-book.b2 {
-  animation: float 5s ease-in-out infinite;
-}
-
 .hero-frame {
   fill: none;
   stroke: color-mix(in srgb, var(--paper-ink) 45%, transparent);
@@ -452,15 +410,6 @@
 
 .hero-spark {
   fill: var(--accent);
-  animation: production-breathe 2.2s ease-in-out infinite;
-}
-
-.hero-spark.s2 {
-  animation-delay: 0.7s;
-}
-
-.hero-spark.s3 {
-  animation-delay: 1.3s;
 }
 
 .hero-steps {
@@ -895,7 +844,6 @@ mark.var.is-missing {
   border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   border-radius: inherit;
   pointer-events: none;
-  animation: production-breathe 2.4s ease-in-out infinite;
 }
 
 .stage-head {
@@ -942,10 +890,6 @@ mark.var.is-missing {
     0 1px 0 rgb(255 255 255 / 0.18) inset,
     0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
     0 0 36px color-mix(in srgb, var(--accent) 42%, transparent);
-}
-
-.btn.generate.is-live {
-  animation: glow-breathe 2.2s ease-in-out infinite;
 }
 
 .stage-notice {
@@ -1018,19 +962,11 @@ mark.var.is-missing {
 .stage-shimmer {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(
-        100deg,
-        transparent 30%,
-        color-mix(in srgb, var(--accent) 12%, transparent) 50%,
-        transparent 70%
-      )
-      0 0 / 200% 100%,
-    var(--panel-2);
-  animation: shimmer 1.8s linear infinite;
+  background: var(--panel-2);
 }
 
 .stage-scan {
+  display: none;
   position: absolute;
   inset: 0 0 auto;
   height: 25%;
@@ -1040,12 +976,12 @@ mark.var.is-missing {
     color-mix(in srgb, var(--accent) 16%, transparent) 80%,
     color-mix(in srgb, var(--accent) 50%, transparent)
   );
-  animation: scan 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   pointer-events: none;
 }
 
-.stage-card.pending .stage-scan {
-  display: none;
+.stage-card.running .stage-scan {
+  display: block;
+  animation: scan 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .stage-card figcaption {
@@ -1127,16 +1063,10 @@ mark.var.is-missing {
   border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
   border-radius: 4px;
   background: color-mix(in srgb, var(--accent) 6%, transparent);
-  animation: production-breathe 2.4s ease-in-out infinite;
 }
 
 .stage-empty-art i:nth-child(2) {
-  animation-delay: 0.4s;
   transform: translateY(-4px);
-}
-
-.stage-empty-art i:nth-child(3) {
-  animation-delay: 0.8s;
 }
 
 .stage-foot {
@@ -1375,10 +1305,6 @@ mark.var.is-missing {
 
 .mode-sketch .s-line {
   fill: var(--panel-2);
-}
-
-.mode-card.on .s-accent {
-  animation: production-breathe 2.4s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------- responsive */
@@ -1810,7 +1736,6 @@ mark.var.is-missing {
   border-radius: 50%;
   background: var(--sage);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
-  animation: pulse 2.6s ease-in-out infinite;
 }
 
 .shelf-meta-line .dot.is-amber {
@@ -1990,8 +1915,7 @@ mark.var.is-missing {
 
 @media (prefers-reduced-motion: reduce) {
   .exhibit-cover,
-  .shelf-exhibit .edition-info,
-  .shelf-meta-line .dot {
+  .shelf-exhibit .edition-info {
     animation: none;
   }
 }

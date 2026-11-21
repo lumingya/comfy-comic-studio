@@ -37,8 +37,8 @@ export function useNewStory() {
 }
 
 /**
- * The legacy 开箱检查: image service, workflow, storyboards & presets, trial run. Rendering never
- * probes a service beyond the quiet health poll; only the buttons act.
+ * The legacy 开箱检查: image service, workflow, storyboards & presets, trial run.
+ * Read a connection snapshot here; submitting work always requires a user action.
  */
 export function useSetupChecks(): SetupCheck[] {
   const { t } = useTranslation();

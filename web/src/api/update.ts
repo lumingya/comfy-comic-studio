@@ -53,7 +53,8 @@ export function useVersionStatus() {
   const result = useQuery({
     queryKey: ['version-update'],
     queryFn: () => request<UpdateState>(''),
-    refetchInterval: (query) => (updateBusy(query.state.data) ? 800 : 10000),
+    refetchInterval: (query) => (updateBusy(query.state.data) ? 800 : false),
+    refetchOnWindowFocus: true,
   });
   const checkedAt = result.data?.last_check?.at;
   useEffect(() => {

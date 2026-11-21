@@ -162,13 +162,17 @@ export function useJobEvents() {
     };
     const onVisible = () => {
       clearTimeout(pollTimer);
+      clearTimeout(timer);
       if (document.hidden || closed) return;
       if (connected) void refresh(true);
-      else void poll();
+      else {
+        if (!socket) connect();
+        void poll();
+      }
     };
 
     const connect = () => {
-      if (closed) return;
+      if (closed || document.hidden || socket) return;
       const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const current = new WebSocket(`${proto}://${window.location.host}/api/ws/jobs`);
       socket = current;
@@ -199,7 +203,7 @@ export function useJobEvents() {
         clearLive();
         useLive.getState().set({ connected: false });
         void poll();
-        timer = setTimeout(connect, (delay = Math.min(delay * 2, 15000)));
+        if (!document.hidden) timer = setTimeout(connect, (delay = Math.min(delay * 2, 15000)));
       };
     };
 

@@ -43,7 +43,13 @@
   color: var(--accent);
 }
 .config-service-secondary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 4px;
   margin-left: auto;
+}
+.config-service-secondary > .config-service:not(:hover, .active) {
   border-color: var(--line);
 }
 .config-service > svg {

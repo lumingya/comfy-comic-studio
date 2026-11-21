@@ -569,6 +569,10 @@ input[type='range'] {
   }
 }
 
+.take.pending:not(.running) .spinner {
+  animation: none;
+}
+
 .loading {
   display: flex;
   align-items: center;
@@ -580,29 +584,7 @@ input[type='range'] {
 
 .skeleton {
   border-radius: var(--radius-sm);
-  background:
-    linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--text) 6%, transparent),
-        transparent
-      )
-      0 0 / 200% 100% no-repeat,
-    var(--surface-raised);
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  from {
-    background-position:
-      150% 0,
-      0 0;
-  }
-  to {
-    background-position:
-      -50% 0,
-      0 0;
-  }
+  background: var(--surface-raised);
 }
 
 .progress {

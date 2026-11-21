@@ -22,7 +22,10 @@ export function useComfyHealth(
     queries: allowed.map((instance) => ({
       queryKey: ['comfy-health', instance.id],
       enabled,
-      refetchInterval: enabled ? 20_000 : (false as const),
+      // This is a connection snapshot, not a heartbeat. Refresh when returning
+      // to the app or opening a view that needs a fresh connection check.
+      staleTime: 20_000,
+      refetchOnWindowFocus: true,
       retry: false,
       queryFn: async () =>
         data(

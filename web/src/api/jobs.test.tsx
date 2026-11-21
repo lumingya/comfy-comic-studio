@@ -173,6 +173,25 @@ describe('job events recovery', () => {
     expect(fetches.jobs).toHaveBeenCalledTimes(3);
   });
 
+  it('suspends reconnect attempts while hidden and connects as soon as the page returns', async () => {
+    const { fetches } = mount();
+    const first = FakeSocket.all[0];
+    await run(() => first.onopen?.());
+    await run(() => first.close());
+    const count = fetches.jobs.mock.calls.length;
+
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    await run(() => document.dispatchEvent(new Event('visibilitychange')), 30_000);
+    expect(FakeSocket.all).toHaveLength(1);
+    expect(fetches.jobs).toHaveBeenCalledTimes(count);
+
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    await run(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(FakeSocket.all).toHaveLength(2);
+    await run(() => FakeSocket.all[1].onopen?.());
+    expect(useLive.getState().connected).toBe(true);
+  });
+
   it('ignores malformed frames and obsolete sockets, and disposes reconnect and polling on unmount', async () => {
     const { unmount, fetches } = mount();
     const first = FakeSocket.all[0];

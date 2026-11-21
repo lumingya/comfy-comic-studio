@@ -139,7 +139,6 @@ a.workspace-profile-button {
 /* Top bar: the service chip is a button (legacy styles it as such); queue badge. */
 .image-service-chip.tone-good .dot {
   background: var(--live);
-  animation: pulse 2.4s infinite;
 }
 .image-service-chip.tone-bad .dot {
   background: var(--red);
@@ -158,8 +157,6 @@ a.workspace-profile-button {
   height: 6px;
   border-radius: 50%;
   background: var(--live);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 60%, transparent);
-  animation: task-beacon 1.8s infinite;
 }
 #statusbar .dot.amber {
   background: var(--amber);
