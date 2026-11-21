@@ -1,4 +1,5 @@
 import logging
+import queue
 import tempfile
 import threading
 import time
@@ -70,6 +71,36 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(job["state"], "completed")
         self.assertEqual(sorted(ex.applied), [(0, {"ok": 0}), (1, {"ok": 1}), (2, {"ok": 2})])
         self.assertEqual([i["result"] for i in job["items"]], [{"ok": 0}, {"ok": 1}, {"ok": 2}])
+
+    def test_idle_scheduler_waits_for_submission_and_manual_reconciliation(self):
+        engine = JobEngine(autostart=False, poll=60)
+        self.addCleanup(engine.close)
+        wait_times = queue.Queue()
+        wait = engine.wake.wait
+
+        def observe_wait(timeout=None):
+            wait_times.put(timeout)
+            return wait(timeout)
+
+        engine.wake.wait = observe_wait
+
+        def run(ctx):
+            if ctx.input["n"] == 0:
+                raise ExecError("lost connection", kind="connection", sent=True)
+            return {"ok": ctx.input["n"]}
+
+        engine.register("demo", Recorder(run))
+        engine.start()
+        self.assertIsNone(wait_times.get(timeout=3))
+        job = engine.submit("demo", items(2))
+        self.assertEqual(engine.wait(job["id"], timeout=3)["state"], "blocked")
+        # Wait for the scheduler to park again before resolving the item by hand.
+        deadline = time.monotonic() + 3
+        while wait_times.get(timeout=max(deadline - time.monotonic(), 0)) is not None:
+            pass
+        engine.resolve(job["id"], 0, "complete", {"ok": 0})
+        completed = engine.wait(job["id"], timeout=3)
+        self.assertEqual([item["result"] for item in completed["items"]], [{"ok": 0}, {"ok": 1}])
 
     def test_list_carries_item_counts(self):
         engine, ex = self.make(), Recorder()

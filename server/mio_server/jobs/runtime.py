@@ -71,9 +71,13 @@ class EngineRuntime:
         finally:
             self._callback_context.active = active
 
-    @operation_serialized
     def tick(self) -> int:
-        """One scheduling pass (the background loop calls this; tests may call it directly)."""
+        """Run one scheduling pass and return the number of dispatched items."""
+        started, _ = self._schedule()
+        return started
+
+    @operation_serialized
+    def _schedule(self) -> tuple[int, bool]:
         with self.lock:
             rows = self.db.execute(
                 """SELECT i.job_id, i.idx, i.resource, i.group_key, i.instances, i.input_json,
@@ -109,7 +113,7 @@ class EngineRuntime:
                 if ctx:
                     self.workers.submit(self._run, ctx, cand.resource, instance_id)
                     started += 1
-            return started
+            return started, bool(rows)
 
     def executors_resources(self) -> set[str]:
         return {LOCAL, COMFY}
@@ -117,12 +121,18 @@ class EngineRuntime:
     # ================================================================== internals
     def _loop(self) -> None:
         while not self.closed:
+            # Consume notifications before reading state; any work added during the
+            # pass can wake the wait below, even if the pass didn't see it.
+            self.wake.clear()
+            recheck = True
             try:
-                self.tick()
+                _, recheck = self._schedule()
             except Exception:  # never let the scheduler die
                 log.exception("scheduler pass failed")
-            self.wake.wait(self.poll)
-            self.wake.clear()
+            if not self.closed:
+                # Submissions, releases and resume are signaled. Only a queue with
+                # pending work needs the fallback for resource changes and retries.
+                self.wake.wait(self.poll if recheck else None)
 
     @operation_serialized
     def _claim(self, cand: Candidate, instance_id: str | None) -> ItemContext | None:
@@ -466,7 +476,7 @@ class EngineRuntime:
         ):
             counts[r["state"]] = r["n"]
         job = self.db.execute(
-            "SELECT paused, canceled, state FROM jobs WHERE id = ?", (job_id,)
+            "SELECT paused, blocked, canceled, state FROM jobs WHERE id = ?", (job_id,)
         ).fetchone()
         missing = bool(
             counts["pending"]
@@ -496,6 +506,9 @@ class EngineRuntime:
         )
         if state != job["state"]:
             self._event(job_id, None, "state", {"state": state, "counts": counts})
+        if job["blocked"] and not blocked and counts["pending"]:
+            # A manually reconciled result can unblock work without a worker's wake.
+            self.wake.set()
 
     def _event(self, job_id: str, idx: int | None, type_: str, data: dict) -> None:
         self._emit(job_id, idx, type_, data, persist=True)

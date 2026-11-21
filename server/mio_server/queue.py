@@ -33,6 +33,7 @@ ACTIVE = ("queued", "running", "paused", "blocked")
 # Free disk space below which the queue warns, and below which the lane stops starting albums.
 LOW_DISK = 500 * 1024 * 1024
 CRITICAL_DISK = 200 * 1024 * 1024
+LANE_RECHECK_SECONDS = 5
 
 
 def load_queue(store) -> WorkshopQueue:
@@ -73,7 +74,9 @@ class ProductionQueue:
         self.lock = threading.RLock()
         self.kick = threading.Event()
         self.closed = False
-        self._active_job = load_queue(store).active_job
+        queue = load_queue(store)
+        self._active_job = queue.active_job
+        self._has_lane_work = self._lane_needs_recheck(queue)
         self._unsubscribe = engine.subscribe(self._on_event)
         self.thread = threading.Thread(target=self._loop, name="mio-queue", daemon=True)
         if autostart:
@@ -92,23 +95,38 @@ class ProductionQueue:
             self.kick.set()
 
     def _loop(self) -> None:
+        failed = False
         while not self.closed:
-            self.kick.wait(5)
+            # Still recheck a real lane, e.g. when disk space may recover without
+            # an application event. An empty or held lane can sleep indefinitely.
+            needs_recheck = self._has_lane_work or failed
+            self.kick.wait(LANE_RECHECK_SECONDS if needs_recheck else None)
             self.kick.clear()
             if self.closed:
                 break
+            failed = False
             try:
                 self.advance()
             except Exception:  # never let the lane thread die
                 log.exception("queue advance failed")
+                failed = True
 
     # ------------------------------------------------------------------ state
     def state(self) -> WorkshopQueue:
         return load_queue(self.store)
 
+    @staticmethod
+    def _lane_needs_recheck(q: WorkshopQueue) -> bool:
+        return bool(q.active_job or (q.lane and not q.paused))
+
     def _save(self, q: WorkshopQueue) -> WorkshopQueue:
         saved = self.store.put_doc(q)
         self._active_job = q.active_job
+        needs_recheck = self._lane_needs_recheck(q)
+        wake = needs_recheck and not self._has_lane_work
+        self._has_lane_work = needs_recheck
+        if wake:
+            self.kick.set()
         return saved
 
     def fault(self) -> str | None:
@@ -250,8 +268,9 @@ class ProductionQueue:
                 if not lane_finished(job):
                     return self._save(q) if recovered else q
                 q.active, q.active_job = None, None
+                recovered = True
             if q.paused or not q.lane or self._disk_critical():
-                return self._save(q)
+                return self._save(q) if recovered else q
             while q.lane:
                 album_id = q.lane[0]
                 token = q.lane_tokens.get(album_id)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from collections import namedtuple
 from pathlib import Path
 from unittest import mock
@@ -180,3 +181,38 @@ class QueueTest(ApiCase):
         q = self.queue()
         self.assertIsNone(q["fault"])
         self.assertEqual(q["active"], a)
+
+    def test_background_lane_sleeps_when_empty_and_rechecks_low_disk_when_queued(self):
+        album, episode = self.assemble("A")
+        lane = self.ctx.queue
+        parked = threading.Event()
+        free_space = threading.Event()
+        submitted = threading.Event()
+        wait = lane.kick.wait
+
+        def observe_wait(timeout=None):
+            if timeout is None:
+                parked.set()
+            return wait(timeout)
+
+        def usage(_path):
+            return Usage(0, 0, (600 if free_space.is_set() else 50) * 1024 * 1024)
+
+        def on_job(event):
+            if event["type"] == "submitted":
+                submitted.set()
+
+        self.addCleanup(self.ctx.engine.subscribe(on_job))
+        lane.kick.wait = observe_wait
+        with (
+            mock.patch("mio_server.queue.LANE_RECHECK_SECONDS", 0.02),
+            mock.patch("mio_server.queue.shutil.disk_usage", side_effect=usage),
+        ):
+            lane.thread.start()
+            self.assertTrue(parked.wait(3))
+            state = lane.start([album])
+            self.assertEqual((state.active, state.lane), (None, [album]))
+            self.assertFalse(submitted.is_set())
+            free_space.set()
+            self.assertTrue(submitted.wait(3))
+            self.assertEqual(len(self.jobs_of(episode)), 1)
