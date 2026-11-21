@@ -57,6 +57,8 @@ export default function StoryboardEditor() {
     selection,
     enabled: true,
     pinned: false,
+    marqueeFromBlankOnly: true,
+    escapeFromFields: true,
     contextOpen: !!menu.state,
     onExit: selection.clear,
     onOpen: (id) => {

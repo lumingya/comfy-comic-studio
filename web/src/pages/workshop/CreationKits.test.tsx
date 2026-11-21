@@ -207,7 +207,7 @@ describe('kit assembly source', () => {
     expect(screen.queryByRole('checkbox', { name: /workshop_preset/ })).toBeNull();
     next();
     await screen.findByText('已核对 1 幕，没有未解决的变量。');
-    fireEvent.click(screen.getByText('查看各幕提示词'));
+    await screen.findByRole('tab', { name: /01/ });
     expect(screen.getByText('SERVER COMPOSED')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
     await waitFor(() =>

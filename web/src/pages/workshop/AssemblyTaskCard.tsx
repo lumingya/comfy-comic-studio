@@ -144,7 +144,18 @@ export function AssemblyTaskCard({
       aria-selected={selected || undefined}
     >
       <header>
-        <div className="production-card-title">
+        <div
+          className="production-card-title"
+          onPointerDown={(event) => {
+            if (
+              event.pointerType !== 'mouse' ||
+              !(event.target instanceof Element) ||
+              event.target.closest('input,textarea,select,button,a,[contenteditable]')
+            )
+              return;
+            onGripDown(event);
+          }}
+        >
           <button
             type="button"
             className="production-grip"

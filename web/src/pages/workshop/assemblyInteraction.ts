@@ -67,6 +67,8 @@ export function useAssemblyInteraction(
     selection,
     enabled: true,
     pinned: false,
+    marqueeFromBlankOnly: true,
+    escapeFromFields: true,
     contextOpen: !!menu.state,
     onExit: selection.clear,
     onOpen: () => {},
@@ -87,10 +89,14 @@ export function useAssemblyInteraction(
 
   // ---------------------------------------------------------------- drag to reorder
   const onGripDown = (e: ReactPointerEvent<HTMLElement>, task: Task) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     const grip = e.currentTarget;
+    const { pointerId, clientX, clientY } = e;
+    const fromHandle = grip.matches('.production-grip');
+    if (fromHandle) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     grip.setPointerCapture(e.pointerId);
     let state: Drag = {
       id: task.album.id!,
@@ -100,9 +106,14 @@ export function useAssemblyInteraction(
       target: null,
       after: false,
     };
-    setDrag(state);
-    menu.close();
+    let active = false;
     const move = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      if (!active) {
+        if (Math.hypot(ev.clientX - clientX, ev.clientY - clientY) < 6) return;
+        active = true;
+        menu.close();
+      }
       const hit = document
         .elementFromPoint(ev.clientX, ev.clientY)
         ?.closest<HTMLElement>('[data-production-task]');
@@ -118,17 +129,28 @@ export function useAssemblyInteraction(
       setDrag(state);
     };
     const end = (drop: boolean) => {
+      document.removeEventListener('keydown', key, true);
       grip.removeEventListener('pointermove', move);
       grip.removeEventListener('pointerup', up);
       grip.removeEventListener('pointercancel', cancel);
+      grip.removeEventListener('lostpointercapture', cancel);
       setDrag(null);
-      if (drop && state.target) reorder(moveId(taskIds, state.id, state.target, state.after));
+      if (active && drop && state.target)
+        reorder(moveId(taskIds, state.id, state.target, state.after));
     };
     const up = () => end(true);
     const cancel = () => end(false);
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.isComposing || event.keyCode === 229) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      cancel();
+    };
+    document.addEventListener('keydown', key, true);
     grip.addEventListener('pointermove', move);
     grip.addEventListener('pointerup', up);
     grip.addEventListener('pointercancel', cancel);
+    grip.addEventListener('lostpointercapture', cancel);
   };
 
   return { page, setPage, drag, desktop, onContextMenu, onGripDown };

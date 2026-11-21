@@ -24,6 +24,9 @@ class LongformFixture(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.ctx = AppContext.create(Path(tmp.name), autostart=False, seed_instance=False)
         self.addCleanup(self.ctx.close)
+        # TestClient starts the app lifespan. Keep update checks out of the
+        # fixture so their background writes cannot race temporary cleanup.
+        self.ctx.updater.preferences(False)
         self.store = self.ctx.store
         self.series = self.store.create_series(
             Series(title="Long story", variables={"hero": "Alice"})

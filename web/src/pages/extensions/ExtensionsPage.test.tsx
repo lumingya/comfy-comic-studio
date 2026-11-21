@@ -44,7 +44,9 @@ it('searches extensions without treating theme contributions as separate package
   fireEvent.change(screen.getByRole('textbox', { name: '搜索扩展' }), {
     target: { value: '不存在' },
   });
-  expect(screen.getByText('没有找到扩展')).toBeInTheDocument();
+  expect(screen.getByText('没有匹配搜索的扩展。')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '清除搜索' }));
+  expect(screen.getByRole('textbox', { name: '搜索扩展' })).toHaveFocus();
 });
 it('installs only the reviewed catalog package and leaves activation to the user', async () => {
   const calls = mockFetch({

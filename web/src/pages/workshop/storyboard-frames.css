@@ -8,6 +8,13 @@
 
 .workshop-frame-row > [data-selection-id] {
   min-width: 0;
+  user-select: none;
+}
+
+@media (pointer: fine) {
+  .workshop-frame-row > [data-direct-reorder] {
+    cursor: grab;
+  }
 }
 
 .workshop-frame-row > .workshop-reorder-handle {

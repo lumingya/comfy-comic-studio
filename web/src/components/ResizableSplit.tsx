@@ -84,8 +84,13 @@ export function ResizableSplit({
   useLayoutEffect(() => {
     const element = root.current;
     if (!element) return;
-    const measure = () =>
-      setSize({ width: element.clientWidth, mobile: window.innerWidth <= MOBILE_WIDTH });
+    const measure = () => {
+      const width = element.clientWidth;
+      const mobile = window.innerWidth <= MOBILE_WIDTH;
+      setSize((previous) =>
+        previous.width === width && previous.mobile === mobile ? previous : { width, mobile },
+      );
+    };
     measure();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
     observer?.observe(element);

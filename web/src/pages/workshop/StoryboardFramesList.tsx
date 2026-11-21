@@ -89,6 +89,17 @@ function FrameRow({
         data-selection-open
         aria-selected={selected || undefined}
         aria-current={active ? 'true' : undefined}
+        data-direct-reorder={showHandle && !reordering ? true : undefined}
+        onPointerDown={(event) => {
+          if (
+            event.pointerType === 'mouse' &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.shiftKey &&
+            !event.altKey
+          )
+            listeners?.onPointerDown?.(event);
+        }}
         title={title}
       >
         <small>{String(index + 1).padStart(2, '0')}</small>
@@ -153,7 +164,7 @@ export function StoryboardFramesList({
     return { visible, filled };
   }, [panels, frameFilter, query]);
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
   const dndId = useId();

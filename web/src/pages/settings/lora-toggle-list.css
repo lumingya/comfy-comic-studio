@@ -1,5 +1,7 @@
 .lora-toggle-list {
   container-type: inline-size;
+  min-width: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -113,6 +115,7 @@
   overflow-y: auto;
   scrollbar-gutter: stable;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -157,5 +160,15 @@
 
   .lora-toggle-weight label {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container (max-width: 260px) {
+  .lora-toggle-list-head {
+    flex-wrap: wrap;
+  }
+  .lora-toggle-number,
+  .lora-toggle-clip .input {
+    max-width: 42%;
   }
 }
