@@ -81,3 +81,35 @@ OK
 - 没有扩大测试通用等待预算，也没有更改并行的 `test_jobs.py`、runtime 或 queue。
 - 只编辑隔离 worktree 中的导出测试及本报告；随包 64 文件已保护，未访问默认 legacy 根、用户工作区或真实 ComfyUI/云端。
 - 主控将安排新代理检查两页、真实采用/布局、冻结作业及取消清理没有因夹具调整而弱化，并验证准确最终提交的跨平台 CI。本报告不提前宣称最终 CI 通过。
+
+## `5682a43` Windows CI 追加：CRUD 列表准备范围
+
+该提交的主门禁及 Ubuntu Python 3.11 再次通过；Windows 1,576 项中，上一节导出夹具已通过，新的唯一失败发生在
+`test_api.CrudTests.test_listings_carry_progress_and_covers`：`self.adopt_all(ep)` 为列表统计准备全部 12 格，仍穿过共享助手的 5 秒总预算。该现象归并台账的同一测试准备边界，不另计生产缺陷。
+
+### 原断言实际需要的数据
+
+该用例检查空首话不遮住后话封面、两话计数、多个已采用图的数量、回收站中第三话不计入、拒绝至单图时仍有封面、最后一图拒绝后封面清空。它没有依赖 12 格的硬编码预期，采用图数量使用 `len(ep["panels"])`。两格已经覆盖 plural → single → empty；`GoldenStoryTests.test_golden_story_renders_via_api` 仍单独断言完整 12 格生成与采用。
+
+### 同症状受控红环
+
+只在真实临时上下文的 `ComfyRenderExecutor.on_complete()` 前加入每项 0.55 秒等待，不调整 SQL、原生成结果、原 `drain()`、重试或任务状态。以原 CRUD 方法直接运行：
+
+```text
+原 12 格：5.005 秒 TimeoutError；当时 job 仍 running，7 项 complete。
+继续观察同一任务：7.479 秒 completed，12 项 attempts 均为 1；未重发。
+```
+
+因此与上一节相同，正常推进的准备任务可以在进入统计断言前被总预算截断。这仍不是 CI 机器当时的状态记录，也不唯一定位其实际延迟来源。诊断脚本 `%TEMP%/mio-ci-crud-timeout.py` 的命令为：
+
+```powershell
+python -X utf8 "$env:TEMP\mio-ci-crud-timeout.py" <checkout>
+```
+
+红/绿精简输出分别保留为 `%TEMP%/mio-ci-crud-timeout-before.json`、`mio-ci-crud-timeout-after.json`；内容只有时长、项目数量和状态，不含作品提示词。
+
+### 最小补修及验证
+
+`server/tests/test_api.py` 只为这一个用例导入并复用已有 `test_album.adopt_two_frames()`：实际裁成两格，继续通过真实 render → AssetStore/结果交付 → adopt HTTP 的路径准备。不复制另一套夹具，不把两格改为单格，也不删除任何原统计与封面断言。共享助手、其它 12 格生成用例和全部生产代码均未改动。
+
+相同每项 0.55 秒保存延迟下，补修后原 CRUD 方法全部通过：两格 `drain` 为 1.242 秒，完整用例 2.348 秒。集中运行 `python -X utf8 -m unittest tests.test_api tests.test_album.AlbumApiTests -q`，**15 项通过，21.838 秒**，包含完整 12 格 golden story 与真实画册准备/导出集成。source encoding 两项、该测试文件 Ruff lint / format、编译与 `git diff --check` 通过；测试和本附录已读回并通过 UTF-8/BOM 检查。最终 Windows CI 和新的独立复验仍由主控完成。
