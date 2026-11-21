@@ -164,7 +164,7 @@ def _extension_paths(folder: Path):
     pending, count, total = [folder], 0, 0
     while pending:
         for path in sorted(pending.pop().iterdir()):
-            if path.name in SKIP_DIRS or path.suffix in {".pyc", ".pyo"}:
+            if path.name in SKIP_DIRS:
                 continue
             regular_path(path, missing=False)
             if path.is_dir():

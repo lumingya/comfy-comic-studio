@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import sys
 import unittest
 import zipfile
 from pathlib import Path
@@ -13,7 +14,7 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from mio_server.api import create_app
-from mio_server.extensions.manifest import ManifestError, digest, inside
+from mio_server.extensions.manifest import digest, inside
 from mio_server.hooks import HookBus, HookError
 
 from .api_harness import LOCAL, ApiCase
@@ -355,13 +356,16 @@ class ExtensionApiTests(ApiCase):
         hidden = folder / ".git" / "unreviewed.py"
         hidden.parent.mkdir()
         hidden.write_text("value = 'before'\n", encoding="utf-8")
+        cache = folder / "__pycache__" / "unreviewed.pyc"
+        cache.parent.mkdir()
+        cache.write_bytes(b"reviewed bytecode")
         before = digest(folder)
         hidden.write_text("value = 'after'\n", encoding="utf-8")
         self.assertNotEqual(digest(folder), before)
-        with self.assertRaises(ManifestError):
-            inside(folder, ".git/__pycache__/hidden.py")
-        with self.assertRaises(ManifestError):
-            inside(folder, ".git/hidden.pyc")
+        cache_before = digest(folder)
+        cache.write_bytes(b"modified bytecode")
+        self.assertNotEqual(digest(folder), cache_before)
+        self.assertEqual(inside(folder, "__pycache__/unreviewed.pyc"), cache)
 
     def test_python_entry_under_dot_directory_cannot_change_without_new_digest(self):
         folder = write_ext(self.root())
@@ -381,6 +385,33 @@ class ExtensionApiTests(ApiCase):
         response = self.client.post("/api/extensions/demo/enable", json={"digest": approved})
         self.assertEqual(response.status_code, 400)
         self.assertNotIn("demo", self.ctx.extensions.loaded)
+
+    def test_extension_lazy_imports_do_not_create_unhashed_bytecode(self):
+        original = sys.dont_write_bytecode
+        self.addCleanup(setattr, sys, "dont_write_bytecode", original)
+        folder = write_ext(
+            self.root(),
+            main=MAIN
+            + "\n    @mio.router.get('/lazy')\n"
+            + "    def lazy():\n"
+            + "        from .helper import VALUE\n"
+            + "        return {'value': VALUE}\n",
+        )
+        (folder / "helper.py").write_text("VALUE = 'approved'\n", encoding="utf-8")
+        self.assertEqual(self.enable()["status"], "active")
+        self.assertTrue(sys.dont_write_bytecode)
+        self.assertEqual(self.ok(self.client.get("/api/ext/demo/lazy")), {"value": "approved"})
+        self.assertFalse((folder / "__pycache__").exists())
+        self.assertEqual(digest(folder), self.ctx.extensions.loaded["demo"].api.digest)
+
+    def test_injected_extension_bytecode_invalidates_the_reviewed_route(self):
+        folder = write_ext(self.root())
+        self.enable()
+        cache = folder / "__pycache__" / "helper.cpython-313.pyc"
+        cache.parent.mkdir()
+        cache.write_bytes(b"unreviewed bytecode")
+        self.assertEqual(self.ctx.extensions.info("demo").status, "changed")
+        self.assertEqual(self.client.get("/api/ext/demo/hello").status_code, 404)
 
     def test_modified_panel_assets_are_not_served_from_a_stale_activation(self):
         folder = write_ext(

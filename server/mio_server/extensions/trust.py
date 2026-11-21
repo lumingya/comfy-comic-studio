@@ -27,7 +27,7 @@ def remember_package(workspace, folder, expected):
                 folder,
                 temporary,
                 dirs_exist_ok=True,
-                ignore=shutil.ignore_patterns(*SKIP_DIRS, "*.pyc"),
+                ignore=shutil.ignore_patterns(*SKIP_DIRS),
             )
             if digest(temporary) != expected:
                 raise ValueError("reviewed extension snapshot changed")

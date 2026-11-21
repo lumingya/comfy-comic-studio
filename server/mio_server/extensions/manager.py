@@ -18,6 +18,7 @@ import os
 import shutil
 import sys
 import tempfile
+import threading
 import zipfile
 from dataclasses import dataclass, field
 from functools import wraps
@@ -46,6 +47,30 @@ MAX_ENTRIES = 2000
 MAX_UNPACKED = 4 * MAX_ZIP
 MAX_MANIFEST_BYTES = 1024 * 1024
 BUILTIN_ROOT = Path(__file__).resolve().parents[3] / "extensions"
+_bytecode_policy_lock = threading.Lock()
+_bytecode_policy_users = 0
+_bytecode_policy_original: bool | None = None
+
+
+def _retain_source_only_imports() -> None:
+    """Suppress new pyc files while any extension is active; existing caches stay digest-pinned."""
+    global _bytecode_policy_users, _bytecode_policy_original
+    with _bytecode_policy_lock:
+        if _bytecode_policy_users == 0:
+            _bytecode_policy_original = sys.dont_write_bytecode
+            sys.dont_write_bytecode = True
+        _bytecode_policy_users += 1
+
+
+def _release_source_only_imports() -> None:
+    global _bytecode_policy_users, _bytecode_policy_original
+    with _bytecode_policy_lock:
+        if _bytecode_policy_users <= 0:
+            return
+        _bytecode_policy_users -= 1
+        if _bytecode_policy_users == 0:
+            sys.dont_write_bytecode = bool(_bytecode_policy_original)
+            _bytecode_policy_original = None
 
 
 class ExtensionError(ValueError):
@@ -129,6 +154,7 @@ class ExtensionManager:
         self.loaded: dict[str, Loaded] = {}
         self.errors: dict[str, str] = {}
         self.mounted: set[str] = set()  # extensions whose router is part of the running app
+        self._bytecode_policy = False
         self._catalog_transitions = 0
         self.apps = []
 
@@ -372,6 +398,11 @@ class ExtensionManager:
         self.errors.pop(ext_id, None)
         loading = self.engine.catalog_loading
         self.engine.catalog_loading = True
+        # Existing bytecode caches participate in the digest; stop imports from creating new
+        # cache files while extension code may perform lazy imports.
+        if not self._bytecode_policy:
+            _retain_source_only_imports()
+            self._bytecode_policy = True
         if previous:
             previous.api._enabled = False
         self.ctx.registry.unregister_source(source)
@@ -381,10 +412,6 @@ class ExtensionManager:
             ensure_requirements(info.folder)
             if digest(info.folder) != info.digest:
                 raise ExtensionError("扩展内容在依赖检查期间发生变化，请重新审阅后启用")
-            # Also prevent stale package helper bytecode from defeating the reviewed digest.
-            for cached in info.folder.rglob("*.pyc"):
-                if "__pycache__" in cached.relative_to(info.folder).parts:
-                    cached.unlink()
             self._declarative(api, info.manifest)
             module = self._run_main(api, info.manifest) if info.manifest.main else None
             if digest(info.folder) != info.digest:
@@ -409,6 +436,9 @@ class ExtensionManager:
             sys.modules.update(previous_modules)
             self.errors[ext_id] = f"{type(exc).__name__}: {exc}"
             log.exception("extension %s failed to load", ext_id)
+            if not self.loaded:
+                _release_source_only_imports()
+                self._bytecode_policy = False
             return False
         finally:
             self.engine.catalog_loading = loading
@@ -433,6 +463,9 @@ class ExtensionManager:
         self.ctx.registry.unregister_source(loaded.api.source)
         self.refresh_routes()
         self.engine.refresh_executor_jobs()
+        if not self.loaded and self._bytecode_policy:
+            _release_source_only_imports()
+            self._bytecode_policy = False
         name = f"mio_ext_{ext_id}"
         for key in list(sys.modules):
             if key == name or key.startswith(name + "."):
@@ -544,6 +577,9 @@ class ExtensionManager:
         for loaded in list(self.loaded.values()):
             loaded.api._enabled = False
             loaded.api.stop_services()
+        if self._bytecode_policy:
+            _release_source_only_imports()
+            self._bytecode_policy = False
 
     # ------------------------------------------------------------- install
     @operation_serialized
