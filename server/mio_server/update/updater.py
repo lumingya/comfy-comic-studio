@@ -50,9 +50,16 @@ def serialized(operation):
     def guarded(self, *args, **kwargs):
         if not self._execution.acquire(blocking=False):
             raise UpdateError("已有更新操作正在进行")
+        active = getattr(self._operation_context, "active", False)
         try:
+            if not active:
+                with self._lock:
+                    if self._closed:
+                        raise UpdateError("更新器已关闭")
+            self._operation_context.active = True
             return operation(self, *args, **kwargs)
         finally:
+            self._operation_context.active = active
             self._execution.release()
 
     return guarded
@@ -84,6 +91,7 @@ class Updater:
         current: str = __version__,
         keys: dict[str, str] | None = None,
         transport: httpx.BaseTransport | None = None,
+        startup_enabled: bool = True,
     ):
         self.dir = Path(data_dir) / "updates"
         self.root = Path(install_root)
@@ -97,8 +105,11 @@ class Updater:
         self.activity: dict = {"phase": "idle", "error": ""}
         self._lock = threading.Lock()
         self._execution = threading.RLock()
+        self._operation_context = threading.local()
         self._worker: threading.Thread | None = None
         self._started = False
+        self._startup_enabled = startup_enabled
+        self._closed = False
         self._catalog_cache: dict[tuple[int, int], tuple[float, dict]] = {}
 
     def _read_state(self) -> dict:
@@ -141,6 +152,8 @@ class Updater:
 
     def preferences(self, auto_check: bool) -> dict:
         with self._lock:
+            if self._closed:
+                raise UpdateError("更新器已关闭")
             self.auto_check = auto_check
             self._save_state()
         return self.status()
@@ -173,7 +186,7 @@ class Updater:
 
     def startup_check(self, feed: str = "") -> None:
         """Called once by the server lifespan; never delay startup for the network."""
-        if self._started:
+        if self._started or not self._startup_enabled or self._closed:
             return
         self._started = True
         if self.auto_check:
@@ -185,6 +198,8 @@ class Updater:
 
     def _launch(self, phase: str, operation) -> None:
         with self._lock:
+            if self._closed:
+                raise UpdateError("更新器已关闭")
             if self._worker is not None and self._worker.is_alive():
                 raise UpdateError("已有更新操作正在进行")
             self.activity = {"phase": phase, "error": ""}
@@ -203,6 +218,24 @@ class Updater:
 
             self._worker = threading.Thread(target=run, name="mio-update", daemon=True)
             self._worker.start()
+
+    def close(self) -> None:
+        """Seal intake and finish admitted work before the workspace lease is released.
+
+        Existing HTTP operations retain their configured I/O timeouts. Do not hold the
+        state lock while joining: check() needs it to persist its final result. Nested
+        steps of an already admitted install may finish, but later commands are refused.
+        """
+        if getattr(self._operation_context, "active", False):
+            raise RuntimeError("Updater.close cannot run inside an update operation")
+        with self._lock:
+            self._closed = True
+            worker = self._worker
+        if worker is not None:
+            worker.join()
+        # A synchronous API check is not represented by _worker, but owns the same lane.
+        with self._execution:
+            pass
 
     @serialized
     def _execute(self, operation):

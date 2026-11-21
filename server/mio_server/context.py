@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
+import threading
 from contextlib import ExitStack
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -80,6 +81,8 @@ class AppContext:
     extension_services: dict = field(default_factory=dict)
     host_app: object | None = None
     image_llm_factory: Callable | None = None
+    _close_lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
+    _closing: bool = field(default=False, init=False, repr=False)
 
     @classmethod
     def create(
@@ -187,7 +190,8 @@ class AppContext:
         ]
         engine.subscribe(lambda event: ctx.hooks.action("job.event", event))
         ctx.tokens = TokenStore(store)
-        ctx.updater = Updater(ctx.data_dir, INSTALL_ROOT)
+        ctx.updater = Updater(ctx.data_dir, INSTALL_ROOT, startup_enabled=autostart)
+        startup.callback(ctx.updater.close)
         ctx.webhooks = Dispatcher(store, engine)
         startup.callback(ctx.webhooks.close)
         ctx.webhooks.attach(ctx.hooks)
@@ -213,6 +217,7 @@ class AppContext:
             ctx.queue.close,
             ctx.reading.clear,
             ctx.extensions.close,
+            ctx.updater.close,
         ]
         # Executors (including reviewed extensions) must exist before replaying local results.
         engine.recover_deliveries()
@@ -244,11 +249,20 @@ class AppContext:
         self.engine.pool.set_instances(self.store.list_docs("instance"))
 
     def close(self) -> None:
-        while self.closers:
+        # Concurrent callers share the whole shutdown barrier, including the workspace
+        # lease. A callback may reenter on this thread without draining later resources.
+        with self._close_lock:
+            if self._closing:
+                return
+            self._closing = True
             try:
-                self.closers.pop()()
-            except Exception:
-                log.exception("close failed")
+                while self.closers:
+                    try:
+                        self.closers.pop()()
+                    except Exception:
+                        log.exception("close failed")
+            finally:
+                self._closing = False
 
     def _register_builtins(self) -> None:
         from .comfy.contracts import register_builtins
