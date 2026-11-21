@@ -431,7 +431,7 @@ class ExtensionApiTests(ApiCase):
         response = self.client.get("/api/extensions/demo/files/panel.html")
         self.assertEqual(response.status_code, 200)
         self.assertIn("form-action 'none'", response.headers["content-security-policy"])
-        self.assertIn("navigate-to 'self'", response.headers["content-security-policy"])
+        self.assertIn("frame-src 'none'", response.headers["content-security-policy"])
         entry.write_text("<!doctype html><script>unreviewed()</script>", encoding="utf-8")
         self.assertEqual(self.ctx.extensions.info("demo").status, "changed")
         self.assertEqual(self.client.get("/api/extensions/demo/files/panel.html").status_code, 404)
