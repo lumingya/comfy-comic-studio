@@ -56,3 +56,13 @@ python -m py_compile server/tests/api_harness.py server/tests/test_workshop.py s
 本轮覆盖共享夹具的两个实际读取入口、四项公开样例依赖以及既有相关工坊/权限测试，
 不声称已复核所有测试类的自建 AppContext，也未运行全量项目门禁。
 独立审查应确认默认根在应用创建前赋值、公开样例只在显式测试中载入，以及哨兵回归可阻止默认读取。
+
+## 最终 CI 的 Windows 路径断言补修
+
+`c84ce33` 的 Windows Python 3.11 CI 中，两项读取隔离回归因 TEMP 的 8.3 短路径
+`RUNNER~1` 与 `AppContext.data_dir` 的规范长路径 `runneradmin` 直接比较而失败。
+失败发生在路径等值断言；请求成功、默认读取器未调用的保护仍然成立。
+
+路径断言现将两侧都 `resolve()` 后比较，仍严格要求目标是该测试 TEMP 内的
+`empty-legacy`，保留“不存在”和“读取器未调用”断言。没有改变生产读取边界或放宽隔离要求。
+本机重跑两项通过（2.308 秒），该测试文件 Ruff lint / format 通过；最终跨平台结果另见 CI。

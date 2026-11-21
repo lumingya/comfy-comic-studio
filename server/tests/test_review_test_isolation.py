@@ -36,7 +36,9 @@ class ApiHarnessIsolationTests(unittest.TestCase):
                     response = case.client.get(path, headers=headers)
                     self.assertEqual(response.status_code, 200)
                     loader.assert_not_called()
-                    self.assertEqual(case.ctx.legacy_root, Path(case.tmp) / "empty-legacy")
+                    self.assertEqual(
+                        case.ctx.legacy_root.resolve(), (Path(case.tmp) / "empty-legacy").resolve()
+                    )
                     self.assertFalse(case.ctx.legacy_root.exists())
                 finally:
                     case.doCleanups()
