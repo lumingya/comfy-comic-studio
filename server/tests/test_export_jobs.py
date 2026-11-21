@@ -15,9 +15,10 @@ from fastapi.testclient import TestClient
 from mio_server.api import create_app
 from mio_server.context import AppContext
 from mio_server.jobs import Canceled
+from mio_server.models import Take
 
 from .api_harness import LOCAL, ApiCase, FakeComfy, FakeLLM
-from .test_album import adopt_two_frames
+from .test_compile_executor import png
 from .test_jobs import drain
 
 
@@ -25,7 +26,25 @@ class ExportJobTests(ApiCase):
     def setUp(self):
         super().setUp()
         self.series, ep = self.make_episode()
-        self.ep = adopt_two_frames(self, ep)
+        panels = self.ctx.store.get_episode(ep["id"]).ordered_panels()[:2]
+        self.assertEqual(len(panels), 2)
+        takes = []
+        # Export jobs start with existing candidates. Avoid an unrelated asynchronous
+        # render/drain deadline in every export fixture, while keeping real assets,
+        # persisted takes and the production adoption/layout path.
+        for index, panel in enumerate(panels):
+            asset = self.ctx.assets.put(png((40 * (index + 1), 0, 0)), source="test")
+            takes.append(
+                Take(panel_id=panel.id, asset_id=asset.id, width=asset.width, height=asset.height)
+            )
+
+        def prepare(episode):
+            episode.panels = panels
+            episode.takes = takes
+
+        self.ctx.store.update_episode(ep["id"], prepare)
+        for take in takes:
+            self.ep = self.ok(self.client.post(f"/api/episodes/{ep['id']}/takes/{take.id}/adopt"))
 
     def submit(self, kind="portable", **extra):
         body = {"episode_ids": [self.ep["id"]], "format": "zip", **extra}
