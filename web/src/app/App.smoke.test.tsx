@@ -619,7 +619,12 @@ describe('every route mounts with API data', () => {
     expect(within(drawer).getByText('复制诊断信息')).toBeInTheDocument();
     fireEvent.click(within(drawer).getByRole('button', { name: /快速开始教程/ }));
     const quick = await screen.findByRole('dialog', { name: '快速开始 · 从灵感到一本画册' });
-    expect(within(quick).getByText(/导入 ComfyUI 的 API 工作流/)).toBeInTheDocument();
+    expect(quick.querySelectorAll('.quickstart-steps [data-check]')).toHaveLength(4);
+    expect(
+      [...quick.querySelectorAll('.quickstart-steps [data-check]')].map((item) =>
+        item.getAttribute('data-check'),
+      ),
+    ).toEqual(['service', 'workflow', 'reader', 'create']);
     expect(within(quick).getByText('进阶')).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: '装配与队列' })).toBeNull();
   });

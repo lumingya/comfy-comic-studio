@@ -32,6 +32,7 @@ export function TemplateEditorFields(props: {
   const option = (patch: Partial<AlbumTemplateDoc['options']>) =>
     tpl && props.onChange({ ...tpl, options: { ...tpl.options, ...patch } });
   const hasLoop = !!tpl?.html.includes('{{#books}}');
+  const hasEditorialControls = !!tpl?.html.includes('data-mio-curated-edition');
   const insertLoop = () => {
     if (!tpl || hasLoop) return;
     change({
@@ -84,6 +85,75 @@ export function TemplateEditorFields(props: {
               onChange={(e) => change({ description: e.target.value })}
             />
           </div>
+          {hasEditorialControls ? (
+            <>
+              <div className="divider" />
+              <h3>{t('reader.studio.editorialHead')}</h3>
+              <div className="field">
+                <label className="label" htmlFor="et-subtitle">
+                  {t('reader.studio.subtitle')}
+                </label>
+                <input
+                  id="et-subtitle"
+                  maxLength={240}
+                  value={tpl.options.subtitle ?? ''}
+                  onChange={(e) => option({ subtitle: e.target.value })}
+                />
+              </div>
+              <label className="export-check">
+                <input
+                  id="et-cover-crop"
+                  type="checkbox"
+                  checked={tpl.options.cover_crop ?? false}
+                  onChange={(e) => option({ cover_crop: e.target.checked })}
+                />
+                {t('reader.studio.coverCrop')}
+              </label>
+              {tpl.options.cover_crop ? (
+                <>
+                  <div className="field">
+                    <label className="label" htmlFor="et-cover-focus-x">
+                      {t('reader.studio.coverFocalX', {
+                        value: tpl.options.cover_focal_x ?? 50,
+                      })}
+                    </label>
+                    <input
+                      id="et-cover-focus-x"
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={tpl.options.cover_focal_x ?? 50}
+                      onChange={(e) => option({ cover_focal_x: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label className="label" htmlFor="et-cover-focus-y">
+                      {t('reader.studio.coverFocalY', {
+                        value: tpl.options.cover_focal_y ?? 50,
+                      })}
+                    </label>
+                    <input
+                      id="et-cover-focus-y"
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={tpl.options.cover_focal_y ?? 50}
+                      onChange={(e) => option({ cover_focal_y: Number(e.target.value) })}
+                    />
+                  </div>
+                </>
+              ) : null}
+              <label className="export-check">
+                <input
+                  id="et-chapter-header"
+                  type="checkbox"
+                  checked={tpl.options.chapter_header ?? true}
+                  onChange={(e) => option({ chapter_header: e.target.checked })}
+                />
+                {t('reader.studio.chapterHeader')}
+              </label>
+            </>
+          ) : null}
           <div className="grid2">
             <div className="field">
               <label className="label" htmlFor="et-author">

@@ -8,6 +8,8 @@ import { useEpisodes, useSeriesList } from '../api/series';
 import { useSettings, useWorkflows } from '../api/system';
 import { useWorkshop } from '../api/workshop';
 import { useRenderRoute } from '../app/renderRoute';
+import { setQuickStartDismissed } from '../app/onboarding';
+import { useUI } from '../app/ui-store';
 import { Icon, type IconName } from '../app/icons';
 import { useSetupChecks, useNewStory, type SetupCheck } from '../app/setup';
 import { toast, toastError } from './toast';
@@ -576,15 +578,90 @@ function QuickStartBody() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const set = useQuickStart((s) => s.set);
+  const setHomeGuideHidden = useUI((s) => s.setHomeGuideHidden);
   const checks = useSetupChecks();
   const books = useSeriesList();
-  const close = () => set(false);
+  const close = () => {
+    set(false);
+    setQuickStartDismissed(true);
+    setHomeGuideHidden(true);
+  };
   const modal = useModal(close);
-  const done = checks.filter((c) => c.state === 'done').length;
-  const next = checks.find((c) => c.fix && c.state !== 'done');
+  const service = checks.find((check) => check.id === 'service')!;
+  const workflow = checks.find((check) => check.id === 'workflow')!;
+  const material = checks.find((check) => check.id === 'material')!;
+  const trial = checks.find((check) => check.id === 'trial')!;
   const book = (books.data ?? []).find((b) => (b.adopted_count ?? 0) > 0);
-  const more: { id: 'reader' | 'export' | 'handbook'; icon: IconName; run: () => void }[] = [
-    { id: 'reader', icon: 'book', run: () => navigate(book ? `/gallery/${book.id}` : '/gallery') },
+  const hasOpenedSample = (() => {
+    try {
+      return !!book && localStorage.getItem('mio.quick-start.reader') === book.id;
+    } catch {
+      return false;
+    }
+  })();
+  const serviceStep = {
+    id: 'service',
+    title: t('guide.quick.onboarding.serviceTitle'),
+    intro: t('guide.quick.onboarding.serviceIntro'),
+    detail: service.detail,
+    state: service.state,
+    action: service.fix?.label ?? t('guide.quick.onboarding.openService'),
+    run: service.fix?.run ?? (() => navigate('/engine?tab=instances')),
+  };
+  const workflowStep = {
+    id: 'workflow',
+    title: t('guide.quick.onboarding.workflowTitle'),
+    intro: t('guide.quick.onboarding.workflowIntro'),
+    detail: `${workflow.detail} · ${trial.detail}`,
+    state:
+      workflow.state === 'checking' || trial.state === 'checking'
+        ? 'checking'
+        : workflow.state === 'done' && trial.state === 'done'
+          ? 'done'
+          : 'todo',
+    action: t('guide.quick.onboarding.testImage'),
+    run: () => navigate('/workshop/assembly?new=1'),
+  };
+  const readerStep = {
+    id: 'reader',
+    title: t('guide.quick.onboarding.readerTitle'),
+    intro: t('guide.quick.onboarding.readerIntro'),
+    detail: book
+      ? hasOpenedSample
+        ? t('guide.quick.onboarding.readerReady')
+        : t('guide.quick.onboarding.readerAvailable')
+      : t('guide.quick.onboarding.readerEmpty'),
+    state: books.isPending ? 'checking' : hasOpenedSample ? 'done' : 'todo',
+    action: t('guide.quick.items.reader.title'),
+    run: () => {
+      if (book) {
+        try {
+          localStorage.setItem('mio.quick-start.reader', book.id!);
+        } catch {
+          // Storage can be unavailable in private browsing; opening the sample still works.
+        }
+        navigate(`/gallery/${book.id}`);
+      } else navigate('/gallery');
+    },
+  };
+  const createStep = {
+    id: 'create',
+    title: t('guide.quick.onboarding.createTitle'),
+    intro: t('guide.quick.onboarding.createIntro'),
+    detail: material.detail,
+    state:
+      books.isPending || material.state === 'checking'
+        ? 'checking'
+        : (books.data?.length ?? 0) > 1
+          ? 'done'
+          : 'todo',
+    action: t('guide.quick.onboarding.createAction'),
+    run: () => navigate('/workshop/story'),
+  };
+  const steps = [serviceStep, workflowStep, readerStep, createStep] as const;
+  const done = steps.filter((step) => step.state === 'done').length;
+  const next = steps.find((step) => step.state !== 'done');
+  const more: { id: 'export' | 'handbook'; icon: IconName; run: () => void }[] = [
     {
       id: 'export',
       icon: 'download',
@@ -620,16 +697,32 @@ function QuickStartBody() {
         <i style={{ width: `${checks.length ? (done / checks.length) * 100 : 0}%` }} />
       </div>
       <div className="quickstart-body">
-        <p className="help-note">{t('route.checklistScope')}</p>
+        <p className="help-note">{t('guide.quick.onboarding.lede')}</p>
         <ol className="help-checks quickstart-steps" aria-label={t('guide.quick.steps')}>
-          {checks.map((c) => (
-            <CheckItem
-              key={c.id}
-              check={c}
-              intro={t(`guide.quick.intro.${c.id}`)}
-              primary={c === next}
-              onAct={c.fix?.stay ? undefined : close}
-            />
+          {steps.map((step, index) => (
+            <li key={step.id} className={`help-check is-${step.state}`} data-check={step.id}>
+              <span className="help-check-mark" aria-hidden>
+                {{ done: '✓', todo: '!', checking: '…' }[step.state]}
+              </span>
+              <span className="help-check-body">
+                <strong>
+                  {index + 1}. {step.title}
+                  <span className="visually-hidden"> · {t(`guide.said.${step.state}`)}</span>
+                </strong>
+                <span className="help-check-intro">{step.intro}</span>
+                <small>{step.detail}</small>
+              </span>
+              <button
+                type="button"
+                className={`btn small${step === next ? ' primary' : ''}`}
+                onClick={() => {
+                  close();
+                  step.run();
+                }}
+              >
+                {step.action}
+              </button>
+            </li>
           ))}
         </ol>
         <section className="quickstart-more" aria-labelledby="quickstart-more-title">
@@ -657,7 +750,7 @@ function QuickStartBody() {
       </div>
       <footer className="service-footer">
         <span className="grow service-status">
-          {t('guide.progress', { done, total: checks.length })}
+          {t('guide.progress', { done, total: steps.length })}
         </span>
         <button type="button" className="btn ghost" onClick={close}>
           {t('guide.quick.done')}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useSeriesList } from '../../api/series';
@@ -5,7 +6,8 @@ import { Icon, type IconName } from '../../app/icons';
 import { useSetupChecks } from '../../app/setup';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
-import { CheckItem, manualHref } from '../../components/HelpDrawer';
+import { CheckItem, manualHref, useQuickStart } from '../../components/HelpDrawer';
+import { quickStartDismissed, setQuickStartDismissed } from '../../app/onboarding';
 
 /** A comic page illustration for the home screen. */
 function HomeArt() {
@@ -91,27 +93,35 @@ function FirstRun() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const checks = useSetupChecks();
+  const openQuickStart = useQuickStart((s) => s.set);
+  const [dismissed, setDismissed] = useState(quickStartDismissed);
   const hidden = useUI((s) => s.homeGuideHidden);
   const setHidden = useUI((s) => s.setHomeGuideHidden);
   const done = checks.filter((c) => c.state === 'done').length;
-  if (hidden)
-    return (
-      <button type="button" className="btn ghost small" onClick={() => setHidden(false)}>
-        <Icon name="down" />
-        {t('legacy.home.show')}
-      </button>
-    );
+  if (hidden || dismissed) return null;
   return (
     <section className="first-run" aria-labelledby="first-run-title">
       <header>
         <div>
           <h2 id="first-run-title">{t('legacy.home.firstTitle')}</h2>
         </div>
-        <button type="button" className="btn ghost small" onClick={() => setHidden(true)}>
+        <button
+          type="button"
+          className="btn ghost small"
+          onClick={() => {
+            setHidden(true);
+            setDismissed(true);
+            setQuickStartDismissed(true);
+          }}
+        >
           <Icon name="close" />
           {t('legacy.home.hide')}
         </button>
       </header>
+      <button type="button" className="btn small" onClick={() => openQuickStart(true)}>
+        <Icon name="play" />
+        {t('guide.quickstart')}
+      </button>
       <div className="first-run-paths">
         {PATHS.map((p) => (
           <button key={p.id} className="first-run-path" onClick={() => navigate(p.to)}>

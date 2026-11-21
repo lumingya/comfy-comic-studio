@@ -466,6 +466,11 @@ export interface AlbumTemplateDoc {
     gap: number;
     radius: number;
     font: 'serif' | 'sans';
+    subtitle: string;
+    cover_crop: boolean;
+    cover_focal_x: number;
+    cover_focal_y: number;
+    chapter_header: boolean;
   };
   html: string;
   assets: Record<string, string>;

@@ -153,7 +153,8 @@ def render_album(tpl: AlbumTemplate, books: list[Book], opts: AlbumOptions | Non
             values = {
                 **globals_,
                 "title": book.title,
-                "synopsis": book.synopsis,
+                "synopsis": o.subtitle or book.synopsis,
+                "subtitle": o.subtitle or book.synopsis,
                 "characterName": book.character_name,
                 "storyTitle": book.story_title,
                 "panelCount": len(frames),
@@ -209,6 +210,12 @@ def render_album(tpl: AlbumTemplate, books: list[Book], opts: AlbumOptions | Non
         lambda m: escaped(tpl.assets.get(m.group(1), "")),
         tpl.html[shell.body_start : shell.body_end],
     )
+    has_edition_heading = "data-mio-curated-edition" in tpl.html
+    if has_edition_heading:
+        extra = '<small class="chapter-header">{{storyTitle}}</small>'
+        if o.cover_crop:
+            extra += '<img class="edition-cover" src="{{coverImage}}" alt="">'
+        body = body.replace("<h1>{{title}}</h1>", "<h1>{{title}}</h1>" + extra, 1)
     body = BOOKS_RE.sub(render_books, body, count=1)
     return _finish(
         tpl, shell, fill(head, globals_), fill(body, globals_), books, assets, tagged, opts
@@ -216,6 +223,7 @@ def render_album(tpl: AlbumTemplate, books: list[Book], opts: AlbumOptions | Non
 
 
 def _finish(tpl, shell: DocumentShell, head, body, books, assets, tagged, opts) -> str:
+    has_edition_heading = "data-mio-curated-edition" in tpl.html
     nonce = secrets.token_hex(12)
     csp = (
         '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; '
@@ -226,6 +234,24 @@ def _finish(tpl, shell: DocumentShell, head, body, books, assets, tagged, opts) 
     extra = (
         BASE_STYLE
         + runtime_css()
+        + (
+            ".chapter-header{display:block;margin:0 0 20px;color:var(--accent);text-align:center;"
+            "font:10px/1.7 system-ui,sans-serif;letter-spacing:.12em}"
+            if has_edition_heading
+            else ""
+        )
+        + (
+            ".edition-cover{display:block;width:min(100%,480px);height:clamp(140px,24vw,260px);"
+            f"object-fit:cover;object-position:{tpl.options.cover_focal_x}% "
+            f"{tpl.options.cover_focal_y}%;margin:22px auto 0;background:var(--paper)}}"
+            if has_edition_heading and tpl.options.cover_crop
+            else ""
+        )
+        + (
+            ".chapter-header{display:none!important}"
+            if has_edition_heading and not tpl.options.chapter_header
+            else ""
+        )
         + ("" if opts.show_captions else "[data-cc-caption]{display:none!important}")
     )
     tail = f'<script nonce="{nonce}">{runtime()}</script>' + _metadata(books, assets, tagged, opts)

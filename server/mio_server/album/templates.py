@@ -50,6 +50,11 @@ class TemplateOptions(BaseModel):
     gap: int = Field(default=24, ge=0, le=200)
     radius: int = Field(default=8, ge=0, le=64)
     font: Literal["serif", "sans"] = "sans"
+    subtitle: str = Field(default="", max_length=240)
+    cover_crop: bool = False
+    cover_focal_x: int = Field(default=50, ge=0, le=100)
+    cover_focal_y: int = Field(default=50, ge=0, le=100)
+    chapter_header: bool = True
 
     @field_validator("accent", "background", "paper", "text")
     @classmethod
