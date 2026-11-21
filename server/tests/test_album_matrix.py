@@ -164,8 +164,20 @@ class AlbumTemplateMatrixTests(unittest.TestCase):
                 self.assertIn(color, document)
 
     def test_each_export_uses_a_new_nonce_and_one_policy(self):
-        self.assertEqual(len(builtin_templates()), 5)
-        template = builtin_templates()[0]
+        templates = builtin_templates()
+        self.assertEqual(
+            {template.id for template in templates},
+            {
+                "mio-fit",
+                "export-seamless",
+                "export-monograph",
+                "export-nocturne",
+                "export-folio",
+                "export-zine",
+                "export-contact-sheet",
+            },
+        )
+        template = templates[0]
         documents = [render_album(template, sample_books("single")) for _ in range(2)]
         nonces = [re.search(r"script-src 'nonce-([0-9a-f]+)'", doc).group(1) for doc in documents]
         self.assertNotEqual(*nonces)

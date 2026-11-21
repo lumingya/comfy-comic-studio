@@ -102,7 +102,7 @@ class TemplateTests(unittest.TestCase):
 
     def test_every_builtin_renders_offline_and_safely(self):
         templates = builtin_templates()
-        self.assertEqual(len(templates), 5)
+        self.assertEqual(len(templates), 7)
         for tpl in templates:
             with self.subTest(tpl.id):
                 doc = render_album(tpl, books(), AlbumOptions(show_prompts=True, signature="Mio"))
@@ -129,7 +129,10 @@ class TemplateTests(unittest.TestCase):
             "export-folio": ("folio", "中缝光影", "精装对页 · Folio"),
         }
         templates = {template.id: template for template in builtin_templates()}
-        self.assertEqual(set(templates), {*expected, "mio-fit", "export-seamless"})
+        self.assertEqual(
+            set(templates),
+            {*expected, "mio-fit", "export-seamless", "export-zine", "export-contact-sheet"},
+        )
         for template_id, (layout, marker, title) in expected.items():
             with self.subTest(template_id):
                 template = templates[template_id]
@@ -149,6 +152,40 @@ class TemplateTests(unittest.TestCase):
                 rendered = render_album(template, books())
                 self.assertIn("mio-album-data", rendered)
                 self.assertIn("mio.album-html.v1", rendered)
+
+    def test_curated_template_controls_keep_defaults_and_render_safely(self):
+        base = next(tpl for tpl in builtin_templates() if tpl.id == "export-monograph")
+        legacy = AlbumTemplate.model_validate(
+            {**base.model_dump(), "options": {"accent": base.options.accent}}
+        )
+        self.assertEqual(legacy.options.subtitle, "")
+        self.assertFalse(legacy.options.cover_crop)
+        self.assertEqual(legacy.options.cover_focal_x, 50)
+        self.assertEqual(legacy.options.cover_focal_y, 50)
+        self.assertTrue(legacy.options.chapter_header)
+        original = render_album(legacy, books())
+        self.assertNotIn('class="edition-cover"', original)
+        self.assertIn('class="chapter-header">', original)
+
+        tuned = legacy.model_copy(
+            update={
+                "options": legacy.options.model_copy(
+                    update={
+                        "subtitle": "<em>暮色与来信</em>",
+                        "cover_crop": True,
+                        "cover_focal_x": 24,
+                        "cover_focal_y": 76,
+                        "chapter_header": False,
+                    }
+                )
+            }
+        )
+        rendered = render_album(tuned, books())
+        self.assertIn("&lt;em&gt;暮色与来信&lt;/em&gt;", rendered)
+        self.assertNotIn("<em>暮色与来信</em>", rendered)
+        self.assertIn('class="edition-cover"', rendered)
+        self.assertIn("object-position:24% 76%", rendered)
+        self.assertIn(".chapter-header{display:none!important}", rendered)
 
     def test_captions_and_prompts_can_be_hidden(self):
         tpl = parse_template({"id": "mini", "title": "迷你", "html": MINIMAL})
