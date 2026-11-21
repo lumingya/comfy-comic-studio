@@ -1,6 +1,7 @@
 import type { ExtensionPanel } from '../api/open';
 import {
   BRIDGE,
+  type PanelAppearance as ContractPanelAppearance,
   type PanelContext as ContractPanelContext,
   type PanelBridgeRequest,
   type PanelBridgeResponse,
@@ -15,6 +16,7 @@ const MAX_CONCURRENT = BRIDGE.panel.limits.concurrent;
 const MAX_REQUEST_IDS = BRIDGE.panel.limits.requestIds;
 
 export type PanelContext = ContractPanelContext;
+export type PanelAppearance = ContractPanelAppearance;
 export type PanelCall = PanelBridgeRequest;
 export type PanelResult = PanelBridgeResponse;
 
@@ -33,6 +35,7 @@ export function createPanelBridge(options: {
   panel: ExtensionPanel;
   session: string;
   context: PanelContext;
+  appearance: PanelAppearance;
   frame: () => Window | null;
   request: (body: PanelCall, signal: AbortSignal) => Promise<PanelResult>;
   binaryRequest?: (
@@ -44,6 +47,7 @@ export function createPanelBridge(options: {
   onMutation?: () => void;
 }) {
   const { panel, session, context } = options;
+  let appearance = options.appearance;
   const pending = new Map<string, AbortController>();
   const seen = new Set<string>();
   const media = createPanelMedia(options.onDownloadChange);
@@ -67,7 +71,8 @@ export function createPanelBridge(options: {
     });
 
   const handle = (event: MessageEvent) => {
-    if (disposed || !options.frame() || event.source !== options.frame()) return;
+    if (disposed || event.origin !== 'null' || !options.frame() || event.source !== options.frame())
+      return;
     const message: unknown = event.data;
     if (!record(message) || message.version !== BRIDGE.panel.version || message.session !== session)
       return;
@@ -77,6 +82,7 @@ export function createPanelBridge(options: {
         ...envelope,
         type: BRIDGE.panel.types.init,
         context,
+        appearance,
         requests: panel.requests ?? [],
         limits: {
           requestBytes: PANEL_REQUEST_LIMIT,
@@ -194,6 +200,16 @@ export function createPanelBridge(options: {
   return {
     handle,
     abort,
+    updateAppearance: (next: PanelAppearance) => {
+      if (JSON.stringify(appearance) === JSON.stringify(next)) return;
+      appearance = next;
+      if (!ready || disposed) return;
+      reply({
+        ...envelope,
+        type: BRIDGE.panel.types.appearance,
+        appearance,
+      });
+    },
     saveDownload: () => {
       if (!disposed) media.saveDownload();
     },

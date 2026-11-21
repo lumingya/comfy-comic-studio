@@ -7,6 +7,25 @@ import { createPanelBridge, type PanelResult } from './extensionBridge';
 import { readPanelBinary, type PanelDownload } from './extensionMedia';
 import type { CreationContext } from '../extensions/creationContext';
 import { useCreationChannel } from '../extensions/useCreationChannel';
+import { BRIDGE } from '../api/extensionProtocol';
+import type { PanelAppearance } from './extensionBridge';
+
+function currentAppearance(): PanelAppearance {
+  const root = document.documentElement;
+  const style = getComputedStyle(root);
+  const tokens = Object.fromEntries(
+    BRIDGE.colorTokens.flatMap((token) => {
+      const value = style.getPropertyValue(`--${token}`).trim();
+      return value ? [[token, value]] : [];
+    }),
+  );
+  const theme = root.dataset.theme;
+  return {
+    tokens,
+    theme: theme === 'dark' || theme === 'light' ? theme : null,
+    locale: root.lang || 'zh-CN',
+  };
+}
 
 /** Panel key used in routes: `<extension>.<panel>`. */
 export const panelKey = (p: ExtensionPanel) => `${p.extension}.${p.id}`;
@@ -54,6 +73,7 @@ export function ExtensionFrame(props: {
         ...(episode ? { episode_id: episode } : {}),
         ...(series ? { series_id: series } : {}),
       },
+      appearance: currentAppearance(),
       frame: () => frame.current?.contentWindow ?? null,
       request: async (body, signal) => {
         const response = await send(body, signal);
@@ -68,7 +88,15 @@ export function ExtensionFrame(props: {
     });
     bridge.current = current;
     window.addEventListener('message', current.handle);
+    const appearanceObserver = new MutationObserver(() => {
+      current.updateAppearance(currentAppearance());
+    });
+    appearanceObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['style', 'data-theme', 'lang'],
+    });
     return () => {
+      appearanceObserver.disconnect();
       window.removeEventListener('message', current.handle);
       current.dispose();
       bridge.current = null;

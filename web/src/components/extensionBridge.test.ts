@@ -31,7 +31,8 @@ function setup(
   }),
 ) {
   const request = vi.fn(handler);
-  const frame = { postMessage: vi.fn() } as unknown as Window;
+  const postMessage = vi.fn();
+  const frame = { postMessage } as unknown as Window;
   const mutation = vi.fn();
   const binaryRequest = vi.fn(
     async (_body: PanelCall, _kind: 'image' | 'download', _signal: AbortSignal) => ({
@@ -44,6 +45,7 @@ function setup(
     panel,
     session: 'nonce',
     context: { episode_id: 'ep' },
+    appearance: { tokens: { bg: '#17191b', accent: '#e0a070' }, theme: 'dark', locale: 'zh-CN' },
     frame: () => frame,
     request,
     onMutation: mutation,
@@ -52,7 +54,11 @@ function setup(
   });
   const send = (data: Record<string, unknown>, source: MessageEventSource = frame) =>
     bridge.handle(
-      new MessageEvent('message', { source, data: { version: 1, session: 'nonce', ...data } }),
+      new MessageEvent('message', {
+        source,
+        origin: 'null',
+        data: { version: 1, session: 'nonce', ...data },
+      }),
     );
   const ready = () => send({ type: 'mio:panel:ready' });
   const call = (rid = 'one', extra: Record<string, unknown> = {}) =>
@@ -63,7 +69,18 @@ function setup(
       path_params: { episode_id: 'ep' },
       ...extra,
     });
-  return { bridge, frame, request, binaryRequest, download, mutation, send, ready, call };
+  return {
+    bridge,
+    frame,
+    postMessage,
+    request,
+    binaryRequest,
+    download,
+    mutation,
+    send,
+    ready,
+    call,
+  };
 }
 
 describe('sandbox panel bridge', () => {
@@ -74,12 +91,61 @@ describe('sandbox panel bridge', () => {
     s.send({ type: 'mio:panel:ready', session: 'stale' });
     s.send({ type: 'mio:panel:ready', version: 2 });
     expect(s.frame.postMessage).not.toHaveBeenCalled();
+    s.bridge.handle(
+      new MessageEvent('message', {
+        source: s.frame,
+        origin: 'https://attacker.invalid',
+        data: { version: 1, session: 'nonce', type: 'mio:panel:ready' },
+      }),
+    );
+    expect(s.frame.postMessage).not.toHaveBeenCalled();
     s.ready();
     expect(s.frame.postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'mio:panel:init', context: { episode_id: 'ep' } }),
+      expect.objectContaining({
+        type: 'mio:panel:init',
+        context: { episode_id: 'ep' },
+        appearance: {
+          tokens: { bg: '#17191b', accent: '#e0a070' },
+          theme: 'dark',
+          locale: 'zh-CN',
+        },
+      }),
       '*',
     );
     expect(s.request).not.toHaveBeenCalled();
+  });
+
+  it('updates appearance after initialization without changing API context', () => {
+    const s = setup();
+    s.ready();
+    s.postMessage.mockClear();
+    s.bridge.updateAppearance({ tokens: { bg: '#fff' }, theme: 'light', locale: 'en' });
+    expect(s.frame.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'mio:panel:appearance',
+        session: 'nonce',
+        appearance: { tokens: { bg: '#fff' }, theme: 'light', locale: 'en' },
+      }),
+      '*',
+    );
+    expect(s.request).not.toHaveBeenCalled();
+    s.bridge.dispose();
+  });
+
+  it('does not send appearance until the actual frame passes the session handshake', () => {
+    const s = setup();
+    s.bridge.updateAppearance({ tokens: {}, theme: null, locale: 'en' });
+    expect(s.frame.postMessage).not.toHaveBeenCalled();
+    s.send({ type: 'mio:panel:ready' }, window);
+    expect(s.frame.postMessage).not.toHaveBeenCalled();
+    s.ready();
+    s.postMessage.mockClear();
+    s.bridge.updateAppearance({ tokens: {}, theme: 'light', locale: 'en' });
+    expect(s.frame.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'mio:panel:appearance' }),
+      '*',
+    );
+    s.bridge.dispose();
   });
 
   it('passes only declared request fields and returns the correlated result', async () => {

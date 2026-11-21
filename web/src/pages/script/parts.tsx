@@ -10,6 +10,8 @@ import {
   type PromptSource,
   type Series,
 } from '../../api/types';
+import type { KnownVariables, PromptSources } from '../workshop/PromptSurface';
+import { PromptSurface } from '../workshop/PromptSurface';
 import { toast, toastError } from '../../components/toast';
 import { Loading, Select, TagInput, TextInput } from '../../components/ui';
 
@@ -104,6 +106,8 @@ export function CastEditor(props: {
 export function DialogueEditor(props: {
   value: Dialogue[];
   series: Series;
+  known: KnownVariables;
+  sources: PromptSources;
   onChange: (v: Dialogue[]) => void;
 }) {
   const { t } = useTranslation();
@@ -127,7 +131,15 @@ export function DialogueEditor(props: {
             options={DIALOGUE_KINDS.map((k) => ({ value: k, label: t(`script.kinds.${k}`) }))}
             onChange={(kind) => edit(i, { kind })}
           />
-          <TextInput value={d.text} onChange={(text) => edit(i, { text })} />
+          <PromptSurface
+            value={d.text}
+            onChange={(text) => edit(i, { text })}
+            known={props.known}
+            sources={props.sources}
+            label={`${t('script.dialogue')} ${i + 1}`}
+            className="dialogue-prompt"
+            foot={false}
+          />
           <button
             className={`btn ghost icon sm ${d.bridge ? 'active' : ''}`}
             title={t('script.bridgeHint')}

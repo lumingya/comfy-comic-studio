@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { SeriesCard } from '../../api/types';
@@ -469,5 +469,41 @@ describe('shelf direct reorder', () => {
     fireEvent.pointerUp(cover(), pointer);
     fireEvent.click(cover(), { detail: 1 });
     expect(screen.getByLabelText('测试路径')).toHaveTextContent('/gallery/book_0');
+  });
+
+  it('drags a selected group together, shows its count and offers undo', async () => {
+    useUI.setState({ shelfSort: 'createdAt', shelfOrder: [] });
+    await mount();
+    positions();
+    fireEvent.click(cover('甲册'), { ctrlKey: true });
+    fireEvent.click(cover('乙册'), { ctrlKey: true });
+    const before = screen.getAllByRole('article').map((item) => item.getAttribute('aria-label')!);
+    const target = cover('丙册');
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => target,
+    });
+    try {
+      fireEvent.pointerDown(cover('甲册'), { ...pointer, clientX: 30, clientY: 110 });
+      movePointer(350, 110);
+      expect(document.querySelector('.shelf-drag-ghost')).toHaveAttribute('data-count', '2');
+      expect(card('甲册')).toHaveClass('is-dragging');
+      expect(card('乙册')).toHaveClass('is-dragging');
+      expect(card('丙册')).toHaveClass('is-drop-target', 'is-drop-after');
+      fireEvent.pointerUp(window, pointer);
+      expect(screen.getAllByRole('article').map((item) => item.getAttribute('aria-label'))).toEqual(
+        ['丙册', ...before.filter((name) => name !== '丙册')],
+      );
+      const undo = useToasts.getState().items.at(-1)?.action;
+      expect(undo?.label).toBe('撤销');
+      act(() => undo?.onClick());
+      expect(useUI.getState().shelfSort).toBe('createdAt');
+      expect(useUI.getState().shelfOrder).toEqual([]);
+      expect(screen.getAllByRole('article').map((item) => item.getAttribute('aria-label'))).toEqual(
+        before,
+      );
+    } finally {
+      Reflect.deleteProperty(document, 'elementFromPoint');
+    }
   });
 });

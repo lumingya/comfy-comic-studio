@@ -138,6 +138,35 @@ function isFullscreenOverlay(): boolean {
   );
 }
 
+function useWallpaperIdle(timeoutSeconds: number, active: boolean): boolean {
+  const [idle, setIdle] = useState(false);
+
+  useEffect(() => {
+    if (timeoutSeconds <= 0 || !active) {
+      setIdle(false);
+      return;
+    }
+
+    let timer: ReturnType<typeof setTimeout>;
+    const resetTimer = () => {
+      setIdle(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setIdle(true), timeoutSeconds * 1000);
+    };
+    const activityEvents = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'];
+    resetTimer();
+    activityEvents.forEach((eventName) =>
+      window.addEventListener(eventName, resetTimer, { passive: true }),
+    );
+    return () => {
+      clearTimeout(timer);
+      activityEvents.forEach((eventName) => window.removeEventListener(eventName, resetTimer));
+    };
+  }, [active, timeoutSeconds]);
+
+  return timeoutSeconds > 0 && active && idle;
+}
+
 function useWallpaperSuspended(pauseWhenUnfocused: boolean): boolean {
   const covered = useWallpaperOccluded();
   const [hidden, setHidden] = useState(() => document.hidden);
@@ -178,6 +207,7 @@ function DynamicBackground({
   url,
   paused,
   pauseWhenUnfocused,
+  idleTimeoutSeconds,
   playbackRate,
   loop,
 }: {
@@ -185,11 +215,13 @@ function DynamicBackground({
   url: string;
   paused: boolean;
   pauseWhenUnfocused: boolean;
+  idleTimeoutSeconds: number;
   playbackRate: number;
   loop: boolean;
 }) {
   const suspended = useWallpaperSuspended(pauseWhenUnfocused);
-  const stopped = paused || suspended;
+  const idle = useWallpaperIdle(idleTimeoutSeconds, !paused && !suspended);
+  const stopped = paused || suspended || idle;
   return kind === 'video' ? (
     <BackgroundVideo
       url={url}
@@ -208,6 +240,7 @@ export function ThemeBackdrop({
   opacity,
   paused,
   pauseWhenUnfocused = true,
+  idleTimeoutSeconds = 30,
   playbackRate = 1,
   loop = true,
 }: {
@@ -215,6 +248,7 @@ export function ThemeBackdrop({
   opacity: number;
   paused: boolean;
   pauseWhenUnfocused?: boolean;
+  idleTimeoutSeconds?: number;
   playbackRate?: number;
   loop?: boolean;
 }) {
@@ -227,6 +261,7 @@ export function ThemeBackdrop({
           url={background.url}
           paused={paused}
           pauseWhenUnfocused={pauseWhenUnfocused}
+          idleTimeoutSeconds={idleTimeoutSeconds}
           playbackRate={playbackRate}
           loop={loop}
         />

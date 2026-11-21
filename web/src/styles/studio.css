@@ -111,7 +111,7 @@
 }
 
 .take-badges .chip {
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(3px);
   background: color-mix(in srgb, var(--bg) 70%, transparent);
 }
 
@@ -204,7 +204,7 @@
   gap: 8px;
   padding: 10px 16px;
   background: color-mix(in srgb, var(--bg-deep) 85%, transparent);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
 }
 
 .reader-page {

@@ -264,7 +264,7 @@
   background: var(--cover-chip);
   color: var(--cover-chip-text);
   font-size: 11px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
 }
 
 .glass-chip {

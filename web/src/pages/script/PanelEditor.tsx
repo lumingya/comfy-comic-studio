@@ -567,6 +567,8 @@ export function PanelEditor(props: {
           <DialogueEditor
             value={draft.dialogues}
             series={series}
+            known={completionKnown}
+            sources={completionSources}
             onChange={(dialogues) => set({ dialogues })}
           />
         </section>

@@ -248,6 +248,34 @@ describe('candidate board updates', () => {
       { takeId: 't2', action: 'reject' },
       expect.anything(),
     );
+    const splitSlider = document.querySelector<HTMLInputElement>(
+      '.board-split-controls input[type="range"]',
+    )!;
+    expect(splitSlider).toHaveValue('50');
+    const dividerHandle = document.querySelector<HTMLButtonElement>('.board-split-handle')!;
+    fireEvent.keyDown(dividerHandle, { key: 'ArrowRight' });
+    expect(dividerHandle).toHaveAttribute('aria-valuenow', '52');
+    fireEvent.keyDown(splitSlider, { key: 'ArrowRight' });
+    expect(splitSlider).toHaveValue('54');
+    fireEvent.change(splitSlider, { target: { value: '64' } });
+    expect(document.querySelector('.board-split-divider')).toHaveStyle({ left: '64%' });
+    fireEvent.keyDown(dividerHandle, { key: 'ArrowLeft' });
+    expect(dividerHandle).toHaveAttribute('aria-valuenow', '62');
+    const zoomSlider = document.querySelectorAll<HTMLInputElement>(
+      '.board-split-controls input[type="range"]',
+    )[1];
+    fireEvent.change(zoomSlider, { target: { value: '2' } });
+    expect(document.querySelectorAll('.board-split-frame')).toHaveLength(2);
+    for (const frame of document.querySelectorAll('.board-split-frame'))
+      expect(frame).toHaveStyle({ transform: 'translate(0px, 0px) scale(2)' });
+    fireEvent.click(
+      screen.getByRole('button', { name: /采用.*固定候选|board\.adopt.*board\.compareReference/ }),
+    );
+    expect(actions.mutate).toHaveBeenLastCalledWith(
+      { takeId: 't3', action: 'adopt' },
+      expect.anything(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /并排对比|board\.compareSideBySide/ }));
     fireEvent.click(screen.getByRole('button', { name: '原图细节' }));
     expect(document.querySelector('.board-compare')).toHaveAttribute('data-detail', 'true');
     const viewport = screen.getByRole('region', { name: '固定候选' });

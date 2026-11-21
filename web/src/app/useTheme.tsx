@@ -22,6 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const themeOpacity = useUI((s) => s.themeOpacity);
   const paused = useUI((s) => s.themeBackgroundPaused);
   const pauseWhenUnfocused = useUI((s) => s.pauseWallpaperWhenUnfocused);
+  const wallpaperIdleTimeout = useUI((s) => s.wallpaperIdleTimeout);
   const allowThemeVideoWithReducedMotion = useUI((s) => s.allowThemeVideoWithReducedMotion);
   const enabledThemeScripts = useUI((s) => s.enabledThemeScripts);
   const reduceMotion = useUI((s) => s.reduceMotion);
@@ -111,6 +112,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           background?.kind === 'video' && allowThemeVideoWithReducedMotion,
         )}
         pauseWhenUnfocused={pauseWhenUnfocused}
+        idleTimeoutSeconds={wallpaperIdleTimeout}
         playbackRate={playbackRate}
         loop={loop}
       />

@@ -7,7 +7,10 @@ beforeEach(() => {
   vi.spyOn(document, 'hasFocus').mockReturnValue(true);
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe('theme image motion', () => {
   it('pauses animated images while preserving static image backgrounds', () => {
@@ -170,6 +173,41 @@ describe('theme image motion', () => {
     expect(play).toHaveBeenCalledTimes(playCalls);
     view.unmount();
     play.mockRestore();
+  });
+
+  it('pauses an animated wallpaper after the configured idle timeout and resumes on activity', () => {
+    vi.useFakeTimers();
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const wallpaper = {
+      kind: 'video',
+      url: '/wallpaper.mp4',
+      opacity: 0.4,
+      animated: false,
+      mime_type: 'video/mp4',
+    } as const;
+    const view = render(
+      <ThemeBackdrop background={wallpaper} opacity={0.4} paused={false} idleTimeoutSeconds={30} />,
+    );
+    const video = document.querySelector<HTMLVideoElement>('.theme-backdrop video')!;
+    expect(video.autoplay).toBe(true);
+    act(() => vi.advanceTimersByTime(29_999));
+    expect(video.autoplay).toBe(true);
+    act(() => vi.advanceTimersByTime(1));
+    expect(video.autoplay).toBe(false);
+    expect(pause).toHaveBeenCalled();
+
+    const playCalls = play.mock.calls.length;
+    fireEvent.pointerMove(window);
+    expect(video.autoplay).toBe(true);
+    expect(play.mock.calls.length).toBeGreaterThan(playCalls);
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(video.autoplay).toBe(false);
+    fireEvent.keyDown(window, { key: 'ArrowDown' });
+    expect(video.autoplay).toBe(true);
+    view.unmount();
+    vi.useRealTimers();
   });
 
   it('keeps the paused video frame through focus, visibility and nested full-screen changes', () => {

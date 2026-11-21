@@ -8,6 +8,7 @@ import { shortcutBlocked } from '../../app/shortcuts';
 import { CloudRequestDetails, TakeParameterSummary } from '../../components/CloudRequestDetails';
 import { BoardZoomDialog } from './BoardZoomDialog';
 import './board-review.css';
+import { SplitCompare } from './SplitCompare';
 
 /** A comparison pins one take; navigation never compares unrelated panels. */
 export function BoardReview(props: {
@@ -26,6 +27,7 @@ export function BoardReview(props: {
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [side, setSide] = useState(1);
   const [detail, setDetail] = useState(false);
+  const [splitMode, setSplitMode] = useState(true);
   const pinned = pinnedId ? props.takes.get(pinnedId) : undefined;
   const selected = side === 0 && pinned ? pinned : props.take;
   const alternatives = props.panelTakes.filter((take) => take.id !== pinnedId);
@@ -65,6 +67,15 @@ export function BoardReview(props: {
         event.target instanceof Element &&
         event.target.closest('.board-compare-viewport') &&
         event.key.startsWith('Arrow')
+      )
+        return;
+      if (splitMode && event.target instanceof HTMLInputElement && event.target.type === 'range')
+        return;
+      if (
+        splitMode &&
+        event.target instanceof Element &&
+        event.target.closest('.board-split-handle') &&
+        ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)
       )
         return;
       if (event.key === 'ArrowRight') step(1);
@@ -114,9 +125,46 @@ export function BoardReview(props: {
             <span className="kbd">C</span>
           </button>
           {pinned ? (
+            <button
+              className="btn"
+              aria-pressed={splitMode}
+              onClick={() => {
+                setSplitMode(!splitMode);
+                setDetail(false);
+              }}
+            >
+              <Columns2 size={15} />
+              {t(splitMode ? 'board.compareSideBySide' : 'board.compareSplit')}
+            </button>
+          ) : null}
+          {pinned && !splitMode ? (
             <button className="btn" aria-pressed={detail} onClick={() => setDetail(!detail)}>
               <Scan size={15} /> {t('board.compareDetail')}
             </button>
+          ) : null}
+          {pinned ? (
+            <>
+              <button
+                className="btn ghost sm"
+                disabled={pinned.status === 'adopted'}
+                onClick={() => {
+                  setSide(0);
+                  props.onAction(pinned, 'adopt');
+                }}
+              >
+                {t('board.adopt')} · {t('board.compareReference')}
+              </button>
+              <button
+                className="btn ghost sm"
+                disabled={props.take.status === 'adopted'}
+                onClick={() => {
+                  setSide(1);
+                  props.onAction(props.take, 'adopt');
+                }}
+              >
+                {t('board.adopt')} · {t('board.compareCandidate')}
+              </button>
+            </>
           ) : null}
           <span className="grow" />
           {selected.status === 'rejected' ? (
@@ -141,37 +189,68 @@ export function BoardReview(props: {
       }
     >
       {pinned ? (
-        <div className="board-compare" data-detail={detail || undefined}>
-          {[pinned, props.take].map((take, index) => {
-            const label = t(index === 0 ? 'board.compareReference' : 'board.compareCandidate');
-            return (
-              <section key={index} className="board-compare-side" data-selected={side === index}>
-                <button
-                  className="board-compare-choice"
-                  aria-pressed={side === index}
-                  onClick={() => setSide(index)}
+        splitMode ? (
+          <div className="board-split-compare">
+            <div className="board-split-choices">
+              {[pinned, props.take].map((take, index) => {
+                const label = t(index === 0 ? 'board.compareReference' : 'board.compareCandidate');
+                return (
+                  <button
+                    key={take.id}
+                    className="board-compare-choice"
+                    data-selected={side === index}
+                    aria-pressed={side === index}
+                    onClick={() => setSide(index)}
+                  >
+                    <span>
+                      <span className="kbd">{index + 1}</span> {label}
+                    </span>
+                    {take.status === 'adopted' ? (
+                      <Check size={14} aria-label={t('board.adopted')} />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+            <SplitCompare reference={pinned} candidate={props.take} onSelect={setSide} />
+          </div>
+        ) : (
+          <div className="board-compare" data-detail={detail || undefined}>
+            {[pinned, props.take].map((take, index) => {
+              const label = t(index === 0 ? 'board.compareReference' : 'board.compareCandidate');
+              return (
+                <section
+                  key={take.id}
+                  className="board-compare-side"
+                  data-selected={side === index}
                 >
-                  <span>
-                    <span className="kbd">{index + 1}</span> {label}
-                  </span>
-                  {take.status === 'adopted' ? (
-                    <Check size={14} aria-label={t('board.adopted')} />
-                  ) : null}
-                </button>
-                <div
-                  className="board-compare-viewport"
-                  role="region"
-                  aria-label={label}
-                  tabIndex={0}
-                  onPointerDown={() => setSide(index)}
-                  onFocus={() => setSide(index)}
-                >
-                  <img src={assetUrl(take.asset_id)} alt={label} />
-                </div>
-              </section>
-            );
-          })}
-        </div>
+                  <button
+                    className="board-compare-choice"
+                    aria-pressed={side === index}
+                    onClick={() => setSide(index)}
+                  >
+                    <span>
+                      <span className="kbd">{index + 1}</span> {label}
+                    </span>
+                    {take.status === 'adopted' ? (
+                      <Check size={14} aria-label={t('board.adopted')} />
+                    ) : null}
+                  </button>
+                  <div
+                    className="board-compare-viewport"
+                    role="region"
+                    aria-label={label}
+                    tabIndex={0}
+                    onPointerDown={() => setSide(index)}
+                    onFocus={() => setSide(index)}
+                  >
+                    <img src={assetUrl(take.asset_id)} alt={label} />
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )
       ) : (
         <div className="zoom">
           <img src={assetUrl(props.take.asset_id)} alt="" />

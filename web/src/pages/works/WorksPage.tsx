@@ -21,7 +21,7 @@ import { ExportBooks, RenameBooks } from './ShelfDialogs';
 import {
   filterShelf,
   missingOf,
-  reorderShelf,
+  reorderShelfMany,
   shelfState,
   SHELF_FILTERS,
   useGeneratingSeries,
@@ -129,16 +129,27 @@ export default function WorksPage() {
   });
   const visibleSelection = shelf.snapshot ? new Set(shelf.snapshot) : selection.set;
   const chosen = books.filter((b) => visibleSelection.has(b.id!));
+  const selectedBookIds = bookIds.filter((id) => selection.has(id));
   /** Legacy reorderCollectionBook: the drop becomes the manual order (and 手动排序 the sort). */
-  const moveBook = (source: string, target: string, after: boolean) => {
-    setOrder(reorderShelf(items, bookIds, order, sort, source, target, after));
+  const moveBook = (source: string, target: string, after: boolean, moving = [source]) => {
+    const previous = { order, sort };
+    setOrder(reorderShelfMany(items, bookIds, order, sort, moving, target, after));
     setSort('manual');
-    toast(t('classic.shelf.reordered'));
+    toast(t('classic.shelf.reordered'), {
+      action: {
+        label: t('common.undo'),
+        onClick: () => {
+          setOrder(previous.order);
+          setSort(previous.sort);
+        },
+      },
+    });
   };
   const reorder = useShelfReorder({
     root: shelf.ref,
     enabled: !readerOpen && !dialogOpen && !menu.state,
-    sortable: !bulk && !selection.ids.length && books.length > 1,
+    sortable: !bulk && books.length > 1,
+    selectedIds: selectedBookIds,
     onDrop: moveBook,
   });
   useEffect(() => {
@@ -351,7 +362,9 @@ export default function WorksPage() {
                   state={stateOf(s)}
                   onMenu={(e) => openMenu(s, e)}
                   onPointerDown={reorder.onPointerDown}
-                  sortable={!bulk && !selection.ids.length && books.length > 1}
+                  sortable={
+                    !bulk && books.length > 1 && (!selection.ids.length || selection.has(s.id!))
+                  }
                   selecting={bulk}
                   selected={selection.has(s.id!)}
                   context={menu.state?.payload.focusId === s.id}

@@ -12,6 +12,7 @@ interface UIState {
   themeOpacity: Record<string, number>;
   themeBackgroundPaused: boolean;
   pauseWallpaperWhenUnfocused: boolean;
+  wallpaperIdleTimeout: WallpaperIdleTimeout;
   allowThemeVideoWithReducedMotion: boolean;
   enabledThemeScripts: string[];
   /** Last explicit theme id per mode, for the quick toggle (see theme.toggled). */
@@ -20,6 +21,7 @@ interface UIState {
   setThemeOpacity: (id: string, opacity: number) => void;
   setThemeBackgroundPaused: (paused: boolean) => void;
   setPauseWallpaperWhenUnfocused: (pause: boolean) => void;
+  setWallpaperIdleTimeout: (seconds: WallpaperIdleTimeout) => void;
   setAllowThemeVideoWithReducedMotion: (allow: boolean) => void;
   setThemeScriptEnabled: (key: string, enabled: boolean) => void;
   showRejected: boolean;
@@ -77,6 +79,10 @@ export type DisplayFontScale = (typeof FONT_SCALE_OPTS)[number];
 export const SHELF_SORTS = ['manual', 'createdAt', 'updatedAt', 'totalSteps'] as const;
 export type ShelfSort = (typeof SHELF_SORTS)[number];
 
+/** Seconds of inactivity before the animated wallpaper is paused; zero disables the timer. */
+export const WALLPAPER_IDLE_TIMEOUTS = [0, 30, 60, 180] as const;
+export type WallpaperIdleTimeout = (typeof WALLPAPER_IDLE_TIMEOUTS)[number];
+
 export const useUI = create<UIState>()(
   persist(
     (set) => ({
@@ -84,6 +90,7 @@ export const useUI = create<UIState>()(
       themeOpacity: {},
       themeBackgroundPaused: false,
       pauseWallpaperWhenUnfocused: true,
+      wallpaperIdleTimeout: 30,
       allowThemeVideoWithReducedMotion: false,
       enabledThemeScripts: [],
       recentThemes: {},
@@ -103,6 +110,7 @@ export const useUI = create<UIState>()(
       setThemeBackgroundPaused: (themeBackgroundPaused) => set({ themeBackgroundPaused }),
       setPauseWallpaperWhenUnfocused: (pauseWallpaperWhenUnfocused) =>
         set({ pauseWallpaperWhenUnfocused }),
+      setWallpaperIdleTimeout: (wallpaperIdleTimeout) => set({ wallpaperIdleTimeout }),
       setAllowThemeVideoWithReducedMotion: (allowThemeVideoWithReducedMotion) =>
         set({ allowThemeVideoWithReducedMotion }),
       setThemeScriptEnabled: (key, enabled) =>
@@ -145,12 +153,13 @@ export const useUI = create<UIState>()(
     }),
     {
       name: 'mio.ui',
-      version: 2,
+      version: 3,
       partialize: (s) => ({
         theme: s.theme,
         themeOpacity: s.themeOpacity,
         themeBackgroundPaused: s.themeBackgroundPaused,
         pauseWallpaperWhenUnfocused: s.pauseWallpaperWhenUnfocused,
+        wallpaperIdleTimeout: s.wallpaperIdleTimeout,
         allowThemeVideoWithReducedMotion: s.allowThemeVideoWithReducedMotion,
         enabledThemeScripts: s.enabledThemeScripts,
         recentThemes: s.recentThemes,
@@ -185,6 +194,11 @@ export const useUI = create<UIState>()(
           ),
           themeBackgroundPaused: !!state.themeBackgroundPaused,
           pauseWallpaperWhenUnfocused: state.pauseWallpaperWhenUnfocused !== false,
+          wallpaperIdleTimeout: WALLPAPER_IDLE_TIMEOUTS.includes(
+            state.wallpaperIdleTimeout as WallpaperIdleTimeout,
+          )
+            ? (state.wallpaperIdleTimeout as WallpaperIdleTimeout)
+            : 30,
           allowThemeVideoWithReducedMotion: !!state.allowThemeVideoWithReducedMotion,
           enabledThemeScripts: Array.isArray(state.enabledThemeScripts)
             ? state.enabledThemeScripts.filter(

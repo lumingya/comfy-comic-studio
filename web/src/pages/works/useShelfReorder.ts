@@ -14,6 +14,7 @@ const CONTROL = 'input,textarea,select,[contenteditable],button,a,[role="button"
 
 interface Gesture {
   id: string;
+  moving: string[];
   pointerId: number;
   startX: number;
   startY: number;
@@ -35,12 +36,15 @@ export function useShelfReorder(options: {
   root: RefObject<HTMLElement | null>;
   enabled: boolean;
   sortable: boolean;
-  onDrop: (source: string, target: string, after: boolean) => void;
+  selectedIds?: readonly string[];
+  onDrop: (source: string, target: string, after: boolean, moving?: string[]) => void;
 }) {
   const latest = useRef(options);
   latest.current = options;
   const cleanup = useRef<(() => void) | null>(null);
   const suppressClick = useRef(false);
+  const findCard = (root: HTMLElement, id: string) =>
+    [...root.querySelectorAll<HTMLElement>(CARD)].find((el) => el.dataset.shelfId === id);
   useEffect(() => () => cleanup.current?.(), []);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
@@ -56,10 +60,14 @@ export function useShelfReorder(options: {
     if (!card || !root) return;
     const control = e.target.closest(CONTROL);
     if (control && !control.matches('[data-shelf-open]')) return;
+    const selectedIds = latest.current.selectedIds ?? [];
+    const selectedDrag = selectedIds.length > 1 && selectedIds.includes(card.dataset.shelfId!);
+    const moving = selectedDrag ? [...selectedIds] : [card.dataset.shelfId!];
     e.preventDefault();
     cleanup.current?.();
     const g: Gesture = {
       id: card.dataset.shelfId!,
+      moving,
       pointerId: e.pointerId,
       startX: e.clientX,
       startY: e.clientY,
@@ -69,7 +77,13 @@ export function useShelfReorder(options: {
       active: false,
       target: null,
       after: false,
-      sortable: latest.current.sortable && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey,
+      sortable:
+        latest.current.sortable &&
+        (!selectedIds.length || selectedDrag) &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.shiftKey &&
+        !e.altKey,
     };
     const scroller =
       root.closest<HTMLElement>('main') ?? (document.scrollingElement as HTMLElement | null);
@@ -94,6 +108,7 @@ export function useShelfReorder(options: {
       }
       el.style.width = `${rect.width}px`;
       el.style.height = `${rect.height}px`;
+      if (g.moving.length > 1) el.dataset.count = String(g.moving.length);
       document.body.append(el);
       return el;
     };
@@ -107,7 +122,7 @@ export function useShelfReorder(options: {
     const hit = (x: number, y: number) => {
       const el = document.elementFromPoint(x, y);
       const over = el?.closest<HTMLElement>(CARD);
-      if (over && root.contains(over) && over.dataset.shelfId !== g.id) {
+      if (over && root.contains(over) && !g.moving.includes(over.dataset.shelfId ?? '')) {
         const r = over.getBoundingClientRect();
         return { card: over, after: x > r.left + r.width / 2 };
       }
@@ -161,7 +176,9 @@ export function useShelfReorder(options: {
       ghost?.remove();
       ghost = null;
       clearTarget();
-      card.classList.remove('is-dragging');
+      for (const id of g.moving) {
+        findCard(root!, id)?.classList.remove('is-dragging');
+      }
       document.body.classList.remove('shelf-reordering');
       window.removeEventListener('pointermove', move, true);
       window.removeEventListener('pointerup', up, true);
@@ -186,7 +203,9 @@ export function useShelfReorder(options: {
         document.getSelection?.()?.removeAllRanges();
         if (g.sortable) {
           ghost = makeGhost();
-          g.card.classList.add('is-dragging');
+          for (const id of g.moving) {
+            findCard(root!, id)?.classList.add('is-dragging');
+          }
           document.body.classList.add('shelf-reordering');
         }
       }
@@ -204,7 +223,7 @@ export function useShelfReorder(options: {
       if (!active) return;
       suppressClick.current = true;
       if (latest.current.enabled && g.sortable && target && target !== g.id)
-        latest.current.onDrop(g.id, target, after);
+        latest.current.onDrop(g.id, target, after, g.moving);
     }
     function key(ev: KeyboardEvent) {
       if (ev.key !== 'Escape' || shortcutBlocked(ev, root, true)) return;

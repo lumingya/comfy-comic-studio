@@ -1,0 +1,106 @@
+.story-import {
+  display: grid;
+  gap: 14px;
+  min-width: min(680px, calc(100vw - 64px));
+}
+
+.story-import-input {
+  min-height: 170px;
+  resize: vertical;
+}
+
+.story-import-preview-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.story-import-limit {
+  color: var(--danger, #b54b43);
+}
+
+.story-import-preview {
+  display: grid;
+  gap: 7px;
+  max-height: min(36vh, 340px);
+  overflow: auto;
+  margin: 0;
+  padding: 0 4px 0 0;
+  list-style: none;
+}
+
+.story-import-preview li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--panel) 68%, transparent);
+}
+
+.story-import-number {
+  color: var(--accent);
+  font: 0.72rem/1.7 var(--mono);
+}
+
+.story-import-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.story-import-copy strong,
+.story-import-copy p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.story-import-copy p {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.6;
+}
+
+.story-import-copy p svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+.story-import-empty,
+.story-import-more {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 680px) {
+  .story-import {
+    min-width: 0;
+  }
+
+  .story-import-input {
+    min-height: 140px;
+  }
+}
+
+.dialogue-row .prompt-surface:has(> textarea.dialogue-prompt) {
+  min-height: 40px;
+}
+
+.dialogue-row .prompt-surface > textarea.dialogue-prompt {
+  min-height: 40px;
+  height: 58px;
+  resize: vertical;
+}

@@ -7,6 +7,7 @@ import {
   missingOf,
   moveId,
   reorderShelf,
+  reorderShelfMany,
   shelfDay,
   shelfState,
   type ShelfFacts,
@@ -127,6 +128,18 @@ describe('manual order', () => {
     expect(
       reorderShelf(items, ['a', 'b', 'c', 'd'], ['a', 'b', 'c', 'd'], 'manual', 'a', 'd', true),
     ).toEqual(['b', 'c', 'd', 'a']);
+  });
+
+  it('moves a selection together in displayed order and leaves a drop on a selected album unchanged', () => {
+    expect(
+      reorderShelfMany(items, ['b', 'a', 'd', 'c'], [], 'createdAt', ['c', 'b'], 'a', true),
+    ).toEqual(['a', 'b', 'c', 'd']);
+    expect(reorderShelfMany(items, ['b', 'a', 'd', 'c'], [], 'createdAt', ['c', 'b'], 'c')).toEqual(
+      ['b', 'a', 'd', 'c'],
+    );
+    expect(
+      reorderShelfMany(items, ['c', 'b'], ['a', 'b', 'c', 'd'], 'updatedAt', ['c', 'b'], 'a'),
+    ).toEqual(['c', 'b', 'a', 'd']);
   });
 });
 

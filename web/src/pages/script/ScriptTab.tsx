@@ -11,6 +11,7 @@ import {
   ClipboardCopy,
   Copy,
   Download,
+  FileText,
   ListChecks,
   Lock,
   MoveVertical,
@@ -50,6 +51,7 @@ import { PanelList } from './PanelList';
 import { bundlePanels, downloadJson, PanelImportError, parsePanelBundle } from './panelIO';
 import { usePublishCreationContext } from '../../extensions/creationContext';
 import { useHostSlotMenu } from '../../extensions/hostSlots';
+import { StoryImportDialog } from './StoryImportDialog';
 
 export default function ScriptTab() {
   const { t } = useTranslation();
@@ -67,6 +69,7 @@ export default function ScriptTab() {
   const patchEpisode = usePatchEpisode(episode.id!);
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[] | null>(null);
+  const [storyImportOpen, setStoryImportOpen] = useState(false);
   const [transfer, setTransfer] = useState<{ episode: Episode; ids: string[] } | null>(null);
   const openTransfer = async (list: string[]) => {
     try {
@@ -286,6 +289,19 @@ export default function ScriptTab() {
       else toastError(error);
     }
   };
+  const onImportStory = async (list: Record<string, unknown>[]) => {
+    try {
+      await flushEditors();
+      const ep = await importPanels.mutateAsync({ panels: list, after: selectedId });
+      const known = new Set(ids);
+      const created = ep.panels.filter((p) => !known.has(p.id)).sort((a, b) => a.order - b.order);
+      if (created[0]) select(created[0].id!);
+      setStoryImportOpen(false);
+      toast(t('batch.imported', { count: created.length }));
+    } catch (error) {
+      toastError(error);
+    }
+  };
   const pickImport = (after: string | null) => {
     importAfter.current = after;
     fileInput.current?.click();
@@ -488,6 +504,14 @@ export default function ScriptTab() {
           >
             <Upload size={14} />
           </button>
+          <button
+            className="btn icon sm"
+            title={t('ws.story.textImport.open')}
+            aria-label={t('ws.story.textImport.open')}
+            onClick={() => setStoryImportOpen(true)}
+          >
+            <FileText size={14} />
+          </button>
           <button className="btn icon sm" title={t('script.addPanel')} onClick={addAfter}>
             <Plus size={14} />
           </button>
@@ -605,6 +629,13 @@ export default function ScriptTab() {
           onDone={selection.clear}
         />
       ) : null}
+      <StoryImportDialog
+        open={storyImportOpen}
+        busy={importPanels.isPending}
+        characters={series.bible.characters}
+        onOpenChange={setStoryImportOpen}
+        onImport={(list) => void onImportStory(list)}
+      />
       <Modal
         open={!!moveTarget}
         onOpenChange={(open) => !open && setMoveTarget(null)}

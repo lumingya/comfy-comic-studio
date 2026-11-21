@@ -27,3 +27,30 @@
     cursor: grab;
   }
 }
+.shelf-drag-ghost[data-count]::after {
+  content: attr(data-count);
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  display: grid;
+  min-width: 25px;
+  height: 25px;
+  place-items: center;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent, white);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.shelf-drag-ghost[data-count] {
+  overflow: visible;
+  box-shadow:
+    0 24px 60px rgb(var(--shadow-rgb) / 0.5),
+    4px 4px 0 -1px var(--panel),
+    5px 5px 0 0 var(--line),
+    8px 8px 0 -1px var(--panel),
+    9px 9px 0 0 var(--line);
+}

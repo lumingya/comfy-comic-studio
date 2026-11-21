@@ -66,3 +66,18 @@ it('defaults to pausing unfocused wallpaper and persists wallpaper power choices
     themeBackgroundPaused: true,
   });
 });
+
+it('offers a disable option and the supported idle pause intervals', async () => {
+  render(<AppearanceSection />);
+  const idle = screen
+    .getAllByRole('combobox')
+    .find((element) =>
+      ['0', '30', '60', '180'].every((value) =>
+        Array.from((element as HTMLSelectElement).options).some((option) => option.value === value),
+      ),
+    ) as HTMLSelectElement;
+  expect(idle).toHaveValue('30');
+  expect(Array.from(idle.options, (option) => option.value)).toEqual(['0', '30', '60', '180']);
+  await userEvent.selectOptions(idle, '60');
+  expect(useUI.getState().wallpaperIdleTimeout).toBe(60);
+});

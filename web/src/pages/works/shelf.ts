@@ -57,6 +57,22 @@ export function moveId(order: readonly string[], source: string, target: string,
   return out;
 }
 
+/** Move a selected run together, preserving the shelf order in which its albums appeared. */
+export function moveIds(
+  order: readonly string[],
+  sources: readonly string[],
+  target: string,
+  after = false,
+): string[] {
+  const moving = order.filter((id) => sources.includes(id));
+  if (!moving.length || moving.includes(target)) return [...order];
+  const out = order.filter((id) => !sources.includes(id));
+  const i = out.indexOf(target);
+  if (i < 0) return [...order];
+  out.splice(after ? i + 1 : i, 0, ...moving);
+  return out;
+}
+
 /**
  * Drop `source` before or after `target` (legacy reorderCollectionBook).  Outside 手动排序 the
  * shelf as displayed becomes the new manual order first, so the drop lands where it was seen;
@@ -78,6 +94,25 @@ export function reorderShelf(
     next = next.map((id) => (shown.has(id) ? displayed[i++] : id));
   }
   return moveId(next, source, target, after);
+}
+
+/** As reorderShelf, but keep a multi-selection together when it is dropped. */
+export function reorderShelfMany(
+  items: SeriesCard[],
+  displayed: readonly string[],
+  order: readonly string[],
+  sort: ShelfSort,
+  sources: readonly string[],
+  target: string,
+  after = false,
+): string[] {
+  let next = manualIds(items, order);
+  if (sort !== 'manual') {
+    const shown = new Set(displayed);
+    let i = 0;
+    next = next.map((id) => (shown.has(id) ? displayed[i++] : id));
+  }
+  return moveIds(next, sources, target, after);
 }
 
 /** Search (title / subtitle / 简介 / cast), the legacy status filter and sort; exported for tests. */
