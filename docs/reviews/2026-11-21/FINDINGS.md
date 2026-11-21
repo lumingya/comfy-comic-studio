@@ -67,3 +67,4 @@
 | --- | --- | --- | --- | --- |
 | R5-WIN-PATH-01 P1 | 更新器工作区重叠检查混用规范路径与 Windows 别名；独立复审再以扩展前缀真实覆盖 TEMP 私有文件 | Windows Python 3.11 CI 与新代理真实签名夹具；短名、`..` 首补修通过后，`\\?\` 前缀仍绕过 | [统一比较身份及租约/恢复归属](fixes/update-recovery.md)，60 项集中回归；[独立路径复验](round-5-ci-verification/windows-paths.md) 8 探针及[全新身份复验](round-5-ci-verification/path-identity.md) 4 探针通过，保留原数据损坏反证 | 已关闭，最终跨平台整合另核对 |
 | R5-JOBS-SQLITE-01 P1 | 任务完工/调度共享连接的无锁读取导致 SQLite API misuse，生成项转为 uncertain，整批 blocked | Python 3.13 CI；原用例自然重复第 20 次重现；受控连接/游标护栏旧代码 4 项全红 | [连接锁/游标快照](fixes/sqlite-concurrency.md)；31 项相关、修后原用例 40 次通过；[新独立复验](round-5-ci-verification/sqlite.md) | 已关闭，最终跨平台整合另核对 |
+| R5-TEST-EXPORT-01 P3 | 导出测试每例先异步生成素材，慢保存时在无关的 5 秒准备截止处失败，未进入导出断言 | `0bf22c2` CI 两个 Linux job 全绿、Windows 1/1,576 在 setUp 超时；受控慢保存证明原任务仍前进，不冒称唯一定位 CI 慢因 | [导出域夹具](fixes/export-test-timeout.md)，30 项相关通过；[新独立复验](round-5-ci-verification/export-fixture.md)确认真实两格素材/采用/布局、两页 PDF 和取消正文均保留 | 已关闭，最终跨平台整合另核对 |
