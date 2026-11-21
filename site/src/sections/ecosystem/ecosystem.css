@@ -1,0 +1,624 @@
+.ecosystem {
+  padding-block: clamp(4.5rem, 8vw, 8rem);
+}
+
+.ecosystem-edition {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-top: 1px solid var(--ink);
+  padding-block: 1.2rem 2.6rem;
+}
+
+.ecosystem-edition > span {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+}
+
+.ecosystem-main-spread {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  gap: clamp(2rem, 5.2vw, 5rem);
+  align-items: start;
+}
+
+.ecosystem-manifesto {
+  position: relative;
+  display: flex;
+  min-height: 56rem;
+  flex-direction: column;
+  padding: clamp(2rem, 4vw, 3.6rem);
+  background: var(--sage);
+}
+
+.ecosystem-ownership-mark {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+}
+
+.ecosystem-ownership-mark svg {
+  width: 3rem;
+  stroke: currentColor;
+  stroke-width: 1.1;
+}
+
+.ecosystem-manifesto-title {
+  font-family: var(--font-display);
+  font-size: clamp(3.7rem, 6.5vw, 6rem);
+  font-weight: 400;
+  letter-spacing: -0.07em;
+  line-height: 1.22;
+}
+
+.ecosystem-manifesto-title > span,
+.ecosystem-catalogue-title > span {
+  display: block;
+}
+
+.ecosystem-manifesto-intro {
+  max-width: 22rem;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  line-height: 1.9;
+  text-wrap: pretty;
+}
+
+.ecosystem-local-note {
+  margin-top: 3rem;
+  border-top: 1px solid var(--ink);
+  padding-top: 1.3rem;
+}
+
+.ecosystem-local-note h3 {
+  margin-block: 0.75rem 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.ecosystem-local-note > p:last-child,
+.ecosystem-open-note > p:nth-child(2) {
+  max-width: 27rem;
+  font-size: 0.75rem;
+  line-height: 1.95;
+  text-wrap: pretty;
+}
+
+.ecosystem-open-note {
+  margin-top: 2rem;
+}
+
+.ecosystem-open-note > p:nth-child(2) {
+  margin-top: 0.7rem;
+}
+
+.ecosystem-open-note .text-link {
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+}
+
+.ecosystem-manifesto-folio {
+  margin-top: auto;
+  padding-top: 3rem;
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+}
+
+.ecosystem-catalogue {
+  min-width: 0;
+  padding-top: 1.2rem;
+}
+
+.ecosystem-catalogue > .eyebrow {
+  color: var(--muted);
+}
+
+.ecosystem-catalogue-title {
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 3.7vw, 3.4rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 1.3;
+}
+
+.ecosystem-catalogue-copy {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+}
+
+.ecosystem-default-note {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-block: 1.4rem 1.3rem;
+  font-size: 0.67rem;
+}
+
+.ecosystem-default-note > span {
+  width: 0.35rem;
+  height: 0.35rem;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+}
+
+.ecosystem-extension-list {
+  margin: 0;
+  border-top: 1px solid var(--ink);
+  padding: 0;
+  list-style: none;
+}
+
+.ecosystem-extension {
+  border-bottom: 1px solid var(--line);
+}
+
+.ecosystem-extension h4 {
+  margin: 0;
+}
+
+.ecosystem-extension-toggle {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 2.8rem minmax(0, 1fr) 1.6rem;
+  align-items: center;
+  border: 0;
+  padding: 1.2rem 0.2rem 1.2rem 0;
+  background: transparent;
+  text-align: left;
+}
+
+.ecosystem-extension-toggle:hover .ecosystem-extension-name > span,
+.ecosystem-extension-toggle[aria-expanded='true'] .ecosystem-extension-name > span {
+  color: var(--accent);
+}
+
+.ecosystem-extension-toggle:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline-offset: 3px;
+}
+
+.ecosystem-extension-number {
+  align-self: start;
+  padding-top: 0.25rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  font-weight: 400;
+}
+
+.ecosystem-extension-name > span {
+  display: block;
+  font-size: 1.03rem;
+  font-weight: 500;
+  transition: color 180ms ease;
+}
+
+.ecosystem-extension-name > small {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.69rem;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.ecosystem-extension-symbol {
+  color: var(--accent);
+  font-size: 1.6rem;
+  font-weight: 300;
+  line-height: 1;
+  text-align: right;
+}
+
+.ecosystem-extension-detail {
+  margin-left: 2.8rem;
+  padding-block: 0.1rem 1.5rem;
+}
+
+.ecosystem-extension-category {
+  display: block;
+  margin-bottom: 0.65rem;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.13em;
+}
+
+.ecosystem-extension-detail > p {
+  font-size: 0.76rem;
+  line-height: 1.95;
+  text-wrap: pretty;
+}
+
+.ecosystem-extension-entry {
+  margin-top: 1rem;
+  color: var(--muted);
+}
+
+.ecosystem-extension-entry > span {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+}
+
+.ecosystem-extension-detail .text-link {
+  margin-top: 0.7rem;
+  font-size: 0.7rem;
+}
+
+.ecosystem-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.65rem;
+  padding-top: 1rem;
+  color: var(--muted);
+  font-size: 0.69rem;
+  line-height: 1.9;
+}
+
+.ecosystem-extra a {
+  color: var(--ink);
+}
+
+.ecosystem-bridge-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+  gap: 1rem 3rem;
+  align-items: end;
+  margin-top: clamp(4rem, 7vw, 7rem);
+  border-top: 1px solid var(--line);
+  padding-block: 1.4rem 2.2rem;
+}
+
+.ecosystem-bridge-heading > .eyebrow {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+
+.ecosystem-bridge-heading h3 {
+  max-width: 40rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3.3vw, 3.1rem);
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.ecosystem-bridge-heading > .section-copy {
+  padding-bottom: 0.1rem;
+  font-size: 0.8rem;
+}
+
+.ecosystem-connection-spread {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+}
+
+.ecosystem-api,
+.ecosystem-astrbot {
+  min-width: 0;
+  padding: clamp(1.6rem, 3.5vw, 3rem);
+}
+
+.ecosystem-api {
+  display: flex;
+  flex-direction: column;
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.ecosystem-api > .eyebrow {
+  color: #c0c8b8;
+}
+
+.ecosystem-connection-spread h4 {
+  margin-block: 1.5rem 0.8rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3vw, 2.8rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+
+.ecosystem-api-copy,
+.ecosystem-chat-copy {
+  max-width: 30rem;
+  font-size: 0.8rem;
+  line-height: 1.9;
+  text-wrap: pretty;
+}
+
+.ecosystem-api-copy {
+  color: #d2d6ca;
+}
+
+.ecosystem-code {
+  margin-top: 2.3rem;
+  border-block: 1px solid #5c6557;
+}
+
+.ecosystem-code figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.3rem 1rem;
+  padding-top: 0.8rem;
+  color: #c0c8b8;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  line-height: 1.7;
+}
+
+.ecosystem-code figcaption > span:first-child {
+  color: #e6b19b;
+}
+
+.ecosystem-code pre {
+  margin-block: 1.8rem 2rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.61rem, 0.8vw, 0.74rem);
+  line-height: 2.2;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.ecosystem-code code {
+  font-family: inherit;
+}
+
+.ecosystem-api-scopes,
+.ecosystem-chat-scopes {
+  margin-top: 1.2rem;
+  font-size: 0.65rem;
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+
+.ecosystem-api-scopes {
+  margin-bottom: 1.5rem;
+  color: #c0c8b8;
+}
+
+.ecosystem-api > .text-link {
+  align-self: start;
+  margin-top: auto;
+  color: var(--paper);
+  font-size: 0.74rem;
+}
+
+.ecosystem-api > .text-link:hover {
+  color: #e6b19b;
+}
+
+.ecosystem-astrbot {
+  background: var(--sage);
+}
+
+.ecosystem-command-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 1.8rem;
+}
+
+.ecosystem-command-picker button {
+  min-height: 2.6rem;
+  border: 1px solid #a6ae9b;
+  padding: 0.4rem 0.6rem;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  line-height: 1.4;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+.ecosystem-command-picker button:hover,
+.ecosystem-command-picker button[aria-pressed='true'] {
+  border-color: var(--ink);
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.ecosystem-conversation {
+  min-height: 15rem;
+  margin-top: 1.6rem;
+}
+
+.ecosystem-message > span {
+  display: block;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+}
+
+.ecosystem-message > p {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.ecosystem-message--you {
+  border-left: 1px solid #a6ae9b;
+  padding-left: 0.8rem;
+}
+
+.ecosystem-message--you > p {
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+}
+
+.ecosystem-message--mio {
+  margin-top: 1.4rem;
+  border-left: 2px solid var(--accent);
+  padding-left: 0.8rem;
+}
+
+.ecosystem-conversation figcaption {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.58rem;
+  line-height: 1.7;
+}
+
+.ecosystem-chat-scopes {
+  color: var(--muted);
+}
+
+.ecosystem-astrbot > .text-link {
+  margin-top: 1.1rem;
+  font-size: 0.74rem;
+}
+
+.ecosystem--en .ecosystem-manifesto-title {
+  font-size: clamp(3.6rem, 6.3vw, 5.8rem);
+  letter-spacing: -0.06em;
+  line-height: 1.05;
+}
+
+@media (max-width: 1000px) {
+  .ecosystem-main-spread {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 2rem;
+  }
+
+  .ecosystem-manifesto {
+    min-height: 58rem;
+    padding: 2rem;
+  }
+
+  .ecosystem-manifesto-title {
+    font-size: clamp(3rem, 6.3vw, 4.2rem);
+  }
+
+  .ecosystem--en .ecosystem-manifesto-title {
+    font-size: clamp(3rem, 6.3vw, 4.2rem);
+  }
+
+  .ecosystem-catalogue-title {
+    font-size: 2.35rem;
+  }
+
+  .ecosystem-connection-spread {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .ecosystem-edition {
+    padding-bottom: 1.6rem;
+  }
+
+  .ecosystem-edition > span {
+    display: none;
+  }
+
+  .ecosystem-main-spread,
+  .ecosystem-connection-spread {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ecosystem-main-spread {
+    gap: 2.5rem;
+  }
+
+  .ecosystem-manifesto {
+    min-height: 0;
+    padding: clamp(1.6rem, 7vw, 3rem);
+  }
+
+  .ecosystem-ownership-mark {
+    margin-bottom: 1.7rem;
+  }
+
+  .ecosystem-manifesto-title {
+    font-size: clamp(3.8rem, 13vw, 5rem);
+    line-height: 1.16;
+  }
+
+  .ecosystem--en .ecosystem-manifesto-title {
+    font-size: clamp(3.8rem, 13vw, 5rem);
+  }
+
+  .ecosystem-manifesto-intro {
+    margin-top: 1.5rem;
+  }
+
+  .ecosystem-local-note {
+    margin-top: 2rem;
+  }
+
+  .ecosystem-manifesto-folio {
+    padding-top: 2.3rem;
+  }
+
+  .ecosystem-catalogue {
+    padding-top: 0;
+  }
+
+  .ecosystem-catalogue-title {
+    margin-top: 1.2rem;
+    font-size: clamp(2.4rem, 8vw, 3rem);
+  }
+
+  .ecosystem-catalogue-copy {
+    margin-top: 1rem;
+  }
+
+  .ecosystem-extension-toggle {
+    grid-template-columns: 2.5rem minmax(0, 1fr) 1.6rem;
+  }
+
+  .ecosystem-extension-detail {
+    margin-left: 2.5rem;
+  }
+
+  .ecosystem-bridge-heading {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.1rem;
+    padding-bottom: 1.7rem;
+  }
+
+  .ecosystem-bridge-heading h3 {
+    font-size: 2rem;
+  }
+
+  .ecosystem-api,
+  .ecosystem-astrbot {
+    padding: 1.8rem 1.6rem;
+  }
+
+  .ecosystem-code {
+    margin-top: 1.6rem;
+  }
+
+  .ecosystem-api > .text-link {
+    margin-top: 0;
+  }
+
+  .ecosystem-code pre {
+    font-size: 0.64rem;
+  }
+
+  .ecosystem-conversation {
+    min-height: 13rem;
+  }
+}

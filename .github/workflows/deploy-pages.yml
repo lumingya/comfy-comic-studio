@@ -1,0 +1,73 @@
+name: Deploy Mio website to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: mio-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Check and build the standalone website
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Resolve repository deployment path
+        id: target
+        env:
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+        run: node site/scripts/pages-config.mjs
+      - name: Install website dependencies
+        run: npm ci --prefix site --no-audit --no-fund
+      - name: Website quality gates
+        run: |
+          npm --prefix site run format:check
+          npm --prefix site run typecheck
+          npm --prefix site test
+      - name: Build and verify Pages artifact
+        env:
+          VITE_BASE_PATH: ${{ steps.target.outputs.base_path }}
+          VITE_SITE_URL: ${{ steps.target.outputs.site_url }}
+        run: |
+          npm --prefix site run build
+          node site/scripts/postbuild.mjs --check
+      - name: Upload website artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site/dist
+
+  deploy:
+    name: Publish website
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy website artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,15 @@
+:root {
+  color-scheme: light;
+  --paper: #f3f0e7;
+  --ink: #20231f;
+  --muted: #687465;
+  --accent: #c64b34;
+  --sage: #d9ddd0;
+  --line: #c4c8ba;
+  --font-display:
+    'Iowan Old Style', 'Palatino Linotype', 'Noto Serif CJK SC', 'Songti SC', 'STSong', 'SimSun',
+    Georgia, serif;
+  --font-body: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+}
