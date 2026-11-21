@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import struct
 import warnings
 import zlib
@@ -35,16 +36,35 @@ def _json(value: str | bytes) -> Any:
     def invalid_constant(_value: str):
         raise ValueError("non-finite JSON number")
 
+    def finite_float(value: str) -> float:
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError("non-finite JSON number")
+        return number
+
     try:
-        return json.loads(value, parse_constant=invalid_constant)
+        return json.loads(value, parse_constant=invalid_constant, parse_float=finite_float)
     except (UnicodeError, ValueError, RecursionError):
         raise WorkflowDecodeError("工作流 JSON 无法读取；请重新导出完整的 API 格式文件。") from None
+
+
+def validate_finite_numbers(value: Any) -> None:
+    """JSON request parsers may accept overflowing exponents or explicit NaN/Infinity."""
+    pending, visited = [value], set()
+    while pending:
+        item = pending.pop()
+        if isinstance(item, float) and not math.isfinite(item):
+            raise WorkflowDecodeError("工作流或覆盖参数含无穷大或非数字值，请改为有限数字后重试。")
+        if isinstance(item, (dict, list, tuple)) and id(item) not in visited:
+            visited.add(id(item))
+            pending.extend(item.values() if isinstance(item, dict) else item)
 
 
 def normalize_workflow(payload: dict) -> dict[str, Any]:
     """Keep Mio configuration; prefer an embedded API prompt over a frontend workflow."""
     if not isinstance(payload, dict):
         raise WorkflowDecodeError("工作流必须是 JSON 对象，请导出 ComfyUI API 格式。")
+    validate_finite_numbers(payload)
     is_api = bool(payload) and all(
         isinstance(node, dict) and "class_type" in node and "inputs" in node
         for node in payload.values()
@@ -64,6 +84,15 @@ def normalize_workflow(payload: dict) -> dict[str, Any]:
     nodes = graph.get("nodes")
     if len(nodes if isinstance(nodes, list) else graph) > MAX_NODES:
         raise WorkflowDecodeError("工作流超过 20000 个节点的分析上限。")
+    if not isinstance(nodes, list) and any(
+        isinstance(node, dict)
+        and node.get("_meta") is not None
+        and not isinstance(node["_meta"], dict)
+        for node in graph.values()
+    ):
+        raise WorkflowDecodeError(
+            "工作流节点的 _meta 必须是对象或 null，请重新导出完整的 API 格式。"
+        )
     out = {"graph": graph}
     if "graph" in payload and not is_api:
         for key in ("config", "name", "notes"):

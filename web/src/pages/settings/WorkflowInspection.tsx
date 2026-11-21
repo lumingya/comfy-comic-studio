@@ -308,7 +308,7 @@ export function WorkflowImportPreview({
         </>
       }
     >
-      <div className="workflow-inspection">
+      <div className="workflow-inspection" aria-busy={query.isFetching}>
         {availableVariants.length ? (
           <Field label={t('config.workflow.variant')}>
             <Select
@@ -325,6 +325,11 @@ export function WorkflowImportPreview({
             />
           </Field>
         ) : null}
+        {query.isFetching && !query.isPending ? (
+          <p role="status" className="small muted">
+            {t('common.loading')}
+          </p>
+        ) : null}
         {query.isPending ? (
           <Loading />
         ) : query.isError ? (
@@ -334,7 +339,10 @@ export function WorkflowImportPreview({
         )}
         {query.data?.importable && workflow ? (
           <Advanced lazy title={t('config.workflow.adjustMapping')}>
-            <fieldset className="workflow-import-mappings" disabled={saving}>
+            <fieldset
+              className="workflow-import-mappings"
+              disabled={saving || query.isFetching || query.isPlaceholderData || query.isError}
+            >
               <WorkflowMappings
                 graph={graph}
                 config={draftConfig ?? config ?? {}}

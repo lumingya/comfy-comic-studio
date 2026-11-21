@@ -163,6 +163,34 @@ class WorkflowDecodeTests(unittest.TestCase):
         self.assertFalse(report.importable)
         self.assertNotIn("private-marker", report.model_dump_json())
 
+    def test_malformed_metadata_is_rejected_before_node_inspection(self):
+        for metadata in ([1], "private-marker", 1, True, [], 0, False):
+            with self.subTest(metadata=metadata):
+                graph = plain_sdxl()
+                graph["6"]["_meta"] = metadata
+                report = I.inspect(I.InspectRequest(workflow=graph))
+                self.assertFalse(report.importable)
+                self.assertEqual(report.format, "invalid")
+                self.assertIn("_meta", report.issues[0].message)
+                self.assertNotIn("private-marker", report.model_dump_json())
+        for metadata in (None, {}, {"title": "Synthetic"}):
+            graph = plain_sdxl()
+            graph["6"]["_meta"] = metadata
+            self.assertTrue(I.inspect(I.InspectRequest(workflow=graph)).importable)
+
+    def test_overflowing_json_and_direct_nonfinite_values_are_rejected(self):
+        for number in (b"1e999", b"-1e999", b"NaN", b"Infinity"):
+            with self.subTest(number=number):
+                value = b'{"1":{"class_type":"Any","inputs":{"nested":[{"n":' + number + b"}]}}}"
+                with self.assertRaises(W.WorkflowDecodeError):
+                    W.decode_workflow_bytes(value)
+        for number in (float("inf"), float("-inf"), float("nan")):
+            graph = plain_sdxl()
+            graph["6"]["inputs"]["other"] = {"nested": [number]}
+            report = I.inspect(I.InspectRequest(workflow=graph))
+            self.assertFalse(report.importable)
+            self.assertEqual(report.format, "invalid")
+
     def test_image_candidates_keep_reference_control_init_and_mask_manual(self):
         graph = {
             "1": {"class_type": "AnyImageLoader", "inputs": {"image": "synthetic.png"}},
@@ -182,6 +210,53 @@ class WorkflowDecodeTests(unittest.TestCase):
 
 
 class WorkflowMediaApiTests(ApiCase):
+    def test_malformed_metadata_is_an_actionable_review_and_import_error(self):
+        graph = plain_sdxl()
+        graph["6"]["_meta"] = [1]
+        raw = self.ok(self.client.post("/api/workflows/inspect-file", content=json.dumps(graph)))
+        self.assertIsNone(raw["workflow"])
+        self.assertEqual(raw["inspection"]["format"], "invalid")
+        inspected = self.ok(self.client.post("/api/workflows/inspect", json={"workflow": graph}))
+        self.assertFalse(inspected["importable"])
+        saved = self.client.post("/api/workflows", json={"name": "Synthetic", "graph": graph})
+        self.assertEqual(saved.status_code, 400)
+        self.assertEqual(saved.json()["code"], "invalid_format")
+
+    def test_nonfinite_json_is_rejected_in_file_review_graph_and_overrides(self):
+        graph = plain_sdxl()
+        graph["6"]["inputs"]["extra"] = [float("inf")]
+        raw = self.ok(
+            self.client.post(
+                "/api/workflows/inspect-file",
+                content=json.dumps(graph).replace("Infinity", "1e999"),
+            )
+        )
+        self.assertIsNone(raw["workflow"])
+        self.assertFalse(raw["inspection"]["importable"])
+        for body in (
+            {"workflow": graph},
+            {"workflow": plain_sdxl(), "values": {"seed": float("inf")}},
+            {"workflow": plain_sdxl(), "overrides": {"/3/inputs/seed": float("inf")}},
+            {"workflow": plain_sdxl(), "config": {"values": {"seed": float("inf")}}},
+            {"workflow": plain_sdxl(), "object_info": {"Any": {"other": float("inf")}}},
+        ):
+            with self.subTest(fields=list(body)):
+                report = self.ok(
+                    self.client.post(
+                        "/api/workflows/inspect",
+                        content=json.dumps(body),
+                        headers={"Content-Type": "application/json"},
+                    )
+                )
+                self.assertEqual(report["format"], "invalid")
+                self.assertFalse(report["importable"])
+        saved = self.client.post(
+            "/api/workflows",
+            content=json.dumps({"name": "Synthetic", "graph": graph}),
+            headers={"Content-Type": "application/json"},
+        )
+        self.assertEqual(saved.status_code, 400)
+
     def test_raw_review_has_no_persistent_or_network_side_effects(self):
         before = len(self.ctx.store.list_docs("workflow"))
         content = png({"prompt": plain_sdxl()})

@@ -13,7 +13,12 @@ from . import bindings as B
 from . import compile as C
 from . import slot_adapters as SA
 from .diagnostics import MODEL_FILE, diagnose
-from .workflow_import import WorkflowDecodeError, normalize_workflow, ui_issues
+from .workflow_import import (
+    WorkflowDecodeError,
+    normalize_workflow,
+    ui_issues,
+    validate_finite_numbers,
+)
 
 _IMAGE_FILE = re.compile(r"\.(png|jpe?g|webp|bmp|tiff?)(?:\s*\[input\])?$", re.I)
 _KINDS = {
@@ -99,6 +104,14 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
     """Never imports, mutates input, contacts ComfyUI or executes a workflow."""
     result = Inspection(format="mio" if "graph" in request.workflow else "api")
     try:
+        validate_finite_numbers(
+            (
+                request.config.model_dump() if request.config is not None else None,
+                request.values,
+                request.overrides,
+                request.object_info,
+            )
+        )
         payload = normalize_workflow(request.workflow)
     except WorkflowDecodeError as exc:
         result.format = "invalid"

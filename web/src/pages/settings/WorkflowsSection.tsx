@@ -69,15 +69,42 @@ export function WorkflowsSection() {
       const image = /\.(png|webp)$/i.test(file.name) || /^image\/(png|webp)$/i.test(file.type);
       const decoded = image ? await inspectWorkflowFile(file) : null;
       const parsed = decoded ? (decoded.workflow ?? {}) : jsonObject(await file.text());
+      // API node IDs may themselves be "graph", "prompt" or "workflow".
+      // Match the decoder's full-graph precedence before unwrapping envelopes.
+      const apiGraph =
+        Object.keys(parsed).length > 0 &&
+        Object.values(parsed).every(
+          (node) =>
+            node &&
+            typeof node === 'object' &&
+            !Array.isArray(node) &&
+            'class_type' in node &&
+            'inputs' in node,
+        );
       const bundled =
-        parsed.graph && typeof parsed.graph === 'object' && !Array.isArray(parsed.graph);
+        !apiGraph &&
+        parsed.graph &&
+        typeof parsed.graph === 'object' &&
+        !Array.isArray(parsed.graph);
       const prompt =
-        parsed.prompt && typeof parsed.prompt === 'object' && !Array.isArray(parsed.prompt);
-      const graph = bundled
-        ? (parsed.graph as Record<string, unknown>)
-        : prompt
-          ? (parsed.prompt as Record<string, unknown>)
-          : parsed;
+        !apiGraph &&
+        parsed.prompt &&
+        typeof parsed.prompt === 'object' &&
+        !Array.isArray(parsed.prompt);
+      const uiEnvelope =
+        !apiGraph &&
+        parsed.workflow &&
+        typeof parsed.workflow === 'object' &&
+        !Array.isArray(parsed.workflow);
+      const graph = apiGraph
+        ? parsed
+        : bundled
+          ? (parsed.graph as Record<string, unknown>)
+          : prompt
+            ? (parsed.prompt as Record<string, unknown>)
+            : uiEnvelope
+              ? (parsed.workflow as Record<string, unknown>)
+              : parsed;
       importWf.reset();
       setPendingImport({
         workflow: decoded ? decoded.workflow : parsed,
