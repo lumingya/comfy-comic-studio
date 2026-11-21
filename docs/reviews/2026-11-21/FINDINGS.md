@@ -18,7 +18,7 @@
 | R1-SDK-02 | SDK P2 | pending绑定可混入额外生成设置 | [Ecosystem/SDK](round-1-changes/ecosystem-sdk.md) | [receipt修复](fixes/sdk-receipts.md)，默认归一后全业务等价 | [SDK/Script复核](round-2-verification/sdk-script.md) | 已关闭 |
 | R1-CLD-01 | 渠道 P2 | 真实阻塞read超过总截止 | [Ecosystem/SDK](round-1-changes/ecosystem-sdk.md) | [网络截止](fixes/cloud-deadline.md)，独享socket/SSLContext和清理 | [网络复核](round-2-verification/network.md) | 已关闭，DNS/无socket边界保留 |
 | R1-MED-01 | 媒体桥/部署边界 | ASGI2.4断开清理延迟；默认2.3未证实 | [Bridge/UI](round-1-changes/bridge-ui.md) | [响应清理](fixes/media-cleanup.md) | [UI/媒体复核](round-2-verification/ui-media.md) | 加固已关闭，不冒称默认部署漏洞 |
-| R1-AST-02 | 需求/审阅粒度 | 多句修改合成同一op，逐句展示但不能逐句接受/拒绝 | Spec 离线探针 | [句/字段修复](fixes/script-review.md)，33项Python与DOM回归 | verify_sdk_script_fixes | 独立复审通过 |
+| R1-AST-02 | 需求/审阅粒度 | 多句修改合成同一op，逐句展示但不能逐句接受/拒绝 | Spec 离线探针 | [句/字段修复](fixes/script-review.md)，33项Python与DOM回归 | verify_sdk_script_fixes | 已关闭 |
 | R2-SDK-DEFAULT-01 | 集成/SDK | 新增Strip.rasterized默认字段使相同pending绑定误拒 | [SDK/Script复审](round-2-verification/sdk-script.md) | [默认契约回归](fixes/sdk-receipts.md) | 同一独立复审者窄验 | 已关闭 |
 
 状态：待复现 → 已确认 → 修复中 → 待独立复审 → 已关闭。重复发现合并到原 ID；证据不成立时保留反证理由。
@@ -31,3 +31,28 @@
 - 第二轮：新的审查者检查上述修复，没有未关闭的已确认问题。
 - 第三轮：其他模块的覆盖清单、发现与修复均已记录，新增修复同样有新代理复审。
 - 收尾：生成物无漂移、必要门禁通过、最后提交推送并确认对应 CI。
+
+## 其他文件审查
+
+第三轮范围固定为 `ddf8d81` 的原变更集以外模块。恢复入口大小问题在生命周期与设置两份报告重复，合并为 R3-LIFE-06；附件删除后可读因保留合同未明确只记观察，不冒充漏洞。
+
+| ID | 原模块问题 | 修复证据 | 新代理结论 | 状态 |
+| --- | --- | --- | --- | --- |
+| R3-LIFE-01 P1 | 并发安装混版/清pending | [更新事务](fixes/update-recovery.md) | [更新/安装复核](round-4-adjacent-verification/update-packages.md) | 已关闭 |
+| R3-LIFE-02 P1 | 移走应用后中断，恢复器自身丢失 | [稳定恢复宿主](fixes/update-recovery.md) | [更新/安装复核](round-4-adjacent-verification/update-packages.md) | 已关闭 |
+| R3-LIFE-03 P2 | --data未传入更新器 | [启动参数](fixes/update-recovery.md) | [更新/安装复核](round-4-adjacent-verification/update-packages.md) | 已关闭 |
+| R3-LIFE-04 P2 | 扩展覆盖rename失败删除旧包 | [扩展发布](fixes/extension-lifecycle.md) | [更新/安装复核](round-4-adjacent-verification/update-packages.md) | 已关闭 |
+| R3-LIFE-05 P2 | 信任快照失败仍active/半快照不能重试 | [扩展加载](fixes/extension-lifecycle.md) | [更新/安装复核](round-4-adjacent-verification/update-packages.md) | 已关闭 |
+| R3-LIFE-06 P2 | 前端2GiB拒绝服务端允许的2–12GiB | [设置/上限](fixes/settings-drafts.md) | [设置/AI复核](round-4-adjacent-verification/settings-ai.md) | 已关闭 |
+| R3-SCHED-01 P2 | queue回执写失败后重复提交 | [队列意图](fixes/queue-pool.md) | [事件/队列/鉴权](round-4-adjacent-verification/events-queue-auth.md) | 已关闭 |
+| R3-SCHED-02 P2 | 一个坏端口阻断健康实例 | [实例校验/隔离](fixes/queue-pool.md) | [事件/队列/鉴权](round-4-adjacent-verification/events-queue-auth.md) | 已关闭 |
+| R3-EVENT-01 P2 | Webhook重试忽略停用/删除/轮换 | [每次重试复验](fixes/webhook-dispatch.md) | [事件/队列/鉴权](round-4-adjacent-verification/events-queue-auth.md) | 已关闭 |
+| R3-EVENT-02 P2 | 坏URL中断其后合法订阅 | [URL隔离](fixes/webhook-dispatch.md) | [事件/队列/鉴权](round-4-adjacent-verification/events-queue-auth.md) | 已关闭 |
+| R3-EVENT-03 P3 | 首次并发emit产生多个worker/close遗留 | [生命周期锁](fixes/webhook-dispatch.md) | [事件/队列/鉴权](round-4-adjacent-verification/events-queue-auth.md) | 已关闭 |
+| R3-ACCESS-01 P2 | WS握手后吊销/到期仍收新事件 | [只读持续鉴权](fixes/websocket-tokens.md) | [事件/队列/鉴权](round-4-adjacent-verification/events-queue-auth.md) | 已关闭 |
+| R3-ACCESS-02 P2 | API夹具默认legacy回退读取本机data | [默认TEMP隔离](fixes/test-isolation.md) | [事件/队列/鉴权](round-4-adjacent-verification/events-queue-auth.md) | 已关闭 |
+| SET-AI-01 P2 | 正常上传后backup/head失败 | [附件URL与往返](fixes/ai-backup.md) | [设置/AI复核](round-4-adjacent-verification/settings-ai.md) | 已关闭 |
+| SET-AI-02 P2 | General/Channels旧draft覆盖已刷新设置 | [字段意图/CAS](fixes/settings-drafts.md) | [设置/AI复核](round-4-adjacent-verification/settings-ai.md) | 已关闭 |
+| SET-AI-03 P2 | 删除会话404的pending污染new并卡住 | [会话epoch隔离](fixes/ai-drafts.md) | [设置/AI复核](round-4-adjacent-verification/settings-ai.md) | 已关闭 |
+| SET-AI-04 P3 | 保存成功吞后续编辑/模式changed卸载宿主 | [保存快照及模式切换禁用](fixes/ai-drafts.md) | [真实宿主窄验](round-4-adjacent-verification/settings-ai.md) | 已关闭 |
+| R4-SET-UI-01 P2 | arrive动画保留identity transform，使fixed保存条落到视口外 | [实际CSS/bbox反证](round-4-adjacent-verification/settings-ai.md) | backwards fill后桌面/窄屏浅深8图及坐标点击 | 已关闭 |
