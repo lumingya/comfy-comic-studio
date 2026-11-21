@@ -148,3 +148,104 @@ class SparseLoRAStructureTests(TestCase):
         expected = deepcopy(source)
         del expected["stack"]["inputs"]["lora_1"]
         self.assertEqual(result.graph, expected)
+
+    def test_trailing_empty_dictionary_keeps_metadata_when_another_pin_changes(self):
+        source = graph(
+            {
+                "lora_1": {"lora": "ink.safetensors", "on": True, "strength": 0.7},
+                "lora_2": {
+                    "lora": "None",
+                    "on": False,
+                    "strength": 0.6,
+                    "strengthTwo": None,
+                    "widget": {"caption": "retained"},
+                },
+            }
+        )
+        doc = WorkflowDoc(name="Synthetic trailing placeholder", graph=source)
+        before = doc.model_dump()
+        group = slot_adapters.describe(doc)["groups"][0]
+        result = compile_workflow(
+            doc, {}, slot_overrides=override(group, group["loras"][0], strength=0.4)
+        )
+        expected = deepcopy(source)
+        expected["stack"]["inputs"]["lora_1"]["strength"] = 0.4
+        self.assertEqual(result.graph, expected)
+        result.graph["stack"]["inputs"]["lora_2"]["widget"]["caption"] = "compiled edit"
+        self.assertEqual(doc.model_dump(), before)
+
+    def test_unchanged_disabled_pins_keep_native_weights_when_another_pin_changes(self):
+        cases = (
+            {
+                "lora_1": {"lora": "ink.safetensors", "on": True, "strength": 0.7},
+                "lora_2": {
+                    "lora": "wash.safetensors",
+                    "on": False,
+                    "strength": -0.6,
+                    "strengthTwo": 0.2,
+                    "widget": {"caption": "retained"},
+                },
+            },
+            {
+                "lora_name_1": "ink.safetensors",
+                "strength_1": 0.7,
+                "switch_1": "On",
+                "lora_name_2": "wash.safetensors",
+                "strength_2": -0.6,
+                "clip_strength_2": 0.2,
+                "switch_2": "Off",
+            },
+        )
+        for inputs in cases:
+            with self.subTest(shape="object" if "lora_1" in inputs else "flat"):
+                source = graph(inputs)
+                doc = WorkflowDoc(name="Synthetic disabled neighbor", graph=source)
+                before = doc.model_dump()
+                group = slot_adapters.describe(doc)["groups"][0]
+                self.assertFalse(group["loras"][1]["enabled"])
+                result = compile_workflow(
+                    doc, {}, slot_overrides=override(group, group["loras"][0], strength=0.4)
+                )
+                expected = deepcopy(source)
+                if "lora_1" in inputs:
+                    expected["stack"]["inputs"]["lora_1"]["strength"] = 0.4
+                else:
+                    expected["stack"]["inputs"]["strength_1"] = 0.4
+                self.assertEqual(result.graph, expected)
+                self.assertEqual(doc.model_dump(), before)
+
+    def test_thirty_five_power_pins_follow_reversed_stable_key_overrides(self):
+        source = graph(
+            {
+                f"lora_{i + 1}": {
+                    "lora": "repeated.safetensors",
+                    "on": True,
+                    "strength": 0.1 + i / 100,
+                    "marker": i,
+                }
+                for i in range(35)
+            }
+        )
+        doc = WorkflowDoc(name="Synthetic large dictionary stack", graph=source)
+        before = doc.model_dump()
+        group = slot_adapters.describe(doc)["groups"][0]
+        pins = group["loras"]
+        self.assertEqual(len(pins), 35)
+        self.assertEqual(len({pin["key"] for pin in pins}), 35)
+        changes = {
+            "groups": [
+                {
+                    "key": group["key"],
+                    "loras": [
+                        {"key": pin["key"], "name": pin["name"], "strength": -(i + 1) / 100}
+                        for i, pin in reversed(list(enumerate(pins)))
+                    ],
+                }
+            ]
+        }
+        result = compile_workflow(doc, {}, slot_overrides=changes)
+        for i in range(35):
+            entry = result.graph["stack"]["inputs"][f"lora_{i + 1}"]
+            self.assertEqual(entry["strength"], -(i + 1) / 100)
+            self.assertEqual(entry["marker"], i)
+        self.assertEqual(doc.model_dump(), before)

@@ -88,12 +88,39 @@ class SemanticBindingsTests(unittest.TestCase):
             negative=["control", 1],
             cfg=5.0,
         )
-        self.assertEqual(targets(graph, "prompt"), {("text", "clip_l"), ("text", "t5xxl")})
-        self.assertEqual(
-            targets(graph, "negative"),
-            {("negative", "clip_l"), ("negative", "clip_g"), ("negative", "t5xxl")},
-        )
+        # Paired input roles alone do not declare the custom node's output order.
+        self.assertEqual(targets(graph, "prompt"), set())
+        self.assertEqual(targets(graph, "negative"), set())
         self.assertEqual(targets(graph, "cfg"), {("guider", "cfg")})
+
+    def test_crosswired_paired_outputs_require_mapping_instead_of_guessing_roles(self):
+        graph = modern_graph()
+        graph["negative"] = node("CLIPTextEncode", text="negative", clip=["clip", 0])
+        graph["pair"] = node(
+            "UnseenConditioningPair", positive=["text", 0], negative=["negative", 0]
+        )
+        graph["guider"] = node(
+            "UnseenGuider", model=["model", 0], positive=["pair", 1], negative=["pair", 0]
+        )
+        before = copy.deepcopy(graph)
+        bound, _ = B.resolve(graph)
+        self.assertFalse(any(b.kind in ("prompt", "negative") for b in bound))
+        self.assertEqual(
+            B.apply_values(graph, bound, {"prompt": "new", "negative": "exclude"}), graph
+        )
+        bound, _ = B.resolve(
+            graph,
+            {
+                "prompt": "/negative/inputs/text",
+                "negative": ["/text/inputs/clip_l", "/text/inputs/t5xxl"],
+            },
+        )
+        changed = B.apply_values(graph, bound, {"prompt": "new", "negative": "exclude"})
+        self.assertEqual(changed["negative"]["inputs"]["text"], "new")
+        self.assertEqual(changed["text"]["inputs"]["clip_l"], "exclude")
+        self.assertEqual(changed["text"]["inputs"]["t5xxl"], "exclude")
+        self.assertEqual(changed["guider"], graph["guider"])
+        self.assertEqual(graph, before)
 
     def test_distinct_encoder_fields_and_regional_assembly_require_mapping(self):
         graph = modern_graph()
@@ -167,6 +194,31 @@ class SemanticBindingsTests(unittest.TestCase):
         self.assertEqual(targets(graph, "seed"), {("seed", "value"), ("refiner", "seed_num")})
         self.assertNotIn(("refiner", "steps"), targets(graph, "steps"))
 
+    def test_fixed_positive_region_is_protected_when_another_region_is_explicit(self):
+        graph = modern_graph()
+        graph["text"] = node("CLIPTextEncode", clip=["clip", 0], text="fixed region")
+        graph["tagged"] = node("CLIPTextEncode", clip=["clip", 0], text="editable region")
+        graph["tagged"]["_meta"] = {"title": "[mio:prompt]"}
+        graph["combine"] = node(
+            "ConditioningCombine", conditioning_1=["text", 0], conditioning_2=["tagged", 0]
+        )
+        graph["zero"] = node("ConditioningZeroOut", conditioning=["text", 0])
+        graph["guider"] = node(
+            "NovelCFGGuider",
+            model=["model", 0],
+            positive=["combine", 0],
+            negative=["zero", 0],
+            cfg=1.0,
+        )
+        before = copy.deepcopy(graph)
+        bound, _ = B.resolve(graph)
+        self.assertFalse(any(b.kind == "negative" for b in bound))
+        changed = B.apply_values(graph, bound, {"prompt": "new region", "negative": "exclude"})
+        self.assertEqual(changed["text"]["inputs"]["text"], "fixed region")
+        self.assertEqual(changed["tagged"]["inputs"]["text"], "new region")
+        self.assertEqual(changed["guider"], graph["guider"])
+        self.assertEqual(graph, before)
+
     def test_nested_regional_control_does_not_bypass_top_level_prompt_ambiguity(self):
         graph = modern_graph()
         graph["region_text"] = node("CLIPTextEncode", text="different region", clip=["clip", 0])
@@ -178,6 +230,31 @@ class SemanticBindingsTests(unittest.TestCase):
         )
         graph["guidance"]["inputs"]["conditioning"] = ["combine", 0]
         self.assertEqual(targets(graph, "prompt"), set())
+
+    def test_negative_heuristic_preserves_a_shared_later_stage_positive(self):
+        graph = modern_graph()
+        graph["refiner_text"] = node("CLIPTextEncode", clip=["clip", 0], text="fixed refiner")
+        graph["guider"] = node(
+            "NovelCFGGuider",
+            model=["model", 0],
+            positive=["text", 0],
+            negative=["refiner_text", 0],
+            cfg=1.0,
+        )
+        graph["refiner"] = node(
+            "UnseenRefiner",
+            model=["model", 0],
+            positive=["refiner_text", 0],
+            latent_image=["sample", 0],
+            seed=7,
+        )
+        graph["decode"]["inputs"]["samples"] = ["refiner", 0]
+        before = copy.deepcopy(graph)
+        bound, _ = B.resolve(graph)
+        self.assertFalse(any(b.kind == "negative" for b in bound))
+        changed = B.apply_values(graph, bound, {"prompt": "new", "negative": "exclude"})
+        self.assertEqual(changed["refiner_text"], graph["refiner_text"])
+        self.assertEqual(graph, before)
 
     def test_one_shared_numeric_source_is_not_claimed_as_independent_dimensions(self):
         graph = modern_graph()

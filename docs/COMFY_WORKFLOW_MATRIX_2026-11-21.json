@@ -1,5 +1,6 @@
 {
   "before_revision": "aa06d0a",
+  "after_measurement": "Final repaired integration; conservative abstention on undeclared paired-output contracts.",
   "before": {
     "sample_count": 75,
     "distinct_topologies": 75,
@@ -138,8 +139,8 @@
     "bound_value_mismatches": 0,
     "binding_sample_counts": {
       "output": 21,
-      "prompt": 17,
-      "negative": 16,
+      "prompt": 14,
+      "negative": 12,
       "width": 9,
       "height": 9,
       "batch": 9,
@@ -509,9 +510,9 @@
           "cfg": 8,
           "denoise": 9,
           "height": 6,
-          "negative": 8,
+          "negative": 4,
           "output": 9,
-          "prompt": 9,
+          "prompt": 6,
           "sampler": 9,
           "scheduler": 9,
           "seed": 9,
@@ -2050,9 +2051,7 @@
         "bindings_present": [
           "cfg",
           "denoise",
-          "negative",
           "output",
-          "prompt",
           "sampler",
           "scheduler",
           "seed",
@@ -2106,9 +2105,7 @@
         "bindings_present": [
           "cfg",
           "denoise",
-          "negative",
           "output",
-          "prompt",
           "sampler",
           "scheduler",
           "seed",
@@ -2246,9 +2243,7 @@
         "bindings_present": [
           "cfg",
           "denoise",
-          "negative",
           "output",
-          "prompt",
           "sampler",
           "scheduler",
           "seed",
@@ -2561,7 +2556,6 @@
           "cfg",
           "denoise",
           "height",
-          "negative",
           "output",
           "prompt",
           "sampler",
@@ -4176,6 +4170,7 @@
     "75 authentic public workflow payloads; 54 are UI-only, never guessed into executable API graphs.",
     "File importability measures the real bytes decoder; API-graph metrics separately use embedded prompt extraction.",
     "Binding coverage counts availability, not semantic accuracy; some models do not need negative text or explicit size.",
+    "7 API samples deliberately have no automatic positive binding: 4 SD3 graphs have distinct multi-encoder texts; 3 conditioning nodes expose paired positive/negative outputs without an object_info output contract, so require explicit mappings or synchronized node definitions.",
     "Civitai base-model labels are publisher declarations; structural categories overlap and are not model truth.",
     "Only one genuine API sample contains writable LoRA; broad LoRA correctness depends on separate synthetic regressions.",
     "Static only: no GPU, model download, node execution, custom VALIDATE_INPUTS, installed catalog or runtime success claims."

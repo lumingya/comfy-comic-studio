@@ -211,6 +211,10 @@ class _Inference:
                 return []
             if reason == "not-router":
                 port = "positive" if kind == "prompt" else "negative"
+                if "positive" in inputs and "negative" in inputs:
+                    # Input roles do not declare output order. A custom paired node may
+                    # reorder its ports, or its two outputs may be crosswired downstream.
+                    return []
                 if port in inputs:
                     routes = [(port, inputs[port])]
                 else:
@@ -253,8 +257,8 @@ class _Inference:
                 primary.append(nid)
         return primary
 
-    def prompt_owners(self, sites):
-        owners = set(self.primary_sites(sites))
+    def prompt_owners(self, sites, *, primary_only=True):
+        owners = set(self.primary_sites(sites) if primary_only else sites)
         for nid in list(owners):
             for port in ("guider", "pipe"):
                 value = self.inputs(nid).get(port)
@@ -283,6 +287,26 @@ class _Inference:
             }
         return [nid for nid in self.graph if nid in owners]
 
+    def positive_literals(self, owners):
+        """Protect every positive dependency, including fixed/ambiguous prompt regions.
+
+        Automatic negative binding must never change a string used by a positive path,
+        even when a different region already has an explicit prompt binding.
+        """
+        literals, roots = set(), []
+        for nid in owners:
+            for field in ("positive", "conditioning"):
+                value = self.inputs(nid).get(field)
+                if isinstance(value, str):
+                    literals.add((nid, field))
+                elif _link(value, self.graph):
+                    roots.append(value[0])
+        for nid in _ancestors(self.graph, roots):
+            literals.update(
+                (nid, field) for field, value in self.inputs(nid).items() if isinstance(value, str)
+            )
+        return literals
+
 
 def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, str, str | None]]:
     """Return deterministic (kind, node, literal field) recommendations; outputs have no field."""
@@ -292,7 +316,8 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
     sites = engine.sampling_sites()
     primary = set(engine.primary_sites(sites))
     text_targets = {"prompt": [], "negative": []}
-    for nid in engine.prompt_owners(sites):
+    owners = engine.prompt_owners(sites)
+    for nid in owners:
         inputs = engine.inputs(nid)
         for kind, ports in (("prompt", ("positive", "conditioning")), ("negative", ("negative",))):
             if kind not in missing:
@@ -303,10 +328,9 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
                     text_targets[kind].append((nid, field))
                 elif _link(value, graph):
                     text_targets[kind].extend(engine.conditioning_sources(value, kind))
-    # Zeroed negative conditioning may share the positive encoder. One field cannot bind both.
-    text_targets["negative"] = [
-        t for t in text_targets["negative"] if t not in text_targets["prompt"]
-    ]
+    # Positive dependencies include fixed regions which intentionally have no auto binding.
+    positive_literals = engine.positive_literals(engine.prompt_owners(sites, primary_only=False))
+    text_targets["negative"] = [t for t in text_targets["negative"] if t not in positive_literals]
     found.extend((kind, n, f) for kind, targets in text_targets.items() for n, f in targets)
     for nid in graph:
         if nid not in engine.scope:

@@ -3,7 +3,7 @@
 import copy
 import re
 
-from .workflow_slot_common import LibraryError, _consumer_index, _is_link, _write_field
+from .workflow_slot_common import LibraryError, _consumer_index, _is_link, _is_number, _write_field
 from .workflow_slot_syntax import format_tag, lora_display_name
 from .workflow_slot_values import _is_empty_name, _name_key
 
@@ -113,13 +113,26 @@ def _apply_stack(workflow, lora, loras):
     assigned.update(zip(free, pending))
     for i, slot in enumerate(slots):
         l = assigned.get(i)
-        if l is None and names[i] is None and i < max(assigned, default=-1):
+        if (
+            l is None
+            and names[i] is None
+            and (slot["objectStyle"] or i < max(assigned, default=-1))
+        ):
             continue
         if slot["objectStyle"]:
             if l is None:
                 del node["inputs"][slot["namePath"]]
                 continue
             entry = node["inputs"][slot["namePath"]]
+            if (
+                entry.get("on") is False
+                and not l.get("enabled", True)
+                and entry.get("strength") == l["strength"]
+                and entry.get("strengthTwo") == l.get("clip")
+            ):
+                # A native gate already disables this unchanged pin. Editing another
+                # position must not erase its saved weights or optional widget values.
+                continue
             if "lora" in entry or "name" not in entry:
                 entry["lora"] = lora_display_name(l["name"], "file")
             else:
@@ -133,6 +146,15 @@ def _apply_stack(workflow, lora, loras):
         switch_value = node["inputs"][slot["switchPath"]] if slot["switchPath"] else None
         on, off = (True, False) if isinstance(switch_value, bool) else ("On", "Off")
         if l is not None:
+            strength = node["inputs"].get(slot["strengthPath"])
+            clip = node["inputs"].get(slot["clipPath"])
+            if (
+                (switch_value is False or switch_value == "Off")
+                and not l.get("enabled", True)
+                and l["strength"] == (strength if _is_number(strength) else 1)
+                and l.get("clip") == (clip if _is_number(clip) else None)
+            ):
+                continue
             _write_field(
                 workflow, lora["nodeId"], slot["namePath"], lora_display_name(l["name"], "file")
             )

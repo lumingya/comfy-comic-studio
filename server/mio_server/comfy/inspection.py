@@ -154,6 +154,8 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
             registry=registry,
         )
         selected = compiled.graph
+        bound = compiled.resolved_bindings
+        result.output_nodes = compiled.outputs
         result.compilable = not any(issue.severity == "error" for issue in result.issues)
         result.issues.extend(
             Issue(code="compile_warning", severity="warning", message=w)
