@@ -57,3 +57,13 @@
 | SET-AI-04 P3 | 保存成功吞后续编辑/模式changed卸载宿主 | [保存快照及模式切换禁用](fixes/ai-drafts.md) | [真实宿主窄验](round-4-adjacent-verification/settings-ai.md) | 已关闭 |
 | R4-SET-UI-01 P2 | arrive动画保留identity transform，使fixed保存条落到视口外 | [实际CSS/bbox反证](round-4-adjacent-verification/settings-ai.md) | backwards fill后桌面/窄屏浅深8图及坐标点击 | 已关闭 |
 | R4-RENDER-FONT-01 P1 | Ubuntu无系统字体时复制Pillow内存字体失败，分带导出不可用 | 远端Ubuntu/Python3.11实际回归 | [局部字体相位代理](fixes/export-integrity.md)，31项相关回归 | [新字体复核](round-4-adjacent-verification/memory-fonts.md)，162个phase view | 已关闭，远端整合另核对 |
+
+## 最终 CI 追加
+
+`c84ce33` 的 Ubuntu Python 3.11 全套后端通过，Windows 与 Python 3.13 门禁另暴露以下问题。
+它们追加到同一台账，修复后仍由新代理独立复审，不能用上一轮通过结论代替。
+
+| ID | 已确认问题 | 证据 | 修复/独立复审 | 状态 |
+| --- | --- | --- | --- | --- |
+| R5-WIN-PATH-01 P1 | 更新器工作区重叠检查混用规范路径与 Windows 别名；独立复审再以扩展前缀真实覆盖 TEMP 私有文件 | Windows Python 3.11 CI 与新代理真实签名夹具；短名、`..` 首补修通过后，`\\?\` 前缀仍绕过 | [统一比较身份及租约/恢复归属](fixes/update-recovery.md)，60 项集中回归；[独立路径复验](round-5-ci-verification/windows-paths.md) 8 探针及[全新身份复验](round-5-ci-verification/path-identity.md) 4 探针通过，保留原数据损坏反证 | 已关闭，最终跨平台整合另核对 |
+| R5-JOBS-SQLITE-01 P1 | 任务完工/调度共享连接的无锁读取导致 SQLite API misuse，生成项转为 uncertain，整批 blocked | Python 3.13 CI；原用例自然重复第 20 次重现；受控连接/游标护栏旧代码 4 项全红 | [连接锁/游标快照](fixes/sqlite-concurrency.md)；31 项相关、修后原用例 40 次通过；[新独立复验](round-5-ci-verification/sqlite.md) | 已关闭，最终跨平台整合另核对 |
