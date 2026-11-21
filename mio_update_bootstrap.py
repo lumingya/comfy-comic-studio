@@ -71,7 +71,10 @@ def _linked(path: Path) -> bool:
 def _workspace(data: Path) -> Path:
     if not data.is_absolute() or any(_linked(p) for p in (data, *data.parents)):
         raise RecoveryError("工作区路径不能包含链接或相对路径")
-    return data
+    # Check the supplied path for links before canonicalizing it. Root and program
+    # entries already use resolved paths; compare the workspace in the same form
+    # so Windows 8.3 names and '..' cannot hide an overlapping program directory.
+    return data.resolve()
 
 
 def workspace_updates(data: Path) -> Path:

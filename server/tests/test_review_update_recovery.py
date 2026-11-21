@@ -84,7 +84,7 @@ class UpdateRecoveryTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        self.base = Path(temporary.name)
+        self.base = Path(temporary.name).resolve()
         self.root = self.base / "Mio 空格 & (test)!"
         self.root.mkdir()
         self.data = self.base / "工作区 空格 & 数据"
@@ -433,6 +433,34 @@ class UpdateRecoveryTests(unittest.TestCase):
         shutil.rmtree(self.root / ".mio-update", ignore_errors=True)
         self.assertFalse(host.recover(self.root))
         self.assertFalse((self.root / ".mio-update").exists())
+
+    def test_workspace_aliases_cannot_hide_program_overlap(self):
+        aliases = [self.root / "data/../web/private-workspace"]
+        if os.name == "nt":
+            import ctypes
+
+            short_path = ctypes.WinDLL("kernel32", use_last_error=True).GetShortPathNameW
+            short_path.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint]
+            short_path.restype = ctypes.c_uint
+            size = short_path(str(self.root), None, 0)
+            self.assertGreater(size, 0)
+            buffer = ctypes.create_unicode_buffer(size)
+            self.assertGreater(short_path(str(self.root), buffer, size), 0)
+            short_root = Path(buffer.value)
+            if short_root != self.root:  # Some Windows volumes disable 8.3 aliases.
+                aliases.append(short_root / "web/private-workspace")
+        for data in aliases:
+            with self.subTest(data=data):
+                updater = self.stage(data=data)
+                marker = updater.dir.parent / "private.txt"
+                marker.write_text("keep-private", encoding="utf-8")
+                pending = (updater.dir / "pending.json").read_bytes()
+                with self.assertRaisesRegex(UpdateError, "工作区"):
+                    updater.apply_pending()
+                self.assertEqual(marker.read_text(encoding="utf-8"), "keep-private")
+                self.assertEqual((updater.dir / "pending.json").read_bytes(), pending)
+                self.assert_version("4.0.0")
+                updater.cancel_pending()
 
     def test_real_launcher_forwards_data_forms_and_preserves_stable_host_on_downgrade(self):
         # A TEMP venv plus no-op bootstrap: no pip, real app, network or service.

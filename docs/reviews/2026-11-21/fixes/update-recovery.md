@@ -47,3 +47,18 @@ OK (skipped=1)
 唯一跳过是 Windows 无 `sh`，因此原 `ShellScriptTests.test_syntax` 按条件跳过。新增 11 项全部执行通过；Windows junction 测试使用无需提升权限的目录链接替代需要特权的 symlink，没有跳过。
 
 受影响 Python 文件的 ruff check / format check、py_compile、UTF-8/BOM 检查与 `git diff --check` 通过。本轮没有运行会真实调用 pip 的原 `LauncherExecutionTests`；其 fixture 仅同步新增宿主文件，实际启动器调用由上述独立离线用例覆盖。全量门禁与新代理独立复审由主控整合。
+
+## CI 收尾补充：R5-WIN-PATH-01
+
+最终基线 `c84ce33` 的 Windows Python 3.11 CI 检出三项更新恢复失败。此次在本机临时目录先创建长名称父目录，再通过真实 Windows `GetShortPathNameW` 取得 8.3 别名；让独立 Python 子进程以该别名作为 `TEMP` / `TMP` 运行三项原回归，**三项全部复现失败，15.806 秒**。没有通过延长等待、跳过或放宽业务断言处理。
+
+- **确认的生产问题**：稳定宿主把安装根 `root` 规范化为 `resolve()`，但 `_workspace` 返回原始 `absolute()` 路径；短名数据路径与长名程序目录作词法祖先比较，实际位于 `web/` 下的工作区未被识别，导致安装可覆盖工作区。类似 `data/../web/private-workspace` 的绝对路径也能在各平台触发同类绕过。新集成回归在修复前运行，`UpdateError not raised`，0.304 秒。
+- **另两项为测试暂停钩子误报**：实际交换的 source 是规范化长路径，测试 fixture 的 `self.root` 却保留短名，两者 `==` 为假，所以线程的 `entered` 和子进程的 `held` 未触发。它们没有证明租约失效。将测试 TEMP base 在 setup 时规范化后，暂停依然发生在实际 module 目录已移走的位置，原并发拒绝和最终完整性断言全部保留。
+- **生产最小修复**：`_workspace` 先检查用户原始路径及祖先不存在链接 / reparse point，再返回 `data.resolve()`；不能在链接检查之前解析，否则会抹掉应当拒绝的链接证据。apply 与 journal 恢复两处重叠检查共享该函数，安装根、程序 entry、工作区采用同一形式比较。
+- **新增持久回归**：`test_workspace_aliases_cannot_hide_program_overlap` 使用真实签名 fixture，通过 `..` 路径以及 Windows 文件系统支持时的真实 8.3 别名分别指向受交换程序目录内部。拒绝后核对工作区私有文件、pending 逐字内容、整套旧版本与稳定宿主均不变；每个子 case 断言完成后取消 pending，避免同一物理工作区夹具串扰。没有新增 skip；不提供 8.3 别名的卷仍执行跨平台 `..` 用例。
+
+修复后同一强制短 TEMP 的三项原回归全部通过，**3 项，1.797 秒**。集中更新、版本目录、启动器静态和 bootstrap 回归运行 **58 项**：原 57 项无失败，其中既有无 `sh` 语法检查跳过 1 项；新增回归首次因上述 pending 夹具串扰报错，修正后只重跑该受影响回归，**1 项通过，0.241 秒**，其 Windows 两类 alias 子 case 均执行。Ruff check / format check、py_compile 通过。
+
+此外，同次 Windows CI 的 API 隔离回归由主控修正为比较实际路径的 `resolve()` 结果；短名和长名仍指向同一个隔离 TEMP，不是读取默认 legacy 根。该测试修正不改变应用行为。
+
+本补充只变更稳定宿主的一处返回值、更新恢复测试及本文，未接触用户运行目录、真实更新源或个人工作区。独立新代理复审和精确最终提交的跨平台 CI 由主控继续验证；这里的本机结果不代称远端已通过。
