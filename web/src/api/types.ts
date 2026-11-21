@@ -239,6 +239,8 @@ export interface ImageAdapterInfo {
 }
 
 export interface AppSettings {
+  /** Opaque write comparison for masked fields; expires when the server restarts. */
+  write_revision?: string;
   generation_defaults?: Record<
     string,
     { candidates: number; width?: number | null; height?: number | null }

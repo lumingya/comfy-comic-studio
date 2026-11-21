@@ -23,7 +23,7 @@ from pathlib import Path
 
 from .jobs import JobNotFound
 from .jobs.operations import operation_serialized
-from .models import Series, WorkshopQueue
+from .models import Series, WorkshopQueue, new_id
 from .storage import NotFound
 
 log = logging.getLogger("mio.queue")
@@ -107,8 +107,9 @@ class ProductionQueue:
         return load_queue(self.store)
 
     def _save(self, q: WorkshopQueue) -> WorkshopQueue:
+        saved = self.store.put_doc(q)
         self._active_job = q.active_job
-        return self.store.put_doc(q)
+        return saved
 
     def fault(self) -> str | None:
         """A storage warning for the queue page (legacy 存储异常横幅)."""
@@ -136,6 +137,7 @@ class ProductionQueue:
             for album_id in album_ids:
                 if album_id not in q.lane and album_id != q.active:
                     q.lane.append(album_id)
+                    q.lane_tokens[album_id] = new_id("lane")
                 q.notices.pop(album_id, None)
             q.paused = False
             self._save(q)
@@ -146,6 +148,7 @@ class ProductionQueue:
         with self.lock:
             q = self.state()
             q.lane = [a for a in q.lane if a != album_id]
+            q.lane_tokens.pop(album_id, None)
             return self._save(q)
 
     def hold(self, paused: bool) -> WorkshopQueue:
@@ -160,6 +163,7 @@ class ProductionQueue:
         with self.lock:
             q = self.state()
             q.lane, q.active, q.active_job, q.paused = [], None, None, False
+            q.lane_tokens.clear()
             return self._save(q)
 
     def set_order(self, album_ids: list[str]) -> WorkshopQueue:
@@ -215,6 +219,7 @@ class ProductionQueue:
             q = self.state()
             if album_id in q.lane or album_id in q.order or album_id in q.notices:
                 q.lane = [a for a in q.lane if a != album_id]
+                q.lane_tokens.pop(album_id, None)
                 q.order = [a for a in q.order if a != album_id]
                 q.notices.pop(album_id, None)
                 self._save(q)
@@ -224,24 +229,46 @@ class ProductionQueue:
     def advance(self) -> WorkshopQueue:
         with self.lock:
             q = self.state()
+            recovered = False
+            if not q.active_job:
+                # A launch can have committed before its active_job receipt was saved. Bind it
+                # before honoring pause/reorder/disk checks, without starting any more work.
+                for album_id in q.lane:
+                    token = q.lane_tokens.get(album_id)
+                    job = self.engine.find_submission(token) if token else None
+                    if job is not None:
+                        q.active, q.active_job = album_id, job["id"]
+                        q.lane.remove(album_id)
+                        q.lane_tokens.pop(album_id, None)
+                        recovered = True
+                        break
             if q.active_job:
                 try:
                     job = self.engine.get(q.active_job, items=False)
                 except JobNotFound:
                     job = None
                 if not lane_finished(job):
-                    return q
+                    return self._save(q) if recovered else q
                 q.active, q.active_job = None, None
             if q.paused or not q.lane or self._disk_critical():
                 return self._save(q)
             while q.lane:
-                album_id = q.lane.pop(0)
+                album_id = q.lane[0]
+                token = q.lane_tokens.get(album_id)
+                if token is None:
+                    # Old queues have no intent token. Commit it before the job can exist.
+                    token = q.lane_tokens[album_id] = new_id("lane")
+                    self._save(q)
                 try:
-                    job = self._start_album(album_id)
+                    job = self._start_album(album_id, token)
                 except Exception as exc:  # the album is skipped; the card says why
-                    log.info("queue: %s not started: %s", album_id, exc)
-                    q.notices[album_id] = str(exc) or exc.__class__.__name__
-                    continue
+                    # Submission can commit and then fail while reporting its result.
+                    job = self.engine.find_submission(token)
+                    if job is None:
+                        log.info("queue: %s not started: %s", album_id, exc)
+                        q.notices[album_id] = str(exc) or exc.__class__.__name__
+                q.lane.pop(0)
+                q.lane_tokens.pop(album_id, None)
                 if job is None:
                     continue
                 q.active, q.active_job = album_id, job["id"]
@@ -249,7 +276,11 @@ class ProductionQueue:
             return self._save(q)
 
     @operation_serialized
-    def _start_album(self, album_id: str) -> dict | None:
+    def _start_album(self, album_id: str, token: str) -> dict | None:
+        # Recover the frozen request even if it finished or the album changed meanwhile.
+        existing = self.engine.find_submission(token)
+        if existing is not None:
+            return existing
         series = self.store.get_series(album_id)
         if series.deleted_at or series.kind != "album":
             return None
@@ -261,4 +292,6 @@ class ProductionQueue:
         missing = [p.id for p in episode.ordered_panels() if p.id not in adopted]
         if not missing:
             return None
-        return self.render.render(episode.id, missing, None, None, None, adopt_first=True)
+        return self.render.render(
+            episode.id, missing, None, None, None, adopt_first=True, idempotency_key=token
+        )

@@ -8,7 +8,7 @@ export type BackupHead = S['BackupHead'];
 export type RestorePlan = S['RestorePlan'];
 export type BackupRecord = S['BackupRecord'];
 export type RestoreRecord = S['RestoreRecord'];
-export const MAX_WORKSPACE_BACKUP_BYTES = 2 * 1024 ** 3;
+export const MAX_WORKSPACE_BACKUP_BYTES = 12 * 1024 ** 3;
 
 export async function workspaceBackupHead() {
   return data(await api.GET('/api/backups/head'));

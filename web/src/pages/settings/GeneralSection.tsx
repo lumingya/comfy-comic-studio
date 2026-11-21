@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePatchSettings, useSettings } from '../../api/system';
 import type { AppSettings } from '../../api/types';
@@ -13,31 +12,19 @@ import {
   validHttpUrl,
 } from './ConfigurationParts';
 import { ModelCatalog } from './ModelCatalog';
-
-const editable = (s: AppSettings) => ({
-  llm: {
-    base_url: s.llm.base_url,
-    api_key: s.llm.api_key,
-    image_models: s.llm.image_models,
-    timeout: s.llm.timeout,
-    pace: s.llm.pace,
-  },
-  guard_terms: s.guard_terms,
-  trash_days: s.trash_days,
-});
+import { settingsIntentBody, useSettingsDraft } from './settingsDraft';
 
 export function GeneralSection() {
   const { t } = useTranslation();
   const settings = useSettings();
   const patch = usePatchSettings();
-  const [draft, setDraft] = useState<AppSettings | null>(null);
+  const draft = useSettingsDraft(settings.data, patch.isPending);
   if (settings.isError) return <QueryError error={settings.error} onRetry={settings.refetch} />;
   if (!settings.data) return <Loading />;
-  const d = draft ?? settings.data;
+  const d = draft.view!;
   const llm = (change: Partial<AppSettings['llm']>) =>
-    setDraft({ ...d, llm: { ...d.llm, ...change } });
-  const dirty =
-    !!draft && JSON.stringify(editable(draft)) !== JSON.stringify(editable(settings.data));
+    Object.entries(change).forEach(([key, value]) => draft.change(['llm', key], value));
+  const dirty = draft.dirty;
   const invalid = !validHttpUrl(d.llm.base_url);
   const modelRequest = { kind: 'openai', base_url: d.llm.base_url, api_key: d.llm.api_key };
   return (
@@ -46,20 +33,18 @@ export function GeneralSection() {
       onSubmit={(event) => {
         event.preventDefault();
         if (invalid || patch.isPending) return;
-        patch.mutate(
-          { ...editable(d), llm: { ...editable(d).llm, base_url: d.llm.base_url.trim() } },
-          {
-            onSuccess: () => {
-              setDraft(null);
-              toast(t('common.saved'));
-            },
-            onError: toastError,
+        const submitted = draft.intent;
+        patch.mutate(settingsIntentBody(submitted), {
+          onSuccess: (saved) => {
+            draft.saved(submitted, saved);
+            toast(t('common.saved'));
           },
-        );
+          onError: toastError,
+        });
       }}
     >
       <ConfigurationGuard dirty={dirty} />
-      <fieldset disabled={patch.isPending}>
+      <fieldset>
         <div className="config-section-head">
           <div>
             <h2>{t('settings.imageModels')}</h2>
@@ -121,7 +106,7 @@ export function GeneralSection() {
           <Field label={t('settings.guardTerms')} hint={t('settings.guardHint')}>
             <TagInput
               value={d.guard_terms}
-              onChange={(guard_terms) => setDraft({ ...d, guard_terms })}
+              onChange={(guard_terms) => draft.change(['guard_terms'], guard_terms)}
             />
           </Field>
           <Field label={t('settings.trashDays')}>
@@ -129,7 +114,7 @@ export function GeneralSection() {
               value={d.trash_days}
               min={1}
               max={3650}
-              onChange={(value) => setDraft({ ...d, trash_days: value ?? 30 })}
+              onChange={(value) => draft.change(['trash_days'], value ?? 30)}
             />
           </Field>
         </Advanced>
@@ -143,7 +128,7 @@ export function GeneralSection() {
         dirty={dirty}
         pending={patch.isPending}
         invalid={invalid}
-        onCancel={() => setDraft(null)}
+        onCancel={draft.reset}
       />
     </form>
   );

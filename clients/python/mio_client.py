@@ -1186,7 +1186,7 @@ class MioClient(_Base):
     def patch_settings(self, body: dict | list | None = None) -> Any:
         """PATCH /settings — Patch Settings.
 
-        Deep-merges one level; sending the masked api key back keeps the stored one.
+        Deep-merge settings, optionally comparing ``expected`` fields atomically.
         """
         return self._request("PATCH", "/settings", json=body)
 

@@ -11,12 +11,35 @@ import { InstancesSection } from './InstancesSection';
 afterEach(() => vi.unstubAllGlobals());
 const catalog = { models: [{ id: 'custom-model' }], source: 'remote', notice: '' };
 
+/** These cases edit LLM fields: mirror the API's one-level merge and public key mask. */
+function llmSettingsRoutes() {
+  let revision = 0;
+  let settings: AppSettings = {
+    ...structuredClone(configSettings),
+    write_revision: 'offline-revision-0',
+  };
+  return {
+    'GET /api/settings': () => settings,
+    'PATCH /api/settings': (body: unknown) => {
+      const patch = body as { llm: Partial<AppSettings['llm']> };
+      const key = patch.llm.api_key;
+      settings = {
+        ...settings,
+        llm: {
+          ...settings.llm,
+          ...patch.llm,
+          api_key:
+            key === undefined || key === '••••••' ? settings.llm.api_key : key ? '••••••' : '',
+        },
+        write_revision: `offline-revision-${++revision}`,
+      };
+      return settings;
+    },
+  };
+}
+
 it('replaces a saved password without the mask and makes clearing explicit', async () => {
-  const calls = mockFetch(
-    configurationRoutes({
-      'PATCH /api/settings': (patch: unknown) => ({ ...configSettings, ...(patch as object) }),
-    }),
-  );
+  const calls = mockFetch(configurationRoutes(llmSettingsRoutes()));
   renderWithProviders(<GeneralSection />);
   const key = await screen.findByPlaceholderText('已保存密钥，输入新密钥即可替换');
   expect(key).toHaveValue('');
@@ -26,19 +49,30 @@ it('replaces a saved password without the mask and makes clearing explicit', asy
   expect((calls.find((call) => call.method === 'PATCH')!.body as AppSettings).llm.api_key).toBe(
     'replacement-key',
   );
+  await waitFor(() => expect(screen.queryByRole('button', { name: '保存' })).toBeNull());
+  expect(screen.getByDisplayValue('https://shared.test/v1')).toBeInTheDocument();
+  expect(key).toHaveValue('');
+  expect(calls.find((call) => call.method === 'PATCH')!.body).toMatchObject({
+    expected_revision: 'offline-revision-0',
+  });
   await userEvent.click(screen.getByRole('button', { name: '清除密钥' }));
   await userEvent.click(screen.getByRole('button', { name: '保存' }));
   await waitFor(() => expect(calls.filter((call) => call.method === 'PATCH')).toHaveLength(2));
   expect((calls.filter((call) => call.method === 'PATCH')[1].body as AppSettings).llm.api_key).toBe(
     '',
   );
+  await waitFor(() => expect(screen.queryByRole('button', { name: '保存' })).toBeNull());
+  expect(screen.getByDisplayValue('https://shared.test/v1')).toBeInTheDocument();
+  expect(calls.filter((call) => call.method === 'PATCH')[1].body).toMatchObject({
+    expected_revision: 'offline-revision-1',
+  });
 });
 
 it('adds image models without exposing or modifying the assistant text models', async () => {
   const calls = mockFetch(
     configurationRoutes({
       'POST /api/settings/models': catalog,
-      'PATCH /api/settings': (patch: unknown) => ({ ...configSettings, ...(patch as object) }),
+      ...llmSettingsRoutes(),
     }),
   );
   renderWithProviders(<GeneralSection />);
@@ -55,6 +89,9 @@ it('adds image models without exposing or modifying the assistant text models', 
   expect(llm.text_models).toBeUndefined();
   expect(llm.vision_models).toBeUndefined();
   expect(llm.image_models).toEqual(['chat-image-test', 'custom-model']);
+  await waitFor(() => expect(screen.queryByRole('button', { name: '保存' })).toBeNull());
+  expect(screen.getByDisplayValue('https://shared.test/v1')).toBeInTheDocument();
+  expect(screen.getByPlaceholderText('已保存密钥，输入新密钥即可替换')).toHaveValue('');
 });
 
 it('fetches a cloud draft and applies a selected model without saving or generating', async () => {

@@ -15,6 +15,7 @@ from ..comfy import slot_adapters as SA
 from ..comfy import workflow_slots as slots
 from ..comfy.client import ComfyError
 from ..comfy.diagnostics import diagnose, model_catalog
+from ..jobs.pool import normalize_endpoint
 from ..models import now_iso
 from ..render_models import Asset, ComfyInstance, RenderProfile, WorkflowConfig, WorkflowDoc
 from ..storage import Conflict
@@ -369,6 +370,7 @@ def list_instances(ctx: Ctx) -> dict:
 
 @router.post("/instances", response_model=ComfyInstance, status_code=status.HTTP_201_CREATED)
 def create_instance(ctx: Ctx, body: ComfyInstance) -> ComfyInstance:
+    normalize_endpoint(body.base_url)
     doc = ctx.store.put_doc(body)
     ctx.refresh_instances()
     return doc
@@ -393,9 +395,10 @@ def delete_instance(ctx: Ctx, instance_id: str) -> None:
 def instance_health(ctx: Ctx, instance_id: str) -> dict:
     inst = ctx.store.get_doc("instance", instance_id)
     try:
+        normalize_endpoint(inst.base_url)
         stats = ctx.comfy_client_factory(inst.base_url).system_stats()
         ok = True
-    except (ComfyError, OSError) as exc:
+    except (ComfyError, OSError, ValueError) as exc:
         stats, ok = {"error": str(exc)}, False
     ctx.engine.pool.mark_health(instance_id, ok)
     return {"id": instance_id, "ok": ok, "stats": stats}

@@ -44,7 +44,7 @@ export const workspaceBackupsZh = {
   reselect: '请重新选择同一备份文件，检查后再暂存。',
   busyJobs: '当前有 {{count}} 个进行中或待核对的任务。请先处理任务，再导出或安排恢复。',
   retry: '重试',
-  sizeLimit: '工作区备份不能超过 2 GiB。',
+  sizeLimit: '工作区备份不能超过 12 GiB。',
   details: '校验与计划详情',
   hash: '备份 SHA-256',
   head: '暂存时的工作区版本',
@@ -147,7 +147,7 @@ export const workspaceBackupsEn: typeof workspaceBackupsZh = {
   busyJobs:
     '{{count}} jobs are active or need review. Resolve them before exporting or scheduling a restore.',
   retry: 'Retry',
-  sizeLimit: 'A workspace archive cannot exceed 2 GiB.',
+  sizeLimit: 'A workspace archive cannot exceed 12 GiB.',
   details: 'Verification and plan details',
   hash: 'Archive SHA-256',
   head: 'Workspace version at staging',

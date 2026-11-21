@@ -17,13 +17,47 @@ COMFY = "comfy"
 
 
 def normalize_endpoint(base_url: str) -> str:
-    """Stable identity for a configured Comfy endpoint, independent of instance ids."""
-    parts = urlsplit(base_url.strip())
+    """Validate and identify a Comfy endpoint, independent of instance ids.
+
+    Also used at the save boundary. Historical documents remain readable so the pool can
+    quarantine a bad endpoint and expose a useful diagnostic beside healthy instances.
+    """
+    value = base_url.strip()
+    if any(ord(c) <= 32 or ord(c) == 127 for c in value) or "\\" in value:
+        raise ValueError("ComfyUI URL contains whitespace, control characters or backslashes")
+    parts = urlsplit(value)
     scheme = parts.scheme.lower()
     host = (parts.hostname or "").lower()
+    if scheme not in ("http", "https") or not host:
+        raise ValueError("ComfyUI URL requires http:// or https:// and a hostname")
+    if ":" not in host:
+        try:
+            labels = host.encode("idna").decode("ascii").rstrip(".").split(".")
+        except UnicodeError:
+            raise ValueError("ComfyUI URL has an invalid hostname") from None
+        if any(
+            not label
+            or len(label) > 63
+            or label.startswith("-")
+            or label.endswith("-")
+            or any(not (c.isalnum() or c in "-_") for c in label)
+            for label in labels
+        ):
+            raise ValueError("ComfyUI URL has an invalid hostname")
+    authority = parts.netloc.rsplit("@", 1)[-1]
+    if authority.endswith(":") or (":" in host and not authority.startswith("[")):
+        raise ValueError("ComfyUI URL has an invalid port or IPv6 address")
+    if authority.startswith("["):
+        suffix = authority.partition("]")[2]
+        if suffix and not (
+            suffix.startswith(":") and suffix[1:].isascii() and suffix[1:].isdigit()
+        ):
+            raise ValueError("ComfyUI URL has an invalid IPv6 authority")
+    port = parts.port  # urlsplit validates numeric range as well as malformed ports.
+    if port == 0:
+        raise ValueError("ComfyUI URL port must be between 1 and 65535")
     if ":" in host:
         host = f"[{host}]"
-    port = parts.port
     authority = host
     if port is not None and (scheme, port) not in (("http", 80), ("https", 443)):
         authority += f":{port}"
@@ -74,7 +108,18 @@ class ResourcePool:
                 slot = InstanceSlot(
                     inst.id, inst.base_url, inst.capacity, tuple(getattr(inst, "tags", ()) or ())
                 )
-                if old and normalize_endpoint(old.base_url) == normalize_endpoint(inst.base_url):
+                try:
+                    endpoint = normalize_endpoint(inst.base_url)
+                except ValueError as exc:
+                    slot.healthy = False
+                    slot.info["configuration_error"] = str(exc)
+                    fresh[inst.id] = slot
+                    continue
+                if (
+                    old
+                    and not old.info.get("configuration_error")
+                    and normalize_endpoint(old.base_url) == endpoint
+                ):
                     slot.busy, slot.last_group, slot.healthy = old.busy, old.last_group, old.healthy
                 fresh[inst.id] = slot
             # keep busy counters of removed instances so running work can still release
@@ -87,7 +132,8 @@ class ResourcePool:
     def mark_health(self, instance_id: str, healthy: bool) -> None:
         with self.lock:
             if instance_id in self.instances:
-                self.instances[instance_id].healthy = healthy
+                slot = self.instances[instance_id]
+                slot.healthy = healthy and not slot.info.get("configuration_error")
 
     def snapshot(self) -> dict:
         with self.lock:
@@ -101,6 +147,11 @@ class ResourcePool:
                         "busy": s.busy,
                         "last_group": s.last_group,
                         "healthy": s.healthy,
+                        **(
+                            {"error": s.info["configuration_error"]}
+                            if s.info.get("configuration_error")
+                            else {}
+                        ),
                     }
                     for s in self.instances.values()
                 ],
@@ -186,8 +237,8 @@ class ResourcePool:
                 self.local_busy += 1
             else:
                 slot = self.instances[instance_id]
-                slot.busy += 1
                 endpoint = normalize_endpoint(slot.base_url)
+                slot.busy += 1
                 self.endpoint_active[endpoint] = self.endpoint_active.get(endpoint, 0) + 1
                 if group:
                     slot.last_group = group
@@ -207,7 +258,11 @@ class ResourcePool:
                     self.endpoint_active[endpoint] = remaining
                 else:
                     self.endpoint_active.pop(endpoint, None)
-                if slot and normalize_endpoint(slot.base_url) == endpoint:
+                if (
+                    slot
+                    and not slot.info.get("configuration_error")
+                    and normalize_endpoint(slot.base_url) == endpoint
+                ):
                     slot.busy = max(0, slot.busy - 1)
                     if slot.capacity == 0 and slot.busy == 0:
                         del self.instances[instance_id]

@@ -1586,7 +1586,13 @@ export interface paths {
         head?: never;
         /**
          * Patch Settings
-         * @description Deep-merges one level; sending the masked api key back keeps the stored one.
+         * @description Deep-merge settings, optionally comparing ``expected`` fields atomically.
+         *
+         *     ``image_channel_edits`` uses stable IDs and partial before/after fields (null creates or
+         *     deletes). Masked field comparisons also require the GET response's opaque
+         *     ``write_revision`` as ``expected_revision``; it expires on restart. A stale comparison
+         *     fails with 409 and changes nothing. Legacy patches without comparisons keep their
+         *     existing semantics, including preserving a stored key when its mask is resubmitted.
          */
         patch: operations["patch_settings_api_settings_patch"];
         trace?: never;
@@ -6504,6 +6510,13 @@ export interface components {
              * @description Albums waiting to start one after another.
              */
             lane: string[];
+            /**
+             * Lane Tokens
+             * @description Album id → durable identity of this lane submission.
+             */
+            lane_tokens: {
+                [key: string]: string;
+            };
             /**
              * Paused
              * @description The lane is held (全局暂停).

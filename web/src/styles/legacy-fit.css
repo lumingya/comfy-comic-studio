@@ -1,6 +1,11 @@
 /* Glue between the generated legacy stylesheet (legacy.css) and the React markup.
    Keep this small: anything here is a deliberate difference from legacy/styles.css. */
 
+/* Forward fill retains an identity matrix in Chrome and traps fixed save bars. */
+.view {
+  animation-fill-mode: backwards;
+}
+
 /* The rail, content and fixed bars share one width, including when labels are hidden. */
 html[data-nav-collapsed='true'] {
   --nav-width: 66px;

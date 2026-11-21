@@ -161,6 +161,20 @@ describe('workspace backup export', () => {
 });
 
 describe('workspace restore review', () => {
+  it.each([2 * 1024 ** 3 + 1, 12 * 1024 ** 3])(
+    'lets metadata size %s reach inspection without allocating a large file',
+    async (size) => {
+      const calls = backupFetch();
+      renderWithProviders(<BackupsSection />);
+      const dialog = await openRestore();
+      const file = archiveFile();
+      Object.defineProperty(file, 'size', { value: size });
+      await userEvent.upload(dialog.querySelector<HTMLInputElement>('input[type=file]')!, file);
+      await userEvent.click(within(dialog).getByRole('button', { name: '检查文件' }));
+      await within(dialog).findByText('文件检查通过，当前工作区未修改。');
+      expect(calls.filter((c) => c.url === '/api/backups/inspect')).toHaveLength(1);
+    },
+  );
   it('separates inspect, stage and schedule; checks the current head and offers explicit cancellation', async () => {
     const calls = backupFetch();
     renderWithProviders(<BackupsSection />);
@@ -249,7 +263,7 @@ describe('workspace restore review', () => {
     const oversized = archiveFile();
     Object.defineProperty(oversized, 'size', { value: MAX_WORKSPACE_BACKUP_BYTES + 1 });
     await userEvent.upload(input, oversized);
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('不能超过 2 GiB');
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('不能超过 12 GiB');
     expect(calls.filter((call) => call.method === 'POST')).toHaveLength(0);
     await userEvent.upload(input, archiveFile());
     await userEvent.click(within(dialog).getByRole('button', { name: '检查文件' }));

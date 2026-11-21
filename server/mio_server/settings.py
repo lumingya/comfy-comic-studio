@@ -6,6 +6,9 @@ stored key when the client sends the mask back unchanged.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import secrets
 from typing import Callable
 
 from pydantic import Field
@@ -18,7 +21,10 @@ from .pipeline import providers as PV
 ImageChannel = PV.ImageChannel
 
 MASK = "••••••"
-PROTECTED = {"extensions", "api_tokens", "id", "name"}
+PROTECTED = {"extensions", "api_tokens", "id", "name", "write_revision"}
+# Masked credentials cannot serve as comparison values. This process-local keyed digest
+# makes a stale private value detectable without exposing a stable hash of any credential.
+_WRITE_REVISION_KEY = secrets.token_bytes(32)
 
 
 class LLMSettings(StrictModel):
@@ -91,11 +97,115 @@ def load(store) -> AppSettings:
 
 def public(settings: AppSettings) -> dict:
     data = settings.model_dump()
+    data["write_revision"] = write_revision(settings)
     data["llm"]["api_key"] = MASK if settings.llm.api_key else ""
     for channel in data["image_channels"]:
         channel["api_key"] = MASK if channel["api_key"] else ""
         channel["extra_options"] = PV.redact_extra_options(channel["extra_options"])
     return data
+
+
+def write_revision(settings: AppSettings) -> str:
+    return hmac.new(
+        _WRITE_REVISION_KEY, settings.model_dump_json().encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+
+
+def intent_patch(settings: AppSettings, request: dict) -> dict:
+    """Resolve field comparisons and channel edits against the transaction's live settings.
+
+    ``expected`` compares only explicitly edited public fields. A channel edit has matching
+    partial ``before``/``after`` keys; null before creates, null after deletes. The caller must
+    keep read, comparison, validation and persistence within one store transaction.
+    """
+    from .storage import Conflict
+
+    patch = dict(request)
+    expected = patch.pop("expected", {})
+    edits = patch.pop("image_channel_edits", [])
+    revision = patch.pop("expected_revision", None)
+    visible = public(settings)
+
+    def compare(current, before):
+        if isinstance(before, dict) and isinstance(current, dict):
+            return all(
+                key in current and compare(current[key], value) for key, value in before.items()
+            )
+        return current == before
+
+    if not isinstance(expected, dict) or not isinstance(edits, list):
+        raise ValueError("Invalid settings field intent")
+
+    def masked(value):
+        if isinstance(value, dict):
+            return any(masked(item) for item in value.values())
+        if isinstance(value, list):
+            return any(masked(item) for item in value)
+        return value == MASK
+
+    compares_mask = masked(expected) or any(
+        isinstance(edit, dict) and masked(edit.get("before")) for edit in edits
+    )
+    if compares_mask and revision is None:
+        raise ValueError("Masked field comparisons require the opaque write revision")
+    if revision is not None and (
+        not isinstance(revision, str)
+        or not revision.isascii()
+        or not hmac.compare_digest(revision, visible["write_revision"])
+    ):
+        raise Conflict("Settings changed; cancel the draft and review the latest values.")
+    if not compare(visible, expected):
+        raise Conflict(
+            "Settings changed in another window; cancel the draft and review the latest values."
+        )
+    if edits:
+        if "image_channels" in patch:
+            raise ValueError("Use channel edits or channel replacement, not both")
+        channels = {c["id"]: c for c in visible["image_channels"]}
+        seen = set()
+        for edit in edits:
+            if not isinstance(edit, dict) or not isinstance(edit.get("id"), str):
+                raise ValueError("Invalid channel field intent")
+            channel_id = edit["id"]
+            if channel_id in seen or "before" not in edit or "after" not in edit:
+                raise ValueError("Invalid or repeated channel field intent")
+            seen.add(channel_id)
+            before, after = edit["before"], edit["after"]
+            current = channels.get(channel_id)
+            if before is None:
+                if current is not None:
+                    raise Conflict(
+                        "Channel was created in another window; review the latest settings."
+                    )
+                if not isinstance(after, dict) or after.get("id") != channel_id:
+                    raise ValueError("New channel intent must contain its matching ID")
+                channels[channel_id] = after
+            else:
+                if (
+                    current is None
+                    or not isinstance(before, dict)
+                    or not all(
+                        key in current and current[key] == value for key, value in before.items()
+                    )
+                ):
+                    raise Conflict(
+                        "Channel changed in another window; cancel the draft and review the latest values."
+                    )
+                if after is None:
+                    # Deleting must compare the entire visible row, not merely one old field.
+                    if before != current:
+                        raise ValueError("Channel deletion must compare the full channel")
+                    del channels[channel_id]
+                elif (
+                    isinstance(after, dict) and before.keys() == after.keys() and "id" not in after
+                ):
+                    channels[channel_id] = {**current, **after}
+                else:
+                    raise ValueError(
+                        "Channel edit must compare each changed field and preserve its ID"
+                    )
+        patch["image_channels"] = list(channels.values())
+    return patch
 
 
 def apply_patch(settings: AppSettings, patch: dict) -> AppSettings:

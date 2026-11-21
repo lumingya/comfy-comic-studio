@@ -837,6 +837,9 @@ class WorkshopQueue(StrictModel):
     lane: list[str] = Field(
         default_factory=list, description="Albums waiting to start one after another."
     )
+    lane_tokens: dict[str, str] = Field(
+        default_factory=dict, description="Album id → durable identity of this lane submission."
+    )
     paused: bool = Field(default=False, description="The lane is held (全局暂停).")
     active: str | None = Field(default=None, description="Album the lane started last.")
     active_job: str | None = None

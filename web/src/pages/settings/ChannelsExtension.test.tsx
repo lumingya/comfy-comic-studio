@@ -64,11 +64,17 @@ async function openOptions() {
   return screen.findByRole('textbox', { name: /^扩展参数（JSON）/ });
 }
 const savedSettings = (calls: ReturnType<typeof mockFetch>) =>
-  calls.filter((call) => call.method === 'PATCH').at(-1)?.body as AppSettings;
+  calls.filter((call) => call.method === 'PATCH').at(-1)?.body as {
+    image_channel_edits?: {
+      id: string;
+      before: Record<string, unknown>;
+      after: Record<string, unknown>;
+    }[];
+  };
 
 describe('extension channel structured options', () => {
   it('keeps unknown nested values and masked credentials intact when editing another channel field', async () => {
-    const { calls, settings } = start();
+    const { calls } = start();
     const json = await openOptions();
     expect(JSON.parse((json as HTMLTextAreaElement).value)).toEqual(options);
     expect(screen.queryByRole('textbox', { name: 'vendor_recipe' })).not.toBeInTheDocument();
@@ -76,13 +82,16 @@ describe('extension channel structured options', () => {
       target: { value: 'Renamed offline provider' },
     });
     await userEvent.click(screen.getByRole('button', { name: '保存' }));
-    await waitFor(() => expect(savedSettings(calls)?.image_channels).toBeDefined());
-    expect(savedSettings(calls).image_channels?.[0]).toMatchObject({
-      label: 'Renamed offline provider',
-      api_key: '••••••',
-      extra_options: options,
+    await waitFor(() => expect(savedSettings(calls)?.image_channel_edits).toBeDefined());
+    expect(savedSettings(calls)).toEqual({
+      image_channel_edits: [
+        {
+          id: 'nested',
+          before: { label: 'Nested provider' },
+          after: { label: 'Renamed offline provider' },
+        },
+      ],
     });
-    expect(savedSettings(calls).image_channels?.[1]).toEqual(settings.image_channels?.[1]);
     expect(calls.filter((call) => call.url === '/api/image-adapters')).toHaveLength(1);
     expect(calls.some((call) => /generate|render|models/.test(call.url))).toBe(false);
   });
@@ -93,11 +102,12 @@ describe('extension channel structured options', () => {
     const next = { ...options, quality_mode: 'final' };
     fireEvent.change(json, { target: { value: JSON.stringify(next, null, 2) } });
     await userEvent.click(screen.getByRole('button', { name: '保存' }));
-    await waitFor(() => expect(savedSettings(calls)?.image_channels).toBeDefined());
-    expect(savedSettings(calls).image_channels?.[0].extra_options).toEqual(next);
-    expect(savedSettings(calls).image_channels?.[0].extra_options.vendor_recipe).not.toBeTypeOf(
-      'string',
-    );
+    await waitFor(() => expect(savedSettings(calls)?.image_channel_edits).toBeDefined());
+    expect(savedSettings(calls).image_channel_edits?.[0]).toEqual({
+      id: 'nested',
+      before: { extra_options: options },
+      after: { extra_options: next },
+    });
   });
 
   it('restores the server JSON when canceling a valid options edit', async () => {

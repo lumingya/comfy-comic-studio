@@ -114,16 +114,15 @@ describe('cloud channel configuration', () => {
     await user.type(screen.getByLabelText(/^输出质量/), 'high');
     await user.click(screen.getByRole('button', { name: '保存' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true));
-    const patch = calls.find((c) => c.method === 'PATCH')!.body as AppSettings;
-    expect(patch.image_channels?.[0]).toMatchObject({
-      id: 'images',
-      api_key: '••••••',
-      size: '1024x1536',
-      quality: 'high',
-      width: 832,
-      negative: 'blur',
+    expect(calls.find((c) => c.method === 'PATCH')!.body).toEqual({
+      image_channel_edits: [
+        {
+          id: 'images',
+          before: { size: '', quality: '' },
+          after: { size: '1024x1536', quality: 'high' },
+        },
+      ],
     });
-    expect(patch.image_channels?.[1]).toEqual(configSettings.image_channels![1]);
     expect(calls.some((c) => c.url.includes('/render') || c.url.includes('/generate'))).toBe(false);
   });
 
@@ -145,13 +144,14 @@ describe('cloud channel configuration', () => {
     await user.type(screen.getByLabelText('采样器'), 'custom_sampler');
     await user.click(screen.getByRole('button', { name: '保存' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true));
-    const patch = calls.find((c) => c.method === 'PATCH')!.body as AppSettings;
-    expect(patch.image_channels?.[0]).toMatchObject({
-      kind: 'novelai',
-      scale: 6.5,
-      sampler: 'custom_sampler',
-      ref_strength: 0.6,
-      steps: 28,
+    expect(calls.find((c) => c.method === 'PATCH')!.body).toEqual({
+      image_channel_edits: [
+        {
+          id: 'images',
+          before: { kind: 'openai_images', scale: 5, sampler: 'k_euler_ancestral' },
+          after: { kind: 'novelai', scale: 6.5, sampler: 'custom_sampler' },
+        },
+      ],
     });
   });
 
@@ -174,8 +174,15 @@ describe('cloud channel configuration', () => {
     await user.selectOptions(quality, 'final');
     await user.click(screen.getByRole('button', { name: '保存' }));
     await waitFor(() => expect(calls.some((call) => call.method === 'PATCH')).toBe(true));
-    const patch = calls.find((call) => call.method === 'PATCH')!.body as AppSettings;
-    expect(patch.image_channels?.[0].extra_options).toEqual({ quality_mode: 'final' });
+    expect(calls.find((call) => call.method === 'PATCH')!.body).toEqual({
+      image_channel_edits: [
+        {
+          id: 'images',
+          before: { kind: 'openai_images', extra_options: { quality_mode: 'draft' } },
+          after: { kind: 'vendor_images', extra_options: { quality_mode: 'final' } },
+        },
+      ],
+    });
   });
 
   it('chat image channels inherit the image proxy and do not expose text AI or unsupported sizing', async () => {

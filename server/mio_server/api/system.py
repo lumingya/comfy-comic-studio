@@ -43,15 +43,23 @@ def fetch_models(ctx: Ctx, body: ModelCatalogRequest) -> ModelCatalog:
 
 @router.patch("/settings")
 def patch_settings(ctx: Ctx, patch: dict[str, Any]) -> dict:
-    """Deep-merges one level; sending the masked api key back keeps the stored one."""
-    current = ctx.settings()
-    updated = SET.apply_patch(current, patch)
-    removed = {c.id for c in current.image_channels} - {c.id for c in updated.image_channels}
-    users = [p.name for p in ctx.store.list_docs("profile") if p.cloud_channel in removed]
-    if users:
-        raise Conflict("渠道仍被出图配置使用，请先更换渠道：" + "、".join(users))
-    updated.updated_at = now_iso()
-    ctx.store.put_doc(updated)
+    """Deep-merge settings, optionally comparing ``expected`` fields atomically.
+
+    ``image_channel_edits`` uses stable IDs and partial before/after fields (null creates or
+    deletes). Masked field comparisons also require the GET response's opaque
+    ``write_revision`` as ``expected_revision``; it expires on restart. A stale comparison
+    fails with 409 and changes nothing. Legacy patches without comparisons keep their
+    existing semantics, including preserving a stored key when its mask is resubmitted.
+    """
+    with ctx.store.tx():
+        current = ctx.settings()
+        updated = SET.apply_patch(current, SET.intent_patch(current, patch))
+        removed = {c.id for c in current.image_channels} - {c.id for c in updated.image_channels}
+        users = [p.name for p in ctx.store.list_docs("profile") if p.cloud_channel in removed]
+        if users:
+            raise Conflict("渠道仍被出图配置使用，请先更换渠道：" + "、".join(users))
+        updated.updated_at = now_iso()
+        ctx.store.put_doc(updated)
     return SET.public(updated)
 
 

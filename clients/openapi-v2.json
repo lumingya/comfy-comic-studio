@@ -9656,6 +9656,14 @@
       "title": "Lane",
       "type": "array"
      },
+     "lane_tokens": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "Album id → durable identity of this lane submission.",
+      "title": "Lane Tokens",
+      "type": "object"
+     },
      "notices": {
       "additionalProperties": {
        "type": "string"
@@ -9687,6 +9695,7 @@
      "id",
      "order",
      "lane",
+     "lane_tokens",
      "paused",
      "active",
      "active_job",
@@ -22979,7 +22988,7 @@
     "x-mio-operation": "GET /settings"
    },
    "patch": {
-    "description": "Deep-merges one level; sending the masked api key back keeps the stored one.",
+    "description": "Deep-merge settings, optionally comparing ``expected`` fields atomically.\n\n``image_channel_edits`` uses stable IDs and partial before/after fields (null creates or\ndeletes). Masked field comparisons also require the GET response's opaque\n``write_revision`` as ``expected_revision``; it expires on restart. A stale comparison\nfails with 409 and changes nothing. Legacy patches without comparisons keep their\nexisting semantics, including preserving a stored key when its mask is resubmitted.",
     "operationId": "patch_settings",
     "requestBody": {
      "content": {

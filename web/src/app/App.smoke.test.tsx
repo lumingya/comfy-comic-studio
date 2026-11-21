@@ -34,6 +34,7 @@ const idleQueue: QueueStatus = {
   id: 'queue',
   order: [],
   lane: [],
+  lane_tokens: {},
   paused: false,
   active: null,
   active_job: null,

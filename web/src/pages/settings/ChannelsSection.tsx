@@ -17,6 +17,7 @@ import { toast, toastError } from '../../components/toast';
 import { Empty, Field, Loading, Select } from '../../components/ui';
 import { ConfigurationGuard, ConfigurationSaveBar, validHttpUrl } from './ConfigurationParts';
 import { BUILTIN_KINDS, ChannelFields } from './ChannelFields';
+import { settingsIntentBody, useSettingsDraft } from './settingsDraft';
 
 export type { ImageChannel } from '../../api/types';
 
@@ -50,16 +51,13 @@ export function ChannelsSection() {
   const adapters = useImageAdapters();
   const profiles = useProfiles();
   const patch = usePatchSettings();
-  const [draft, setDraft] = useState<{ list: ImageChannel[]; current: string } | null>(null);
+  const draft = useSettingsDraft(settings.data, patch.isPending);
   const [selected, setSelected] = useState('');
   const [invalidOptions, setInvalidOptions] = useState(false);
   const [editorRevision, setEditorRevision] = useState(0);
-  const stored = {
-    list: settings.data?.image_channels ?? [],
-    current: settings.data?.image_channel ?? '',
-  };
-  const { list, current } = draft ?? stored;
-  const dirty = invalidOptions || (!!draft && JSON.stringify(draft) !== JSON.stringify(stored));
+  const list = draft.view?.image_channels ?? [];
+  const current = draft.view?.image_channel ?? '';
+  const dirty = invalidOptions || draft.dirty;
   const active = list.find((c) => c.id === selected) ?? list[0];
   const kinds = Array.from(
     new Set([
@@ -75,33 +73,20 @@ export function ChannelsSection() {
   const used = active && (active.id === current || users.length > 0);
   const invalidDefault = !!current && !list.some((c) => c.id === current);
   const invalid = duplicate || invalidUrl || invalidDefault || invalidOptions;
-  const edit = (next: ImageChannel[]) => setDraft({ list: next, current });
 
   if (settings.isError) return <QueryError error={settings.error} onRetry={settings.refetch} />;
   if (!settings.data) return <Loading />;
 
   const save = () => {
     if (invalid || patch.isPending) return;
-    patch.mutate(
-      {
-        image_channels: list.map((c) => ({
-          ...c,
-          base_url: c.base_url.trim(),
-          model: c.model.trim(),
-          size: c.size.trim(),
-          quality: c.quality.trim(),
-        })),
-        image_channel: current,
+    const submitted = draft.intent;
+    patch.mutate(settingsIntentBody(submitted), {
+      onSuccess: (saved) => {
+        draft.saved(submitted, saved);
+        toast(t('common.saved'));
       },
-      {
-        onSuccess: () => {
-          setDraft(null);
-          setEditorRevision((revision) => revision + 1);
-          toast(t('common.saved'));
-        },
-        onError: toastError,
-      },
-    );
+      onError: toastError,
+    });
   };
   const remove = async () => {
     if (
@@ -115,7 +100,7 @@ export function ChannelsSection() {
       }))
     )
       return;
-    edit(list.filter((c) => c.id !== active.id));
+    draft.change(['image_channels', active.id], null);
   };
 
   return (
@@ -127,7 +112,7 @@ export function ChannelsSection() {
       }}
     >
       <ConfigurationGuard dirty={dirty} />
-      <fieldset disabled={patch.isPending}>
+      <fieldset>
         <div className="config-section-head">
           <div>
             <h2>{t('config.cloud.title')}</h2>
@@ -138,7 +123,7 @@ export function ChannelsSection() {
             className="btn"
             onClick={() => {
               const channel = newChannel(list.map((c) => c.id));
-              edit([...list, channel]);
+              draft.change(['image_channels', channel.id], channel);
               setSelected(channel.id);
             }}
           >
@@ -150,7 +135,7 @@ export function ChannelsSection() {
           <Field label={t('settings.channels.default')} hint={t('config.cloud.defaultHint')}>
             <Select
               value={current}
-              onChange={(value) => setDraft({ list, current: value })}
+              onChange={(value) => draft.change(['image_channel'], value)}
               options={[
                 { value: '', label: t('config.cloud.sharedDefault') },
                 ...list.map((c) => ({
@@ -227,7 +212,12 @@ export function ChannelsSection() {
                   channel={active}
                   kinds={kinds}
                   adapter={adapters.data?.find((item) => item.id === active.kind)}
-                  onChange={(next) => edit(list.map((c) => (c.id === active.id ? next : c)))}
+                  onChange={(next) => {
+                    for (const key of Object.keys(next) as (keyof ImageChannel)[]) {
+                      if (JSON.stringify(next[key]) !== JSON.stringify(active[key]))
+                        draft.change(['image_channels', active.id, key], next[key]);
+                    }
+                  }}
                   onInvalidChange={setInvalidOptions}
                 />
                 {used ? (
@@ -263,7 +253,7 @@ export function ChannelsSection() {
         pending={patch.isPending}
         invalid={invalid}
         onCancel={() => {
-          setDraft(null);
+          draft.reset();
           setInvalidOptions(false);
           setEditorRevision((revision) => revision + 1);
         }}
