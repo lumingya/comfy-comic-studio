@@ -20,6 +20,7 @@ import { QueryError } from '../../app/errors';
 import { AssemblyCanvas, EMPTY_DESIGN, canvasTasks, type CanvasDesign } from './AssemblyCanvas';
 import { AssemblyReview } from './AssemblyReview';
 import { AssemblyIntents } from './assemblyIntent';
+import { AssemblePresets } from './AssemblePresets';
 import { GenerationSettings, GenerationSummary, generationValid } from './GenerationSettings';
 import { workshopHref } from './workshopSource';
 import './creation-kits.css';
@@ -374,64 +375,22 @@ export default function AssembleDialog({
                   <h3>{t('ws.assemble.presetsTitle')}</h3>
                   <p>{t('ws.assemble.presetsLede')}</p>
                 </header>
-                <div
-                  className="designer-presets"
-                  role="group"
-                  aria-label={t('ws.assemble.presets')}
-                >
-                  {presets.map((p) => {
-                    const on = picked.includes(p.id!);
-                    const keys = p.entries.map((e) => e.key);
-                    return (
-                      <label key={p.id} className={`designer-preset${on ? ' selected' : ''}`}>
-                        <input type="checkbox" checked={on} onChange={() => toggle(p.id!)} />
-                        <span className="designer-preset-mark" aria-hidden="true" />
-                        <span className="designer-preset-icon">
-                          <Icon name="users" sm />
-                        </span>
-                        <span className="designer-preset-body">
-                          <strong>{p.title}</strong>
-                          <small>{t('ws.assemble.presetKind', { count: keys.length })}</small>
-                          <span className="designer-preset-keys">
-                            {keys.slice(0, 4).map((k) => (
-                              <code key={k}>{`{${k}}`}</code>
-                            ))}
-                            {keys.length > 4 ? <code>+{keys.length - 4}</code> : null}
-                          </span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-                <ol className="assembly-preset-order" aria-label={t('ws.assemble.presetOrder')}>
-                  {ordered.map((preset, index) => (
-                    <li key={preset.id}>
-                      <span>{preset.title}</span>
-                      {([-1, 1] as const).map((direction) => (
-                        <button
-                          type="button"
-                          className="btn ghost"
-                          key={direction}
-                          disabled={index + direction < 0 || index + direction >= picked.length}
-                          aria-label={t(
-                            direction < 0 ? 'ws.assemble.moveUp' : 'ws.assemble.moveDown',
-                            { title: preset.title },
-                          )}
-                          onClick={() => {
-                            const next = [...picked];
-                            [next[index], next[index + direction]] = [
-                              next[index + direction],
-                              next[index],
-                            ];
-                            setChosen(next);
-                          }}
-                        >
-                          <Icon name={direction < 0 ? 'up' : 'down'} sm />
-                        </button>
-                      ))}
-                    </li>
-                  ))}
-                </ol>
+                <AssemblePresets
+                  host={ref.current}
+                  presets={presets}
+                  ordered={ordered}
+                  onToggle={toggle}
+                  onMove={(id, offset) => {
+                    const index = ordered.findIndex((preset) => preset.id === id);
+                    const other = ordered[index + offset];
+                    if (index < 0 || !other) return;
+                    const next = [...picked];
+                    const from = next.indexOf(id);
+                    const to = next.indexOf(other.id!);
+                    [next[from], next[to]] = [next[to], next[from]];
+                    setChosen(next);
+                  }}
+                />
               </section>
             ) : (
               <section className="designer-step" data-step="2">

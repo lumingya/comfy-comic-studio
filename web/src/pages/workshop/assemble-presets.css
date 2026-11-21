@@ -1,0 +1,152 @@
+.assembly-preset-card {
+  position: relative;
+  min-width: 0;
+}
+
+#modal.assembly-designer .assembly-preset-card .designer-preset {
+  height: 100%;
+}
+
+.assembly-preset-card .designer-preset-body > strong {
+  padding-inline-end: 58px;
+}
+
+.assembly-preset-card .designer-preset-body code {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assembly-preset-card .assembly-preset-peek {
+  position: absolute;
+  inset-block-start: 7px;
+  inset-inline-end: 36px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+}
+
+.assembly-preset-card .assembly-preset-peek[aria-expanded='true'],
+.assembly-merge-peek[aria-expanded='true'] {
+  color: var(--accent);
+  background: var(--tint);
+}
+
+.assembly-preset-order-section {
+  margin-top: 16px;
+}
+
+.assembly-preset-order-section > header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.assembly-preset-order-section h4 {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.assembly-preset-order {
+  margin: 8px 0 0;
+  padding-inline-start: 24px;
+}
+
+.assembly-preset-order > li {
+  padding-block: 4px;
+}
+
+.assembly-preset-order > li > span {
+  display: inline-block;
+  max-width: calc(100% - 86px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.assembly-preset-order .btn {
+  margin-inline-start: 6px;
+  padding: 3px 6px;
+}
+
+.assembly-preset-popover {
+  z-index: 24;
+  width: min(360px, calc(100vw - 44px), var(--radix-popover-content-available-width, 360px));
+  max-height: min(300px, var(--radix-popover-content-available-height, 300px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 0 12px 10px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+.assembly-preset-popover:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.assembly-preset-popover > h4 {
+  position: sticky;
+  top: 0;
+  margin: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assembly-preset-popover > p {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.assembly-preset-popover dl {
+  margin: 0;
+}
+
+.assembly-preset-popover dl > div {
+  padding: 8px 0;
+}
+
+.assembly-preset-popover dl > div + div {
+  border-top: 1px solid var(--line);
+}
+
+.assembly-preset-popover dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  color: var(--accent);
+}
+
+.assembly-preset-popover dd {
+  margin: 3px 0 0;
+  white-space: pre-wrap;
+}
+
+.assembly-preset-popover small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.assembly-preset-popover dd small {
+  display: block;
+  margin-top: 5px;
+}
+
+.assembly-preset-popover .is-overridden {
+  color: var(--muted);
+}

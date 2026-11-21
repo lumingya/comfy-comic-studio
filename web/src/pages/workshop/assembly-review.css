@@ -1,15 +1,107 @@
 .assembly-review {
   margin-top: 18px;
 }
-.assembly-review details > summary {
+.assembly-review-summary,
+.assembly-review-navigation,
+.assembly-review-arrows {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.assembly-review-summary {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.assembly-review-summary p {
+  margin: 0;
+}
+.assembly-review-summary [role='alert'] p {
+  margin-bottom: 8px;
+}
+.assembly-review-summary label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+}
+.assembly-review-summary input[type='checkbox'] {
+  width: auto;
+  min-width: auto;
+  margin: 0;
+}
+.assembly-review-navigation [role='tablist'] {
+  display: flex;
+  flex: 1 1 0;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.assembly-review-navigation [role='tab'] {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
-  padding: 10px 0;
+  font-size: 0.8125rem;
+}
+.assembly-review-navigation [role='tab'][aria-selected='true'] {
+  border-color: var(--line);
+  background: var(--panel-2);
   font-weight: 600;
 }
-.assembly-review article {
-  border-top: 1px solid var(--line);
-  padding: 14px 0;
-  outline-offset: 4px;
+.assembly-review-scene-title {
+  min-width: 0;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.assembly-review-count {
+  flex: none;
+  min-width: 1.5em;
+  padding-inline: 4px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  color: var(--red);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.assembly-review-arrows {
+  flex: none;
+  gap: 2px;
+}
+.assembly-review-arrows .ibtn:disabled {
+  opacity: 0.45;
+}
+.assembly-review-detail {
+  box-sizing: border-box;
+  height: clamp(180px, 38dvh, 360px);
+  min-width: 0;
+  margin: 6px 0 0;
+  padding: 10px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior-y: contain;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.assembly-review-jump {
+  width: 100%;
+  min-width: 0;
+}
+.assembly-review-no-problems {
+  color: var(--muted);
 }
 .assembly-review h5 {
   margin: 0 0 12px;
@@ -17,6 +109,7 @@
 }
 .assembly-review-problems,
 .assembly-review-values {
+  margin: 6px 0;
   padding: 0;
   list-style: none;
 }
@@ -39,8 +132,19 @@
 .assembly-review-values li {
   display: grid;
   gap: 4px;
-  padding: 8px 0;
+  padding: 8px;
   border-top: 1px solid var(--line);
+}
+.assembly-review-values li[data-problem] > span {
+  color: var(--red);
+}
+.assembly-review-values li:not([data-problem])[data-highlighted] > span {
+  color: var(--accent);
+}
+.assembly-review-values li[data-highlighted] {
+  border-radius: 6px;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 .assembly-review-values li span,
 .assembly-review-values li small {
@@ -52,21 +156,33 @@
   overflow-wrap: anywhere;
 }
 .assembly-review-variables {
-  margin: 14px 0;
+  min-inline-size: 0;
+  margin: 0 0 12px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
 }
-.assembly-review-variables label {
+.assembly-review-variables .help {
+  margin: 0;
+}
+.assembly-review-input,
+.assembly-review-input label {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+.assembly-review-input {
   margin-top: 8px;
 }
-.assembly-review-variables input {
-  flex: 1;
-  min-width: 120px;
+.assembly-review-input label {
+  flex: 1 1 16rem;
+}
+.assembly-review-input input {
+  flex: 1 1 9rem;
+  min-width: 0;
+  max-width: 100%;
 }
 .assembly-preset-order {
   margin: 12px 0;
