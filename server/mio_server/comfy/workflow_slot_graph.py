@@ -1,8 +1,7 @@
 """Typed graph traversal, live branches and unambiguous string origins."""
 
-import re
-
-from .workflow_slot_common import MODEL_INPUT, _consumer_index, _is_link, _node_ids
+from .workflow_graph import SemanticGraph
+from .workflow_slot_common import MODEL_INPUT, _consumer_index, _node_ids
 
 
 def _rules(node, info):
@@ -11,39 +10,17 @@ def _rules(node, info):
 
 
 class Graph:
-    """Declared types first; without definitions only one-hop field semantics."""
+    """Model reachability on active semantic routes, independent of execution closure."""
 
     def __init__(self, workflow, info):
         self.wf, self.info = workflow, info or {}
+        self.semantic = SemanticGraph(workflow, info)
         self.users = _consumer_index(workflow)
         self.blocked = set()
         for nid in _node_ids(workflow):
-            inputs = workflow[nid]["inputs"]
-
-            def literal(value):
-                if _is_link(value, workflow):
-                    src = workflow.get(str(value[0]), {}).get("inputs", {})
-                    if any(_is_link(v, workflow) for v in src.values()) or len(src) != 1:
-                        return None
-                    return next(iter(src.values()))
-                return value
-
-            for yes, no in [
-                ("on_true", "on_false"),
-                ("tt_value", "ff_value"),
-                ("true_input", "false_input"),
-            ]:
-                if yes in inputs and no in inputs:
-                    controls = [literal(v) for k, v in inputs.items() if k not in (yes, no)]
-                    bools = [v for v in controls if type(v) is bool]
-                    if len(bools) == 1:
-                        self.blocked.add((nid, no if bools[0] else yes))
-            selected = literal(inputs.get("select"))
-            if type(selected) is int:
-                for key in inputs:
-                    match = re.fullmatch(r"input_?(\d+)", key)
-                    if match and int(match[1]) != selected:
-                        self.blocked.add((nid, key))
+            selected, branches, _ = self.semantic.selection(nid)
+            if selected:
+                self.blocked.update((nid, key) for key in branches if key != selected)
         # A branch shared by a live consumer must never be classified as dead.
         self.dead = set()
         for _ in workflow:
@@ -61,38 +38,38 @@ class Graph:
             self.dead |= added
 
     def output(self, nid, slot):
-        outputs = self.info.get(self.wf.get(nid, {}).get("class_type"), {}).get("output", [])
-        return str(outputs[slot]).upper() if 0 <= slot < len(outputs) else ""
+        return self.semantic.output_type(nid, slot)
 
     def edge(self, nid, user, kind="MODEL", seen=None):
-        declared = self.output(nid, user["index"])
-        if declared:
-            return declared.endswith("MODEL") if kind == "MODEL" else declared == kind
-        key = user["key"].lower()
-        if key in (
-            "on_true",
-            "on_false",
-            "tt_value",
-            "ff_value",
-            "true_input",
-            "false_input",
-        ) or re.fullmatch(r"input_?\d+", key):
-            consumer = user["consumer"]
-            if (consumer, user["key"]) in self.blocked:
-                return False
-            seen = set() if seen is None else seen
-            if consumer in seen:
-                return False
-            seen = seen | {consumer}
-            return any(
-                self.edge(consumer, downstream, kind, seen)
-                for downstream in self.users.get(consumer, [])
-            )
-        return (
-            bool(MODEL_INPUT.fullmatch(key))
-            if kind == "MODEL"
-            else key in ("lora_stack", "prev_lora")
-        )
+        pending, seen = [(nid, user)], set() if seen is None else set(seen)
+        while pending:
+            source, edge = pending.pop()
+            consumer, key = edge["consumer"], edge["key"]
+            marker = (source, consumer, key, edge["index"])
+            if marker in seen:
+                continue
+            seen.add(marker)
+            # Inactive input routing takes precedence over the source's declared type.
+            if (consumer, key) in self.blocked or self.wf.get(consumer, {}).get("mode") == 2:
+                continue
+            if self.wf.get(source, {}).get("mode") == 2:
+                continue
+            declared = self.output(source, edge["index"])
+            if declared and declared != "*":
+                if declared.endswith("MODEL") if kind == "MODEL" else declared == kind:
+                    return True
+                continue
+            if (
+                bool(MODEL_INPUT.fullmatch(key))
+                if kind == "MODEL"
+                else key.lower() in ("lora_stack", "prev_lora")
+            ):
+                return True
+            for downstream in self.users.get(consumer, []):
+                routes = self.semantic.input_routes([consumer, downstream["index"]], kind)
+                if any(path == key for path, _ in routes):
+                    pending.append((consumer, downstream))
+        return False
 
     def model_node(self, nid):
         definition = self.info.get(self.wf[nid].get("class_type"))
@@ -128,40 +105,5 @@ class Graph:
 
 
 def trace_origin(workflow, link, object_info=None, sites=None):
-    """Follow at most eight unambiguous STRING edges, never switches/concats."""
-    seen = set()
-    for _ in range(8):
-        if not _is_link(link, workflow):
-            break
-        nid = str(link[0])
-        if nid in seen or nid not in workflow:
-            break
-        seen.add(nid)
-        node = workflow[nid]
-        outputs = (object_info or {}).get(node.get("class_type"), {}).get("output", [])
-        if link[1] < len(outputs) and outputs[link[1]] != "STRING":
-            return {"nodeId": nid, "path": "", "writable": False}
-        if sites and nid in sites and sites[nid]["kind"] in ("object", "syntax"):
-            return {"nodeId": nid, "path": sites[nid]["path"], "writable": True}
-        links = [(k, v) for k, v in node["inputs"].items() if _is_link(v, workflow)]
-        if not links:
-            strings = [(k, v) for k, v in node["inputs"].items() if isinstance(v, str)]
-            return {
-                "nodeId": nid,
-                "path": strings[0][0] if len(strings) == 1 else "",
-                "writable": len(strings) == 1,
-            }
-        rules = _rules(node, object_info)
-        # Only pure single-input forwarding nodes are transparent. A selector is not.
-        if len(node["inputs"]) != 1 or len(links) != 1:
-            return {"nodeId": nid, "path": "", "writable": False}
-        key, value = links[0]
-        rule = rules.get(key, [])
-        if not rule or rule[0] != "STRING":
-            return {"nodeId": nid, "path": "", "writable": False}
-        link = value
-    return {
-        "nodeId": str(link[0]) if _is_link(link, workflow) else "",
-        "path": "",
-        "writable": False,
-    }
+    """Follow cycle-safe scalar routes, requiring a unique writable STRING origin."""
+    return SemanticGraph(workflow, object_info).literal_origin(link, "STRING", sites)

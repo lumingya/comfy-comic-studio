@@ -50,7 +50,7 @@ TEXT_KINDS = ("prompt", "negative", "region")
 AREA_PARTS = ("x", "y", "width", "height", "strength")
 SELECT_KINDS = {"output", "inspect"}
 DEFAULT_FIELDS = {
-    "seed": ("seed", "noise_seed"),
+    "seed": ("seed", "noise_seed", "seed_num"),
     "width": ("width",),
     "height": ("height",),
     "steps": ("steps",),
@@ -66,10 +66,19 @@ DEFAULT_FIELDS = {
     "strength": ("strength",),
     "control": ("image",),
 }
-TEXT_FIELDS = ("text", "prompt", "positive", "string", "value", "text_g", "text_l")
-SAMPLER_CLASSES = {"KSampler", "KSamplerAdvanced", "SamplerCustom", "SamplerCustomAdvanced"}
-LATENT_CLASSES = {"EmptyLatentImage", "EmptySD3LatentImage", "EmptyFluxLatentImage"}
-OUTPUT_CLASSES = {"SaveImage", "PreviewImage"}
+TEXT_FIELDS = (
+    "text",
+    "prompt",
+    "positive",
+    "string",
+    "value",
+    "text_g",
+    "text_l",
+    "clip_l",
+    "clip_g",
+    "t5xxl",
+    "text_t5",
+)
 TEXT_ENCODER_HINT = ("TextEncode",)
 CORE_KINDS = ("prompt", "negative", "seed", "width", "height", "output")
 
@@ -205,59 +214,13 @@ def mapping_bindings(graph: dict, mapping: dict | None) -> list[Binding]:
     return result
 
 
-def heuristic_bindings(graph: dict, missing: set[str]) -> list[Binding]:
-    found: list[Binding] = []
-    for node_id, node in graph.items():
-        cls, inputs = node.get("class_type", ""), node.get("inputs") or {}
-        if cls in SAMPLER_CLASSES | {"BasicGuider", "CFGGuider"}:
-            ports = (
-                (("prompt", "conditioning"),)
-                if cls == "BasicGuider"
-                else (("prompt", "positive"), ("negative", "negative"))
-            )
-            for kind, port in ports:
-                if kind in missing and is_link(inputs.get(port)):
-                    src_id = inputs[port][0]
-                    src = graph.get(src_id) or {}
-                    if any(h in src.get("class_type", "") for h in TEXT_ENCODER_HINT):
-                        sources = _encoder_text_sources(graph, src_id)
-                        if len(sources) == 1:
-                            target, field = sources[0]
-                            found.append(Binding(kind, target, field, None, "heuristic"))
-        if cls in SAMPLER_CLASSES | {"RandomNoise"} and "seed" in missing:
-            field = _default_field("seed", inputs)
-            if field:
-                found.append(Binding("seed", node_id, field, None, "heuristic"))
-        if cls in LATENT_CLASSES:
-            for kind in ("width", "height", "batch"):
-                field = _default_field(kind, inputs)
-                if kind in missing and field:
-                    found.append(Binding(kind, node_id, field, None, "heuristic"))
-        if cls in OUTPUT_CLASSES and "output" in missing:
-            found.append(Binding("output", node_id, None, None, "heuristic"))
-    return list(dict.fromkeys(found))
+def heuristic_bindings(graph: dict, missing: set[str], *, roots=()) -> list[Binding]:
+    from .binding_inference import infer_bindings
 
-
-def _encoder_text_sources(graph: dict, encoder: str) -> list[tuple[str, str]]:
-    """Follow only the encoder's text inputs; multiple upstream literals require a choice."""
-    found: set[tuple[str, str]] = set()
-    seen: set[str] = set()
-
-    pending = [(encoder, True)]
-    while pending:
-        node_id, encoder_input = pending.pop()
-        if node_id in seen:
-            continue
-        seen.add(node_id)
-        for field, value in graph.get(node_id, {}).get("inputs", {}).items():
-            if encoder_input and field not in TEXT_FIELDS:
-                continue
-            if is_link(value):
-                pending.append((value[0], False))
-            elif isinstance(value, str) and not FILE_KEYS.search(field):
-                found.add((node_id, field))
-
-    return sorted(found)
+    return [
+        Binding(kind, nid, field, source="heuristic")
+        for kind, nid, field in infer_bindings(graph, missing, roots)
+    ]
 
 
 def rule_bindings(graph: dict, rules: BindingRules, have: set[str]):
@@ -301,8 +264,17 @@ def resolve(
     maps = mapping_bindings(graph, mapping)
     have = {b.kind for b in tags + maps}
     extra, rule_problems = rule_bindings(graph, rules, have)
-    missing = (set(CORE_KINDS) | {"batch"}) - have
-    return tags + maps + extra + heuristic_bindings(graph, missing), problems + rule_problems
+    missing = (
+        set(CORE_KINDS) | {"batch", "steps", "cfg", "denoise", "sampler", "scheduler"}
+    ) - have
+    roots = [b.node for b in tags + maps + extra if b.kind == "output"]
+    explicit = {(b.node, b.field): b.kind for b in tags + maps + extra if b.field is not None}
+    inferred = [
+        b
+        for b in heuristic_bindings(graph, missing, roots=roots)
+        if (b.node, b.field) not in explicit or explicit[b.node, b.field] == b.kind
+    ]
+    return tags + maps + extra + inferred, problems + rule_problems
 
 
 def summary(bindings: list[Binding]) -> dict:

@@ -29,9 +29,61 @@
   gap: 4px;
 }
 
+.workflow-binding-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+}
+
+.workflow-binding-summary dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.workflow-binding-summary dd {
+  margin: 4px 0 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.workflow-inspection :is(.config-mappings, .concept-hint-heading) {
+  min-width: 0;
+}
+
+.workflow-inspection .concept-hint-heading {
+  flex-wrap: wrap;
+}
+
+.workflow-import-mappings {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.workflow-lora-summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.workflow-lora-summary.scroll {
+  max-block-size: 24rem;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.workflow-lora-summary > div {
+  min-width: 0;
+}
+
 @media (max-width: 520px) {
   .workflow-inspection-summary {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .workflow-binding-summary {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

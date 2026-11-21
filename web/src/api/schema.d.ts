@@ -931,6 +931,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workflows/inspect-file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inspect Workflow File
+         * @description Review JSON or PNG/WebP workflow metadata without saving images or queueing work.
+         */
+        post: operations["inspect_workflow_file_api_workflows_inspect_file_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workflows/{workflow_id}": {
         parameters: {
             query?: never;
@@ -4724,6 +4744,12 @@ export interface components {
             ];
             /** Character Id */
             character_id: string | null;
+        };
+        /** FileInspection */
+        FileInspection: {
+            /** Workflow */
+            workflow?: Record<string, unknown> | null;
+            inspection: components["schemas"]["Inspection"];
         };
         /** FinalizeRequest */
         FinalizeRequest: {
@@ -10964,6 +10990,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inspect_workflow_file_api_workflows_inspect_file_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileInspection"];
                 };
             };
         };

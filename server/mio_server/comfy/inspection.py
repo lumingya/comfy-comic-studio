@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict
 from typing import Any, Literal
 
@@ -12,6 +13,17 @@ from . import bindings as B
 from . import compile as C
 from . import slot_adapters as SA
 from .diagnostics import MODEL_FILE, diagnose
+from .workflow_import import WorkflowDecodeError, normalize_workflow, ui_issues
+
+_IMAGE_FILE = re.compile(r"\.(png|jpe?g|webp|bmp|tiff?)(?:\s*\[input\])?$", re.I)
+_KINDS = {
+    "prompt": "正提示词",
+    "negative": "负提示词",
+    "seed": "种子",
+    "width": "宽度",
+    "height": "高度",
+    "output": "出图节点",
+}
 
 
 class InspectRequest(BaseModel):
@@ -78,39 +90,40 @@ class Inspection(BaseModel):
     lora_controls: dict | None = None
 
 
+class FileInspection(BaseModel):
+    workflow: dict[str, Any] | None = None
+    inspection: Inspection
+
+
 def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=None) -> Inspection:
     """Never imports, mutates input, contacts ComfyUI or executes a workflow."""
-    payload = request.workflow
-    graph = payload.get("graph", payload)
-    result = Inspection(format="mio" if "graph" in payload else "api")
-    if isinstance(graph, dict) and len(graph) > 20000:
+    result = Inspection(format="mio" if "graph" in request.workflow else "api")
+    try:
+        payload = normalize_workflow(request.workflow)
+    except WorkflowDecodeError as exc:
         result.format = "invalid"
-        result.issues.append(
-            Issue(
-                code="graph_too_large",
-                severity="error",
-                message="工作流超过 20000 个节点的分析上限。",
-            )
-        )
+        result.issues.append(Issue(code=exc.code, severity="error", message=str(exc)))
         return result
+    graph = payload["graph"]
+    result.format = (
+        "mio" if graph is not request.workflow and "graph" in request.workflow else "api"
+    )
     if isinstance(graph, dict) and isinstance(graph.get("nodes"), list):
         result.format = "ui"
-        result.issues.append(
-            Issue(
-                code="ui_format",
-                severity="error",
-                message="这是 ComfyUI 界面工作流，请使用「导出 (API)」；不会猜测自定义控件的值顺序。",
-            )
-        )
+        result.issues.extend(Issue(**issue) for issue in ui_issues(graph))
         return result
     try:
-        config = request.config or WorkflowConfig.model_validate(
-            payload.get("config", {}) if "graph" in payload else {}
-        )
+        config = request.config or WorkflowConfig.model_validate(payload.get("config", {}))
         doc = WorkflowDoc(name="Import preview", graph=graph, config=config)
-    except (ValidationError, ValueError, TypeError) as exc:
+    except (ValidationError, ValueError, TypeError):
         result.format = "invalid"
-        result.issues.append(Issue(code="invalid_format", severity="error", message=str(exc)))
+        result.issues.append(
+            Issue(
+                code="invalid_format",
+                severity="error",
+                message="工作流节点或配置格式不完整；节点需包含 class_type 与 inputs 对象。请重新导出 API 格式，或检查 Mio 配置。",
+            )
+        )
         return result
     result.importable = True
     try:
@@ -159,7 +172,7 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
                 code="unbound",
                 severity="warning",
                 kind=kind,
-                message=f"未绑定 {kind}；保留工作流原值，Mio 传入的该参数不会生效。",
+                message=f"未绑定{_KINDS.get(kind, kind)}；保留工作流原值，Mio 传入的该参数不会生效。",
             )
         )
     candidates = _candidates(selected, set(result.missing), request.object_info)
@@ -171,7 +184,7 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
                     code="ambiguous",
                     severity="warning",
                     kind=kind,
-                    message=f"{kind} 有多个候选，请明确选择映射；未自动改写。",
+                    message=f"{_KINDS.get(kind, kind)}有多个候选，请明确选择映射；未自动改写。",
                 )
             )
     classes: dict[str, list[str]] = {}
@@ -213,4 +226,41 @@ def _candidates(graph: dict, missing: set[str], object_info: dict | None) -> lis
             "output_node"
         ):
             found.append(B.Binding("output", node_id, source="candidate"))
+    found.extend(_image_candidates(graph, object_info or {}))
     return list(dict.fromkeys(found))
+
+
+def _image_candidates(graph: dict, object_info: dict) -> list[B.Binding]:
+    """Offer source-image roles for manual review; never collapse distinct images to ref:1."""
+    consumers: dict[str, list[tuple[str, dict]]] = {}
+    for node in graph.values():
+        for field, value in node["inputs"].items():
+            if B.is_link(value):
+                consumers.setdefault(value[0], []).append((field.lower(), node["inputs"]))
+    found = []
+    for node_id, node in graph.items():
+        outputs = object_info.get(node["class_type"], {}).get("output", [])
+        image_output = isinstance(outputs, (list, tuple)) and any(
+            value in ("IMAGE", "MASK") for value in outputs
+        )
+        for field, value in node["inputs"].items():
+            if not isinstance(value, str) or field.lower() not in ("image", "mask", "filename"):
+                continue
+            if not image_output and not _IMAGE_FILE.search(value):
+                continue
+            roles = {"ref"}
+            if field.lower() == "mask" or outputs == ["MASK"]:
+                roles = {"mask"}
+            for target, inputs in consumers.get(node_id, []):
+                if "mask" in target:
+                    roles.add("mask")
+                if "control" in target or any(
+                    name.lower() in ("control_net", "controlnet") for name in inputs
+                ):
+                    roles.add("control")
+                if target == "pixels":
+                    roles.add("init")
+            found.extend(
+                B.Binding(role, node_id, field, source="candidate") for role in sorted(roles)
+            )
+    return found

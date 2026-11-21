@@ -15,6 +15,13 @@ from ..comfy import slot_adapters as SA
 from ..comfy import workflow_slots as slots
 from ..comfy.client import ComfyError
 from ..comfy.diagnostics import diagnose, model_catalog
+from ..comfy.workflow_import import (
+    UI_EXPORT_GUIDE,
+    WorkflowDecodeError,
+    WorkflowFormatError,
+    decode_workflow_bytes,
+    normalize_workflow,
+)
 from ..jobs.pool import normalize_endpoint
 from ..models import now_iso
 from ..render_models import Asset, ComfyInstance, RenderProfile, WorkflowConfig, WorkflowDoc
@@ -69,14 +76,18 @@ class CompileRequest(BaseModel):
     slot_overrides: dict[str, Any] = Field(default_factory=dict)
 
 
-class WorkflowFormatError(ValueError):
-    code = "ui_format"
-
-
 def _check_api_format(graph: dict) -> None:
     if isinstance(graph.get("nodes"), list):
-        raise WorkflowFormatError(
-            "这是 ComfyUI 的界面格式；请在 ComfyUI 里用「导出 (API)」保存后再导入"
+        raise WorkflowFormatError(UI_EXPORT_GUIDE)
+    if any(
+        not isinstance(node, dict)
+        or not isinstance(node.get("class_type"), str)
+        or not node["class_type"].strip()
+        or not isinstance(node.get("inputs"), dict)
+        for node in graph.values()
+    ):
+        raise WorkflowDecodeError(
+            "工作流含不完整节点；每个节点需包含 class_type 与 inputs 对象。请重新导出 API 格式。"
         )
 
 
@@ -127,15 +138,33 @@ def inspect_workflow(ctx: Ctx, body: I.InspectRequest) -> I.Inspection:
     return I.inspect(body, rules=_rules(ctx), registry=ctx.registry)
 
 
+@router.post("/workflows/inspect-file", response_model=I.FileInspection, openapi_extra=BINARY_BODY)
+async def inspect_workflow_file(ctx: Ctx, request: Request) -> I.FileInspection:
+    """Review JSON or PNG/WebP workflow metadata without saving images or queueing work."""
+    data = await read_body(request, MAX_UPLOAD, "工作流文件超过 64 MB")
+    try:
+        payload = decode_workflow_bytes(data)
+    except WorkflowDecodeError as exc:
+        return I.FileInspection(
+            inspection=I.Inspection(
+                format="invalid",
+                issues=[I.Issue(code=exc.code, severity="error", message=str(exc))],
+            )
+        )
+    report = I.inspect(I.InspectRequest(workflow=payload), rules=_rules(ctx), registry=ctx.registry)
+    return I.FileInspection(workflow=payload if report.importable else None, inspection=report)
+
+
 @router.post("/workflows", status_code=status.HTTP_201_CREATED)
 def import_workflow(ctx: Ctx, body: WorkflowImport) -> dict:
-    _check_api_format(body.graph)
+    graph = normalize_workflow(body.graph)["graph"]
+    _check_api_format(graph)
     doc = WorkflowDoc(
         name=body.name,
-        graph=body.graph,
+        graph=graph,
         config=body.config or WorkflowConfig(),
         notes=body.notes,
-        slots=_analyze(body.graph),
+        slots=_analyze(graph),
     )
     C.describe(doc, rules=_rules(ctx))  # raises on broken manual mappings
     ctx.store.put_doc(doc)
@@ -170,8 +199,10 @@ def patch_workflow(ctx: Ctx, workflow_id: str, body: WorkflowPatch) -> dict:
         raise Conflict("内置工作流的节点图不能修改；请先另存为副本")
     changes = body.model_dump(exclude_unset=True)
     if body.graph is not None:
-        _check_api_format(body.graph)
-        changes["slots"] = _analyze(body.graph)
+        graph = normalize_workflow(body.graph)["graph"]
+        _check_api_format(graph)
+        changes["graph"] = graph
+        changes["slots"] = _analyze(graph)
     if body.config is not None:
         changes["config"] = body.config
     doc = WorkflowDoc.model_validate({**doc.model_dump(), **changes})

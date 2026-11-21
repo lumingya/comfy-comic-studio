@@ -131,6 +131,138 @@ describe('workflow import preview', () => {
     );
   });
 
+  it.each(['png', 'webp'])(
+    'previews embedded %s workflows as bytes and saves only the decoded graph',
+    async (extension) => {
+      const calls = mockFetch(configurationRoutes({ 'POST /api/workflows': configWorkflow }));
+      const fallback = globalThis.fetch;
+      const uploads: RequestInit[] = [];
+      vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (String(input).includes('/api/workflows/inspect-file?')) {
+          uploads.push(init!);
+          return new Response(
+            JSON.stringify({
+              workflow: { graph: configWorkflow.graph },
+              inspection,
+            }),
+            { headers: { 'content-type': 'application/json' } },
+          );
+        }
+        return fallback(input, init);
+      });
+      const { container } = renderWithProviders(<WorkflowsSection />);
+      const image = new File([new Uint8Array([0, 1, 2, 3])], `sample.${extension}`, {
+        type: `image/${extension}`,
+      });
+      await userEvent.upload(container.querySelector('input[type="file"]')!, image);
+      const dialog = await screen.findByRole('dialog');
+      await within(dialog).findByText('ComfyUI API');
+      expect(uploads).toHaveLength(1);
+      expect(uploads[0].body).toBe(image);
+      expect(uploads[0].headers).toEqual({ 'Content-Type': 'application/octet-stream' });
+      await userEvent.click(within(dialog).getByRole('button', { name: '保存工作流' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      expect(calls.find((call) => call.method === 'POST')?.body).toEqual({
+        name: 'sample',
+        graph: configWorkflow.graph,
+        notes: '',
+      });
+    },
+  );
+
+  it('keeps an editor-only sample image in a guided, read-only preview', async () => {
+    const calls = mockFetch(configurationRoutes());
+    const fallback = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes('/api/workflows/inspect-file?'))
+        return new Response(
+          JSON.stringify({
+            workflow: null,
+            inspection: { ...inspection, format: 'ui', importable: false, bindings: [] },
+          }),
+          { headers: { 'content-type': 'application/json' } },
+        );
+      return fallback(input, init);
+    });
+    const { container } = renderWithProviders(<WorkflowsSection />);
+    await userEvent.upload(
+      container.querySelector('input[type="file"]')!,
+      new File(['sample'], 'editor.png', { type: 'image/png' }),
+    );
+    const dialog = await screen.findByRole('dialog');
+    const instructions = await within(dialog).findByRole('alert');
+    expect(within(instructions).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(dialog).getByRole('button', { name: '保存工作流' })).toBeDisabled();
+    expect(within(dialog).queryByText('原始工作流 JSON')).toBeNull();
+    expect(calls.some((call) => call.method !== 'GET')).toBe(false);
+  });
+
+  it('normalizes an API prompt envelope for saving while inspecting the original document', async () => {
+    const calls = mockFetch(
+      configurationRoutes({
+        'POST /api/workflows/inspect': inspection,
+        'POST /api/workflows': configWorkflow,
+      }),
+    );
+    const { container } = renderWithProviders(<WorkflowsSection />);
+    const prompt = { prompt: configWorkflow.graph, client_id: 'synthetic' };
+    const dialog = await upload(container, prompt);
+    await within(dialog).findByText('ComfyUI API');
+    await userEvent.click(within(dialog).getByRole('button', { name: '保存工作流' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(calls.find((call) => call.url === '/api/workflows/inspect')?.body).toEqual({
+      workflow: prompt,
+      variant: null,
+    });
+    expect(
+      calls.find((call) => call.url === '/api/workflows' && call.method === 'POST')?.body,
+    ).toEqual({ name: 'sample', graph: configWorkflow.graph, notes: '' });
+  });
+
+  it('adopts detected mappings before saving while preserving manual targets and advanced config', async () => {
+    const config = { ...configWorkflow.config, mapping: { negative: '/7/inputs/text' } };
+    const bundle = {
+      name: 'Mapped workflow',
+      graph: configWorkflow.graph,
+      config,
+      notes: 'Preserve',
+    };
+    const bindings: NonNullable<WorkflowInspection['bindings']> = [
+      { kind: 'prompt', node: '6', field: 'text', qualifier: null, source: 'heuristic' },
+      { kind: 'negative', node: '6', field: 'text', qualifier: null, source: 'heuristic' },
+      { kind: 'output', node: '9', field: null, qualifier: null, source: 'heuristic' },
+    ];
+    const calls = mockFetch(
+      configurationRoutes({
+        'POST /api/workflows/inspect': { ...inspection, bindings },
+        'POST /api/workflows': configWorkflow,
+      }),
+    );
+    const { container } = renderWithProviders(<WorkflowsSection />);
+    const dialog = await upload(container, bundle);
+    await userEvent.click(await within(dialog).findByText('调整参数映射'));
+    await userEvent.click(within(dialog).getByRole('button', { name: '采纳识别结果' }));
+    await waitFor(() =>
+      expect(calls.filter((call) => call.url === '/api/workflows/inspect')).toHaveLength(2),
+    );
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: '保存工作流' })).toBeEnabled(),
+    );
+    const updated = {
+      ...config,
+      mapping: { negative: '/7/inputs/text', prompt: '/6/inputs/text', output: '/9' },
+    };
+    expect(calls.filter((call) => call.url === '/api/workflows/inspect').at(-1)?.body).toEqual({
+      workflow: { ...bundle, config: updated },
+      variant: null,
+    });
+    await userEvent.click(within(dialog).getByRole('button', { name: '保存工作流' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(
+      calls.find((call) => call.url === '/api/workflows' && call.method === 'POST')?.body,
+    ).toEqual({ ...bundle, config: updated });
+  });
+
   it('lets a failed preview retry without saving and sends the selected output variant', async () => {
     let count = 0;
     const calls = mockFetch(

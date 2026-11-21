@@ -157,3 +157,40 @@ it('mounts JSON editors on demand and keeps unsaved contents after closing and r
   expect(screen.getByRole('textbox', { name: '高级映射与参数 JSON' })).toHaveValue(draft);
   expect(screen.getByRole('button', { name: '保存' })).toBeEnabled();
 });
+
+it('searches a 200-node graph with a bounded option list and keyboard selection', async () => {
+  const doc = structuredClone(configWorkflow);
+  for (let i = 10; i < 205; i++) {
+    doc.graph[String(i)] = {
+      class_type: 'CustomControl',
+      _meta: { title: `Control_${i}` },
+      inputs: { strength: 0.5, text: 'synthetic', linked: ['3', 0] },
+    };
+  }
+  const calls = mockFetch(
+    configurationRoutes({
+      'GET /api/workflows/wf_demo': doc,
+      'PATCH /api/workflows/wf_demo': (body: unknown) => ({ ...doc, ...(body as object) }),
+    }),
+  );
+  renderWithProviders(<WorkflowsSection />);
+  await userEvent.click(await screen.findByRole('combobox', { name: '正向提示词' }));
+  expect(screen.getAllByRole('option')).toHaveLength(60);
+  await userEvent.type(
+    screen.getByRole('combobox', { name: '搜索正向提示词' }),
+    'Control_204 strength',
+  );
+  expect(screen.getAllByRole('option')).toHaveLength(1);
+  await userEvent.keyboard('{Enter}');
+  expect(screen.getByRole('combobox', { name: '为正向提示词添加目标' })).toHaveFocus();
+  await userEvent.click(screen.getByRole('button', { name: '保存' }));
+  await waitFor(() => expect(calls.find((call) => call.method === 'PATCH')).toBeDefined());
+  expect(
+    (calls.find((call) => call.method === 'PATCH')?.body as Partial<WorkflowDocument>).config
+      ?.mapping,
+  ).toEqual({
+    ...doc.config.mapping,
+    prompt: '/204/inputs/strength',
+  });
+  expect(doc.graph['204'].inputs.linked).toEqual(['3', 0]);
+});

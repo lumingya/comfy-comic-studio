@@ -3336,6 +3336,29 @@
     "title": "Face",
     "type": "object"
    },
+   "FileInspection": {
+    "properties": {
+     "inspection": {
+      "$ref": "#/components/schemas/Inspection"
+     },
+     "workflow": {
+      "anyOf": [
+       {
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Workflow"
+     }
+    },
+    "required": [
+     "inspection"
+    ],
+    "title": "FileInspection",
+    "type": "object"
+   },
    "FinalizeRequest": {
     "properties": {
      "idempotency_key": {
@@ -25114,6 +25137,49 @@
      "body"
     ],
     "x-mio-operation": "POST /workflows/inspect"
+   }
+  },
+  "/workflows/inspect-file": {
+   "post": {
+    "description": "Review JSON or PNG/WebP workflow metadata without saving images or queueing work.",
+    "operationId": "inspect_workflow_file",
+    "requestBody": {
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FileInspection"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Inspect Workflow File",
+    "tags": [
+     "library"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "POST /workflows/inspect-file"
    }
   },
   "/workflows/{workflow_id}": {

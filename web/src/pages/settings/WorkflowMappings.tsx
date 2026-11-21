@@ -2,6 +2,7 @@ import { Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkflowConfig, WorkflowDocument } from '../../api/types';
+import type { WorkflowInspection } from '../../api/system';
 import { ConceptHint } from '../../components/ConceptHint';
 import { SearchableSelect } from '../../components/SearchableSelect';
 import { TextInput } from '../../components/ui';
@@ -13,11 +14,13 @@ export function WorkflowMappings({
   graph,
   config,
   bindings,
+  recommendations,
   onChange,
 }: {
   graph: Record<string, unknown> | null;
   config: WorkflowConfig | null;
   bindings: WorkflowDocument['describe']['bindings'];
+  recommendations?: WorkflowInspection['bindings'];
   onChange: (config: WorkflowConfig) => void;
 }) {
   const { t } = useTranslation();
@@ -44,8 +47,11 @@ export function WorkflowMappings({
           const linked =
             Array.isArray(current) &&
             current.length === 2 &&
-            typeof current[0] === 'string' &&
-            Number.isInteger(current[1]);
+            (typeof current[0] === 'string' ||
+              (Number.isInteger(current[0]) && Object.hasOwn(graph ?? {}, String(current[0])))) &&
+            typeof current[1] === 'number' &&
+            Number.isInteger(current[1]) &&
+            current[1] >= 0;
           return linked
             ? []
             : [
@@ -60,7 +66,23 @@ export function WorkflowMappings({
     );
     return { fields, nodes };
   }, [graph]);
-  const custom = Object.keys(mapping).filter((key) => !CORE.includes(key as (typeof CORE)[number]));
+  const extra = [...new Set([...Object.keys(mapping), ...Object.keys(bindings ?? {})])];
+  const custom = extra.filter((key) => !CORE.includes(key as (typeof CORE)[number]));
+  const suggested = useMemo(() => {
+    const next: Record<string, string[]> = {};
+    const fieldsSet = new Set(fields.map(({ value }) => value));
+    const nodesSet = new Set(nodes.map(({ value }) => value));
+    for (const binding of recommendations ?? []) {
+      if (binding.source !== 'heuristic') continue;
+      const key = `${binding.kind}${binding.qualifier ? `:${binding.qualifier}` : ''}`;
+      if (Object.hasOwn(mapping, key)) continue;
+      const target = `/${pointer(binding.node)}${binding.field ? `/inputs/${pointer(binding.field)}` : ''}`;
+      const options =
+        binding.kind === 'output' || binding.kind === 'inspect' ? nodesSet : fieldsSet;
+      if (options.has(target)) (next[key] ??= []).push(target);
+    }
+    return next;
+  }, [recommendations, mapping, fields, nodes]);
   const setTargets = (key: string, targets: string[]) => {
     if (!config) return;
     const unique = [...new Set(targets.filter(Boolean))];
@@ -87,11 +109,35 @@ export function WorkflowMappings({
       <div className="concept-hint-heading">
         <h3>{t('config.workflow.mapping')}</h3>
         <ConceptHint concept="mappings" />
+        {Object.keys(suggested).length ? (
+          <button
+            type="button"
+            className="btn sm"
+            disabled={!config}
+            onClick={() =>
+              config &&
+              onChange({
+                ...config,
+                mapping: {
+                  ...mapping,
+                  ...Object.fromEntries(
+                    Object.entries(suggested).map(([key, targets]) => {
+                      const unique = [...new Set(targets)];
+                      return [key, unique.length === 1 ? unique[0] : unique];
+                    }),
+                  ),
+                },
+              })
+            }
+          >
+            {t('config.workflow.adoptDetected')}
+          </button>
+        ) : null}
       </div>
       <div className="config-mapping-grid">
         {[...CORE, ...custom].map((key) => {
           const isCore = CORE.includes(key as (typeof CORE)[number]);
-          const label = isCore ? t(`config.workflow.fields.${key}`) : key;
+          const label = t(`config.workflow.fields.${key}`, { defaultValue: key });
           const manual = mapping[key];
           const targets = (Array.isArray(manual) ? manual : manual ? [manual] : []).filter(Boolean);
           const kind = key.split(':', 1)[0];
@@ -105,7 +151,7 @@ export function WorkflowMappings({
             <div className="config-mapping-field" key={key}>
               <div className="config-mapping-label">
                 <span>{label}</span>
-                {!isCore ? (
+                {!isCore && Object.hasOwn(mapping, key) ? (
                   <button
                     type="button"
                     className="btn ghost icon sm"

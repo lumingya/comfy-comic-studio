@@ -72,6 +72,22 @@ export async function inspectWorkflow(
   return data(await api.POST('/api/workflows/inspect', { body })) as WorkflowInspection;
 }
 
+/** Read embedded workflow metadata on the server; image bytes never enter the graph JSON. */
+export async function inspectWorkflowFile(file: File): Promise<{
+  workflow: Record<string, unknown> | null;
+  inspection: WorkflowInspection;
+}> {
+  const response = await raw(
+    `/api/workflows/inspect-file?filename=${encodeURIComponent(file.name)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: file,
+    },
+  );
+  return response.json();
+}
+
 export function useWorkflows() {
   return useQuery({
     queryKey: keys.workflows,

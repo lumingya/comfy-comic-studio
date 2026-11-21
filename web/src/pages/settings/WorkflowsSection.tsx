@@ -10,6 +10,8 @@ import {
   useInstances,
   useWorkflow,
   useWorkflows,
+  inspectWorkflowFile,
+  type WorkflowInspection,
 } from '../../api/system';
 import type { WorkflowConfig } from '../../api/types';
 import { QueryError } from '../../app/errors';
@@ -37,17 +39,19 @@ export function WorkflowsSection() {
   const [trialOpen, setTrialOpen] = useState(false);
   const [instance, setInstance] = useState('');
   const [diagnosisVariant, setDiagnosisVariant] = useState('');
+  const [reading, setReading] = useState(false);
   const [pendingImport, setPendingImport] = useState<{
-    workflow: Record<string, unknown>;
+    workflow: Record<string, unknown> | null;
     name: string;
     graph: Record<string, unknown>;
     config?: WorkflowConfig;
     notes: string;
+    inspection?: WorkflowInspection;
   } | null>(null);
   const list = workflows.data ?? [];
   const active = list.find((w) => w.id === selected) ?? list[0];
   const detail = useWorkflow(active?.id);
-  const busy = importWf.isPending || copy.isPending || remove.isPending;
+  const busy = reading || importWf.isPending || copy.isPending || remove.isPending;
   const instanceId =
     instance ||
     instances.data?.instances.find((i) => i.enabled)?.id ||
@@ -60,24 +64,36 @@ export function WorkflowsSection() {
   };
 
   const onFile = async (file: File) => {
+    setReading(true);
     try {
-      const parsed = jsonObject(await file.text());
+      const image = /\.(png|webp)$/i.test(file.name) || /^image\/(png|webp)$/i.test(file.type);
+      const decoded = image ? await inspectWorkflowFile(file) : null;
+      const parsed = decoded ? (decoded.workflow ?? {}) : jsonObject(await file.text());
       const bundled =
         parsed.graph && typeof parsed.graph === 'object' && !Array.isArray(parsed.graph);
-      const graph = bundled ? (parsed.graph as Record<string, unknown>) : parsed;
+      const prompt =
+        parsed.prompt && typeof parsed.prompt === 'object' && !Array.isArray(parsed.prompt);
+      const graph = bundled
+        ? (parsed.graph as Record<string, unknown>)
+        : prompt
+          ? (parsed.prompt as Record<string, unknown>)
+          : parsed;
       importWf.reset();
       setPendingImport({
-        workflow: parsed,
+        workflow: decoded ? decoded.workflow : parsed,
         name:
           bundled && typeof parsed.name === 'string'
             ? parsed.name
-            : file.name.replace(/\.json$/i, ''),
+            : file.name.replace(/\.(json|png|webp)$/i, ''),
         graph,
         ...(bundled && parsed.config ? { config: parsed.config as WorkflowConfig } : {}),
         notes: bundled && typeof parsed.notes === 'string' ? parsed.notes : '',
+        ...(decoded ? { inspection: decoded.inspection } : {}),
       });
     } catch (error) {
       toastError(error);
+    } finally {
+      setReading(false);
     }
   };
 
@@ -88,7 +104,7 @@ export function WorkflowsSection() {
         <div>
           <h2>{t('config.workflow.title')}</h2>
         </div>
-        <FilePick accept=".json" disabled={busy || !!pendingImport} onFile={onFile}>
+        <FilePick accept=".json,.png,.webp" disabled={busy || !!pendingImport} onFile={onFile}>
           <Upload size={15} />
           {t('settings.importWorkflow')}
         </FilePick>
@@ -251,13 +267,17 @@ export function WorkflowsSection() {
       {pendingImport ? (
         <WorkflowImportPreview
           workflow={pendingImport.workflow}
+          graph={pendingImport.graph}
+          config={pendingImport.config}
+          initialInspection={pendingImport.inspection}
           name={pendingImport.name}
           saving={importWf.isPending}
           saveError={importWf.error}
           onClose={() => setPendingImport(null)}
-          onSave={async () => {
+          onSave={async (config) => {
             if (!(await discard(dirty))) return;
-            const { workflow: _workflow, ...body } = pendingImport;
+            const { workflow: _workflow, inspection: _inspection, ...body } = pendingImport;
+            if (config) body.config = config;
             importWf.mutate(body, {
               onSuccess: (doc) => {
                 setDirty(false);

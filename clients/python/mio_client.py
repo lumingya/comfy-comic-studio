@@ -792,6 +792,13 @@ class MioClient(_Base):
         """
         return self._request("POST", "/workflows/inspect", json=body)
 
+    def inspect_workflow_file(self, body: bytes) -> Any:
+        """POST /workflows/inspect-file — Inspect Workflow File.
+
+        Review JSON or PNG/WebP workflow metadata without saving images or queueing work.
+        """
+        return self._request("POST", "/workflows/inspect-file", content=body)
+
     def get_workflow(self, workflow_id: str) -> Any:
         """GET /workflows/{workflow_id} — Get Workflow."""
         return self._request("GET", f"/workflows/{_q(workflow_id)}")

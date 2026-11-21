@@ -5,7 +5,7 @@ import re
 
 from .workflow_slot_common import LibraryError, _consumer_index, _is_link, _write_field
 from .workflow_slot_syntax import format_tag, lora_display_name
-from .workflow_slot_values import _name_key
+from .workflow_slot_values import _is_empty_name, _name_key
 
 
 def _apply_chain(workflow, lora, loras, notices):
@@ -90,8 +90,31 @@ def _apply_stack(workflow, lora, loras):
             node["inputs"][path] = copy.deepcopy(template)
             slots.append({**slots[0], "index": next_index, "slotToken": token, "namePath": path})
             next_index += 1
+    # Pins omit empty placeholders. Retain each existing occurrence in its native slot
+    # rather than compacting a sparse stack and exchanging slot-specific metadata.
+    names = []
+    for slot in slots:
+        raw = node["inputs"][slot["namePath"]]
+        name = (
+            (raw.get("lora") if raw.get("lora") is not None else raw.get("name"))
+            if slot["objectStyle"]
+            else raw
+        )
+        names.append(None if _is_empty_name(name) else _name_key(str(name)))
+    assigned, pending = {}, []
+    for item in loras:
+        name = _name_key(item["name"])
+        index = next((i for i, old in enumerate(names) if old == name and i not in assigned), None)
+        if index is None:
+            pending.append(item)
+        else:
+            assigned[index] = item
+    free = [i for i in range(len(slots)) if i not in assigned]
+    assigned.update(zip(free, pending))
     for i, slot in enumerate(slots):
-        l = loras[i] if i < len(loras) else None
+        l = assigned.get(i)
+        if l is None and names[i] is None and i < max(assigned, default=-1):
+            continue
         if slot["objectStyle"]:
             if l is None:
                 del node["inputs"][slot["namePath"]]
@@ -132,7 +155,11 @@ def _apply_stack(workflow, lora, loras):
                 _write_field(workflow, lora["nodeId"], key, 0)
     for count in ("lora_count", "num_loras"):
         if count in node["inputs"]:
-            _write_field(workflow, lora["nodeId"], count, len(loras))
+            # Count controls commonly expose the first N numbered positions. A sparse
+            # surviving pin at position 3 must not be hidden by setting the count to 1.
+            first_index = min(slot["index"] for slot in slots)
+            extent = max((slots[i]["index"] for i in assigned), default=-(first_index == 0))
+            _write_field(workflow, lora["nodeId"], count, extent + (first_index == 0))
 
 
 def _write_object(wf, writer, loras):
