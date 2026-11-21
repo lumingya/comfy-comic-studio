@@ -13,7 +13,6 @@
   gap: 6px;
 }
 
-.theme-opacity,
 .theme-script-toggle {
   display: flex;
   align-items: center;
@@ -23,33 +22,6 @@
   font-size: 12px;
 }
 
-.theme-motion-override {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 0 12px 10px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.theme-opacity input {
-  flex: 1;
-  min-width: 60px;
+.theme-script-toggle input {
   accent-color: var(--accent);
-}
-
-.theme-script-toggle input,
-.theme-motion-override input {
-  accent-color: var(--accent);
-}
-
-.theme-motion-override input {
-  margin-top: 4px;
-}
-
-.theme-motion-override small {
-  display: block;
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 11px;
 }

@@ -44,8 +44,10 @@
 
 .theme-settings-body {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 14px;
+  min-height: 0;
   overflow: auto;
   padding: 16px;
 }
@@ -76,6 +78,7 @@
 
 .theme-setting-slider input {
   flex: 1;
+  min-width: 0;
   accent-color: var(--accent);
 }
 
@@ -83,6 +86,17 @@
   min-width: 3ch;
   color: var(--muted);
   text-align: right;
+}
+
+.theme-setting-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.theme-setting-toggle input {
+  margin-top: 3px;
+  accent-color: var(--accent);
 }
 
 .theme-upload-button {
@@ -121,7 +135,7 @@
 .theme-settings-frame {
   width: 100%;
   min-height: 320px;
-  flex: 1;
+  flex-shrink: 0;
   border: 0;
   background: transparent;
 }

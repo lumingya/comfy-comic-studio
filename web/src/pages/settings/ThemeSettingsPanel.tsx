@@ -14,6 +14,8 @@ import {
   type ThemeWallpaper,
 } from '../../api/open';
 import { toastError } from '../../components/toast';
+import { effectiveThemeBackground } from '../../app/theme';
+import { ThemeBackgroundSettings } from './ThemeBackgroundSettings';
 import {
   BRIDGE,
   type ThemeSettingsToFrame,
@@ -339,6 +341,8 @@ export function ThemeSettingsPanel({ theme, onClose }: { theme: ThemeInfo; onClo
     }
   };
 
+  const background = effectiveThemeBackground(theme, draft, wallpapers.data?.items);
+
   return (
     <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
@@ -355,65 +359,68 @@ export function ThemeSettingsPanel({ theme, onClose }: { theme: ThemeInfo; onClo
               </button>
             </Dialog.Close>
           </header>
-          {theme.settings_page_url ? (
-            preferences.isPending ? (
-              <div className="theme-settings-body">{t('common.loading')}</div>
-            ) : preferences.isError ? (
-              <div className="theme-settings-body">{t('common.error')}</div>
-            ) : (
-              <ThemeSettingsFrame
-                theme={theme}
-                pageUrl={theme.settings_page_url}
-                settings={draft}
-                save={saveFromFrame}
-              />
-            )
-          ) : (
-            <div className="theme-settings-body">
-              {preferences.isLoading ? <p>{t('common.loading')}</p> : null}
-              {(theme.settings_schema ?? []).map((field) => (
-                <SettingField
-                  key={field.id}
-                  field={field}
-                  value={draft[field.id] ?? field.default}
-                  wallpapers={wallpapers.data?.items ?? []}
-                  onChange={(value) => update(field.id, value, field.type !== 'slider')}
-                  onCommit={() => void commit(field.id).catch(() => undefined)}
-                  onUpload={(file) => void upload(file)}
-                  busy={uploadWallpaper.isPending}
+          <div className="theme-settings-body">
+            <ThemeBackgroundSettings themeId={theme.id} background={background} />
+            {theme.settings_page_url ? (
+              preferences.isPending ? (
+                <p>{t('common.loading')}</p>
+              ) : preferences.isError ? (
+                <p>{t('common.error')}</p>
+              ) : (
+                <ThemeSettingsFrame
+                  theme={theme}
+                  pageUrl={theme.settings_page_url}
+                  settings={draft}
+                  save={saveFromFrame}
                 />
-              ))}
-              {wallpapers.data?.items.length ? (
-                <ul className="theme-wallpaper-manage-list">
-                  {wallpapers.data.items.map((wallpaper) => (
-                    <li key={wallpaper.id}>
-                      <button
-                        className="btn ghost sm"
-                        aria-pressed={draft.wallpaper_id === wallpaper.id}
-                        onClick={() => update('wallpaper_id', wallpaper.id)}
-                      >
-                        {draft.wallpaper_id === wallpaper.id ? <Check size={14} /> : null}
-                        {wallpaper.filename}
-                      </button>
-                      <button
-                        className="btn ghost icon sm danger"
-                        aria-label={t('settings.themes.deleteWallpaper', {
-                          name: wallpaper.filename,
-                        })}
-                        disabled={deleteWallpaper.isPending}
-                        onClick={() => void remove(wallpaper.id)}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {!theme.settings_schema?.length ? (
-                <p className="small muted">{t('settings.themes.noSettings')}</p>
-              ) : null}
-            </div>
-          )}
+              )
+            ) : (
+              <>
+                {preferences.isLoading ? <p>{t('common.loading')}</p> : null}
+                {(theme.settings_schema ?? []).map((field) => (
+                  <SettingField
+                    key={field.id}
+                    field={field}
+                    value={draft[field.id] ?? field.default}
+                    wallpapers={wallpapers.data?.items ?? []}
+                    onChange={(value) => update(field.id, value, field.type !== 'slider')}
+                    onCommit={() => void commit(field.id).catch(() => undefined)}
+                    onUpload={(file) => void upload(file)}
+                    busy={uploadWallpaper.isPending}
+                  />
+                ))}
+                {wallpapers.data?.items.length ? (
+                  <ul className="theme-wallpaper-manage-list">
+                    {wallpapers.data.items.map((wallpaper) => (
+                      <li key={wallpaper.id}>
+                        <button
+                          className="btn ghost sm"
+                          aria-pressed={draft.wallpaper_id === wallpaper.id}
+                          onClick={() => update('wallpaper_id', wallpaper.id)}
+                        >
+                          {draft.wallpaper_id === wallpaper.id ? <Check size={14} /> : null}
+                          {wallpaper.filename}
+                        </button>
+                        <button
+                          className="btn ghost icon sm danger"
+                          aria-label={t('settings.themes.deleteWallpaper', {
+                            name: wallpaper.filename,
+                          })}
+                          disabled={deleteWallpaper.isPending}
+                          onClick={() => void remove(wallpaper.id)}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {!theme.settings_schema?.length && !background ? (
+                  <p className="small muted">{t('settings.themes.noSettings')}</p>
+                ) : null}
+              </>
+            )}
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

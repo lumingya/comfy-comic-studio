@@ -69,12 +69,8 @@ function ThemeCard(props: {
   onPick: () => void;
   onExport: () => void;
   exporting: boolean;
-  opacity?: number;
-  onOpacityChange: (value: number) => void;
   scriptEnabled: boolean;
   onScriptEnabledChange: (enabled: boolean) => void;
-  allowVideoWithReducedMotion: boolean;
-  onAllowVideoWithReducedMotionChange: (allow: boolean) => void;
   onDelete?: () => void;
 }) {
   const { t } = useTranslation();
@@ -82,7 +78,6 @@ function ThemeCard(props: {
   const preferences = useThemePreferences(theme.id);
   const wallpapers = useThemeWallpapers(theme.id);
   const background = effectiveThemeBackground(theme, preferences.data, wallpapers.data?.items);
-  const opacity = props.opacity ?? background?.opacity ?? 0;
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <>
@@ -113,7 +108,7 @@ function ThemeCard(props: {
             <button className="btn sm" disabled={props.exporting} onClick={props.onExport}>
               <Download size={13} /> {t('common.export')}
             </button>
-            {theme.settings_schema?.length || theme.settings_page_url ? (
+            {background || theme.settings_schema?.length || theme.settings_page_url ? (
               <button
                 className="btn sm"
                 aria-label={t('settings.themes.openSettings', { name: theme.name })}
@@ -135,36 +130,6 @@ function ThemeCard(props: {
             ) : null}
           </div>
         </div>
-        {background ? (
-          <label className="theme-opacity">
-            <span>{t('settings.themes.backgroundOpacity')}</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              aria-label={t('settings.themes.backgroundOpacity')}
-              value={opacity}
-              onChange={(event) => props.onOpacityChange(Number(event.currentTarget.value))}
-            />
-            <span className="small muted">{Math.round(opacity * 100)}%</span>
-          </label>
-        ) : null}
-        {background?.kind === 'video' && props.active ? (
-          <label className="theme-motion-override">
-            <input
-              type="checkbox"
-              checked={props.allowVideoWithReducedMotion}
-              onChange={(event) =>
-                props.onAllowVideoWithReducedMotionChange(event.currentTarget.checked)
-              }
-            />
-            <span>
-              {t('settings.themes.playWithReducedMotion')}
-              <small>{t('settings.themes.playWithReducedMotionHint')}</small>
-            </span>
-          </label>
-        ) : null}
         {theme.script_url ? (
           <label className="theme-script-toggle">
             <input
@@ -188,12 +153,8 @@ export function ThemesSection() {
   const themes = useThemes();
   const choice = useUI((s) => s.theme);
   const setTheme = useUI((s) => s.setTheme);
-  const themeOpacity = useUI((s) => s.themeOpacity);
-  const setThemeOpacity = useUI((s) => s.setThemeOpacity);
   const enabledThemeScripts = useUI((s) => s.enabledThemeScripts);
   const setThemeScriptEnabled = useUI((s) => s.setThemeScriptEnabled);
-  const allowVideoWithReducedMotion = useUI((s) => s.allowThemeVideoWithReducedMotion);
-  const setAllowVideoWithReducedMotion = useUI((s) => s.setAllowThemeVideoWithReducedMotion);
   const importTheme = useImportTheme();
   const importPackage = useImportThemePackage();
   const importFolder = useImportThemeFolder();
@@ -336,15 +297,11 @@ export function ThemesSection() {
             theme={theme}
             active={choice === theme.id}
             onPick={() => setTheme(theme.id, theme.mode)}
-            opacity={themeOpacity[theme.id]}
-            onOpacityChange={(value) => setThemeOpacity(theme.id, value)}
             scriptEnabled={enabledThemeScripts.includes(themeScriptKey(theme) ?? '')}
             onScriptEnabledChange={(enabled) => {
               const key = themeScriptKey(theme);
               if (key) setThemeScriptEnabled(key, enabled);
             }}
-            allowVideoWithReducedMotion={allowVideoWithReducedMotion}
-            onAllowVideoWithReducedMotionChange={setAllowVideoWithReducedMotion}
             onExport={() => void onExport(theme)}
             exporting={exporting !== null}
             onDelete={

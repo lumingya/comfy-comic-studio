@@ -115,11 +115,14 @@ it('persists background opacity and keeps theme scripts explicitly opt-in', asyn
   };
   mockFetch({ 'GET /api/themes': [videoTheme] });
   renderWithProviders(<ThemesSection />);
-  const opacity = await screen.findByRole('slider', { name: '背景透明度' });
-  expect(opacity).toHaveValue('0.3');
-  const enableScript = screen.getByRole('checkbox', { name: '启用隔离脚本' });
+  const enableScript = await screen.findByRole('checkbox', { name: '启用隔离脚本' });
   expect(enableScript).not.toBeChecked();
   await userEvent.click(enableScript);
+  expect(screen.queryByRole('slider', { name: '背景透明度' })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: '打开 雨后纸页 的更多设置' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  const opacity = dialog.getByRole('slider', { name: '背景透明度' });
+  expect(opacity).toHaveValue('0.3');
   fireEvent.change(opacity, { target: { value: '0.7' } });
   await waitFor(() => expect(useUI.getState().themeOpacity['moving-paper']).toBe(0.7));
   expect(useUI.getState().enabledThemeScripts).toContain('moving-paper:' + 'a'.repeat(64));
@@ -206,7 +209,7 @@ it.each(
     media.map((descriptor) => ({ source, ...descriptor })),
   ),
 )(
-  'uses effective $source $mime_type animated=$animated for the active card controls',
+  'uses effective $source $mime_type animated=$animated inside more settings',
   async ({ source, kind, animated, mime_type }) => {
     useUI.setState({
       theme: custom.id,
@@ -232,10 +235,18 @@ it.each(
       },
     });
     renderWithProviders(<ThemesSection />);
-    const slider = await screen.findByRole('slider', { name: '背景透明度' });
-    expect(slider).toHaveValue(source === 'package' ? '0.5' : '0.35');
+    const openSettings = await screen.findByRole('button', {
+      name: '打开 雨后纸页 的更多设置',
+    });
     const card = screen.getByText(custom.name).closest('.theme-card') as HTMLElement;
-    const controls = within(card);
+    expect(within(card).queryByRole('slider', { name: '背景透明度' })).not.toBeInTheDocument();
+    expect(
+      within(card).queryByRole('checkbox', { name: /系统减少动态效果时仍播放视频背景/ }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(openSettings);
+    const controls = within(await screen.findByRole('dialog'));
+    const slider = await controls.findByRole('slider', { name: '背景透明度' });
+    expect(slider).toHaveValue(source === 'package' ? '0.5' : '0.35');
     expect(
       Boolean(controls.queryByRole('checkbox', { name: /系统减少动态效果时仍播放视频背景/ })),
     ).toBe(kind === 'video');
@@ -274,11 +285,56 @@ it('hides video controls when a private static image overrides a package video',
   });
   useUI.setState({ theme: custom.id });
   renderWithProviders(<ThemesSection />);
-  await screen.findByRole('slider', { name: '背景透明度' });
+  await userEvent.click(await screen.findByRole('button', { name: '打开 雨后纸页 的更多设置' }));
+  const controls = within(await screen.findByRole('dialog'));
+  await controls.findByRole('slider', { name: '背景透明度' });
   await waitFor(() =>
-    expect(screen.queryByRole('button', { name: '暂停背景' })).not.toBeInTheDocument(),
+    expect(
+      controls.queryByRole('checkbox', { name: /系统减少动态效果时仍播放视频背景/ }),
+    ).not.toBeInTheDocument(),
   );
-  expect(
-    screen.queryByRole('checkbox', { name: /系统减少动态效果时仍播放视频背景/ }),
-  ).not.toBeInTheDocument();
 });
+
+it.each([false, true])(
+  'keeps wallpaper choices after reopening more settings with custom page=%s',
+  async (customPage) => {
+    useUI.setState({
+      theme: custom.id,
+      themeOpacity: { [custom.id]: 0.45 },
+      allowThemeVideoWithReducedMotion: true,
+    });
+    mockFetch({
+      'GET /api/themes': [
+        {
+          ...custom,
+          background: { kind: 'video', url: '/video', opacity: 0.3 },
+          settings_page_url: customPage ? '/settings-page' : undefined,
+        },
+      ],
+      [`GET /api/themes/${custom.id}/preferences`]: {},
+    });
+    renderWithProviders(<ThemesSection />);
+    await userEvent.click(await screen.findByRole('button', { name: '打开 雨后纸页 的更多设置' }));
+    const controls = within(await screen.findByRole('dialog'));
+    const opacity = controls.getByRole('slider', { name: '背景透明度' });
+    const motion = controls.getByRole('checkbox', {
+      name: /系统减少动态效果时仍播放视频背景/,
+    });
+    expect(opacity).toHaveValue('0.45');
+    expect(motion).toBeChecked();
+    if (customPage) expect(await controls.findByTitle(custom.name)).toBeInTheDocument();
+    fireEvent.change(opacity, { target: { value: '0.65' } });
+    await userEvent.click(motion);
+    await userEvent.click(controls.getByRole('button', { name: '关闭' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('slider', { name: '背景透明度' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '打开 雨后纸页 的更多设置' }));
+    const reopened = within(await screen.findByRole('dialog'));
+    expect(reopened.getByRole('slider', { name: '背景透明度' })).toHaveValue('0.65');
+    expect(
+      reopened.getByRole('checkbox', { name: /系统减少动态效果时仍播放视频背景/ }),
+    ).not.toBeChecked();
+    expect(useUI.getState().themeOpacity[custom.id]).toBe(0.65);
+    expect(useUI.getState().allowThemeVideoWithReducedMotion).toBe(false);
+  },
+);
