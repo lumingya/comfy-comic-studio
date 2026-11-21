@@ -113,6 +113,8 @@ export default function WorksPage() {
     selection.clear();
   };
   const shelf = useShelfSelection({
+    marqueeFromBlankOnly: true,
+    escapeFromFields: true,
     selection,
     enabled: !readerOpen && !dialogOpen,
     pinned: bulk,
@@ -125,8 +127,8 @@ export default function WorksPage() {
     onContext: menu.openAt,
     onCloseContext: menu.close,
   });
-  const visibleSelection = shelf.snapshot ?? selection.ids;
-  const chosen = books.filter((b) => visibleSelection.includes(b.id!));
+  const visibleSelection = shelf.snapshot ? new Set(shelf.snapshot) : selection.set;
+  const chosen = books.filter((b) => visibleSelection.has(b.id!));
   /** Legacy reorderCollectionBook: the drop becomes the manual order (and 手动排序 the sort). */
   const moveBook = (source: string, target: string, after: boolean) => {
     setOrder(reorderShelf(items, bookIds, order, sort, source, target, after));
@@ -135,7 +137,8 @@ export default function WorksPage() {
   };
   const reorder = useShelfReorder({
     root: shelf.ref,
-    enabled: !readerOpen && !dialogOpen && !bulk && !selection.ids.length && books.length > 1,
+    enabled: !readerOpen && !dialogOpen && !menu.state,
+    sortable: !bulk && !selection.ids.length && books.length > 1,
     onDrop: moveBook,
   });
   useEffect(() => {
@@ -206,7 +209,13 @@ export default function WorksPage() {
       <section className="art-fade" id="collection-home">
         <div className="collection-heading">
           <div className="grow">
-            <CollectionTitle />
+            <CollectionTitle
+              onCancel={() => {
+                if (!dialogOpen && !menu.state && !readerOpen && (bulk || selection.ids.length)) {
+                  setBulkMode(false);
+                }
+              }}
+            />
           </div>
           <div className="resource-actions">
             <CreationKitImport
@@ -256,7 +265,11 @@ export default function WorksPage() {
           role="region"
           aria-label={t('classic.shelf.listLabel')}
           className={selection.ids.length ? 'has-selection' : undefined}
-          onClickCapture={shelf.onClickCapture}
+          onClickCapture={(e) => {
+            reorder.onClickCapture(e);
+            if (!e.defaultPrevented) shelf.onClickCapture(e);
+          }}
+          onPointerDownCapture={reorder.onPointerDownCapture}
           onPointerDown={shelf.onPointerDown}
           onDragStartCapture={shelf.onDragStartCapture}
           onContextMenu={shelf.onContextMenu}
@@ -337,7 +350,8 @@ export default function WorksPage() {
                   index={i}
                   state={stateOf(s)}
                   onMenu={(e) => openMenu(s, e)}
-                  onReorder={books.length > 1 && !bulk ? reorder.onPointerDown : undefined}
+                  onPointerDown={reorder.onPointerDown}
+                  sortable={!bulk && !selection.ids.length && books.length > 1}
                   selecting={bulk}
                   selected={selection.has(s.id!)}
                   context={menu.state?.payload.focusId === s.id}

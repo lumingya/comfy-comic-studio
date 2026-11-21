@@ -127,6 +127,18 @@ describe('legacy shelf selection', () => {
     expect(screen.queryByText('已选择 2 本')).toBeNull();
   });
 
+  it('Escape on the collection title cancels its draft and clears selection without saving', async () => {
+    const calls = await mount();
+    fireEvent.click(cover(), { ctrlKey: true });
+    const title = screen.getByRole('textbox', { name: '重命名画册集' });
+    title.focus();
+    fireEvent.change(title, { target: { value: '临时标题' } });
+    key('Escape');
+    expect(title).toHaveValue('交互测试画册集');
+    expect(picked()).toHaveLength(0);
+    expect(calls.some((call) => call.method === 'PATCH')).toBe(false);
+  });
+
   it('a plain click on a title opens that album and clears an existing selection', async () => {
     await mount();
     fireEvent.click(cover(), { ctrlKey: true });
@@ -231,7 +243,6 @@ describe('legacy shelf selection', () => {
     search.focus();
     key('Delete');
     key('a', { ctrlKey: true });
-    key('Escape');
     expect(confirm).not.toHaveBeenCalled();
     expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
     expect(picked()).toHaveLength(1);
@@ -312,13 +323,15 @@ function positions() {
   );
 }
 const pointer = { pointerId: 1, pointerType: 'mouse', button: 0 };
+const movePointer = (x: number, y: number) =>
+  fireEvent.pointerMove(window, { ...pointer, buttons: 1, clientX: x, clientY: y });
 
 describe('shelf marquee and touch fallback', () => {
-  it('drags from a cover, keeps the status layout still, and suppresses the release click', async () => {
+  it('drags from a gap, keeps the status layout still, and suppresses the release click', async () => {
     await mount();
     positions();
-    fireEvent.pointerDown(cover(), { ...pointer, clientX: 30, clientY: 110 });
-    fireEvent.pointerMove(window, { ...pointer, clientX: 235, clientY: 190 });
+    fireEvent.pointerDown(root(), { ...pointer, clientX: 14, clientY: 90 });
+    movePointer(235, 190);
     expect(picked()).toEqual([card('甲册'), card('乙册')]);
     expect(document.querySelector('.shelf-marquee')).toBeInTheDocument();
     expect(screen.queryByText('已选择 2 本')).toBeNull();
@@ -333,8 +346,8 @@ describe('shelf marquee and touch fallback', () => {
     await mount();
     positions();
     fireEvent.click(cover('丙册'), { ctrlKey: true });
-    fireEvent.pointerDown(cover(), { ...pointer, ctrlKey: true, clientX: 30, clientY: 110 });
-    fireEvent.pointerMove(window, { ...pointer, clientX: 235, clientY: 190 });
+    fireEvent.pointerDown(root(), { ...pointer, ctrlKey: true, clientX: 14, clientY: 90 });
+    movePointer(235, 190);
     expect(picked()).toHaveLength(3);
     fireEvent.pointerCancel(window, pointer);
     expect(picked()).toEqual([card('丙册')]);
@@ -345,8 +358,8 @@ describe('shelf marquee and touch fallback', () => {
     await mount();
     positions();
     fireEvent.click(cover('丙册'), { ctrlKey: true });
-    fireEvent.pointerDown(cover(), { ...pointer, clientX: 30, clientY: 110 });
-    fireEvent.pointerMove(window, { ...pointer, clientX: 235, clientY: 190 });
+    fireEvent.pointerDown(root(), { ...pointer, clientX: 14, clientY: 90 });
+    movePointer(235, 190);
     key('Delete');
     expect(confirm).not.toHaveBeenCalled();
     key('Escape');
@@ -360,7 +373,7 @@ describe('shelf marquee and touch fallback', () => {
   it('Escape cancels a mouse-down even before the marquee threshold', async () => {
     await mount();
     positions();
-    fireEvent.pointerDown(cover(), { ...pointer, clientX: 30, clientY: 110 });
+    fireEvent.pointerDown(root(), { ...pointer, clientX: 14, clientY: 90 });
     key('Escape');
     fireEvent.pointerUp(window, pointer);
     fireEvent.click(cover(), { detail: 1 });
@@ -393,11 +406,68 @@ describe('shelf marquee and touch fallback', () => {
     fireEvent.click(cover());
     expect(picked()).toHaveLength(1);
     expect(screen.getByLabelText('测试路径')).toHaveTextContent(/^\/gallery$/);
+    const search = screen.getByRole('searchbox');
+    search.focus();
+    key('Escape', { isComposing: true });
+    expect(picked()).toHaveLength(1);
     key('Escape');
     expect(picked()).toHaveLength(0);
+    expect(search).toHaveFocus();
     expect(screen.getByRole('button', { name: '批量管理' })).toHaveAttribute(
       'aria-pressed',
       'false',
     );
+  });
+});
+
+describe('shelf direct reorder', () => {
+  it('lifts a cover after 6px, reorders at its marker and never opens the release target', async () => {
+    await mount();
+    positions();
+    const source = cover();
+    const dest = cover('乙册');
+    const elementFromPoint = vi.fn((): HTMLElement => dest);
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: elementFromPoint,
+    });
+    try {
+      fireEvent.pointerDown(source, { ...pointer, clientX: 30, clientY: 110 });
+      movePointer(35, 110);
+      expect(elementFromPoint).not.toHaveBeenCalled();
+      movePointer(220, 110);
+      expect(card()).toHaveClass('is-dragging');
+      expect(card('乙册')).toHaveClass('is-drop-target', 'is-drop-after');
+      expect(document.querySelector('.shelf-marquee')).toBeNull();
+      elementFromPoint.mockReturnValue(root());
+      movePointer(249, 110);
+      expect(card('乙册')).toHaveClass('is-drop-target', 'is-drop-after');
+      fireEvent.pointerUp(root(), pointer);
+      fireEvent.click(dest, { detail: 1 });
+      expect(useUI.getState().shelfSort).toBe('manual');
+      expect(screen.getAllByRole('article').slice(0, 2)).toEqual([card('乙册'), card()]);
+      expect(screen.getByLabelText('测试路径')).toHaveTextContent(/^\/gallery$/);
+      expect(document.querySelector('.is-drop-target,.shelf-drag-ghost')).toBeNull();
+    } finally {
+      Reflect.deleteProperty(document, 'elementFromPoint');
+    }
+  });
+
+  it('cancels a card drag in selection mode without toggling or opening; a short click still opens', async () => {
+    await mount();
+    positions();
+    fireEvent.click(cover(), { ctrlKey: true });
+    fireEvent.pointerDown(cover(), { ...pointer, clientX: 30, clientY: 110 });
+    movePointer(60, 110);
+    expect(document.querySelector('.shelf-marquee,.shelf-drag-ghost')).toBeNull();
+    fireEvent.pointerUp(cover(), pointer);
+    fireEvent.click(cover(), { detail: 1 });
+    expect(picked()).toEqual([card()]);
+    expect(screen.getByLabelText('测试路径')).toHaveTextContent(/^\/gallery$/);
+    fireEvent.pointerDown(cover(), { ...pointer, clientX: 30, clientY: 110 });
+    movePointer(34, 110);
+    fireEvent.pointerUp(cover(), pointer);
+    fireEvent.click(cover(), { detail: 1 });
+    expect(screen.getByLabelText('测试路径')).toHaveTextContent('/gallery/book_0');
   });
 });

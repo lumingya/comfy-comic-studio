@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useMarquee } from './useMarquee';
 import type { Selection } from './selection';
+import { shortcutBlocked } from './shortcuts';
 
 const EDITABLE = 'input,textarea,select,[contenteditable]:not([contenteditable="false"])';
 // <summary> and <label> have their own click behaviour (toggle the <details>, check the box):
@@ -11,8 +12,6 @@ const canSelect = (el: Element) =>
   !el.closest(EDITABLE) &&
   (!el.closest(CONTROL) ||
     !!el.closest(CONTROL)?.matches('[data-shelf-open],[data-selection-open]'));
-const blocked = () =>
-  !!document.querySelector('dialog[open],[role="dialog"],[role="alertdialog"],[role="menu"]');
 
 export interface DesktopContext {
   ids: string[];
@@ -21,6 +20,8 @@ export interface DesktopContext {
 }
 interface Options {
   itemAttribute?: string;
+  marqueeFromBlankOnly?: boolean;
+  escapeFromFields?: boolean;
   selection: Selection;
   enabled: boolean;
   pinned: boolean;
@@ -55,7 +56,8 @@ export function useDesktopSelection(options: Options) {
     itemAttribute: attribute,
     selection: options.selection,
     enabled: options.enabled,
-    canStart: canSelect,
+    canStart: (target) =>
+      canSelect(target) && (!options.marqueeFromBlankOnly || !target.closest(itemSelector)),
     onStart: options.onCloseContext,
   });
   const marqueeRef = useRef(marquee);
@@ -95,25 +97,20 @@ export function useDesktopSelection(options: Options) {
       const o = latest.current,
         root = ref.current;
       const el = e.target instanceof Element ? e.target : document.activeElement;
+      const escape = e.key === 'Escape';
       if (
         !o.enabled ||
         !root ||
-        e.defaultPrevented ||
-        e.isComposing ||
-        el?.closest(EDITABLE) ||
         o.contextOpen ||
-        blocked()
+        shortcutBlocked(e, undefined, escape && o.escapeFromFields)
       )
         return;
-      if (
-        e.key === 'Escape' &&
-        (o.selection.ids.length || o.pinned || marqueeRef.current.pending())
-      ) {
+      if (escape && (o.selection.ids.length || o.pinned || marqueeRef.current.pending())) {
         e.preventDefault();
         e.stopPropagation();
         marqueeRef.current.cancel();
         o.onExit();
-        focus();
+        if (root.contains(el)) focus();
         return;
       }
       if (marqueeRef.current.pending()) return;

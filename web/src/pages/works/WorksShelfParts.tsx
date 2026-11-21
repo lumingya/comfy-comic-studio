@@ -132,8 +132,8 @@ export function SeriesCardView(props: {
   index: number;
   state: ShelfState;
   onMenu: (e: MouseEvent<HTMLButtonElement>) => void;
-  /** The ⠿ handle's drag start; absent while dragging would make no sense (one album, selecting). */
-  onReorder?: (e: ReactPointerEvent<HTMLElement>) => void;
+  onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
+  sortable: boolean;
   /** Touch 批量管理 mode: the cover toggles selection instead of opening the reader. */
   selecting?: boolean;
   selected?: boolean;
@@ -148,19 +148,10 @@ export function SeriesCardView(props: {
       aria-label={series.title}
       aria-selected={props.selected || undefined}
       data-shelf-id={series.id}
+      data-sortable={props.sortable || undefined}
       tabIndex={0}
+      onPointerDown={props.onPointerDown}
     >
-      {props.onReorder ? (
-        <span
-          className="shelf-drag-handle"
-          data-reorder-handle
-          title={t('classic.shelf.dragHandle')}
-          aria-hidden
-          onPointerDown={props.onReorder}
-        >
-          ⠿
-        </span>
-      ) : null}
       <button
         className="shelf-cover book-cover"
         style={{ '--cover-ratio': 0.75, '--cover-fit': 'cover' } as CSSProperties}
@@ -178,9 +169,10 @@ export function SeriesCardView(props: {
         {series.cover_asset_id ? (
           <img
             draggable={false}
-            src={assetUrl(series.cover_asset_id, 640)}
+            src={assetUrl(series.cover_asset_id, 480)}
             alt={series.title}
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <Parchment series={series} />
@@ -205,7 +197,7 @@ export function SeriesCardView(props: {
 }
 
 /** The collection (画册集) name as the page heading, renamed in place. */
-export function CollectionTitle() {
+export function CollectionTitle({ onCancel }: { onCancel: () => void }) {
   const { t } = useTranslation();
   const settings = useSettings();
   const patch = usePatchSettings();
@@ -217,6 +209,7 @@ export function CollectionTitle() {
         className="collection-title-input"
         value={title}
         label={t('classic.shelf.rename')}
+        onCancel={onCancel}
         onSave={(collection_title) =>
           patch.mutateAsync({ collection_title }, { onError: toastError })
         }

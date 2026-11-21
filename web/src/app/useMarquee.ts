@@ -87,6 +87,8 @@ export function useMarquee(options: Options) {
   useEffect(() => {
     const dispose = (g: Gesture) => {
       cancelAnimationFrame(raf.current);
+      raf.current = 0;
+      window.removeEventListener('scroll', schedule, true);
       g.box?.remove();
       document.body.classList.remove('shelf-marquee-active');
       if (g.root.hasPointerCapture?.(g.pointer)) g.root.releasePointerCapture(g.pointer);
@@ -104,7 +106,14 @@ export function useMarquee(options: Options) {
       }
     };
     finishRef.current = finish;
-    const paint = () => {
+    const schedule = () => {
+      if (raf.current) return;
+      raf.current = requestAnimationFrame(() => {
+        raf.current = 0;
+        paint();
+      });
+    };
+    const paint = (autoScroll = true) => {
       const g = gesture.current;
       if (!g?.box) return;
       const bounds =
@@ -117,7 +126,8 @@ export function useMarquee(options: Options) {
           : g.y > bounds.bottom - 36
             ? Math.ceil((g.y - bounds.bottom + 36) / 4)
             : 0;
-      g.scroll.scrollTop += Math.max(-22, Math.min(22, speed));
+      const scrollBefore = g.scroll.scrollTop;
+      if (autoScroll && speed) g.scroll.scrollTop += Math.max(-22, Math.min(22, speed));
       const x = g.startX - (g.scroll.scrollLeft - g.scrollX);
       const y = g.startY - (g.scroll.scrollTop - g.scrollY);
       const rect = {
@@ -141,7 +151,7 @@ export function useMarquee(options: Options) {
         rect: el.getBoundingClientRect(),
       }));
       latest.current.selection.replace(marqueeIds(items, rect, g.before, g.mode));
-      raf.current = requestAnimationFrame(paint);
+      if (g.scroll.scrollTop !== scrollBefore) schedule();
     };
     const move = (e: PointerEvent) => {
       const g = gesture.current;
@@ -158,6 +168,7 @@ export function useMarquee(options: Options) {
         g.box.setAttribute('aria-hidden', 'true');
         document.body.append(g.box);
         document.body.classList.add('shelf-marquee-active');
+        window.addEventListener('scroll', schedule, true);
         setSnapshot(g.before);
         latest.current.onStart();
         g.root.focus({ preventScroll: true });
@@ -167,6 +178,8 @@ export function useMarquee(options: Options) {
           /* pointer already released */
         }
         paint();
+      } else if (g.box) {
+        schedule();
       }
       if (g.box) {
         e.preventDefault();
@@ -174,18 +187,24 @@ export function useMarquee(options: Options) {
       }
     };
     const up = (e: PointerEvent) => {
-      if (gesture.current?.pointer === e.pointerId) finish(false);
+      if (gesture.current?.pointer === e.pointerId) {
+        if (raf.current) paint(false);
+        finish(false);
+      }
     };
-    const cancel = () => finish(true);
+    const cancel = (e: PointerEvent) => {
+      if (gesture.current?.pointer === e.pointerId) finish(true);
+    };
+    const blur = () => finish(true);
     window.addEventListener('pointermove', move, true);
     window.addEventListener('pointerup', up, true);
     window.addEventListener('pointercancel', cancel, true);
-    window.addEventListener('blur', cancel);
+    window.addEventListener('blur', blur);
     return () => {
       window.removeEventListener('pointermove', move, true);
       window.removeEventListener('pointerup', up, true);
       window.removeEventListener('pointercancel', cancel, true);
-      window.removeEventListener('blur', cancel);
+      window.removeEventListener('blur', blur);
       if (gesture.current) dispose(gesture.current);
       gesture.current = null;
     };

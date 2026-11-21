@@ -19,3 +19,11 @@
 #collection-home .works-hero-main {
   padding: 28px;
 }
+#collection-home .shelf-item {
+  user-select: none;
+}
+@media (any-pointer: fine) {
+  #collection-home .shelf-item[data-sortable] .shelf-cover {
+    cursor: grab;
+  }
+}

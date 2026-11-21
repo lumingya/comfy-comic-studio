@@ -1,8 +1,16 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
+import {
+  useEffect,
+  useRef,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+} from 'react';
+import { shortcutBlocked } from '../../app/shortcuts';
 
 /** Below this the press is a click; above it the album lifts (legacy THRESHOLD). */
-const THRESHOLD = 8;
+const THRESHOLD = 6;
 const CARD = '[data-shelf-id]';
+const CONTROL = 'input,textarea,select,[contenteditable],button,a,[role="button"],summary,label';
 
 interface Gesture {
   id: string;
@@ -13,24 +21,26 @@ interface Gesture {
   y: number;
   card: HTMLElement;
   active: boolean;
-  target: string | null;
+  target: HTMLElement | null;
   after: boolean;
+  sortable: boolean;
 }
 
 /**
- * Legacy shelf reordering (organize.js installShelfReorderDrag): press an album's ⠿ handle and
- * move 8px to lift it; a small copy of the cover follows the pointer, a bar marks where it will
- * land and the page scrolls near the edges.  Escape, leaving the window or a cancelled pointer
- * drops nothing.  Only the handle starts a drag — anywhere else the shelf draws its marquee.
+ * Press the cover or card body and move 6px to lift the album. Blank shelf space owns marquee.
+ * Selection mode keeps its chosen albums and suppresses a drag's release click, so it
+ * cannot accidentally open, deselect or reorder a single album from a group.
  */
 export function useShelfReorder(options: {
   root: RefObject<HTMLElement | null>;
   enabled: boolean;
+  sortable: boolean;
   onDrop: (source: string, target: string, after: boolean) => void;
 }) {
   const latest = useRef(options);
   latest.current = options;
   const cleanup = useRef<(() => void) | null>(null);
+  const suppressClick = useRef(false);
   useEffect(() => () => cleanup.current?.(), []);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
@@ -38,15 +48,14 @@ export function useShelfReorder(options: {
       !latest.current.enabled ||
       e.button !== 0 ||
       e.pointerType === 'touch' ||
-      e.ctrlKey ||
-      e.metaKey ||
-      e.shiftKey ||
-      e.altKey
+      !(e.target instanceof Element)
     )
       return;
     const card = e.currentTarget.closest<HTMLElement>(CARD);
     const root = latest.current.root.current;
     if (!card || !root) return;
+    const control = e.target.closest(CONTROL);
+    if (control && !control.matches('[data-shelf-open]')) return;
     e.preventDefault();
     cleanup.current?.();
     const g: Gesture = {
@@ -60,16 +69,14 @@ export function useShelfReorder(options: {
       active: false,
       target: null,
       after: false,
+      sortable: latest.current.sortable && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey,
     };
     const scroller =
       root.closest<HTMLElement>('main') ?? (document.scrollingElement as HTMLElement | null);
     let ghost: HTMLElement | null = null;
     let raf = 0;
 
-    const clearTargets = () =>
-      root
-        .querySelectorAll('.is-drop-target')
-        .forEach((el) => el.classList.remove('is-drop-target', 'is-drop-after'));
+    const clearTarget = () => g.target?.classList.remove('is-drop-target', 'is-drop-after');
     const makeGhost = () => {
       const cover = card.querySelector<HTMLElement>('.shelf-cover') ?? card;
       const rect = cover.getBoundingClientRect();
@@ -80,6 +87,9 @@ export function useShelfReorder(options: {
       if (art) {
         const copy = art.cloneNode(true) as HTMLElement;
         copy.removeAttribute('id');
+        if (copy instanceof HTMLImageElement) {
+          copy.loading = 'eager';
+        }
         el.append(copy);
       }
       el.style.width = `${rect.width}px`;
@@ -95,103 +105,130 @@ export function useShelfReorder(options: {
       ghost.style.transform = `translate(${x - (w * scale) / 2}px, ${y - (h * scale) / 2}px) scale(${scale})`;
     };
     const hit = (x: number, y: number) => {
-      if (ghost) ghost.style.visibility = 'hidden';
       const el = document.elementFromPoint(x, y);
-      if (ghost) ghost.style.visibility = '';
       const over = el?.closest<HTMLElement>(CARD);
-      if (!over || !root.contains(over) || over.dataset.shelfId === g.id) return null;
-      const r = over.getBoundingClientRect();
-      return { card: over, after: x > r.left + r.width / 2 };
+      if (over && root.contains(over) && over.dataset.shelfId !== g.id) {
+        const r = over.getBoundingClientRect();
+        return { card: over, after: x > r.left + r.width / 2 };
+      }
+      // The marker sits in the gutter. Moving onto it must not cancel that drop target.
+      if (g.target && !over && root.contains(el)) {
+        const r = g.target.getBoundingClientRect();
+        const distance = g.after ? x - r.right : r.left - x;
+        if (y >= r.top && y <= r.bottom && distance >= 0 && distance <= 12) {
+          return { card: g.target, after: g.after };
+        }
+      }
+      return null;
     };
     const track = (x: number, y: number) => {
       g.x = x;
       g.y = y;
       placeGhost(x, y);
       const h = hit(x, y);
-      clearTargets();
-      g.target = h?.card.dataset.shelfId ?? null;
+      if (h && g.target === h.card && g.after === h.after) return;
+      clearTarget();
+      g.target = h?.card ?? null;
       g.after = !!h?.after;
       if (h) {
         h.card.classList.add('is-drop-target');
         h.card.classList.toggle('is-drop-after', h.after);
       }
     };
-    const tick = () => {
-      if (!g.active || !scroller) return;
-      const box = scroller.getBoundingClientRect(),
-        top = Math.max(0, box.top) + 40,
-        bottom = Math.min(window.innerHeight, box.bottom || window.innerHeight) - 64;
-      const dy =
-        g.y < top
-          ? -Math.min(18, (top - g.y) / 3)
-          : g.y > bottom
-            ? Math.min(18, (g.y - bottom) / 3)
-            : 0;
-      if (dy) {
-        scroller.scrollBy({ top: dy });
+    const scheduleScroll = () => {
+      if (raf || !scroller) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const box = scroller.getBoundingClientRect(),
+          top = Math.max(0, box.top) + 40,
+          bottom = Math.min(window.innerHeight, box.bottom || window.innerHeight) - 64;
+        const dy =
+          g.y < top
+            ? -Math.min(18, (top - g.y) / 3)
+            : g.y > bottom
+              ? Math.min(18, (g.y - bottom) / 3)
+              : 0;
+        if (!dy) return;
+        const before = scroller.scrollTop;
+        scroller.scrollTop += dy;
+        if (scroller.scrollTop === before) return;
         track(g.x, g.y);
-      }
-      raf = requestAnimationFrame(tick);
+        scheduleScroll();
+      });
     };
     const finish = () => {
       cancelAnimationFrame(raf);
       ghost?.remove();
       ghost = null;
-      clearTargets();
+      clearTarget();
       card.classList.remove('is-dragging');
       document.body.classList.remove('shelf-reordering');
       window.removeEventListener('pointermove', move, true);
       window.removeEventListener('pointerup', up, true);
-      window.removeEventListener('pointercancel', finish, true);
+      window.removeEventListener('pointercancel', cancel, true);
       window.removeEventListener('keydown', key, true);
-      window.removeEventListener('blur', finish);
+      window.removeEventListener('blur', abort);
       cleanup.current = null;
     };
-    // The click that follows a drop must not open (or deselect) anything.
-    const swallowClick = () => {
-      const swallow = (ev: Event) => {
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-      };
-      window.addEventListener('click', swallow, { capture: true, once: true });
-      setTimeout(() => window.removeEventListener('click', swallow, true), 0);
+    const abort = () => {
+      suppressClick.current = true;
+      finish();
+    };
+    const cancel = (ev: PointerEvent) => {
+      if (ev.pointerId === g.pointerId) abort();
     };
     function move(ev: PointerEvent) {
       if (ev.pointerId !== g.pointerId) return;
-      if (!(ev.buttons & 1)) return finish();
+      if (!(ev.buttons & 1) || !latest.current.enabled) return abort();
       if (!g.active) {
         if (Math.hypot(ev.clientX - g.startX, ev.clientY - g.startY) < THRESHOLD) return;
         g.active = true;
         document.getSelection?.()?.removeAllRanges();
-        ghost = makeGhost();
-        g.card.classList.add('is-dragging');
-        document.body.classList.add('shelf-reordering');
-        raf = requestAnimationFrame(tick);
+        if (g.sortable) {
+          ghost = makeGhost();
+          g.card.classList.add('is-dragging');
+          document.body.classList.add('shelf-reordering');
+        }
       }
       ev.preventDefault();
-      track(ev.clientX, ev.clientY);
+      if (g.sortable) {
+        track(ev.clientX, ev.clientY);
+        scheduleScroll();
+      }
     }
     function up(ev: PointerEvent) {
       if (ev.pointerId !== g.pointerId) return;
-      const { active, target, after } = g;
+      const { active, after } = g;
+      const target = g.target?.dataset.shelfId;
       finish();
       if (!active) return;
-      swallowClick();
-      if (target && target !== g.id) latest.current.onDrop(g.id, target, after);
+      suppressClick.current = true;
+      if (latest.current.enabled && g.sortable && target && target !== g.id)
+        latest.current.onDrop(g.id, target, after);
     }
     function key(ev: KeyboardEvent) {
-      if (ev.key !== 'Escape' || !g.active) return;
-      ev.preventDefault();
-      ev.stopImmediatePropagation();
-      finish();
+      if (ev.key !== 'Escape' || shortcutBlocked(ev, root, true)) return;
+      // Let the selection adapter also leave bulk mode on this same Escape.
+      abort();
     }
     window.addEventListener('pointermove', move, true);
     window.addEventListener('pointerup', up, true);
-    window.addEventListener('pointercancel', finish, true);
+    window.addEventListener('pointercancel', cancel, true);
     window.addEventListener('keydown', key, true);
-    window.addEventListener('blur', finish);
+    window.addEventListener('blur', abort);
     cleanup.current = finish;
   };
 
-  return { onPointerDown };
+  return {
+    onPointerDown,
+    onPointerDownCapture: () => {
+      suppressClick.current = false;
+    },
+    onClickCapture: (e: ReactMouseEvent<HTMLElement>) => {
+      if (!suppressClick.current || !e.detail) return;
+      suppressClick.current = false;
+      e.preventDefault();
+      e.stopPropagation();
+    },
+  };
 }
