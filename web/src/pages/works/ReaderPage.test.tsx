@@ -19,7 +19,7 @@ const geometry = {
   revision: 'saved-crop-lettering-1',
   width: 800,
   height: 4000,
-  panel_boxes: { p0: [0, 400, 800, 1600], p1: [0, 2600, 800, 3800] },
+  panel_boxes: { p0: [0, 400, 800, 1600], p1: [0, 2600, 800, 3800] } as Record<string, number[]>,
   captions: { p0: 'Resolved caption from server', p1: '' },
   display_captions: {} as Record<string, string>,
 };
@@ -99,6 +99,102 @@ afterEach(() => {
 });
 
 describe('saved reading composition', () => {
+  it('turns one short mobile panel per key and lets manual scrolling take over', async () => {
+    const count = 120;
+    const panels = Array.from({ length: count }, (_, i) => ({
+      ...savedEpisode.panels[0],
+      id: `mobile-${i}`,
+      order: i,
+      description: `Mobile scene ${i + 1}`,
+    }));
+    currentEpisode = {
+      ...savedEpisode,
+      panels,
+      takes: panels.map((panel, i) => ({
+        ...savedEpisode.takes[0],
+        id: `mobile-take-${i}`,
+        panel_id: panel.id,
+      })),
+    };
+    metadata = {
+      ...geometry,
+      panel_boxes: Object.fromEntries(
+        panels.map((panel, i) => [panel.id, [0, i * 300, 800, i * 300 + 280]]),
+      ),
+    };
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+    );
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(count * 225);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(720);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      const index = Number(this.dataset.pageAnchor);
+      const scroll = document.getElementById('reader-canvas')?.scrollTop ?? 0;
+      const top = this.hasAttribute('data-page-anchor') ? 64 + index * 225 - scroll : 64;
+      return new DOMRect(0, top, 390, 210);
+    });
+    const { client } = mount('auto');
+    await screen.findByAltText('Mobile scene 1');
+    expect(screen.getByAltText('Mobile scene 1')).toHaveAttribute('width', '800');
+    expect(screen.getByAltText('Mobile scene 1')).toHaveAttribute('height', '280');
+    expect(screen.getByAltText('Mobile scene 120')).toHaveStyle({ width: 'min(100%, 800px)' });
+    const root = document.getElementById('reader-canvas')!;
+    Object.defineProperty(root, 'scrollTo', {
+      configurable: true,
+      value: ({ top }: ScrollToOptions) => {
+        const next = Math.max(0, Math.min(top ?? 0, root.scrollHeight - root.clientHeight));
+        if (root.scrollTop !== next) {
+          root.scrollTop = next;
+          fireEvent.scroll(root);
+        }
+      },
+    });
+    expect(root.style.overflowAnchor).toBe('none');
+    fireEvent.scroll(root);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(document.querySelector('#page-position')).toHaveTextContent('01 / 120');
+    for (const next of [2, 3, 4, 5]) {
+      fireEvent.keyDown(document.body, { key: 'ArrowRight' });
+      await waitFor(() =>
+        expect(document.querySelector('#page-position')).toHaveTextContent(
+          `${String(next).padStart(2, '0')} / 120`,
+        ),
+      );
+      fireEvent(root, new Event('scrollend'));
+    }
+    fireEvent.wheel(root, { deltaY: 600 });
+    root.scrollTop = 225 * 10 + 1;
+    fireEvent.scroll(root);
+    fireEvent(root, new Event('scrollend'));
+    await waitFor(() =>
+      expect(document.querySelector('#page-position')).toHaveTextContent('11 / 120'),
+    );
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft' });
+    expect(document.querySelector('#page-position')).toHaveTextContent('10 / 120');
+    await act(async () => {
+      metadata = { ...metadata, revision: 'mobile-updated' };
+      client.setQueryData(keys.episode('ep_1'), { ...currentEpisode, revision: 2 });
+    });
+    await waitFor(() =>
+      expect(screen.getByAltText('Mobile scene 1')).toHaveAttribute(
+        'src',
+        expect.stringContaining('mobile-updated'),
+      ),
+    );
+    expect(document.querySelector('#page-position')).toHaveTextContent('10 / 120');
+    fireEvent.click(document.querySelector('[aria-controls="room-filmstrip"]')!);
+    fireEvent.click(document.querySelector('#room-filmstrip button:last-child')!);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(document.querySelector('#page-position')).toHaveTextContent('120 / 120');
+    fireEvent(root, new Event('scrollend'));
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft' });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(document.querySelector('#page-position')).toHaveTextContent('119 / 120');
+  });
+
   it('retries a failed chapter list without presenting it as an empty album', async () => {
     const { calls } = mount(
       'single',

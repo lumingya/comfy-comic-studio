@@ -150,6 +150,18 @@ export function useReaderController() {
   const stageAt = staged ? stageOf(stages, current) : -1;
   const range = staged && stages[stageAt] ? stages[stageAt].items.length : 1;
   const first = staged && stages[stageAt] ? stages[stageAt].start : current;
+  const scrollingTo = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (!scroller) return;
+    // Image decoding changes article heights. Browser anchoring must not move the
+    // reader away from the page that its own navigation has selected.
+    const anchor = scroller.style.overflowAnchor;
+    scroller.style.overflowAnchor = 'none';
+    return () => {
+      scroller.style.overflowAnchor = anchor;
+    };
+  }, [scroller]);
 
   const anchorOf = (index: number) => {
     if (!scroller) return null;
@@ -166,6 +178,8 @@ export function useReaderController() {
     const reduced =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const destination = Math.max(0, Math.min(top, scroller.scrollHeight - scroller.clientHeight));
+    scrollingTo.current = Math.abs(scroller.scrollTop - destination) > 1 ? index : null;
     scroller.scrollTo?.({ top, behavior: smooth && !reduced ? 'smooth' : 'instant' });
   };
   const pageRef = useRef(current);
@@ -178,7 +192,8 @@ export function useReaderController() {
     scrollTo(pageRef.current, false);
   }, [layoutKey, scroller]);
 
-  // Track the page in view while scrolling: the last anchor whose top passed the reading line.
+  // Navigation places an anchor at the top. Use that same line during ordinary
+  // scrolling so several short mobile panels cannot count as one page turn.
   useEffect(() => {
     const root = scroller;
     if (!root) return;
@@ -186,8 +201,9 @@ export function useReaderController() {
     const onScroll = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
+        if (scrollingTo.current !== null) return;
         const top = root.getBoundingClientRect().top;
-        const line = top + Math.min(root.clientHeight * 0.35, 240);
+        const line = top + 1; // fractional scroll offsets are rounded by the browser
         let index = 0;
         root.querySelectorAll<HTMLElement>('[data-page-anchor]').forEach((el) => {
           if (el.getBoundingClientRect().top <= line) index = Number(el.dataset.pageAnchor);
@@ -195,10 +211,27 @@ export function useReaderController() {
         setPage((p) => (p === index ? p : index));
       });
     };
+    const endScroll = () => {
+      if (scrollingTo.current !== null) {
+        cancelAnimationFrame(raf);
+        scrollingTo.current = null;
+      } else onScroll();
+    };
+    const manualScroll = () => {
+      scrollingTo.current = null;
+    };
     root.addEventListener('scroll', onScroll, { passive: true });
+    root.addEventListener('scrollend', endScroll);
+    root.addEventListener('wheel', manualScroll, { passive: true });
+    root.addEventListener('touchstart', manualScroll, { passive: true });
+    root.addEventListener('pointerdown', manualScroll, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
       root.removeEventListener('scroll', onScroll);
+      root.removeEventListener('scrollend', endScroll);
+      root.removeEventListener('wheel', manualScroll);
+      root.removeEventListener('touchstart', manualScroll);
+      root.removeEventListener('pointerdown', manualScroll);
     };
   }, [scroller]);
 

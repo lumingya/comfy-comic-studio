@@ -114,6 +114,9 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
             key={p.src}
             src={p.src}
             alt={p.title}
+            width={size?.w}
+            height={size?.h}
+            style={opts.anchor && size ? { width: `min(100%, ${size.w}px)` } : undefined}
             data-shape={shape}
             loading={i > 2 ? 'lazy' : undefined}
             onLoad={(e) => {
