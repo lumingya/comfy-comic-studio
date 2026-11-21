@@ -314,6 +314,6 @@ def extension_file(ctx: Ctx, ext_id: str, path: str) -> Response:
     csp = (
         "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; frame-src 'none'; "
         "style-src 'self' 'unsafe-inline'; connect-src 'none'; form-action 'none'; "
-        "navigate-to 'self'; frame-ancestors 'self'"
+        "frame-ancestors 'self'"
     )
     return FileResponse(target, media_type=mime, headers={"Content-Security-Policy": csp})

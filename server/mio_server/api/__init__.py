@@ -57,6 +57,7 @@ from .validation import request_validation_error
 
 API_VERSION = "1"
 WEB_DIST = Path(__file__).resolve().parents[3] / "web" / "dist"
+WEB_FRAME_CSP = "frame-src 'self' blob: data"
 
 ERRORS: list[tuple[type[Exception], int, str]] = [
     (NotFound, 404, "not_found"),
@@ -160,10 +161,15 @@ def _mount_web(app: FastAPI) -> None:
             # Vite emits content-hashed names under assets/, safe to cache forever.
             immutable = path.startswith("assets/")
             headers = {"Cache-Control": "public, max-age=31536000, immutable"} if immutable else {}
+            if target.suffix.lower() == ".html":
+                headers["Content-Security-Policy"] = WEB_FRAME_CSP
             return FileResponse(target, headers=headers)
         # Unknown API routes and missing files must not masquerade as the SPA shell.
         if path == "api" or path.startswith("api/") or PurePosixPath(path).suffix:
             return JSONResponse(
                 status_code=404, content={"detail": "Not Found", "kind": "not_found"}
             )
-        return FileResponse(root / "index.html", headers={"Cache-Control": "no-cache"})
+        return FileResponse(
+            root / "index.html",
+            headers={"Cache-Control": "no-cache", "Content-Security-Policy": WEB_FRAME_CSP},
+        )

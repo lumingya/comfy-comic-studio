@@ -149,6 +149,9 @@ class CrudTests(ApiCase):
     def test_series_cover_is_the_first_image_until_one_is_chosen(self):
         series, ep = self.make_episode()
         sid, eid = series["id"], ep["id"]
+        ep = self.ctx.store.update_episode(
+            eid, lambda episode: setattr(episode, "panels", episode.ordered_panels()[:2])
+        ).model_dump(mode="json")
         self.drain(self.ok(self.client.post(f"/api/episodes/{eid}/render", json={"candidates": 1})))
         ep = self.ok(self.client.get(f"/api/episodes/{eid}"))
         order = {p["id"]: p["order"] for p in ep["panels"]}
