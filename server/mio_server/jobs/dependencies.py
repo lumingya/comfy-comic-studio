@@ -22,10 +22,17 @@ def references(value):
 
 
 def job_references(engine, job_id):
-    row = engine.db.execute("SELECT snapshot_json FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    # Materialize the connection's rows before yielding to arbitrary consumers. A job
+    # guard does not serialize this connection, and a suspended generator must not keep
+    # either its cursor or the database lock live across caller work.
+    with engine.lock:
+        row = engine.db.execute("SELECT snapshot_json FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        items = engine.db.execute(
+            "SELECT input_json FROM job_items WHERE job_id = ?", (job_id,)
+        ).fetchall()
     if row:
         yield from references(json.loads(row[0]))
-    for row in engine.db.execute("SELECT input_json FROM job_items WHERE job_id = ?", (job_id,)):
+    for row in items:
         yield from references(json.loads(row[0]))
 
 

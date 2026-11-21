@@ -42,11 +42,14 @@ class DeliveryRuntime:
         return f"{row['job_id']}:{row['idx']}:{row['attempt']}"
 
     def _pending_delivery(self, job_id, idx):
-        return self.db.execute(
-            "SELECT * FROM job_deliveries WHERE job_id = ? AND idx = ? "
-            "AND state IN ('pending', 'publishing') ORDER BY attempt DESC",
-            (job_id, idx),
-        ).fetchone()
+        # Completion and recovery callers can hold only a per-job guard. The connection
+        # is shared with scheduling and other jobs, so even reads need the database lock.
+        with self.lock:
+            return self.db.execute(
+                "SELECT * FROM job_deliveries WHERE job_id = ? AND idx = ? "
+                "AND state IN ('pending', 'publishing') ORDER BY attempt DESC",
+                (job_id, idx),
+            ).fetchone()
 
     def _record_delivery(self, row, result):
         """Called under the job guard, before any completion callback can mutate a work."""
