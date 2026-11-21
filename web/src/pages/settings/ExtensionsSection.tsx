@@ -26,7 +26,11 @@ const STATUS_CHIP: Record<ExtensionInfo['status'], string> = {
 };
 
 /** Enabling an extension trusts one exact digest; code-running ones get a louder warning. */
-export function TrustDialog(props: { ext: ExtensionInfo | null; onClose: () => void }) {
+export function TrustDialog(props: {
+  ext: ExtensionInfo | null;
+  safeMode?: boolean;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const action = useExtensionAction();
   const ext = props.ext;
@@ -43,7 +47,7 @@ export function TrustDialog(props: { ext: ExtensionInfo | null; onClose: () => v
           </button>
           <button
             className="btn primary"
-            disabled={action.isPending}
+            disabled={action.isPending || props.safeMode}
             onClick={() =>
               ext &&
               action.mutate(
@@ -88,7 +92,15 @@ export function TrustDialog(props: { ext: ExtensionInfo | null; onClose: () => v
   );
 }
 
-function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => void }) {
+function ExtensionCard({
+  ext,
+  onTrust,
+  safeMode,
+}: {
+  ext: ExtensionInfo;
+  onTrust: () => void;
+  safeMode: boolean;
+}) {
   const { t } = useTranslation();
   const surfaces = useWorkspaceSurfaces();
   const surface = surfaces.data?.items.find((item) => item.extension_id === ext.id);
@@ -113,9 +125,7 @@ function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => vo
       ) : null}
       <div className="ext-meta">
         <span className="chip mono">{ext.id}</span>
-        {ext.runs_code && !ext.builtin ? (
-          <span className="chip warn">{t('settings.ext.code')}</span>
-        ) : null}
+        {ext.runs_code ? <span className="chip warn">{t('settings.ext.code')}</span> : null}
         {ext.contributions.map((c) => (
           <span key={c} className="chip">
             {c}
@@ -140,16 +150,8 @@ function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => vo
         ) : ext.status !== 'invalid' ? (
           <button
             className="btn primary sm"
-            disabled={action.isPending}
-            onClick={
-              ext.builtin
-                ? () =>
-                    action.mutate(
-                      { id: ext.id, action: 'enable', digest: ext.digest },
-                      { onError: toastError },
-                    )
-                : onTrust
-            }
+            disabled={action.isPending || safeMode}
+            onClick={onTrust}
           >
             <Power size={13} /> {t('settings.ext.enable')}
           </button>
@@ -299,7 +301,12 @@ export function ExtensionsSection({ query = '' }: { query?: string }) {
       {!items.length ? <Empty>{t('settings.ext.none')}</Empty> : null}
       <div className="grid-2">
         {items.map((ext) => (
-          <ExtensionCard key={ext.id} ext={ext} onTrust={() => setTrusting(ext)} />
+          <ExtensionCard
+            key={ext.id}
+            ext={ext}
+            safeMode={list.data?.safe_mode === true}
+            onTrust={() => setTrusting(ext)}
+          />
         ))}
       </div>
       {(panels.data ?? []).map((p) => (
@@ -308,7 +315,11 @@ export function ExtensionsSection({ query = '' }: { query?: string }) {
           <ExtensionFrame panel={p} />
         </div>
       ))}
-      <TrustDialog ext={trusting} onClose={() => setTrusting(null)} />
+      <TrustDialog
+        ext={trusting}
+        safeMode={list.data?.safe_mode === true}
+        onClose={() => setTrusting(null)}
+      />
     </section>
   );
 }

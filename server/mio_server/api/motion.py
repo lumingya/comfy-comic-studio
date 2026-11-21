@@ -16,6 +16,47 @@ from .operations import Router as APIRouter
 router = APIRouter(tags=["motion"])
 
 
+MotionMove = Literal[
+    "still", "push_in", "pull_out", "pan_left", "pan_right", "pan_up", "pan_down", "shake"
+]
+MotionTransition = Literal["cut", "fade", "slide"]
+
+
+class MotionVoice(BaseModel):
+    id: str
+    gender: str
+    pitch: float
+    rate: float
+
+
+class MotionLine(BaseModel):
+    text: str
+    kind: str
+    speaker: str
+    voice: MotionVoice
+
+
+class MotionShot(BaseModel):
+    panel_id: str
+    index: int
+    move: MotionMove
+    transition: MotionTransition
+    auto_move: MotionMove
+    move_overridden: bool
+    hold: float
+    auto_hold: float
+    lines: list[MotionLine]
+    description: str
+    has_image: bool
+
+
+class MotionPlanResponse(BaseModel):
+    moves: list[MotionMove]
+    transitions: list[MotionTransition]
+    shots: list[MotionShot]
+    total_seconds: float
+
+
 class MotionExport(BaseModel):
     episode_id: str
     variant_id: str | None = None
@@ -28,7 +69,7 @@ class MotionExport(BaseModel):
 
 
 @router.get("/episodes/{episode_id}/motion-plan")
-def motion_plan(ctx: Ctx, episode_id: str, variant_id: str | None = None) -> dict:
+def motion_plan(ctx: Ctx, episode_id: str, variant_id: str | None = None) -> MotionPlanResponse:
     """Resolved move and hold for every panel (``Panel.motion`` overrides, else automatic)."""
     ep = ctx.store.get_episode(episode_id)
     series = ctx.store.get_series(ep.series_id)

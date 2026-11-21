@@ -169,17 +169,17 @@ class ExtensionManager:
             )
         current = digest(folder)
         state = self._state(ext_id)
-        if ext_id in self.loaded:
-            status = "active"
+        loaded = self.loaded.get(ext_id)
+        if loaded is not None:
+            status = "active" if loaded.api.digest == current else "changed"
         elif ext_id in self.errors:
             status = "error"
         elif state and state.enabled and state.digest != current:
             status = "changed"
         else:
             status = "disabled"
-        loaded = self.loaded.get(ext_id)
         contributions = []
-        if loaded:
+        if loaded and status == "active":
             desc = self.ctx.registry.describe()
             source = loaded.api.source
             contributions = [
@@ -243,6 +243,8 @@ class ExtensionManager:
     @catalog_transition
     def enable(self, ext_id: str, expected_digest: str) -> Info:
         """Enable exactly the reviewed content: ``expected_digest`` must match the folder."""
+        if os.environ.get("MIO_SAFE_MODE") == "1":
+            raise ExtensionError("安全模式下不能启用扩展")
         info = self.info(ext_id)
         if info.status == "invalid":
             raise ExtensionError(info.error)
@@ -343,6 +345,9 @@ class ExtensionManager:
     @operation_serialized
     @catalog_transition
     def load(self, ext_id: str, *, remember: bool = False) -> bool:
+        if os.environ.get("MIO_SAFE_MODE") == "1":
+            log.warning("MIO_SAFE_MODE=1: refused to load extension %s", ext_id)
+            return False
         previous_service = self.ctx.extension_services.get(ext_id)
         if previous_service is not None and getattr(previous_service, "busy", False):
             raise JobConflict("扩展的上次请求尚未结束，请稍后再启用")

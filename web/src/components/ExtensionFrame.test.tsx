@@ -81,4 +81,37 @@ describe('sandbox panel appearance context', () => {
     expect(update).not.toHaveProperty('context');
     view.unmount();
   });
+
+  it('revokes the bridge and returns to a blank document after the panel navigates', () => {
+    const view = renderWithProviders(<ExtensionFrame panel={panel} />);
+    const iframe = view.getByTitle('Appearance probe') as HTMLIFrameElement;
+    const child = iframe.contentWindow!;
+    const post = vi.spyOn(child, 'postMessage');
+    const session = new URL(iframe.src).hash.match(/mio-session=([^&]+)/)?.[1];
+    fireEvent.load(iframe);
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          source: child,
+          origin: 'null',
+          data: { type: 'mio:panel:ready', version: 1, session },
+        }),
+      );
+    });
+    expect(post).toHaveBeenCalledOnce();
+    post.mockClear();
+    fireEvent.load(iframe);
+    expect(iframe.getAttribute('src')).toBe('about:blank');
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          source: child,
+          origin: 'null',
+          data: { type: 'mio:panel:ready', version: 1, session },
+        }),
+      );
+    });
+    expect(post).not.toHaveBeenCalled();
+    view.unmount();
+  });
 });

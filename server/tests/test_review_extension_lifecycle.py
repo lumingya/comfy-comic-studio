@@ -161,7 +161,7 @@ class ExtensionLifecycleReviewTests(unittest.TestCase):
         ):
             info = self.enable()
 
-        self.assertEqual(info.status, "active")
+        self.assertEqual(info.status, "changed")
         self.assertIn("disk full", info.error)
         self.assertEqual(len(created), 1)
         self.assertTrue(created[0].closed)
@@ -185,7 +185,7 @@ class ExtensionLifecycleReviewTests(unittest.TestCase):
         )
 
         with patch("mio_server.extensions.trust.remember_package") as remember:
-            self.assertEqual(self.enable().status, "active")
+            self.assertEqual(self.enable().status, "changed")
 
         remember.assert_not_called()
         self.assertEqual(self.ctx.settings().extensions["lifecycle"], previous_state)
@@ -315,7 +315,7 @@ class ExtensionLifecycleReviewTests(unittest.TestCase):
         with patch.object(Path, "replace", denied):
             failed = self.enable()
 
-        self.assertEqual(failed.status, "active")
+        self.assertEqual(failed.status, "changed")
         self.assertIn("trust index disk full", failed.error)
         self.assertIs(self.manager.loaded["lifecycle"], loaded)
         self.assertIs(self.ctx.extension_services["lifecycle"], service)

@@ -124,6 +124,13 @@ class PlayerTests(unittest.TestCase):
 
 class MotionApiTests(ApiCase):
     def test_plan_override_and_export(self):
+        document = self.ok(self.client.get("/openapi.json"))
+        response = document["paths"]["/api/episodes/{episode_id}/motion-plan"]["get"]["responses"][
+            "200"
+        ]["content"]["application/json"]["schema"]
+        self.assertEqual(response["$ref"], "#/components/schemas/MotionPlanResponse")
+        transition = document["components"]["schemas"]["MotionShot"]["properties"]["transition"]
+        self.assertEqual(transition["enum"], ["cut", "fade", "slide"])
         _, ep = self.make_episode()
         # Two rendered shots cover ordering, overrides and total duration. Rendering the
         # full twelve-shot script fixture can exhaust drain's budget on slow CI storage.

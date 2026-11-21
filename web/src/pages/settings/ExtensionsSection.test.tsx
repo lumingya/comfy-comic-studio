@@ -30,6 +30,7 @@ function routes(item = extension) {
     'GET /api/extensions': { items: [item], safe_mode: false, hooks: [] },
     'GET /api/extension-surfaces': { items: [] },
     'GET /api/extension-panels': [],
+    'POST /api/extensions/sample/enable': { status: 'active' },
     'DELETE /api/extensions/sample': {},
   };
 }
@@ -125,9 +126,22 @@ it('always offers data removal with retention selected by default even when no d
 });
 
 it('keeps bundled extensions outside the uninstall flow', async () => {
-  const calls = mockFetch(routes({ ...extension, builtin: true }));
+  const bundled = { ...extension, builtin: true, digest: 'bundled-reviewed-digest' };
+  const calls = mockFetch(routes(bundled));
   renderWithProviders(<ExtensionsSection />);
-  await screen.findByText('画稿助手');
+  await userEvent.click(await screen.findByRole('button', { name: '启用' }));
+  const dialog = screen.getByRole('dialog', { name: '启用「画稿助手」' });
+  expect(within(dialog).getByText(bundled.digest)).toBeInTheDocument();
+  expect(
+    within(dialog).getByText('这个扩展可以运行代码并访问工作区，请只启用可信来源。'),
+  ).toBeInTheDocument();
+  expect(calls.some((call) => call.method === 'POST' && call.url.endsWith('/enable'))).toBe(false);
   expect(screen.queryByRole('button', { name: '卸载' })).toBeNull();
-  expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+  await userEvent.click(within(dialog).getByRole('button', { name: '信任并启用' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(calls).toContainEqual({
+    method: 'POST',
+    url: '/api/extensions/sample/enable',
+    body: { digest: bundled.digest },
+  });
 });

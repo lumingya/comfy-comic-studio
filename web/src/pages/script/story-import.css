@@ -1,7 +1,8 @@
 .story-import {
   display: grid;
   gap: 14px;
-  min-width: min(680px, calc(100vw - 64px));
+  width: min(680px, 100%);
+  min-width: 0;
 }
 
 .story-import-input {

@@ -299,6 +299,9 @@ def extension_file(ctx: Ctx, ext_id: str, path: str) -> Response:
     info = ctx.extensions.info(ext_id)
     if info.status != "active":
         raise NotFound(f"扩展未启用：{ext_id}")
+    loaded = ctx.extensions.loaded.get(ext_id)
+    if loaded is None or loaded.api.digest != info.digest:
+        raise NotFound("扩展内容已改变，请重新审阅并启用")
     try:
         target = inside(info.folder, path)
     except ManifestError as exc:
@@ -309,7 +312,8 @@ def extension_file(ctx: Ctx, ext_id: str, path: str) -> Response:
     # Panels run in a sandboxed iframe without same-origin; this CSP keeps them from loading
     # anything remote even if opened directly.
     csp = (
-        "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; connect-src 'none'; frame-ancestors 'self'"
+        "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; frame-src 'none'; "
+        "style-src 'self' 'unsafe-inline'; connect-src 'none'; form-action 'none'; "
+        "navigate-to 'self'; frame-ancestors 'self'"
     )
     return FileResponse(target, media_type=mime, headers={"Content-Security-Policy": csp})

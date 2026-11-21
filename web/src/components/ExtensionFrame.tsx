@@ -50,6 +50,9 @@ export function ExtensionFrame(props: {
   const series = props.params?.series ?? props.params?.series_id;
   const declaration = JSON.stringify(props.panel);
   const session = useMemo(() => crypto.randomUUID(), [declaration, episode, series]);
+  const documentLoads = useRef({ session, loaded: false, revoked: false });
+  if (documentLoads.current.session !== session)
+    documentLoads.current = { session, loaded: false, revoked: false };
   const query = new URLSearchParams({
     ...(episode ? { episode } : {}),
     ...(series ? { series } : {}),
@@ -127,6 +130,17 @@ export function ExtensionFrame(props: {
         referrerPolicy="no-referrer"
         src={`${props.panel.url}${query ? `?${query}` : ''}#mio-session=${session}`}
         onLoad={() => {
+          const loads = documentLoads.current;
+          if (loads.session !== session || loads.revoked) return;
+          if (loads.loaded) {
+            // A panel may not hand its opaque-origin message channel to a document it navigates to.
+            loads.revoked = true;
+            bridge.current?.dispose();
+            bridge.current = null;
+            frame.current?.setAttribute('src', 'about:blank');
+            return;
+          }
+          loads.loaded = true;
           bridge.current?.abort();
           creationLoaded();
         }}

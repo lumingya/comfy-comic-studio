@@ -7332,6 +7332,204 @@
     "title": "MotionExport",
     "type": "object"
    },
+   "MotionLine": {
+    "properties": {
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "speaker": {
+      "title": "Speaker",
+      "type": "string"
+     },
+     "text": {
+      "title": "Text",
+      "type": "string"
+     },
+     "voice": {
+      "$ref": "#/components/schemas/MotionVoice"
+     }
+    },
+    "required": [
+     "text",
+     "kind",
+     "speaker",
+     "voice"
+    ],
+    "title": "MotionLine",
+    "type": "object"
+   },
+   "MotionPlanResponse": {
+    "properties": {
+     "moves": {
+      "items": {
+       "enum": [
+        "still",
+        "push_in",
+        "pull_out",
+        "pan_left",
+        "pan_right",
+        "pan_up",
+        "pan_down",
+        "shake"
+       ],
+       "type": "string"
+      },
+      "title": "Moves",
+      "type": "array"
+     },
+     "shots": {
+      "items": {
+       "$ref": "#/components/schemas/MotionShot"
+      },
+      "title": "Shots",
+      "type": "array"
+     },
+     "total_seconds": {
+      "title": "Total Seconds",
+      "type": "number"
+     },
+     "transitions": {
+      "items": {
+       "enum": [
+        "cut",
+        "fade",
+        "slide"
+       ],
+       "type": "string"
+      },
+      "title": "Transitions",
+      "type": "array"
+     }
+    },
+    "required": [
+     "moves",
+     "transitions",
+     "shots",
+     "total_seconds"
+    ],
+    "title": "MotionPlanResponse",
+    "type": "object"
+   },
+   "MotionShot": {
+    "properties": {
+     "auto_hold": {
+      "title": "Auto Hold",
+      "type": "number"
+     },
+     "auto_move": {
+      "enum": [
+       "still",
+       "push_in",
+       "pull_out",
+       "pan_left",
+       "pan_right",
+       "pan_up",
+       "pan_down",
+       "shake"
+      ],
+      "title": "Auto Move",
+      "type": "string"
+     },
+     "description": {
+      "title": "Description",
+      "type": "string"
+     },
+     "has_image": {
+      "title": "Has Image",
+      "type": "boolean"
+     },
+     "hold": {
+      "title": "Hold",
+      "type": "number"
+     },
+     "index": {
+      "title": "Index",
+      "type": "integer"
+     },
+     "lines": {
+      "items": {
+       "$ref": "#/components/schemas/MotionLine"
+      },
+      "title": "Lines",
+      "type": "array"
+     },
+     "move": {
+      "enum": [
+       "still",
+       "push_in",
+       "pull_out",
+       "pan_left",
+       "pan_right",
+       "pan_up",
+       "pan_down",
+       "shake"
+      ],
+      "title": "Move",
+      "type": "string"
+     },
+     "move_overridden": {
+      "title": "Move Overridden",
+      "type": "boolean"
+     },
+     "panel_id": {
+      "title": "Panel Id",
+      "type": "string"
+     },
+     "transition": {
+      "enum": [
+       "cut",
+       "fade",
+       "slide"
+      ],
+      "title": "Transition",
+      "type": "string"
+     }
+    },
+    "required": [
+     "panel_id",
+     "index",
+     "move",
+     "transition",
+     "auto_move",
+     "move_overridden",
+     "hold",
+     "auto_hold",
+     "lines",
+     "description",
+     "has_image"
+    ],
+    "title": "MotionShot",
+    "type": "object"
+   },
+   "MotionVoice": {
+    "properties": {
+     "gender": {
+      "title": "Gender",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "pitch": {
+      "title": "Pitch",
+      "type": "number"
+     },
+     "rate": {
+      "title": "Rate",
+      "type": "number"
+     }
+    },
+    "required": [
+     "id",
+     "gender",
+     "pitch",
+     "rate"
+    ],
+    "title": "MotionVoice",
+    "type": "object"
+   },
    "OutputAdapterConfig": {
     "additionalProperties": false,
     "properties": {
@@ -16292,8 +16490,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "title": "Response Motion Plan",
-         "type": "object"
+         "$ref": "#/components/schemas/MotionPlanResponse"
         }
        }
       },

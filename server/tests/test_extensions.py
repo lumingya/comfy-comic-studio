@@ -13,6 +13,7 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from mio_server.api import create_app
+from mio_server.extensions.manifest import ManifestError, digest, inside
 from mio_server.hooks import HookBus, HookError
 
 from .api_harness import LOCAL, ApiCase
@@ -349,6 +350,61 @@ class ExtensionApiTests(ApiCase):
         self.assertEqual(self.ctx.extensions.info("demo").status, "changed")
         self.assertEqual(self.enable()["status"], "active")
 
+    def test_all_package_files_including_dot_directories_are_digest_covered(self):
+        folder = write_ext(self.root())
+        hidden = folder / ".git" / "unreviewed.py"
+        hidden.parent.mkdir()
+        hidden.write_text("value = 'before'\n", encoding="utf-8")
+        before = digest(folder)
+        hidden.write_text("value = 'after'\n", encoding="utf-8")
+        self.assertNotEqual(digest(folder), before)
+        with self.assertRaises(ManifestError):
+            inside(folder, ".git/__pycache__/hidden.py")
+        with self.assertRaises(ManifestError):
+            inside(folder, ".git/hidden.pyc")
+
+    def test_python_entry_under_dot_directory_cannot_change_without_new_digest(self):
+        folder = write_ext(self.root())
+        hidden = folder / ".git" / "main.py"
+        hidden.parent.mkdir()
+        hidden.write_text("def activate(mio):\n    pass\n", encoding="utf-8")
+        manifest_path = folder / "mio-extension.json"
+        manifest = json.loads(manifest_path.read_text("utf-8"))
+        manifest["main"] = ".git/main.py"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        approved = digest(folder)
+        hidden.write_text(
+            "def activate(mio):\n    @mio.router.get('/hidden')\n    def hidden(): return {'modified': True}\n",
+            encoding="utf-8",
+        )
+        self.assertNotEqual(digest(folder), approved)
+        response = self.client.post("/api/extensions/demo/enable", json={"digest": approved})
+        self.assertEqual(response.status_code, 400)
+        self.assertNotIn("demo", self.ctx.extensions.loaded)
+
+    def test_modified_panel_assets_are_not_served_from_a_stale_activation(self):
+        folder = write_ext(
+            self.root(),
+            panels=[
+                {
+                    "id": "demo-panel",
+                    "slot": "episode",
+                    "title": "Demo",
+                    "entry": "panel.html",
+                }
+            ],
+        )
+        entry = folder / "panel.html"
+        entry.write_text("<!doctype html><title>reviewed</title>", encoding="utf-8")
+        self.enable()
+        response = self.client.get("/api/extensions/demo/files/panel.html")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form-action 'none'", response.headers["content-security-policy"])
+        self.assertIn("navigate-to 'self'", response.headers["content-security-policy"])
+        entry.write_text("<!doctype html><script>unreviewed()</script>", encoding="utf-8")
+        self.assertEqual(self.ctx.extensions.info("demo").status, "changed")
+        self.assertEqual(self.client.get("/api/extensions/demo/files/panel.html").status_code, 404)
+
     def test_failing_activate_rolls_back_contributions(self):
         write_ext(self.root(), main="def activate(mio):\n    raise RuntimeError('boom')\n")
         info = self.enable()
@@ -360,10 +416,17 @@ class ExtensionApiTests(ApiCase):
         write_ext(self.root())
         self.enable()
         self.ctx.extensions.unload("demo")
+        info = self.ctx.extensions.info("demo")
         with mock.patch.dict(os.environ, {"MIO_SAFE_MODE": "1"}):
             self.ctx.extensions.load_all()
             self.assertTrue(self.ok(self.client.get("/api/extensions"))["safe_mode"])
+            with self.assertRaises(ValueError):
+                self.ctx.extensions.enable("demo", info.digest)
+            self.assertFalse(self.ctx.extensions.load("demo"))
+            denied = self.client.post("/api/extensions/demo/enable", json={"digest": info.digest})
+            self.assertEqual(denied.status_code, 400)
         self.assertNotIn("demo", self.ctx.extensions.loaded)
+        self.assertEqual(self.ctx.extensions.info("demo").status, "disabled")
 
     def test_install_zip_and_reject_traversal(self):
         src = write_ext(Path(self.tmp) / "src")

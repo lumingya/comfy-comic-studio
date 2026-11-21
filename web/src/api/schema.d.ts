@@ -5513,6 +5513,72 @@ export interface components {
              */
             max_width?: number;
         };
+        /** MotionLine */
+        MotionLine: {
+            /** Text */
+            text: string;
+            /** Kind */
+            kind: string;
+            /** Speaker */
+            speaker: string;
+            voice: components["schemas"]["MotionVoice"];
+        };
+        /** MotionPlanResponse */
+        MotionPlanResponse: {
+            /** Moves */
+            moves: ("still" | "push_in" | "pull_out" | "pan_left" | "pan_right" | "pan_up" | "pan_down" | "shake")[];
+            /** Transitions */
+            transitions: ("cut" | "fade" | "slide")[];
+            /** Shots */
+            shots: components["schemas"]["MotionShot"][];
+            /** Total Seconds */
+            total_seconds: number;
+        };
+        /** MotionShot */
+        MotionShot: {
+            /** Panel Id */
+            panel_id: string;
+            /** Index */
+            index: number;
+            /**
+             * Move
+             * @enum {string}
+             */
+            move: "still" | "push_in" | "pull_out" | "pan_left" | "pan_right" | "pan_up" | "pan_down" | "shake";
+            /**
+             * Transition
+             * @enum {string}
+             */
+            transition: "cut" | "fade" | "slide";
+            /**
+             * Auto Move
+             * @enum {string}
+             */
+            auto_move: "still" | "push_in" | "pull_out" | "pan_left" | "pan_right" | "pan_up" | "pan_down" | "shake";
+            /** Move Overridden */
+            move_overridden: boolean;
+            /** Hold */
+            hold: number;
+            /** Auto Hold */
+            auto_hold: number;
+            /** Lines */
+            lines: components["schemas"]["MotionLine"][];
+            /** Description */
+            description: string;
+            /** Has Image */
+            has_image: boolean;
+        };
+        /** MotionVoice */
+        MotionVoice: {
+            /** Id */
+            id: string;
+            /** Gender */
+            gender: string;
+            /** Pitch */
+            pitch: number;
+            /** Rate */
+            rate: number;
+        };
         /** OutputAdapterConfig */
         OutputAdapterConfig: {
             /** Id */
@@ -14586,7 +14652,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, unknown>;
+                    "application/json": components["schemas"]["MotionPlanResponse"];
                 };
             };
             /** @description Validation Error */
