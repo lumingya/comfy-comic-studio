@@ -40,6 +40,11 @@
   grid-column: 1 / -1;
 }
 
+.resizable-split[data-stacked] .workshop-frames-list {
+  flex: 0 1 auto;
+  max-height: min(36dvh, 18rem);
+}
+
 .resizable-split[data-stacked] .workshop-frames-actions {
   flex: none;
   flex-direction: row;

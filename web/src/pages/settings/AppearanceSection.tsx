@@ -36,6 +36,25 @@ function SettingSelect<K extends string>(props: {
   );
 }
 
+function SettingSwitch(props: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="switch">
+      <input
+        type="checkbox"
+        role="switch"
+        aria-label={props.label}
+        checked={props.checked}
+        onChange={(event) => props.onChange(event.currentTarget.checked)}
+      />
+      <span className="switch-track" aria-hidden="true" />
+    </label>
+  );
+}
+
 /**
  * 外观与阅读 (legacy appearance tab): interface language, lettering style, display density,
  * font scale, reduce motion, and default reading mode — grouped like the legacy
@@ -52,11 +71,20 @@ export function AppearanceSection() {
     i18n.changeLanguage(lang);
     document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
   };
-  const { setDensity, setFontScale, setReduceMotion, setLettering, setDefaultReaderMode } =
-    useUI.getState();
+  const {
+    setDensity,
+    setFontScale,
+    setReduceMotion,
+    setLettering,
+    setDefaultReaderMode,
+    setPauseWallpaperWhenUnfocused,
+    setThemeBackgroundPaused,
+  } = useUI.getState();
   const density = useUI((s) => s.density);
   const fontScale = useUI((s) => s.fontScale);
   const reduceMotion = useUI((s) => s.reduceMotion);
+  const pauseWallpaperWhenUnfocused = useUI((s) => s.pauseWallpaperWhenUnfocused);
+  const staticWallpaper = useUI((s) => s.themeBackgroundPaused);
   const lettering = useUI((s) => s.lettering);
   const defaultReaderMode = useUI((s) => s.defaultReaderMode);
   return (
@@ -118,16 +146,37 @@ export function AppearanceSection() {
           icon="book"
           title={t('legacy.settings.preferences.reduceMotion')}
           control={
-            <label className="switch">
-              <input
-                type="checkbox"
-                role="switch"
-                aria-label={t('legacy.settings.preferences.reduceMotion')}
-                checked={reduceMotion}
-                onChange={(e) => setReduceMotion(e.target.checked)}
-              />
-              <span className="switch-track" aria-hidden="true" />
-            </label>
+            <SettingSwitch
+              label={t('legacy.settings.preferences.reduceMotion')}
+              checked={reduceMotion}
+              onChange={setReduceMotion}
+            />
+          }
+        />
+      </section>
+      <section className="settings-section">
+        <h2>{t('settings.themes.wallpaperMotion')}</h2>
+        <SettingsRow
+          icon="image"
+          title={t('settings.themes.pauseWallpaperWhenUnfocused')}
+          control={
+            <SettingSwitch
+              label={t('settings.themes.pauseWallpaperWhenUnfocused')}
+              checked={pauseWallpaperWhenUnfocused}
+              onChange={setPauseWallpaperWhenUnfocused}
+            />
+          }
+        />
+        <SettingsRow
+          icon="image"
+          title={t('settings.themes.staticWallpaper')}
+          body={t('settings.themes.staticWallpaperHint')}
+          control={
+            <SettingSwitch
+              label={t('settings.themes.staticWallpaper')}
+              checked={staticWallpaper}
+              onChange={setThemeBackgroundPaused}
+            />
           }
         />
       </section>

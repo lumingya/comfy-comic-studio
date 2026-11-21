@@ -1,8 +1,10 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 import { Outlet } from 'react-router-dom';
+import { ApiError } from '../../api/client';
 import { readingPanelUrl, readingStripUrl } from '../../api/production';
 import { Icon } from '../../app/icons';
 import { QueryError } from '../../app/errors';
+import { useWallpaperOcclusion } from '../../app/wallpaperOcclusion';
 import { ownCancel } from '../../components/topLayer';
 import { SlicePreview, TemplatePreview } from './presentation';
 import { PresentationDrawer } from './ExportDrawer';
@@ -13,6 +15,7 @@ import type { ReaderState } from './readerController';
 const NATIVE = 'mio-fit';
 
 export function ReaderView({ reader }: { reader: ReaderState }) {
+  useWallpaperOcclusion();
   const {
     t,
     navigate,
@@ -67,6 +70,25 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
     setFullscreenHint,
     panel,
   } = reader;
+  const filmstrip = useRef<HTMLDivElement>(null);
+  const filmOpen = (film || layout === 'gallery') && nativeStage;
+  useEffect(() => {
+    if (!filmOpen) return;
+    const strip = filmstrip.current;
+    const active = strip?.querySelector<HTMLElement>('.active');
+    if (!strip || !active) return;
+    const outer = strip.getBoundingClientRect();
+    const inner = active.getBoundingClientRect();
+    if (inner.left < outer.left || inner.right > outer.right)
+      strip.scrollLeft += (inner.left + inner.right - outer.left - outer.right) / 2;
+  }, [current, filmOpen, pages.length]);
+  const failed = [series, episodes, episode, reading].find((query) => query.error);
+  const missingAlbum = series.error instanceof ApiError && series.error.status === 404;
+  const loading =
+    series.isLoading ||
+    episodes.isLoading ||
+    episode.isLoading ||
+    (pages.length > 0 && reading.isPending);
   /** One page of the native stage; continuous mode anchors on the page itself. */
   const renderPage = (
     i: number,
@@ -124,23 +146,29 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
         if (!ownCancel(e)) return;
         e.preventDefault();
         if (panel) navigate(`${base}${keep}`);
-        else close();
+        else if (info) {
+          setInfo(false);
+          ref.current?.querySelector<HTMLButtonElement>('.room-open-details')?.focus();
+        } else if (film && nativeStage) {
+          setFilm(false);
+          ref.current
+            ?.querySelector<HTMLButtonElement>('[aria-controls="room-filmstrip"]')
+            ?.focus();
+        } else close();
       }}
     >
-      {series.error || episodes.error || episode.error || reading.error ? (
-        <QueryError
-          error={series.error || episodes.error || episode.error || reading.error}
-          onRetry={() => {
-            void series.refetch();
-            void episodes.refetch();
-            void episode.refetch();
-            void reading.refetch();
-          }}
-        />
-      ) : null}
       <ReaderHeader reader={reader} />
       <section className="room-stage">
-        {panel === 'layout' && context ? (
+        {missingAlbum ? (
+          <div className="notice error query-error" role="alert">
+            <span className="grow">{t('reader.albumMissing')}</span>
+            <button type="button" className="btn sm" onClick={close}>
+              {t('common.backToWorks')}
+            </button>
+          </div>
+        ) : failed ? (
+          <QueryError error={failed.error} onRetry={() => failed.refetch()} />
+        ) : panel === 'layout' && context ? (
           <div className="room-canvas room-layout workspace-body">
             <Outlet key={context.episode.id} context={context} />
           </div>
@@ -165,13 +193,9 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
             style={staged ? ({ '--mio-stage-height': `${view.h}px` } as CSSProperties) : undefined}
           >
             <div className={`room-scroll ${staged ? 'mio-stage-pages' : ''}`}>
-              {episode.isLoading || series.isLoading || (pages.length > 0 && reading.isPending) ? (
+              {loading ? (
                 <p className="room-empty">{t('reader.loading')}</p>
-              ) : reading.error ? null : savedLayout &&
-                stage === 'continuous' &&
-                reading.data &&
-                epId &&
-                pages.length ? (
+              ) : savedLayout && stage === 'continuous' && reading.data && epId && pages.length ? (
                 <div
                   className="reader-saved-strip"
                   style={{
@@ -264,16 +288,28 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
         ) : null}
       </section>
       <div
+        ref={filmstrip}
         className="room-filmstrip"
         id="room-filmstrip"
-        hidden={!(film || layout === 'gallery') || !nativeStage}
+        hidden={!filmOpen}
         aria-label={t('reader.film')}
+        onWheel={(event) => {
+          if (!event.ctrlKey && Math.abs(event.deltaY) > Math.abs(event.deltaX))
+            event.currentTarget.scrollLeft +=
+              event.deltaY *
+              (event.deltaMode === 1
+                ? 16
+                : event.deltaMode === 2
+                  ? event.currentTarget.clientWidth
+                  : 1);
+        }}
       >
         {pages.map((p, i) => (
           <button
             key={p.id}
             type="button"
             className={i === current ? 'active' : ''}
+            aria-current={i === current ? 'page' : undefined}
             aria-label={t('reader.pageN', { n: i + 1 })}
             onClick={() => go(i)}
           >
@@ -354,6 +390,7 @@ export function ReaderView({ reader }: { reader: ReaderState }) {
                 title={t('reader.film')}
                 aria-label={t('reader.film')}
                 aria-pressed={film}
+                aria-controls="room-filmstrip"
                 onClick={() => setFilm(!film)}
               >
                 <Icon name="list" />

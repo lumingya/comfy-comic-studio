@@ -52,3 +52,17 @@ it('retains the labelled language selector and updates its translated choices', 
   expect(document.documentElement).toHaveAttribute('lang', 'en');
   expect(await screen.findByRole('combobox', { name: 'Display typeface' })).toBeInTheDocument();
 });
+
+it('defaults to pausing unfocused wallpaper and persists wallpaper power choices', async () => {
+  render(<AppearanceSection />);
+  const auto = screen.getByRole('switch', { name: '窗口失焦时自动暂停' });
+  const still = screen.getByRole('switch', { name: '省电静帧模式' });
+  expect(auto).toBeChecked();
+  expect(still).not.toBeChecked();
+  await userEvent.click(auto);
+  await userEvent.click(still);
+  expect(JSON.parse(localStorage.getItem('mio.ui')!).state).toMatchObject({
+    pauseWallpaperWhenUnfocused: false,
+    themeBackgroundPaused: true,
+  });
+});

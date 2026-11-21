@@ -1,15 +1,19 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ThemeInfo } from '../api/open';
+import { useWallpaperOccluded } from './wallpaperOcclusion';
+import './themeBackdrop.css';
 
 function BackgroundVideo({
   url,
   paused,
+  suspended,
   playbackRate,
   loop,
 }: {
   url: string;
   paused: boolean;
+  suspended: boolean;
   playbackRate: number;
   loop: boolean;
 }) {
@@ -37,7 +41,13 @@ function BackgroundVideo({
     video.loop = loop;
     const syncPlayback = () => {
       if (paused || document.hidden) video.pause();
-      else if (video.paused) void video.play().catch(() => undefined);
+      else if (video.paused && (!video.ended || loop)) void video.play().catch(() => undefined);
+    };
+    // Metadata preload alone may not request the first decoded frame. Seek once when
+    // mounting in static mode so there is a poster without starting playback.
+    const primeStaticFrame = () => {
+      if (paused && !suspended && !video.currentTime && video.readyState < 2 && video.duration > 0)
+        video.currentTime = Math.min(video.duration / 2, 0.001);
     };
     const restartPlayback = () => {
       if (!loop || paused || document.hidden) return;
@@ -45,15 +55,16 @@ function BackgroundVideo({
       void video.play().catch(() => undefined);
     };
     syncPlayback();
+    if (video.readyState >= 1) primeStaticFrame();
     video.addEventListener('canplay', syncPlayback);
+    video.addEventListener('loadedmetadata', primeStaticFrame);
     video.addEventListener('ended', restartPlayback);
-    document.addEventListener('visibilitychange', syncPlayback);
     return () => {
       video.removeEventListener('canplay', syncPlayback);
+      video.removeEventListener('loadedmetadata', primeStaticFrame);
       video.removeEventListener('ended', restartPlayback);
-      document.removeEventListener('visibilitychange', syncPlayback);
     };
-  }, [url, paused, loop]);
+  }, [url, paused, suspended, loop]);
 
   return (
     <video
@@ -62,8 +73,133 @@ function BackgroundVideo({
       muted
       loop={loop}
       playsInline
-      preload={paused ? 'metadata' : 'auto'}
+      preload={paused || suspended ? 'metadata' : 'auto'}
     />
+  );
+}
+
+function drawPoster(canvas: HTMLCanvasElement | null, image: HTMLImageElement): boolean {
+  if (!canvas || !image.naturalWidth || !image.naturalHeight) return false;
+  // Keep the frozen copy bounded independently of the uploaded image size.
+  const scale = Math.min(1, 1920 / Math.max(image.naturalWidth, image.naturalHeight));
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext('2d');
+  if (!context) return false;
+  // Canvas draws the default frame of an animated image. It has no playback to suspend.
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return true;
+}
+
+function AnimatedBackground({
+  url,
+  paused,
+  suspended,
+}: {
+  url: string;
+  paused: boolean;
+  suspended: boolean;
+}) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const [posterReady, setPosterReady] = useState(false);
+
+  // On a cold start in static mode, load a frame without mounting an animating image in the DOM.
+  useEffect(() => {
+    if (!paused || suspended || posterReady) return;
+    const image = new Image();
+    image.onload = () => setPosterReady(drawPoster(canvas.current, image));
+    image.src = url;
+    return () => {
+      image.onload = null;
+      image.removeAttribute('src');
+    };
+  }, [url, paused, suspended, posterReady]);
+
+  return (
+    <>
+      <canvas ref={canvas} hidden={!paused || !posterReady} />
+      {!paused ? (
+        <img
+          src={url}
+          alt=""
+          decoding="async"
+          onLoad={(event) => {
+            if (!posterReady) setPosterReady(drawPoster(canvas.current, event.currentTarget));
+          }}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function isFullscreenOverlay(): boolean {
+  return Boolean(
+    document.fullscreenElement && document.fullscreenElement !== document.documentElement,
+  );
+}
+
+function useWallpaperSuspended(pauseWhenUnfocused: boolean): boolean {
+  const covered = useWallpaperOccluded();
+  const [hidden, setHidden] = useState(() => document.hidden);
+  const [focused, setFocused] = useState(() => !pauseWhenUnfocused || document.hasFocus());
+  const [fullscreenOverlay, setFullscreenOverlay] = useState(isFullscreenOverlay);
+
+  useEffect(() => {
+    const visibilityChanged = () => setHidden(document.hidden);
+    const fullscreenChanged = () => setFullscreenOverlay(isFullscreenOverlay());
+    visibilityChanged();
+    fullscreenChanged();
+    document.addEventListener('visibilitychange', visibilityChanged);
+    document.addEventListener('fullscreenchange', fullscreenChanged);
+    return () => {
+      document.removeEventListener('visibilitychange', visibilityChanged);
+      document.removeEventListener('fullscreenchange', fullscreenChanged);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pauseWhenUnfocused) return;
+    const blur = () => setFocused(false);
+    const focus = () => setFocused(true);
+    setFocused(document.hasFocus());
+    window.addEventListener('blur', blur);
+    window.addEventListener('focus', focus);
+    return () => {
+      window.removeEventListener('blur', blur);
+      window.removeEventListener('focus', focus);
+    };
+  }, [pauseWhenUnfocused]);
+
+  return covered || fullscreenOverlay || hidden || (pauseWhenUnfocused && !focused);
+}
+
+function DynamicBackground({
+  kind,
+  url,
+  paused,
+  pauseWhenUnfocused,
+  playbackRate,
+  loop,
+}: {
+  kind: 'video' | 'image';
+  url: string;
+  paused: boolean;
+  pauseWhenUnfocused: boolean;
+  playbackRate: number;
+  loop: boolean;
+}) {
+  const suspended = useWallpaperSuspended(pauseWhenUnfocused);
+  const stopped = paused || suspended;
+  return kind === 'video' ? (
+    <BackgroundVideo
+      url={url}
+      paused={stopped}
+      suspended={suspended}
+      playbackRate={playbackRate}
+      loop={loop}
+    />
+  ) : (
+    <AnimatedBackground key={url} url={url} paused={stopped} suspended={suspended} />
   );
 }
 
@@ -71,27 +207,31 @@ export function ThemeBackdrop({
   background,
   opacity,
   paused,
+  pauseWhenUnfocused = true,
   playbackRate = 1,
   loop = true,
 }: {
   background: ThemeInfo['background'];
   opacity: number;
   paused: boolean;
+  pauseWhenUnfocused?: boolean;
   playbackRate?: number;
   loop?: boolean;
 }) {
   if (!background?.url || opacity <= 0 || typeof document === 'undefined') return null;
   return createPortal(
     <div className="theme-backdrop" style={{ opacity }} aria-hidden="true">
-      {background.kind === 'video' ? (
-        <BackgroundVideo
+      {background.kind === 'video' || background.animated ? (
+        <DynamicBackground
+          kind={background.kind}
           url={background.url}
           paused={paused}
+          pauseWhenUnfocused={pauseWhenUnfocused}
           playbackRate={playbackRate}
           loop={loop}
         />
-      ) : background.animated && paused ? null : (
-        <img src={background.url} alt="" />
+      ) : (
+        <img src={background.url} alt="" decoding="async" />
       )}
     </div>,
     document.body,

@@ -3619,6 +3619,11 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
   grid-template-columns: repeat(2, minmax(0px, 1fr));
   gap: 26px 24px !important;
 }
+@media (max-width: 640px) {
+  .setting-cards.setting-loose .character-settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .setting-cards .character-setting {
   min-width: 0px;
   position: relative;

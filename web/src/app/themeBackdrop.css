@@ -1,0 +1,35 @@
+.theme-backdrop {
+  contain: strict;
+  transform: translateZ(0);
+}
+
+.theme-backdrop > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.theme-backdrop > canvas[hidden] {
+  display: none;
+}
+
+/* Preserve contrast without re-blurring the moving wallpaper beneath these surfaces. */
+:root[data-theme-dynamic-background='true'] .command-dialog::backdrop {
+  background: rgb(var(--shadow-rgb) / 0.62);
+  backdrop-filter: none;
+}
+
+:root[data-theme-dynamic-background='true'] .reader-tools {
+  background: color-mix(in srgb, var(--wallpaper-surface) 96%, transparent);
+  backdrop-filter: none;
+}
+
+:root[data-theme-dynamic-background='true'] :is(.take-badges .chip, .work-status) {
+  background: var(--wallpaper-surface);
+  backdrop-filter: none;
+}
+
+:root[data-theme-dynamic-background='true'] :is(.glass-chip, .book-badge) {
+  backdrop-filter: none;
+}

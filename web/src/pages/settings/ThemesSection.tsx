@@ -73,8 +73,6 @@ function ThemeCard(props: {
   onOpacityChange: (value: number) => void;
   scriptEnabled: boolean;
   onScriptEnabledChange: (enabled: boolean) => void;
-  backgroundPaused: boolean;
-  onBackgroundPausedChange: (paused: boolean) => void;
   allowVideoWithReducedMotion: boolean;
   onAllowVideoWithReducedMotionChange: (allow: boolean) => void;
   onDelete?: () => void;
@@ -85,7 +83,6 @@ function ThemeCard(props: {
   const wallpapers = useThemeWallpapers(theme.id);
   const background = effectiveThemeBackground(theme, preferences.data, wallpapers.data?.items);
   const opacity = props.opacity ?? background?.opacity ?? 0;
-  const hasMotion = background?.kind === 'video' || background?.animated;
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <>
@@ -127,23 +124,6 @@ function ThemeCard(props: {
             ) : null}
           </div>
           <div className="theme-card-actions-right">
-            {hasMotion && props.active ? (
-              <button
-                className="btn sm"
-                aria-label={t(
-                  props.backgroundPaused
-                    ? 'settings.themes.resumeBackground'
-                    : 'settings.themes.pauseBackground',
-                )}
-                onClick={() => props.onBackgroundPausedChange(!props.backgroundPaused)}
-              >
-                {t(
-                  props.backgroundPaused
-                    ? 'settings.themes.resumeBackground'
-                    : 'settings.themes.pauseBackground',
-                )}
-              </button>
-            ) : null}
             {props.onDelete ? (
               <button
                 className="btn ghost icon sm danger"
@@ -212,8 +192,6 @@ export function ThemesSection() {
   const setThemeOpacity = useUI((s) => s.setThemeOpacity);
   const enabledThemeScripts = useUI((s) => s.enabledThemeScripts);
   const setThemeScriptEnabled = useUI((s) => s.setThemeScriptEnabled);
-  const backgroundPaused = useUI((s) => s.themeBackgroundPaused);
-  const setBackgroundPaused = useUI((s) => s.setThemeBackgroundPaused);
   const allowVideoWithReducedMotion = useUI((s) => s.allowThemeVideoWithReducedMotion);
   const setAllowVideoWithReducedMotion = useUI((s) => s.setAllowThemeVideoWithReducedMotion);
   const importTheme = useImportTheme();
@@ -365,8 +343,6 @@ export function ThemesSection() {
               const key = themeScriptKey(theme);
               if (key) setThemeScriptEnabled(key, enabled);
             }}
-            backgroundPaused={backgroundPaused}
-            onBackgroundPausedChange={setBackgroundPaused}
             allowVideoWithReducedMotion={allowVideoWithReducedMotion}
             onAllowVideoWithReducedMotionChange={setAllowVideoWithReducedMotion}
             onExport={() => void onExport(theme)}

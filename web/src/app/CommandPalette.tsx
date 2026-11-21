@@ -34,7 +34,7 @@ export function CommandPalette() {
   const theme = useThemeToggle();
   const openHelp = useHelp((s) => s.set);
   const openQuick = useQuickStart((s) => s.set);
-  const { groups } = useAllEpisodes();
+  const { groups } = useAllEpisodes(open);
   const extensionActions = useHostSlotActions('command_palette');
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -68,14 +68,13 @@ export function CommandPalette() {
 
   const commands = useMemo<Command[]>(() => {
     const go = (to: string) => () => navigate(to);
-    const firstEpisode = groups.find((g) => g.episodes.length)?.episodes[0];
     return [
       {
         id: 'new-story',
         label: t('legacy.workshop.newStory'),
         kind: 'action',
         icon: 'plus',
-        run: go(firstEpisode ? '/workshop' : '/gallery?new=1'),
+        run: go('/workshop/story?new=1'),
       },
       {
         id: 'new-album',
@@ -174,6 +173,7 @@ export function CommandPalette() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const next =

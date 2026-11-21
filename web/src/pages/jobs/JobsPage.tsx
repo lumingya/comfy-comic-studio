@@ -3,7 +3,7 @@ import { confirm } from '../../components/confirm';
 import { Ban, ListTodo, Pause, Play, RotateCcw } from 'lucide-react';
 import { useMemo, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useJobControl, useJobs, useRetryJob, type JobControl } from '../../api/jobs';
 import type { Job } from '../../api/types';
 import { QueryError } from '../../app/errors';
@@ -142,8 +142,22 @@ export default function JobsPage() {
       </div>
       {jobs.error ? <QueryError error={jobs.error} onRetry={jobs.refetch} /> : null}
       {jobs.isLoading ? <Loading /> : null}
-      {jobs.data && !jobs.data.length ? (
-        <Empty icon={<ListTodo size={24} />} title={t('jobs.none')} />
+      {!jobs.error && jobs.data && !jobs.data.length ? (
+        <Empty
+          icon={<ListTodo size={24} />}
+          title={t(activeOnly ? 'jobs.noneActive' : 'jobs.none')}
+          action={
+            activeOnly ? (
+              <button className="btn" onClick={() => set({ active: null, job: null })}>
+                {t('jobs.showAll')}
+              </button>
+            ) : (
+              <Link className="btn primary" to="/workshop/assembly?new=1">
+                {t('jobs.create')}
+              </Link>
+            )
+          }
+        />
       ) : null}
       {jobs.data?.length ? (
         <div className="split">

@@ -105,6 +105,13 @@
               palette synchronize with the embedded reader room. Reduced-motion
               preferences shorten page and ambient transitions automatically.
             </p>
+            <p id="wallpaper-motion">
+              Turn on the still frame in Settings → Appearance &amp; Reading →
+              Animated wallpaper to save power. Video holds its paused frame;
+              animated images show their first frame. By default Mio pauses the
+              wallpaper when you leave the window, open the reader or enter the
+              comic canvas. The system’s reduced-motion preference also pauses it.
+            </p>
             <p>
               Open an album from the <a href="/gallery">gallery</a>. The reader
               shows adopted images. In its toolbar, the layout picker changes
@@ -230,11 +237,18 @@
             </p>
             <h2 id="section-1">Image processing options</h2>
             <p>
-              Auto starts with lossless metadata cleaning and may compress large
-              inline HTML. Publish encodes WebP up to 2560px on the long side.
+              Auto starts with lossless cleaning and may compress large inline
+              HTML. Lossless clean removes metadata such as prompts, workflows
+              or EXIF from supported original images without rerendering them.
+              Light publish encodes WebP up to 2560px on the long side.
               Archive preserves original bytes only when not compositing
               lettering; it may retain private workflow metadata. Hiding prompts
               is a display option, not complete privacy scrubbing.
+            </p>
+            <p>
+              For example, keep Auto for a normal HTML album and use Light
+              publish if it needs to be smaller for sharing. Keep Lossless
+              archive for a local copy where retaining image metadata matters.
             </p>
           </section>
         </article>

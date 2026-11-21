@@ -236,13 +236,6 @@ it.each(
     expect(slider).toHaveValue(source === 'package' ? '0.5' : '0.35');
     const card = screen.getByText(custom.name).closest('.theme-card') as HTMLElement;
     const controls = within(card);
-    const pause = controls.queryByRole('button', { name: '暂停背景' });
-    expect(Boolean(pause)).toBe(kind === 'video' || animated);
-    if (pause) {
-      await userEvent.click(pause);
-      expect(controls.getByRole('button', { name: '播放背景' })).toBeInTheDocument();
-      expect(useUI.getState().themeBackgroundPaused).toBe(true);
-    }
     expect(
       Boolean(controls.queryByRole('checkbox', { name: /系统减少动态效果时仍播放视频背景/ })),
     ).toBe(kind === 'video');

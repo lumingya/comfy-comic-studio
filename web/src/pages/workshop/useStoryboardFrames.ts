@@ -41,8 +41,10 @@ export function useStoryboardFrames(episode: Episode) {
     try {
       if (editorSave.current) await flushDraft(editorSave.current);
       setActiveId(id);
+      return true;
     } catch (error) {
       toastError(error);
+      return false;
     }
   };
   const panelIds = useMemo(() => panels.map((p) => p.id!), [panels]);

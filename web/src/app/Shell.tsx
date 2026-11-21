@@ -12,6 +12,7 @@ import { CommandPalette, useCommand } from './CommandPalette';
 import { CollectionSwitch } from './CollectionSwitch';
 import { Icon } from './icons';
 import { NAV } from './nav';
+import { isMac, shortcutBlocked } from './shortcuts';
 import { ThemeProvider, useThemeToggle } from './useTheme';
 import { useUI } from './ui-store';
 import { useWorkspaceSurfaces, WorkspaceExtensionOverlays } from '../extensions/host';
@@ -83,7 +84,7 @@ function Sidebar() {
       >
         <Icon name="search" />
         <span className="grow">{t('legacy.search')}</span>
-        <kbd className="kbd">⌘ K</kbd>
+        <kbd className="kbd">{isMac() ? '⌘ K' : 'Ctrl K'}</kbd>
       </button>
       <nav className="nav-list" aria-label={t('legacy.navLabel')}>
         {NAV.map((n) => {
@@ -251,7 +252,7 @@ export function Shell() {
   // Alt+0 / 1 / 2 / 3 / , jump between sections (legacy nav keys; e.code survives macOS Alt).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!e.altKey || e.ctrlKey || e.metaKey) return;
+      if (!e.altKey || e.ctrlKey || e.metaKey || shortcutBlocked(e)) return;
       const key = /^Digit(\d)$/.exec(e.code)?.[1] ?? (e.code === 'Comma' ? ',' : e.key);
       const item = NAV.find((n) => n.key === key);
       if (!item) return;

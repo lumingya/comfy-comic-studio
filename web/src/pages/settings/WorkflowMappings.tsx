@@ -2,6 +2,7 @@ import { Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkflowConfig, WorkflowDocument } from '../../api/types';
+import { ConceptHint } from '../../components/ConceptHint';
 import { SearchableSelect } from '../../components/SearchableSelect';
 import { TextInput } from '../../components/ui';
 
@@ -83,7 +84,10 @@ export function WorkflowMappings({
 
   return (
     <section className="config-mappings" aria-label={t('config.workflow.mapping')}>
-      <h3>{t('config.workflow.mapping')}</h3>
+      <div className="concept-hint-heading">
+        <h3>{t('config.workflow.mapping')}</h3>
+        <ConceptHint concept="mappings" />
+      </div>
       <div className="config-mapping-grid">
         {[...CORE, ...custom].map((key) => {
           const isCore = CORE.includes(key as (typeof CORE)[number]);

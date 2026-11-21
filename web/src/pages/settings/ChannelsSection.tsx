@@ -2,7 +2,7 @@ import { ResizableSplit } from '../../components/ResizableSplit';
 import { Cloud, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   useImageAdapters,
   usePatchSettings,
@@ -46,6 +46,7 @@ export function newChannel(taken: string[]): ImageChannel {
 
 export function ChannelsSection() {
   const { t } = useTranslation();
+  const [params] = useSearchParams();
   const settings = useSettings();
   const registry = useRegistry();
   const adapters = useImageAdapters();
@@ -123,6 +124,8 @@ export function ChannelsSection() {
             className="btn"
             onClick={() => {
               const channel = newChannel(list.map((c) => c.id));
+              const kind = params.get('kind');
+              if (kind && kinds.includes(kind)) channel.kind = kind;
               draft.change(['image_channels', channel.id], channel);
               setSelected(channel.id);
             }}

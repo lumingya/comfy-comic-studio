@@ -11,6 +11,7 @@ interface UIState {
   theme: ThemeChoice;
   themeOpacity: Record<string, number>;
   themeBackgroundPaused: boolean;
+  pauseWallpaperWhenUnfocused: boolean;
   allowThemeVideoWithReducedMotion: boolean;
   enabledThemeScripts: string[];
   /** Last explicit theme id per mode, for the quick toggle (see theme.toggled). */
@@ -18,6 +19,7 @@ interface UIState {
   setTheme: (theme: ThemeChoice, mode?: 'dark' | 'light') => void;
   setThemeOpacity: (id: string, opacity: number) => void;
   setThemeBackgroundPaused: (paused: boolean) => void;
+  setPauseWallpaperWhenUnfocused: (pause: boolean) => void;
   setAllowThemeVideoWithReducedMotion: (allow: boolean) => void;
   setThemeScriptEnabled: (key: string, enabled: boolean) => void;
   showRejected: boolean;
@@ -81,6 +83,7 @@ export const useUI = create<UIState>()(
       theme: SYSTEM,
       themeOpacity: {},
       themeBackgroundPaused: false,
+      pauseWallpaperWhenUnfocused: true,
       allowThemeVideoWithReducedMotion: false,
       enabledThemeScripts: [],
       recentThemes: {},
@@ -98,6 +101,8 @@ export const useUI = create<UIState>()(
           },
         })),
       setThemeBackgroundPaused: (themeBackgroundPaused) => set({ themeBackgroundPaused }),
+      setPauseWallpaperWhenUnfocused: (pauseWallpaperWhenUnfocused) =>
+        set({ pauseWallpaperWhenUnfocused }),
       setAllowThemeVideoWithReducedMotion: (allowThemeVideoWithReducedMotion) =>
         set({ allowThemeVideoWithReducedMotion }),
       setThemeScriptEnabled: (key, enabled) =>
@@ -145,6 +150,7 @@ export const useUI = create<UIState>()(
         theme: s.theme,
         themeOpacity: s.themeOpacity,
         themeBackgroundPaused: s.themeBackgroundPaused,
+        pauseWallpaperWhenUnfocused: s.pauseWallpaperWhenUnfocused,
         allowThemeVideoWithReducedMotion: s.allowThemeVideoWithReducedMotion,
         enabledThemeScripts: s.enabledThemeScripts,
         recentThemes: s.recentThemes,
@@ -178,6 +184,7 @@ export const useUI = create<UIState>()(
             ),
           ),
           themeBackgroundPaused: !!state.themeBackgroundPaused,
+          pauseWallpaperWhenUnfocused: state.pauseWallpaperWhenUnfocused !== false,
           allowThemeVideoWithReducedMotion: !!state.allowThemeVideoWithReducedMotion,
           enabledThemeScripts: Array.isArray(state.enabledThemeScripts)
             ? state.enabledThemeScripts.filter(

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '../../app/icons';
+import { useWallpaperOcclusion } from '../../app/wallpaperOcclusion';
 import { ownCancel } from '../../components/topLayer';
 
 export function TemplateStudioPreview(props: {
@@ -12,6 +13,7 @@ export function TemplateStudioPreview(props: {
   const fullPreviewRef = useRef<HTMLDialogElement>(null);
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [fullPreview, setFullPreview] = useState(false);
+  useWallpaperOcclusion(fullPreview && !!props.html);
   useEffect(() => {
     const d = fullPreviewRef.current;
     if (!d) return;

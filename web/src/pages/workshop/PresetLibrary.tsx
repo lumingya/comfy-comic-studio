@@ -22,6 +22,7 @@ export function PresetHeader({
   const { current, presets, draft, choose, commit, update } = library;
   const [renaming, setRenaming] = useState(false);
   const cancelRename = useRef(false);
+  const renameButton = useRef<HTMLButtonElement>(null);
   if (!current) return null;
   return (
     <div className="workshop-asset-head" ref={headRef}>
@@ -46,15 +47,16 @@ export function PresetHeader({
               setRenaming(false);
             }}
             onKeyDown={(e) => {
-              if (e.nativeEvent.isComposing) return;
+              if (e.nativeEvent.isComposing || e.keyCode === 229) return;
               if (e.key === 'Enter') {
                 e.preventDefault();
-                e.currentTarget.blur();
+                renameButton.current?.focus({ preventScroll: true });
               }
               if (e.key === 'Escape') {
                 e.preventDefault();
+                e.stopPropagation();
                 cancelRename.current = true;
-                setRenaming(false);
+                renameButton.current?.focus({ preventScroll: true });
               }
             }}
           />
@@ -83,7 +85,12 @@ export function PresetHeader({
         </button>
       ) : null}
       <div>
-        <button type="button" className="btn" onClick={() => setRenaming(!renaming)}>
+        <button
+          ref={renameButton}
+          type="button"
+          className="btn"
+          onClick={() => setRenaming(!renaming)}
+        >
           <Icon name="edit" />
           {t('ws.rename')}
         </button>

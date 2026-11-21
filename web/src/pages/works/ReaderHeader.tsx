@@ -28,7 +28,7 @@ export function ReaderHeader({ reader }: { reader: ReaderState & { panel: string
         <Icon name="close" />
       </button>
       <span className="room-title grow" id="reader-panel-label">
-        {series.data?.title}
+        {series.data?.title ?? t('classic.shelf.reading', { defaultValue: 'Mio' })}
         {items.length > 1 ? (
           <select
             className="room-episode"

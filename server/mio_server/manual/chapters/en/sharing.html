@@ -102,6 +102,36 @@
               Extension routes also have v2 versions with declared scopes, and
               enabled extensions can wrap or replace core operations.
             </p>
+            <h3 id="token-scopes">Give a token only the access it needs</h3>
+            <p>
+              In Settings, create an API token with only the scopes the
+              program uses. An album directory only needs <code>read</code>.
+              Add <code>write</code> to edit storyboards or
+              <code>render</code> to start generation. Reserve
+              <code>admin</code> for programs that manage tokens or
+              extensions. The token is shown once; keep it somewhere private
+              and pass it only to the program that needs it.
+            </p>
+            <h3 id="webhooks">Notify another program when a task finishes</h3>
+            <p>
+              To have an automation send a notification when generation
+              finishes, enter the receiving URL it provides in Settings →
+              Webhooks and subscribe to <code>job.completed</code>. Send a
+              test notification and check the delivery history. The receiver
+              uses the secret shown at creation to verify
+              <code>X-Mio-Signature</code>.
+            </p>
+            <h3 id="safe-mode">Troubleshoot extensions in safe mode</h3>
+            <p>
+              If Mio cannot start after you install an extension, stop the
+              running service and temporarily set <code>MIO_SAFE_MODE=1</code>
+              before starting Mio. In Windows PowerShell, run
+              <code>$env:MIO_SAFE_MODE='1'</code> and then
+              <code>.\start.bat</code>. On macOS or Linux, run
+              <code>MIO_SAFE_MODE=1 ./start.sh</code>. Mio skips extensions
+              for that run. After troubleshooting and disabling the affected
+              extension, unset the variable and restart normally.
+            </p>
             <h3 id="professional-tools">
               Install six optional professional tools
             </h3>

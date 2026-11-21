@@ -99,11 +99,21 @@
 
 .lora-toggle-weight input[type='range'] {
   min-width: 0;
+  width: 100%;
 }
 
-.lora-toggle-number,
-.lora-toggle-clip .input {
-  width: 76px;
+.lora-toggle-list .lora-toggle-number,
+.lora-toggle-list .lora-toggle-clip .input {
+  width: 5rem;
+  flex: 0 0 5rem;
+}
+
+.lora-toggle-scroll {
+  max-block-size: 27rem;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  display: grid;
+  gap: 10px;
 }
 
 .lora-toggle-clip {

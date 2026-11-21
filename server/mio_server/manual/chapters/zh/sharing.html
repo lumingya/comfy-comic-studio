@@ -95,6 +95,18 @@
               API 完成。 扩展自定义路由也有 v2
               版本，权限由扩展明确声明；核心操作可由已启用扩展包装或替换。
             </p>
+            <h3 id="token-scopes">给令牌选择最少够用的权限</h3>
+            <p>
+              在设置的「API 访问令牌」区域创建令牌时，只给程序够用的权限。例如，只显示画册目录的程序选「读取」（<code>read</code>）；需要修改分镜时加「写入」（<code>write</code>），发起生成时加「出图」（<code>render</code>）。管理令牌或扩展的程序才需要「管理」（<code>admin</code>）。令牌只显示一次，把它交给使用它的程序并妥善保存。
+            </p>
+            <h3 id="webhooks">让外部程序收到完成通知</h3>
+            <p>
+              比如希望自动化工具在生成任务结束时发通知，在设置的 Webhook 区域填入该工具提供的接收地址，订阅 <code>job.completed</code>。用「测试」发送一条测试通知，再到投递记录查看是否收到。接收端使用创建时显示的密钥校验 <code>X-Mio-Signature</code>。
+            </p>
+            <h3 id="safe-mode">用安全模式排查扩展</h3>
+            <p>
+              安装扩展后如果工作室启动不了，先停止当前服务，再临时设置环境变量 <code>MIO_SAFE_MODE=1</code>，重开 Mio。Windows PowerShell 中先执行 <code>$env:MIO_SAFE_MODE='1'</code>，再执行 <code>.\start.bat</code>；macOS / Linux 可运行 <code>MIO_SAFE_MODE=1 ./start.sh</code>。这次启动会跳过所有扩展。排查完并停用有问题的扩展后，去掉环境变量，再正常启动。
+            </p>
             <h3 id="professional-tools">按需安装六个专业工具</h3>
             <p>
               六个独立包在源码的

@@ -155,16 +155,24 @@
 }
 
 .canvas-scroll {
-  display: flex;
-  justify-content: center;
+  --canvas-gutter: 24px;
   max-height: calc(100vh - 210px);
   overflow: auto;
-  padding: 24px;
+  padding: var(--canvas-gutter);
   border-radius: var(--radius);
   background:
     linear-gradient(45deg, var(--panel-2) 25%, transparent 25%) 0 0 / 20px 20px,
     linear-gradient(-45deg, var(--panel-2) 25%, transparent 25%) 0 10px / 20px 20px,
     var(--bg-deep);
+}
+
+.canvas-track {
+  margin-inline: auto;
+}
+
+.canvas-viewport {
+  position: sticky;
+  top: var(--canvas-gutter);
 }
 
 .canvas-scroll canvas {
@@ -335,6 +343,10 @@ tr.item-uncertain td {
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+}
+
+.board-jump {
+  width: min(16rem, 100%);
 }
 
 .board-summary .progress {

@@ -101,7 +101,34 @@
               adopted directly; further refinement can be requested explicitly
               through the professional API.
             </p>
+            <h2 id="advanced-render-plans">When to use an advanced render plan</h2>
+            <p>
+              For everyday generation, select a local workflow or a cloud
+              service in the new task. To draw a draft and then refine it at a
+              higher resolution, add two stages in Workflows &amp; APIs →
+              Advanced render plans. Use a draft workflow first and an
+              upscaling workflow second. Mark the second workflow’s image
+              input with <code>[mio:init]</code> and set its stage image input
+              to the previous output. Save the plan, then select it in the
+              new task.
+            </p>
+            <h2 id="slot-mappings">Send the prompt to the right input</h2>
+            <p>
+              If a trial image ignores your prompt, open the workflow’s
+              mappings. Under Positive prompt, search for the text encoder
+              and select the input that stores the prompt, then try generating
+              another image. Standard inputs can be mapped directly. If a
+              custom node stores its controls in a special format, such as
+              several LoRAs packed into one input, install an adapter that
+              supports that format.
+            </p>
             <h2 id="lora-controls">LoRA slots and layered overrides</h2>
+            <p>
+              Say your workflow enables a character LoRA and a watercolor LoRA
+              by default. To make just one scene line art, turn watercolor
+              off in that scene’s LoRA settings and leave the character on.
+              Other scenes and the saved workflow keep their settings.
+            </p>
             <p>
               Workflow details and preflight expose each controllable LoRA with
               its name, source, default switch, weight range and active

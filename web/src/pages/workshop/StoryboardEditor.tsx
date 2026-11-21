@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { shortcutBlocked } from '../../app/shortcuts';
 import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
 import { useContextMenu } from '../../components/ContextMenu';
 import { ResizableSplit } from '../../components/ResizableSplit';
@@ -46,6 +47,7 @@ export default function StoryboardEditor() {
   } = frames;
   const menu = useContextMenu<DesktopContext>();
   const editorRef = useRef<HTMLDivElement>(null);
+  const pendingFocus = useRef<{ id: string; target: 'prompt' | 'list' } | null>(null);
   const used = useMemo(
     () => variableUsage(panels.flatMap((p) => [promptOf(p), p.overrides.raw_negative ?? ''])),
     [panels],
@@ -58,7 +60,10 @@ export default function StoryboardEditor() {
     contextOpen: !!menu.state,
     onExit: selection.clear,
     onOpen: (id) => {
-      void choose(id);
+      void choose(id).then((changed) => {
+        if (changed && editorRef.current?.closest('.resizable-split[data-stacked]'))
+          editorRef.current.querySelector('.workshop-page')?.scrollIntoView({ block: 'start' });
+      });
     },
     onDelete: (ids) => {
       void removeSelected(ids);
@@ -69,23 +74,53 @@ export default function StoryboardEditor() {
   useEffect(() => {
     if (active?.id && !selection.ids.length) selection.anchorAt(active.id);
   }, [active?.id, selection.ids.length, selection.anchorAt]);
-  const activeIndex = active ? panels.indexOf(active) : -1;
+  useLayoutEffect(() => {
+    const focus = pendingFocus.current;
+    if (!focus || focus.id !== active?.id) return;
+    pendingFocus.current = null;
+    const next =
+      focus.target === 'prompt'
+        ? editorRef.current?.querySelector<HTMLElement>('#workshop-frame-prompt')
+        : [
+            ...(desktop.ref.current?.querySelectorAll<HTMLElement>('[data-selection-id]') ?? []),
+          ].find((row) => row.dataset.selectionId === focus.id);
+    next?.focus();
+  }, [active?.id, desktop.ref]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || !(event.metaKey || event.ctrlKey) || event.isComposing) return;
-      if (document.querySelector('dialog[open]') || activeIndex < 0) return;
-      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-        event.preventDefault();
-        const next = panels[activeIndex + (event.key === 'ArrowDown' ? 1 : -1)];
-        if (next) void choose(next.id);
-      } else if (event.key === 'Enter') {
-        event.preventDefault();
-        const next = panels[activeIndex + 1];
-        void (async () => {
-          await choose(next?.id ?? active?.id);
-          if (next) document.getElementById('workshop-frame-prompt')?.focus();
-        })();
+      const site = editorRef.current;
+      const target = event.target instanceof Element ? event.target : null;
+      const inEditor = !!target?.closest('[data-editor-key]');
+      const inList = !!target?.closest('.workshop-frames-list');
+      if (
+        !site?.contains(target) ||
+        (!inEditor && !inList) ||
+        !active?.id ||
+        !(event.metaKey || event.ctrlKey) ||
+        event.altKey ||
+        event.keyCode === 229 ||
+        shortcutBlocked(event, site, true) ||
+        !['ArrowUp', 'ArrowDown', 'Enter'].includes(event.key)
+      )
+        return;
+      event.preventDefault();
+      if (event.repeat || pendingFocus.current) return;
+      const visible = [
+        ...(desktop.ref.current?.querySelectorAll<HTMLElement>('[data-selection-id]') ?? []),
+      ].map((row) => row.dataset.selectionId!);
+      const index = visible.indexOf(active.id);
+      const backwards = event.key === 'ArrowUp';
+      const next =
+        index < 0 ? visible.at(backwards ? -1 : 0) : visible[index + (backwards ? -1 : 1)];
+      if (!next) {
+        if (event.key === 'Enter' && inEditor) void choose(active.id);
+        return;
       }
+      if (event.key === 'Enter' || inList)
+        pendingFocus.current = { id: next, target: event.key === 'Enter' ? 'prompt' : 'list' };
+      void choose(next).then((ok) => {
+        if (!ok && pendingFocus.current?.id === next) pendingFocus.current = null;
+      });
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);

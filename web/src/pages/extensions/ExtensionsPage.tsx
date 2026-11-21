@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Download, ExternalLink, Power, Puzzle, RefreshCw, Search, Settings2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useExtensionMarket, useMarketAction, type MarketItem } from '../../api/extension-market';
@@ -20,6 +20,7 @@ export default function ExtensionsPage() {
   const action = useMarketAction();
   const enable = useExtensionAction();
   const [query, setQuery] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
   const [sourceOpen, setSourceOpen] = useState(false);
   const [sourceUrl, setSourceUrl] = useState('');
   const [selected, setSelected] = useState<MarketItem | null>(null);
@@ -106,6 +107,7 @@ export default function ExtensionsPage() {
         <div className="extension-search">
           <Search size={16} />
           <input
+            ref={searchRef}
             aria-label={text.search}
             placeholder={text.search}
             value={query}
@@ -153,7 +155,24 @@ export default function ExtensionsPage() {
           ) : catalog.isError ? (
             <QueryError error={catalog.error} onRetry={catalog.refetch} />
           ) : !items.length ? (
-            <Empty>{text.empty}</Empty>
+            <Empty
+              action={
+                query ? (
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      setQuery('');
+                      searchRef.current?.focus();
+                    }}
+                  >
+                    {text.clearSearch}
+                  </button>
+                ) : undefined
+              }
+            >
+              {query ? text.noMatches : text.empty}
+            </Empty>
           ) : (
             <div className="extension-market-grid">
               {items.map((item) => (

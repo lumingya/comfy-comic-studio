@@ -102,19 +102,11 @@ export function useEpisodes(seriesId: string | undefined, offset = 0) {
 }
 
 /** Every series with its (first page of) episodes: the workshop's 「当前分镜」 picker. */
-export function useAllEpisodes() {
+export function useAllEpisodes(enabled = true) {
   const list = useSeriesList();
   const series = list.data ?? [];
   const pages = useQueries({
-    queries: series.map((s) => ({
-      queryKey: keys.episodes(s.id!, 0),
-      queryFn: async () =>
-        data(
-          await api.GET('/api/series/{series_id}/episodes', {
-            params: { path: { series_id: s.id! }, query: { offset: 0, limit: PAGE } },
-          }),
-        ) as unknown as Page<EpisodeSummary>,
-    })),
+    queries: enabled ? series.map((s) => episodePageQuery(s.id)) : [],
   });
   return {
     isLoading: list.isLoading || pages.some((p) => p.isLoading),

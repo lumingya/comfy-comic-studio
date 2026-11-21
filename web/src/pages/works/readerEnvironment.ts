@@ -72,10 +72,20 @@ export function useReaderEnvironment(
   useEffect(() => {
     const d = ref.current;
     if (!d || d.open) return;
+    const opener = document.activeElement;
     if (typeof d.showModal === 'function') d.showModal();
     else d.setAttribute('open', '');
     return () => {
       d.close?.();
+      if (opener instanceof HTMLElement && opener !== document.body)
+        requestAnimationFrame(() => {
+          if (
+            opener.isConnected &&
+            document.activeElement === document.body &&
+            !document.querySelector('dialog[open]')
+          )
+            opener.focus({ preventScroll: true });
+        });
       if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
     };
   }, []);

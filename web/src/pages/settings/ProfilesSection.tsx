@@ -13,6 +13,7 @@ import {
 } from '../../api/system';
 import type { RenderProfile, RenderStage, WorkflowSummary } from '../../api/types';
 import { QueryError } from '../../app/errors';
+import { ConceptHint } from '../../components/ConceptHint';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { Empty, Field, Loading, Select, Switch, TextInput } from '../../components/ui';
@@ -504,8 +505,9 @@ export function ProfilesSection() {
     <section className="config-form">
       <ConfigurationGuard dirty={dirty} />
       <div className="config-section-head">
-        <div>
+        <div className="concept-hint-heading">
           <h2>{t('config.profile.title')}</h2>
+          <ConceptHint concept="profiles" />
         </div>
       </div>
       {profiles.isError ? (

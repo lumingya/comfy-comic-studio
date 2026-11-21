@@ -76,9 +76,11 @@ describe('theme ownership', () => {
       recentThemes: {},
       reduceMotion: false,
       themeBackgroundPaused: false,
+      pauseWallpaperWhenUnfocused: true,
       allowThemeVideoWithReducedMotion: false,
       themeOpacity: {},
     });
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
     vi.stubGlobal('matchMedia', (query: string) => ({
       get matches() {
         return query === '(prefers-color-scheme: dark)'
@@ -163,6 +165,7 @@ describe('theme ownership', () => {
         'src',
         '/api/themes/ink/wallpapers/wallpaper_1/file',
       );
+      expect(document.documentElement).toHaveAttribute('data-theme-dynamic-background', 'true');
       act(() => {
         if (preference === 'application') useUI.setState({ reduceMotion: true });
         else if (preference === 'manual') useUI.setState({ themeBackgroundPaused: true });
@@ -175,6 +178,7 @@ describe('theme ownership', () => {
       wallpaperState.animated = false;
       view.rerender(<ThemeProvider>Workspace</ThemeProvider>);
       expect(document.querySelector('.theme-backdrop img')).toBeInTheDocument();
+      expect(document.documentElement).toHaveAttribute('data-theme-dynamic-background', 'false');
     },
   );
 

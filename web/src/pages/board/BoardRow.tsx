@@ -25,7 +25,7 @@ export const BoardRow = memo(function BoardRow(props: Props) {
   const { t } = useTranslation();
   const { panel, index, takes, pending, selected, contextId, onAction, onZoom } = props;
   return (
-    <section className="board-row">
+    <section className="board-row" data-board-panel={panel.id} tabIndex={-1}>
       <header className="board-row-head">
         <span className="panel-no mono">{String(index + 1).padStart(2, '0')}</span>
         <div className="grow">

@@ -208,6 +208,30 @@ export default function BoardTab() {
           />
         </span>
         <span className="grow" />
+        {rows.length > 12 ? (
+          <select
+            className="input board-jump"
+            aria-label={t('board.jump')}
+            value=""
+            onChange={(event) => {
+              const id = event.currentTarget.value;
+              if (!id) return;
+              const row = desktop.ref.current?.querySelector<HTMLElement>(
+                `[data-board-panel="${CSS.escape(id)}"]`,
+              );
+              row?.scrollIntoView({ block: 'start' });
+              row?.focus({ preventScroll: true });
+            }}
+          >
+            <option value="">{t('board.jump')}</option>
+            {rows.map(({ panel, index }) => (
+              <option key={panel.id} value={panel.id}>
+                {String(index + 1).padStart(2, '0')} ·{' '}
+                {(panel.description || panel.dialogues[0]?.text || '').slice(0, 60)}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <button
           className="btn"
           disabled={!missing.length || rendering}

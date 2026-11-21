@@ -1,4 +1,5 @@
 import { interactionZh } from './interaction';
+import { conceptsZh } from './concepts';
 import { exportZh } from './exportUi';
 import { workspaceBackupsZh } from './workspaceBackups';
 import { longformZh } from './longform';
@@ -21,6 +22,7 @@ const zh = {
   route: routeZh,
   cloudRequest: cloudRequestZh,
   interaction: interactionZh,
+  concepts: conceptsZh,
   config: configZh,
   app: { name: 'Mio', tagline: '条漫工作室', offline: '与服务器的实时连接已断开，正在重连…' },
   nav: {
@@ -490,6 +492,7 @@ const zh = {
     },
   },
   board: {
+    jump: '跳到分幕…',
     batch: {
       selected: '已选 {{count}} 张',
       hint: 'Ctrl / Shift 点图片多选，右键有菜单',
@@ -654,6 +657,7 @@ const zh = {
     takeStatus: { candidate: '候选', adopted: '已采用', rejected: '已弃用' },
   },
   reader: {
+    albumMissing: '这本画册可能已被移走或删除。',
     ...readerZh,
     composed: '与导出一致的合成效果',
     stacked: '尚未排版：按顺序预览已采用的图',
@@ -698,6 +702,9 @@ const zh = {
     sub: '出图和导出任务都在这里排队。未确认的请求不会自动重试。',
     activeOnly: '只看进行中',
     none: '没有任务',
+    noneActive: '没有进行中的任务',
+    showAll: '查看全部任务',
+    create: '新建生成任务',
     item: '条目',
     state: '状态',
     openEpisode: '打开所属剧集',
@@ -760,8 +767,10 @@ const zh = {
       imported: '已导入并切换',
       badFile: '不是有效的主题 JSON',
       backgroundOpacity: '背景透明度',
-      pauseBackground: '暂停背景',
-      resumeBackground: '播放背景',
+      wallpaperMotion: '动态壁纸',
+      pauseWallpaperWhenUnfocused: '窗口失焦时自动暂停',
+      staticWallpaper: '省电静帧模式',
+      staticWallpaperHint: '视频停在当前画面，动图改为显示静态帧。',
       moreSettingsButton: '更多设置',
       moreSettings: '{{name}} 设置',
       openSettings: '打开 {{name}} 的更多设置',
@@ -774,7 +783,7 @@ const zh = {
       deleteWallpaper: '删除 {{name}}',
       noSettings: '此主题没有其他设置。',
       playWithReducedMotion: '系统减少动态效果时仍播放视频背景',
-      playWithReducedMotionHint: '只覆盖系统偏好；Mio 的减少动态效果与手动暂停仍生效。',
+      playWithReducedMotionHint: '只覆盖系统偏好；Mio 的减少动态效果与省电静帧仍生效。',
       enableScript: '启用隔离脚本',
       resetShortcut: '外观异常时按 Ctrl/Cmd + Shift + 0 恢复系统主题',
       system: '跟随系统',
@@ -1170,7 +1179,7 @@ const zh = {
     profileLabel: '工作室设置',
     profileTip: '点击修改工作室名称与创作者署名',
     toolbar: '工作区工具栏',
-    switchCollection: '切换画册集',
+    switchCollection: '画册集菜单',
     collectionMenu: '切换或管理画册集',
     closeMenu: '关闭画册集菜单',
     renameCollection: '重命名当前画册集',
@@ -1188,7 +1197,7 @@ const zh = {
       title2: '让灵感成册。',
       lead: 'Mio 是一间运行在你电脑上的漫画工作室：写下分镜与角色，接入 ComfyUI 或云端图像服务，一次生成整本画册，再逐页阅读、导出与分享。',
       start: '打开分镜工坊',
-      sample: '先翻开示例画册',
+      sample: '翻开一本已有画册',
       browse: '浏览我的画册',
       reassurance: '无需先连接模型，也可以编辑分镜与阅读画册。',
       flow: '创作流程',

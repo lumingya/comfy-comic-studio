@@ -4,6 +4,7 @@ import { useImportAlbumTemplate } from '../../api/open';
 import { useExportPresets } from '../../api/production';
 import { Icon } from '../../app/icons';
 import { QueryError } from '../../app/errors';
+import { ConceptHint } from '../../components/ConceptHint';
 import { toast, toastError } from '../../components/toast';
 import { Field, Select, TextInput, NumberInput } from '../../components/ui';
 import { PROFILES, QUALITIES, type ExportDraft, type Profile, type Quality } from './presentation';
@@ -77,16 +78,19 @@ export function AlbumExportOptions(
               {t('exportUi.captions')}
             </label>
           ) : null}
-          <Field label={t('reader.profile')}>
-            <Select
-              value={d.profile}
-              onChange={(profile) => onDraft({ profile: profile as Profile })}
-              options={PROFILES.map((value) => ({
-                value,
-                label: t(`reader.profiles.${value}.label`),
-              }))}
-            />
-          </Field>
+          <div className="concept-hint-field">
+            <Field label={t('reader.profile')}>
+              <Select
+                value={d.profile}
+                onChange={(profile) => onDraft({ profile: profile as Profile })}
+                options={PROFILES.map((value) => ({
+                  value,
+                  label: t(`reader.profiles.${value}.label`),
+                }))}
+              />
+            </Field>
+            <ConceptHint concept="imageProfiles" />
+          </div>
         </>
       ) : null}
       {format === 'html' && !native ? (

@@ -160,6 +160,31 @@ describe('storyboard editing recovery', () => {
     expect(rows()).toHaveLength(2);
     expect(document.querySelector('[data-editor-key]')).toHaveAttribute('data-editor-key', 'p0');
   });
+  it('keeps search keystrokes in search and advances within the visible frame list from the prompt', async () => {
+    ep.panels[0].description = 'Street in rain';
+    ep.panels[1].description = 'Inside';
+    ep.panels.push({
+      ...structuredClone(ep.panels[1]),
+      id: 'p2',
+      order: 2,
+      description: 'Rain stops',
+    });
+    start();
+    const search = screen.getByRole('searchbox', { name: '搜索分幕…' });
+    search.focus();
+    fireEvent.change(search, { target: { value: 'rain' } });
+    expect(rows().map((row) => row.dataset.selectionId)).toEqual(['p0', 'p2']);
+    fireEvent.keyDown(search, { key: 'Enter', ctrlKey: true });
+    expect(search).toHaveFocus();
+    expect(document.querySelector('[data-editor-key]')).toHaveAttribute('data-editor-key', 'p0');
+
+    prompt().focus();
+    fireEvent.keyDown(prompt(), { key: 'Enter', ctrlKey: true });
+    await waitFor(() =>
+      expect(document.querySelector('[data-editor-key]')).toHaveAttribute('data-editor-key', 'p2'),
+    );
+    expect(prompt()).toHaveFocus();
+  });
   it('edits the caption it displays rather than creating a second, contradictory line', async () => {
     start();
     const text = document.getElementById('workshop-frame-caption')!;

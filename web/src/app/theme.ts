@@ -67,9 +67,12 @@ export function applyTheme(
   mode: 'dark' | 'light',
   theme?: ThemeInfo,
   backgroundEnabled = Boolean(theme?.background?.url),
+  dynamicBackground = backgroundEnabled &&
+    (theme?.background?.kind === 'video' || !!theme?.background?.animated),
 ): void {
   root.dataset.theme = mode;
   root.dataset.themeBackground = backgroundEnabled ? 'true' : 'false';
+  root.dataset.themeDynamicBackground = dynamicBackground ? 'true' : 'false';
   root.style.colorScheme = mode;
   for (const name of applied) root.style.removeProperty(`--${name}`);
   applied.clear();
@@ -85,6 +88,11 @@ export function applyTheme(
     const side = mode === 'dark' ? '#17191b' : '#ecefe7';
     root.style.setProperty('--side', `color-mix(in srgb, ${side} 68%, transparent)`);
     applied.add('side');
+  }
+  if (dynamicBackground) {
+    const neutral = mode === 'dark' ? '#17191b' : '#ecefe7';
+    root.style.setProperty('--wallpaper-surface', theme?.tokens['bg-deep'] ?? neutral);
+    applied.add('wallpaper-surface');
   }
 }
 

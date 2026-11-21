@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSeriesList } from '../api/series';
 import { usePatchSettings, useSettings } from '../api/system';
 import { toastError } from '../components/toast';
+import { topDialog } from '../components/topLayer';
 import { Icon } from './icons';
 
 /** The collection title (legacy 画册集), defaulting to 「遇见你，真好」. */
@@ -26,6 +27,8 @@ export function CollectionSwitch() {
   const [pos, setPos] = useState({ left: 0, top: 0 });
   const button = useRef<HTMLButtonElement>(null);
   const popover = useRef<HTMLDivElement>(null);
+  const renameButton = useRef<HTMLButtonElement>(null);
+  const cancelRename = useRef(false);
 
   useEffect(() => {
     if (!open) return;
@@ -33,7 +36,19 @@ export function CollectionSwitch() {
       const target = e.target as Node;
       if (!popover.current?.contains(target) && !button.current?.contains(target)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.defaultPrevented ||
+        e.isComposing ||
+        e.keyCode === 229 ||
+        e.key !== 'Escape' ||
+        topDialog()
+      )
+        return;
+      e.preventDefault();
+      setOpen(false);
+      button.current?.focus({ preventScroll: true });
+    };
     document.addEventListener('pointerdown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -51,6 +66,11 @@ export function CollectionSwitch() {
   };
 
   const save = () => {
+    if (cancelRename.current) {
+      cancelRename.current = false;
+      setRenaming(false);
+      return;
+    }
     const next = draft.trim();
     if (next && next !== title) patch.mutate({ collection_title: next }, { onError: toastError });
     setRenaming(false);
@@ -90,7 +110,10 @@ export function CollectionSwitch() {
               className="ibtn"
               title={t('legacy.closeMenu')}
               aria-label={t('legacy.closeMenu')}
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                button.current?.focus({ preventScroll: true });
+              }}
             >
               <Icon name="close" />
             </button>
@@ -100,7 +123,8 @@ export function CollectionSwitch() {
               className="project-rename"
               onSubmit={(e) => {
                 e.preventDefault();
-                save();
+                // Focus the trigger, letting the input's blur commit once.
+                renameButton.current?.focus({ preventScroll: true });
               }}
             >
               <input
@@ -110,6 +134,14 @@ export function CollectionSwitch() {
                 maxLength={60}
                 aria-label={t('legacy.renameCollection')}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Escape' || e.nativeEvent.isComposing || e.keyCode === 229) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  cancelRename.current = true;
+                  setDraft(title);
+                  renameButton.current?.focus({ preventScroll: true });
+                }}
                 onBlur={save}
               />
             </form>
@@ -130,7 +162,16 @@ export function CollectionSwitch() {
               </span>
             </button>
           )}
-          <button className="project-new" role="menuitem" onClick={() => setRenaming(true)}>
+          <button
+            ref={renameButton}
+            className="project-new"
+            role="menuitem"
+            onClick={() => {
+              cancelRename.current = false;
+              setDraft(title);
+              setRenaming(true);
+            }}
+          >
             <Icon name="edit" />
             {t('legacy.renameCollection')}
           </button>

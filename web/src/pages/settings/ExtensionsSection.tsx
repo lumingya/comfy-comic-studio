@@ -1,4 +1,5 @@
 import { QueryError } from '../../app/errors';
+import { ConceptHint } from '../../components/ConceptHint';
 import { FolderOpen, Package, Power, PowerOff, ShieldAlert, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -235,11 +236,13 @@ export function ExtensionsSection({ query = '' }: { query?: string }) {
   return (
     <section className="col" style={{ gap: 14 }}>
       {list.data?.safe_mode ? (
-        <p className="card small warn-text" style={{ margin: 0 }}>
-          {t('settings.ext.safeMode')}
-        </p>
+        <div className="card small warn-text concept-hint-heading">
+          <span>{t('settings.ext.safeMode')}</span>
+          <ConceptHint concept="safeMode" />
+        </div>
       ) : null}
       <div className="row wrap" style={{ justifyContent: 'flex-end' }}>
+        {list.data?.safe_mode === false ? <ConceptHint concept="safeMode" /> : null}
         <Switch checked={replace} onChange={setReplace} label={t('settings.ext.replace')} />
         <input
           ref={(element) => {

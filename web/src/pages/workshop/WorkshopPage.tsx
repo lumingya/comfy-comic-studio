@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Link,
   Navigate,
   Outlet,
   useLocation,
@@ -9,6 +10,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { ApiError } from '../../api/client';
 import { keys } from '../../api/keys';
 import {
   useCreateEpisode,
@@ -113,6 +115,7 @@ export function StoryIndex() {
   const ws = useWorkshopSource();
   const boards = useEpisodes(ws.data?.id);
   const recents = useRecents((s) => s.items);
+  const [params] = useSearchParams();
   if (ws.error)
     return (
       <WorkshopFrame tab="story">
@@ -128,8 +131,45 @@ export function StoryIndex() {
   if (boards.error) return <QueryError error={boards.error} onRetry={boards.refetch} />;
   const items = boards.data?.items ?? [];
   const pick = recents.find((r) => items.some((e) => e.id === r.id))?.id ?? items[0]?.id;
+  if (params.get('new') === '1')
+    return <CreateStoryboardEntry workshopId={ws.data.id} kitId={ws.kitId} existing={pick} />;
   if (pick) return <Navigate to={workshopHref(`/workshop/story/${pick}`, ws.kitId)} replace />;
   return <StoryEmpty />;
+}
+
+function CreateStoryboardEntry({
+  workshopId,
+  kitId,
+  existing,
+}: {
+  workshopId: string;
+  kitId?: string;
+  existing?: string;
+}) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const create = useCreateEpisode(workshopId);
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void createStoryboard(create, t)
+      .catch((error: unknown) => {
+        toastError(error);
+        return null;
+      })
+      .then((episode) => {
+        const id = episode?.id ?? existing;
+        navigate(workshopHref(id ? `/workshop/story/${id}` : '/workshop/story', kitId), {
+          replace: true,
+        });
+      });
+  }, [create, existing, kitId, navigate, t]);
+  return (
+    <WorkshopFrame tab="story">
+      <Loading />
+    </WorkshopFrame>
+  );
 }
 
 function StoryEmpty() {
@@ -217,6 +257,17 @@ function StoryTabContent() {
     return (
       <WorkshopFrame tab="story">
         <Loading />
+      </WorkshopFrame>
+    );
+  if (episode.error instanceof ApiError && episode.error.status === 404)
+    return (
+      <WorkshopFrame tab="story">
+        <div className="notice error query-error" role="alert">
+          <span className="grow">{t('workshopSource.storyMissing')}</span>
+          <Link className="btn sm" to={workshopHref('/workshop/story', ws.kitId)}>
+            {t('workshopSource.backToStory')}
+          </Link>
+        </div>
       </WorkshopFrame>
     );
   if (ws.error || episode.error || !ws.data || !episode.data)

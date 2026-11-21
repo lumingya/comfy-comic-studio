@@ -1,4 +1,5 @@
 import { QueryError } from '../../app/errors';
+import { ConceptHint } from '../../components/ConceptHint';
 import { confirm } from '../../components/confirm';
 import { copyText } from '../../app/clipboard';
 import { KeyRound, Plus, Send, Trash2, Webhook } from 'lucide-react';
@@ -130,7 +131,11 @@ function TokensPanel() {
             </span>
           ) : null}
         </Field>
-        <Field label={t('settings.access.scopes')}>
+        <div className="field" role="group" aria-labelledby="api-scopes-label">
+          <div className="concept-hint-heading concept-hint-field-label">
+            <span id="api-scopes-label">{t('settings.access.scopes')}</span>
+            <ConceptHint concept="apiScopes" />
+          </div>
           <Checks
             options={(tokens.data?.scopes ?? ['read', 'write', 'render', 'admin']).map((s) => ({
               value: s,
@@ -139,7 +144,7 @@ function TokensPanel() {
             value={scopes}
             onChange={setScopes}
           />
-        </Field>
+        </div>
       </div>
       <div>
         <button
@@ -305,12 +310,12 @@ function WebhooksPanel() {
   return (
     <div className="col" style={{ gap: 12 }}>
       <div className="card col" style={{ gap: 12 }}>
-        <h3 className="row" style={{ margin: 0 }}>
-          <Webhook size={16} /> {t('settings.access.webhooks')}
-        </h3>
-        <p className="small muted" style={{ margin: 0 }}>
-          {t('settings.access.webhooksHint')}
-        </p>
+        <div className="concept-hint-heading">
+          <h3 className="row" style={{ margin: 0 }}>
+            <Webhook size={16} /> {t('settings.access.webhooks')}
+          </h3>
+          <ConceptHint concept="webhooks" />
+        </div>
         <div className="grid-2">
           <Field label={t('common.name')}>
             <TextInput value={draft.name} onChange={(name) => setDraft({ ...draft, name })} />

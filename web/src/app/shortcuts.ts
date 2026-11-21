@@ -1,3 +1,6 @@
+export const isMac = () =>
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
+
 /** Shared shortcut boundary: typing, IME, menus and unrelated modal layers own their keys. */
 export function shortcutBlocked(
   event: {

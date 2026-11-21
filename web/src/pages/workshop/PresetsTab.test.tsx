@@ -96,16 +96,19 @@ describe('preset editing across library and variable controls', () => {
     expect(screen.queryByRole('toolbar', { name: '已选变量操作' })).toBeNull();
     expect(localStorage.getItem('mio.workshop.preset.ws')).toBe('second');
 
-    fireEvent.click(screen.getByRole('button', { name: '重命名' }));
+    const rename = screen.getByRole('button', { name: '重命名' });
+    fireEvent.click(rename);
     fireEvent.change(screen.getByLabelText('预设名称'), { target: { value: 'discard name' } });
     fireEvent.keyDown(screen.getByLabelText('预设名称'), { key: 'Escape' });
     expect(screen.getByLabelText('当前预设')).toHaveValue('second');
+    expect(rename).toHaveFocus();
     expect(calls.filter((call) => call.method === 'PATCH')).toHaveLength(0);
 
     fireEvent.click(screen.getByRole('button', { name: '重命名' }));
     fireEvent.change(screen.getByLabelText('预设名称'), { target: { value: 'Saved name' } });
     fireEvent.keyDown(screen.getByLabelText('预设名称'), { key: 'Enter' });
     await waitFor(() => expect(workshop.presets[1].title).toBe('Saved name'));
+    expect(rename).toHaveFocus();
     expect(workshop.presets[0].title).toBe('first preset');
   });
 });

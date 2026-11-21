@@ -9,12 +9,13 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLayoutStrip, useSaveStrip } from '../../api/production';
 import type { LetteringLayer } from '../../api/types';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { useUnsavedGuard } from '../../app/autosave';
+import { useWallpaperOcclusion } from '../../app/wallpaperOcclusion';
 import { toast, toastError } from '../../components/toast';
 import { Empty, Field, NumberInput, Select, TextInput } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
@@ -39,6 +40,7 @@ import { useStripHistory } from './useStripHistory';
 type Box = [number, number, number, number];
 
 export default function CanvasTab() {
+  useWallpaperOcclusion();
   const { t } = useTranslation();
   const { episode, series } = useEpisodeContext();
   const layout = useLayoutStrip(episode.id);
@@ -49,11 +51,37 @@ export default function CanvasTab() {
   const layingOut = useRef(false);
   const [selection, setSelection] = useState<Selection>(null);
   const [scale, setScale] = useState(0.6);
+  const scroll = useRef<HTMLDivElement>(null);
+  const zoomAnchor = useRef<number | null>(null);
+  const fitted = useRef(false);
   const [pacing, setPacing] = useState(false);
   const avoid = useAvoidLettering(episode.id);
   const revision = useRef(episode.revision);
   revision.current = episode.revision;
   useUnsavedGuard(dirty || save.isPending, true);
+
+  const hasBoxes = Object.keys(strip.panel_boxes).length > 0;
+  useLayoutEffect(() => {
+    const node = scroll.current;
+    if (!node || fitted.current) return;
+    fitted.current = true;
+    const { paddingLeft, paddingRight } = getComputedStyle(node);
+    const available = node.clientWidth - parseFloat(paddingLeft) - parseFloat(paddingRight);
+    if (available > 0) setScale(Math.max(0.2, Math.min(0.6, available / strip.width)));
+  }, [hasBoxes, strip.width]);
+  useLayoutEffect(() => {
+    const node = scroll.current;
+    if (!node || zoomAnchor.current === null) return;
+    node.scrollTop = Math.max(0, zoomAnchor.current * scale - node.clientHeight / 2);
+    zoomAnchor.current = null;
+  }, [scale]);
+  const zoom = (step: number) => {
+    const next = Math.max(0.2, Math.min(1.5, Math.round((scale + step) * 100) / 100));
+    if (next === scale) return;
+    if (scroll.current && scroll.current.scrollTop > 0)
+      zoomAnchor.current = (scroll.current.scrollTop + scroll.current.clientHeight / 2) / scale;
+    setScale(next);
+  };
 
   // A new server copy (auto layout, pacing) replaces the canvas — but never unsaved edits.
   useEffect(() => {
@@ -153,7 +181,7 @@ export default function CanvasTab() {
   };
 
   if (!Object.keys(images).length) return <Empty>{t('canvas.noAdopted')}</Empty>;
-  if (!Object.keys(strip.panel_boxes).length)
+  if (!hasBoxes)
     return (
       <Empty
         action={
@@ -242,19 +270,11 @@ export default function CanvasTab() {
         {!dirty ? (
           <ReadabilityBadge episodeId={episode.id} bust={String(episode.revision)} />
         ) : null}
-        <button
-          className="btn ghost icon"
-          aria-label="zoom out"
-          onClick={() => setScale(Math.max(0.2, scale - 0.1))}
-        >
+        <button className="btn ghost icon" aria-label="zoom out" onClick={() => zoom(-0.1)}>
           <ZoomOut size={15} />
         </button>
         <span className="mono small muted">{Math.round(scale * 100)}%</span>
-        <button
-          className="btn ghost icon"
-          aria-label="zoom in"
-          onClick={() => setScale(Math.min(1.5, scale + 0.1))}
-        >
+        <button className="btn ghost icon" aria-label="zoom in" onClick={() => zoom(0.1)}>
           <ZoomIn size={15} />
         </button>
         {dirty ? <span className="chip warn">{t('canvas.unsaved')}</span> : null}
@@ -268,7 +288,7 @@ export default function CanvasTab() {
         </button>
       </div>
       <div className="canvas-body">
-        <div className="canvas-scroll">
+        <div ref={scroll} className="canvas-scroll">
           <StripStage
             strip={strip}
             panels={panels}

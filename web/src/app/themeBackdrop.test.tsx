@@ -1,6 +1,11 @@
-import { render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeBackdrop } from './themeBackdrop';
+import { useWallpaperOcclusion } from './wallpaperOcclusion';
+
+beforeEach(() => {
+  vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+});
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -165,5 +170,94 @@ describe('theme image motion', () => {
     expect(play).toHaveBeenCalledTimes(playCalls);
     view.unmount();
     play.mockRestore();
+  });
+
+  it('keeps the paused video frame through focus, visibility and nested full-screen changes', () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    const wallpaper = {
+      kind: 'video',
+      url: '/wallpaper.mp4',
+      opacity: 0.4,
+      animated: false,
+      mime_type: 'video/mp4',
+    } as const;
+    function Cover({ open }: { open: boolean }) {
+      useWallpaperOcclusion(open);
+      return null;
+    }
+    const renderTree = (first = false, second = false, pauseWhenUnfocused = true) => (
+      <>
+        <ThemeBackdrop
+          background={wallpaper}
+          opacity={0.4}
+          paused={false}
+          pauseWhenUnfocused={pauseWhenUnfocused}
+        />
+        <Cover open={first} />
+        <Cover open={second} />
+      </>
+    );
+    const view = render(renderTree());
+    const video = document.querySelector<HTMLVideoElement>('.theme-backdrop video')!;
+    video.currentTime = 3;
+    expect(play).toHaveBeenCalled();
+    fireEvent.blur(window);
+    expect(video.autoplay).toBe(false);
+    expect(pause).toHaveBeenCalled();
+    expect(video.currentTime).toBe(3);
+
+    view.rerender(renderTree(true, true));
+    fireEvent.focus(window);
+    view.rerender(renderTree(false, true));
+    expect(video.autoplay).toBe(false);
+    act(() => hidden.mockReturnValue(true));
+    fireEvent(document, new Event('visibilitychange'));
+    view.rerender(renderTree());
+    expect(video.autoplay).toBe(false);
+    act(() => hidden.mockReturnValue(false));
+    fireEvent(document, new Event('visibilitychange'));
+    expect(video.autoplay).toBe(true);
+    expect(document.querySelector('.theme-backdrop video')).toBe(video);
+
+    view.rerender(renderTree(false, false, false));
+    fireEvent.blur(window);
+    expect(video.autoplay).toBe(true);
+    view.unmount();
+  });
+
+  it('retains an animated image poster after it removes the moving image', () => {
+    const drawImage = vi.fn();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      drawImage,
+    } as unknown as CanvasRenderingContext2D);
+    render(
+      <ThemeBackdrop
+        background={{
+          kind: 'image',
+          url: '/animated.gif',
+          opacity: 0.4,
+          animated: true,
+          mime_type: 'image/gif',
+        }}
+        opacity={0.4}
+        paused={false}
+      />,
+    );
+    const image = document.querySelector('.theme-backdrop img')!;
+    Object.defineProperties(image, {
+      naturalWidth: { value: 4000 },
+      naturalHeight: { value: 2000 },
+    });
+    fireEvent.load(image);
+    expect(drawImage).toHaveBeenCalledWith(image, 0, 0, 1920, 960);
+    fireEvent.blur(window);
+    expect(image).not.toBeInTheDocument();
+    expect(document.querySelector('.theme-backdrop canvas')).toBeVisible();
+    fireEvent.focus(window);
+    expect(document.querySelector('.theme-backdrop img')).toBeInTheDocument();
+    expect(document.querySelector('.theme-backdrop canvas')).not.toBeVisible();
   });
 });

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useAllEpisodes } from '../../api/series';
+import { useSeriesList } from '../../api/series';
 import { Icon, type IconName } from '../../app/icons';
 import { useSetupChecks } from '../../app/setup';
 import { usePageTitle } from '../../app/title';
@@ -83,7 +83,7 @@ function HomeArt() {
 
 const PATHS: { id: 'comfy' | 'novelai' | 'openai'; icon: IconName; to: string }[] = [
   { id: 'comfy', icon: 'nodes', to: '/engine?tab=instances' },
-  { id: 'novelai', icon: 'image', to: '/engine?tab=channels' },
+  { id: 'novelai', icon: 'image', to: '/engine?tab=channels&kind=novelai' },
   { id: 'openai', icon: 'link', to: '/engine?tab=channels' },
 ];
 
@@ -150,10 +150,9 @@ function FirstRun() {
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { groups } = useAllEpisodes();
+  const { data: albums = [] } = useSeriesList();
   usePageTitle(t('legacy.nav.home'));
-  const first = groups.find((g) => g.episodes.length);
-  const sample = (groups.find((g) => g.episodes.some((e) => e.adopted_count > 0)) ?? first)?.series;
+  const sample = albums.find((album) => album.adopted_count > 0);
 
   return (
     <section id="mio-home" aria-labelledby="home-title">

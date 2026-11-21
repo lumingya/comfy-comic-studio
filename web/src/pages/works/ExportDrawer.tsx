@@ -11,6 +11,7 @@ import {
 import { useLive } from '../../api/jobs';
 import type { Job } from '../../api/types';
 import { exportCreationKit } from '../../api/creationKits';
+import { ConceptHint } from '../../components/ConceptHint';
 import { useSeries } from '../../api/series';
 import { Icon } from '../../app/icons';
 import { QueryError } from '../../app/errors';
@@ -234,13 +235,16 @@ export function PresentationDrawer(props: PresentationDrawerProps) {
       </header>
       <div className="export-drawer-body">
         <fieldset disabled={busy}>
-          <Field label={t('exportUi.format')}>
-            <Select
-              value={format}
-              onChange={choose}
-              options={FORMATS.map((value) => ({ value, label: t(`exportUi.formats.${value}`) }))}
-            />
-          </Field>
+          <div className="concept-hint-field">
+            <Field label={t('exportUi.format')}>
+              <Select
+                value={format}
+                onChange={choose}
+                options={FORMATS.map((value) => ({ value, label: t(`exportUi.formats.${value}`) }))}
+              />
+            </Field>
+            <ConceptHint concept="editableExport" />
+          </div>
           {format === 'pdf' || format === 'zip' || format === 'source' ? (
             <p className="export-purpose">{t(`exportUi.hints.${format}`)}</p>
           ) : null}

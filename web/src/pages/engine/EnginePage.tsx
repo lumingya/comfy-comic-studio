@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useInstances, useProfiles, useSettings, useWorkflows } from '../../api/system';
 import { usePageTitle } from '../../app/title';
+import { ConceptHint } from '../../components/ConceptHint';
 import { ChannelsSection } from '../settings/ChannelsSection';
 import { InstancesSection } from '../settings/InstancesSection';
 import { ProfilesSection } from '../settings/ProfilesSection';
@@ -73,6 +74,11 @@ export default function EnginePage() {
             role="tablist"
             aria-label={t('config.page.services')}
             onKeyDown={(event) => {
+              if (
+                !(event.target instanceof HTMLElement) ||
+                event.target.getAttribute('role') !== 'tab'
+              )
+                return;
               const index = groups.findIndex((group) => group.active);
               const next =
                 event.key === 'Home'
@@ -90,30 +96,40 @@ export default function EnginePage() {
               document.getElementById(`config-tab-${groups[next].id}`)?.focus();
             }}
           >
-            {groups.map((group) => (
-              <button
-                type="button"
-                key={group.id}
-                id={`config-tab-${group.id}`}
-                role="tab"
-                aria-selected={group.active}
-                aria-controls="config-panel"
-                tabIndex={group.active ? 0 : -1}
-                className={`config-service ${group.id === 'profiles' ? 'config-service-secondary' : ''} ${group.active ? 'active' : ''}`}
-                aria-current={group.active ? 'page' : undefined}
-                onClick={() => {
-                  if (!group.active) open(group.tab);
-                }}
-              >
-                <group.icon size={20} aria-hidden />
-                <span className="grow">
-                  <strong>{group.title}</strong>
-                </span>
-                {group.count !== undefined ? (
-                  <span className="config-count">{group.count}</span>
-                ) : null}
-              </button>
-            ))}
+            {groups.map((group) => {
+              const button = (
+                <button
+                  type="button"
+                  key={group.id}
+                  id={`config-tab-${group.id}`}
+                  role="tab"
+                  aria-selected={group.active}
+                  aria-controls="config-panel"
+                  tabIndex={group.active ? 0 : -1}
+                  className={`config-service ${group.active ? 'active' : ''}`}
+                  aria-current={group.active ? 'page' : undefined}
+                  onClick={() => {
+                    if (!group.active) open(group.tab);
+                  }}
+                >
+                  <group.icon size={20} aria-hidden />
+                  <span className="grow">
+                    <strong>{group.title}</strong>
+                  </span>
+                  {group.count !== undefined ? (
+                    <span className="config-count">{group.count}</span>
+                  ) : null}
+                </button>
+              );
+              return group.id === 'profiles' ? (
+                <div className="config-service-secondary" role="presentation" key={group.id}>
+                  {button}
+                  <ConceptHint concept="profiles" />
+                </div>
+              ) : (
+                button
+              );
+            })}
           </nav>
         </div>
         <div

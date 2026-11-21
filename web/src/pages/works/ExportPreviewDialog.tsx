@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { raw } from '../../api/client';
 import { Icon } from '../../app/icons';
+import { useWallpaperOcclusion } from '../../app/wallpaperOcclusion';
 import { albumBody, type ExportDraft } from './presentation';
 
 export function ExportPreviewDialog(props: {
@@ -15,6 +16,7 @@ export function ExportPreviewDialog(props: {
   title: string;
 }) {
   const { t } = useTranslation();
+  useWallpaperOcclusion(props.open);
   const ref = useRef<HTMLDialogElement>(null);
   const body = props.episodeId
     ? {

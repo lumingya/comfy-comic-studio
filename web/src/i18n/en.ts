@@ -1,4 +1,5 @@
 import { interactionEn } from './interaction';
+import { conceptsEn } from './concepts';
 import { exportEn } from './exportUi';
 import { workspaceBackupsEn } from './workspaceBackups';
 import { longformEn } from './longform';
@@ -24,6 +25,7 @@ const en: Widen<Dict> = {
   route: routeEn,
   cloudRequest: cloudRequestEn,
   interaction: interactionEn,
+  concepts: conceptsEn,
   config: configEn,
   app: { name: 'Mio', tagline: 'Webtoon studio', offline: 'Live connection lost — reconnecting…' },
   nav: {
@@ -530,6 +532,7 @@ const en: Widen<Dict> = {
     },
   },
   board: {
+    jump: 'Jump to scene…',
     batch: {
       selected: '{{count}} takes selected',
       hint: 'Ctrl / Shift-click images to multi-select; right-click for a menu',
@@ -696,6 +699,7 @@ const en: Widen<Dict> = {
     takeStatus: { candidate: 'Candidate', adopted: 'Adopted', rejected: 'Rejected' },
   },
   reader: {
+    albumMissing: 'This album may have been moved or deleted.',
     ...readerEn,
     composed: 'Composited exactly as exported',
     stacked: 'Not laid out yet — previewing adopted images in order',
@@ -740,6 +744,9 @@ const en: Widen<Dict> = {
     sub: 'Renders and exports queue here. Unconfirmed requests are never retried automatically.',
     activeOnly: 'Active only',
     none: 'No jobs',
+    noneActive: 'No jobs in progress',
+    showAll: 'Show all jobs',
+    create: 'New generation task',
     item: 'Item',
     state: 'State',
     openEpisode: 'Open episode',
@@ -803,8 +810,10 @@ const en: Widen<Dict> = {
       imported: 'Imported and applied',
       badFile: 'Not a valid theme JSON',
       backgroundOpacity: 'Background opacity',
-      pauseBackground: 'Pause background',
-      resumeBackground: 'Play background',
+      wallpaperMotion: 'Animated wallpaper',
+      pauseWallpaperWhenUnfocused: 'Pause when the window loses focus',
+      staticWallpaper: 'Power saving: still frame',
+      staticWallpaperHint: 'Freeze video in place and show a still frame for animated images.',
       moreSettingsButton: 'More settings',
       moreSettings: '{{name}} settings',
       openSettings: 'Open more settings for {{name}}',
@@ -818,7 +827,7 @@ const en: Widen<Dict> = {
       noSettings: 'This theme has no additional settings.',
       playWithReducedMotion: 'Play video when system prefers reduced motion',
       playWithReducedMotionHint:
-        'Overrides the system preference only; Mio’s Reduce motion and manual pause still apply.',
+        'Overrides the system preference only. Mio’s Reduce motion and power saving still apply.',
       enableScript: 'Enable isolated script',
       resetShortcut:
         'If the appearance breaks, press Ctrl/Cmd + Shift + 0 to restore the system theme',
@@ -1232,7 +1241,7 @@ const en: Widen<Dict> = {
     profileLabel: 'Studio settings',
     profileTip: 'Change the studio name and creator signature',
     toolbar: 'Workspace toolbar',
-    switchCollection: 'Switch collection',
+    switchCollection: 'Album collection menu',
     collectionMenu: 'Switch or manage the collection',
     closeMenu: 'Close collection menu',
     renameCollection: 'Rename this collection',
@@ -1250,7 +1259,7 @@ const en: Widen<Dict> = {
       title2: 'and ideas into albums.',
       lead: 'Mio is a comic studio that runs on your computer: write the storyboard and cast, connect ComfyUI or a cloud image service, render a whole album at once, then read, export and share it page by page.',
       start: 'Open storyboards',
-      sample: 'Open the sample album',
+      sample: 'Open an album to read',
       browse: 'Browse my albums',
       reassurance: 'You can edit storyboards and read albums before connecting any model.',
       flow: 'How it works',

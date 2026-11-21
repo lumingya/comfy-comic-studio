@@ -21,6 +21,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = useUI((s) => s.setTheme);
   const themeOpacity = useUI((s) => s.themeOpacity);
   const paused = useUI((s) => s.themeBackgroundPaused);
+  const pauseWhenUnfocused = useUI((s) => s.pauseWallpaperWhenUnfocused);
   const allowThemeVideoWithReducedMotion = useUI((s) => s.allowThemeVideoWithReducedMotion);
   const enabledThemeScripts = useUI((s) => s.enabledThemeScripts);
   const reduceMotion = useUI((s) => s.reduceMotion);
@@ -65,9 +66,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       : 1;
   const loop = preferences.data?.loop !== false;
   const opacity = background ? (themeOpacity[resolved.id] ?? background.opacity) : 0;
+  const backgroundEnabled = opacity > 0;
+  const dynamicBackground =
+    backgroundEnabled && (background?.kind === 'video' || !!background?.animated);
   useEffect(() => {
-    applyTheme(document.documentElement, resolved.mode, resolved.theme, opacity > 0);
-  }, [resolved.mode, resolved.theme, opacity]);
+    applyTheme(
+      document.documentElement,
+      resolved.mode,
+      resolved.theme,
+      backgroundEnabled,
+      dynamicBackground,
+    );
+  }, [resolved.mode, resolved.theme, backgroundEnabled, dynamicBackground]);
   useEffect(() => {
     const resetTheme = (event: KeyboardEvent) => {
       if (
@@ -100,6 +110,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           reducedMotion,
           background?.kind === 'video' && allowThemeVideoWithReducedMotion,
         )}
+        pauseWhenUnfocused={pauseWhenUnfocused}
         playbackRate={playbackRate}
         loop={loop}
       />
