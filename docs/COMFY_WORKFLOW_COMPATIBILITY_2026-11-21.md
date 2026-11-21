@@ -17,8 +17,8 @@ Civitai 原件通过已有浏览器页面正常下载；没有读取或保存 Co
 | 原文件可执行导入 / 75 | 12 | 21 |
 | API 图静态编译 / 21 | 21 | 21 |
 | UI-only 提供明确导出指引 / 54 | 54 | 54 |
-| 正向提示词绑定 / 21 | 9 | 13 |
-| 负向提示词绑定 / 21 | 11 | 12 |
+| 正向提示词绑定 / 21 | 9 | 14 |
+| 负向提示词绑定 / 21 | 11 | 13 |
 | 种子绑定 / 21 | 18 | 21 |
 | 步数绑定 / 21 | 0 | 21 |
 | CFG 绑定 / 21 | 0 | 20 |
@@ -79,10 +79,11 @@ Civitai 原件通过已有浏览器页面正常下载；没有读取或保存 Co
 | P09 | 损坏的节点元数据可能触发500；预检、保存和修改统一返回可行动格式错误 | [test_workflow_import_media.py](../server/tests/test_workflow_import_media.py)：`test_malformed_metadata_is_an_actionable_review_and_import_error` |
 | P10 | 非有限数与溢出JSON存在失真风险；文件、图与覆写统一拒绝，避免静默丢值 | [test_workflow_import_media.py](../server/tests/test_workflow_import_media.py)：`test_overflowing_json_and_direct_nonfinite_values_are_rejected`、`test_nonfinite_json_is_rejected_in_file_review_graph_and_overrides` |
 | P11 | 动态输出路由使可能分支的标量控制漏检；保留真实依赖范围，异文提示词保持人工接管 | [test_workflow_semantic_bindings.py](../server/tests/test_workflow_semantic_bindings.py)：动态图片选择器合成回归 |
+| P12 | 通过参考潜空间连接的后续阶段未被识别；现在按完整因果依赖选择首阶段，只改其文本与尺寸，保留全部采样种子 | [test_workflow_semantic_bindings.py](../server/tests/test_workflow_semantic_bindings.py)：参考条件连接与模型尺寸校准回归；真实漫画样本只读参数覆写复验 |
 
 ## 适配边界
 
-4 份 SD3 API 样本保留不同编码器文本，另外 3 份 Flux API 样本包含无输出端口契约的成对条件节点，1 份多路径样本存在不同提示词来源。自动统一或猜测输出顺序会改变原意，因此要求手工映射。图生图或参考图驱动的分辨率也不保证存在独立宽高槽位。没有完整执行协议时，子图、Use Everywhere、浏览器状态和动态路由需要先由 ComfyUI 导出 API，或使用独立适配器。
+4 份 SD3 API 样本保留不同编码器文本，另外 3 份 Flux API 样本包含无输出端口契约的成对条件节点。自动统一或猜测输出顺序会改变原意，因此要求手工映射。图生图或参考图驱动的分辨率也不保证存在独立宽高槽位。没有完整执行协议时，子图、Use Everywhere、浏览器状态和动态路由需要先由 ComfyUI 导出 API，或使用独立适配器。
 
 静态编译与空 `object_info` 检查不能证明已安装插件、模型或自定义校验器可运行。本轮未将静态通过率宣称为 GPU 出图成功率。
 

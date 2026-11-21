@@ -142,7 +142,7 @@ class _Inference:
             valid = type(value) in (int, float)
         return target if valid else None
 
-    def string_sources(self, link):
+    def string_sources(self, link, *, all_origins=False):
         """A string assembly with several editable terms requires an explicit mapping."""
         found, seen, pending = set(), set(), [link]
         while pending:
@@ -154,9 +154,9 @@ class _Inference:
                 continue
             seen.add((nid, slot))
             routes, reason = self.routes.route(value, "STRING")
-            if reason not in ("", "not-router"):
+            if reason not in ("", "not-router") and not all_origins:
                 return []
-            if reason == "not-router":
+            if reason != "":
                 inputs = self.inputs(nid)
                 fields = [k for k in inputs if k in TEXT_PORTS or _TEXT_PORT.fullmatch(k)]
                 if not fields:
@@ -169,26 +169,26 @@ class _Inference:
                     found.add((nid, field))
         return sorted(found)
 
-    def encoder_sources(self, nid):
+    def encoder_sources(self, nid, *, all_origins=False):
         groups = []
         for field, value in self.inputs(nid).items():
             if field not in TEXT_PORTS and not _TEXT_PORT.fullmatch(field):
                 continue
             sources = (
-                self.string_sources(value)
+                self.string_sources(value, all_origins=all_origins)
                 if _link(value, self.graph)
                 else ([(nid, field)] if isinstance(value, str) else [])
             )
-            if len(sources) != 1:
+            if len(sources) != 1 and not all_origins:
                 return []
             groups.extend(sources)
         unique = list(dict.fromkeys(groups))
         # Dual/triple text encoders commonly duplicate the same prompt across text ports.
         # Distinct regional/language prompts must retain their individual meaning.
         values = {self.inputs(n).get(f) for n, f in unique}
-        return unique if len(values) == 1 else []
+        return unique if all_origins or len(values) == 1 else []
 
-    def conditioning_sources(self, value, kind):
+    def conditioning_sources(self, value, kind, *, all_origins=False):
         found, seen, pending = set(), set(), [value]
         while pending:
             link = pending.pop()
@@ -201,30 +201,37 @@ class _Inference:
             inputs = self.inputs(nid)
             cls = str(self.graph[nid].get("class_type", "")).lower()
             if "textencode" in cls or ("clip" in inputs and "text" in inputs):
-                sources = self.encoder_sources(nid)
-                if not sources:
+                sources = self.encoder_sources(nid, all_origins=all_origins)
+                if not sources and not all_origins:
                     return []
                 found.update(sources)
                 continue
             routes, reason = self.routes.route(link, "CONDITIONING")
-            if reason not in ("", "not-router"):
+            if reason not in ("", "not-router") and not all_origins:
                 return []
-            if reason == "not-router":
+            if reason != "":
                 port = "positive" if kind == "prompt" else "negative"
                 if "positive" in inputs and "negative" in inputs:
                     # Input roles do not declare output order. A custom paired node may
                     # reorder its ports, or its two outputs may be crosswired downstream.
-                    return []
-                if port in inputs:
+                    if not all_origins:
+                        return []
+                    routes = [(k, inputs[k]) for k in ("positive", "negative")]
+                elif port in inputs:
                     routes = [(port, inputs[port])]
                 else:
                     routes = [(k, v) for k, v in inputs.items() if "conditioning" in k.lower()]
+                    if not routes and all_origins:
+                        _, branches, _ = self.routes.selection(nid)
+                        routes = [(k, inputs[k]) for k in branches]
             if not routes:
-                return []
+                if not all_origins:
+                    return []
+                continue
             pending.extend(v for _, v in routes if _link(v, self.graph))
         # Different encoders combined for regions/averaging are not a single text slot.
         values = {self.inputs(n).get(f) for n, f in found}
-        return sorted(found) if len(values) == 1 else []
+        return sorted(found) if all_origins or len(values) == 1 else []
 
     def sampling_sites(self):
         sites = []
@@ -235,8 +242,22 @@ class _Inference:
             cls = str(self.graph[nid].get("class_type", "")).lower()
             latent = any(k in inputs for k in ("latent_image", "latent", "samples"))
             conditioning = any(k in inputs for k in ("positive", "conditioning", "guider"))
+            sampling = any(
+                k in inputs
+                for k in (
+                    "model",
+                    "noise",
+                    "guider",
+                    "sampler",
+                    "sigmas",
+                    "seed",
+                    "noise_seed",
+                    "seed_num",
+                    "steps",
+                )
+            )
             if (
-                (latent and conditioning)
+                (latent and conditioning and sampling)
                 or ("model" in inputs and "positive" in inputs and "seed" in inputs)
                 or ("sampler" in cls and "pipe" in inputs)
             ):
@@ -247,15 +268,43 @@ class _Inference:
         primary = []
         site_ids = set(sites)
         for nid in sites:
-            latent_roots = [
+            roots = [
                 v[0]
                 for k, v in self.inputs(nid).items()
-                if k in ("latent_image", "latent", "samples", "pipe", "image", "images", "pixels")
+                if k
+                not in {
+                    "seed",
+                    "noise_seed",
+                    "seed_num",
+                    "noise",
+                    "steps",
+                    "cfg",
+                    "sigmas",
+                    "sampler",
+                    "scheduler",
+                    "sampler_name",
+                    "denoise",
+                }
                 and _link(v, self.graph)
             ]
-            if not (_ancestors(self.graph, latent_roots) & (site_ids - {nid})):
+            if not (self.dependencies(roots) & (site_ids - {nid})):
                 primary.append(nid)
         return primary
+
+    def dependencies(self, roots):
+        seen, pending = set(), list(roots)
+        while pending:
+            nid = pending.pop()
+            if nid in seen or nid not in self.scope:
+                continue
+            seen.add(nid)
+            selected, branches, _ = self.routes.selection(nid)
+            pending.extend(
+                v[0]
+                for k, v in self.inputs(nid).items()
+                if _link(v, self.graph) and (selected is None or k not in branches or k == selected)
+            )
+        return seen
 
     def prompt_owners(self, sites, *, primary_only=True):
         owners = set(self.primary_sites(sites) if primary_only else sites)
@@ -293,18 +342,14 @@ class _Inference:
         Automatic negative binding must never change a string used by a positive path,
         even when a different region already has an explicit prompt binding.
         """
-        literals, roots = set(), []
+        literals = set()
         for nid in owners:
             for field in ("positive", "conditioning"):
                 value = self.inputs(nid).get(field)
                 if isinstance(value, str):
                     literals.add((nid, field))
                 elif _link(value, self.graph):
-                    roots.append(value[0])
-        for nid in _ancestors(self.graph, roots):
-            literals.update(
-                (nid, field) for field, value in self.inputs(nid).items() if isinstance(value, str)
-            )
+                    literals.update(self.conditioning_sources(value, "prompt", all_origins=True))
         return literals
 
 
@@ -315,8 +360,24 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
     found = [("output", nid, None) for nid in outputs] if "output" in missing else []
     sites = engine.sampling_sites()
     primary = set(engine.primary_sites(sites))
-    text_targets = {"prompt": [], "negative": []}
     owners = engine.prompt_owners(sites)
+    dimensions = engine.dependencies(
+        [
+            v[0]
+            for nid in primary | set(owners)
+            for k, v in engine.inputs(nid).items()
+            if (
+                k == "model"
+                or (
+                    nid in primary
+                    and k
+                    in ("latent_image", "latent", "samples", "pipe", "image", "images", "pixels")
+                )
+            )
+            and _link(v, graph)
+        ]
+    )
+    text_targets = {"prompt": [], "negative": []}
     for nid in owners:
         inputs = engine.inputs(nid)
         for kind, ports in (("prompt", ("positive", "conditioning")), ("negative", ("negative",))):
@@ -361,7 +422,8 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
             scalar_kinds.add("seed")
         # Root dimension producers, including resolution helpers, are not resize/refiner targets.
         if (
-            "width" in inputs
+            nid in dimensions
+            and "width" in inputs
             and "height" in inputs
             and not any(
                 k in inputs

@@ -256,6 +256,71 @@ class SemanticBindingsTests(unittest.TestCase):
         self.assertEqual(changed["refiner_text"], graph["refiner_text"])
         self.assertEqual(graph, before)
 
+    def test_reference_conditioning_dependency_preserves_later_canvas_and_prompt(self):
+        graph = modern_graph()
+        graph["negative"] = node("CLIPTextEncode", clip=["clip", 0], text="exclusion")
+        graph["guider"] = node(
+            "UnseenGuider", model=["model", 0], positive=["text", 0], negative=["negative", 0]
+        )
+        graph["later_text"] = node("CLIPTextEncode", clip=["clip", 0], text="fixed later panel")
+        graph["reference"] = node(
+            "UnseenReferenceConditioning", conditioning=["later_text", 0], latent=["sample", 0]
+        )
+        graph["later_latent"] = node("UnseenCanvas", width=1024, height=1024, batch_size=1)
+        graph["later_sample"] = node(
+            "UnseenSampler",
+            model=["model", 0],
+            positive=["reference", 0],
+            negative=["negative", 0],
+            latent_image=["later_latent", 0],
+            seed=8,
+            steps=9,
+        )
+        graph["decode"]["inputs"]["samples"] = ["later_sample", 0]
+        before = copy.deepcopy(graph)
+        self.assertEqual(targets(graph, "prompt"), {("text", "clip_l"), ("text", "t5xxl")})
+        self.assertEqual(targets(graph, "negative"), {("negative", "text")})
+        self.assertEqual(targets(graph, "width"), {("latent", "width")})
+        self.assertEqual(targets(graph, "height"), {("latent", "height")})
+        self.assertEqual(targets(graph, "seed"), {("seed", "value"), ("later_sample", "seed")})
+        bound, _ = B.resolve(graph)
+        changed = B.apply_values(
+            graph,
+            bound,
+            {
+                "prompt": "new",
+                "negative": "new exclusion",
+                "width": 832,
+                "height": 1216,
+                "seed": 99,
+            },
+        )
+        self.assertEqual(changed["later_text"], graph["later_text"])
+        self.assertEqual(changed["later_latent"], graph["later_latent"])
+        self.assertEqual(changed["reference"], graph["reference"])
+        self.assertEqual(changed["later_sample"]["inputs"]["steps"], 9)
+        self.assertEqual(changed["negative"]["inputs"]["text"], "new exclusion")
+        self.assertEqual(graph, before)
+        graph["external"] = node("UnseenExternalLatent", source="fixture")
+        graph["reference_switch"] = node(
+            "UnseenSwitch", boolean=False, on_true=["sample", 0], on_false=["external", 0]
+        )
+        graph["reference"]["inputs"]["latent"] = ["reference_switch", 0]
+        self.assertEqual(targets(graph, "prompt"), {("later_text", "text")})
+        self.assertEqual(targets(graph, "width"), {("later_latent", "width")})
+        self.assertEqual(targets(graph, "seed"), {("later_sample", "seed")})
+
+    def test_primary_model_dimension_calibration_remains_coupled_to_canvas(self):
+        graph = modern_graph()
+        graph["calibration"] = node(
+            "UnseenModelCalibration", model=["model", 0], width=768, height=1024
+        )
+        graph["guider"]["inputs"]["model"] = ["calibration", 0]
+        self.assertEqual(targets(graph, "width"), {("latent", "width"), ("calibration", "width")})
+        self.assertEqual(
+            targets(graph, "height"), {("latent", "height"), ("calibration", "height")}
+        )
+
     def test_one_shared_numeric_source_is_not_claimed_as_independent_dimensions(self):
         graph = modern_graph()
         graph["side"] = node("PrimitiveNode", value=768)
