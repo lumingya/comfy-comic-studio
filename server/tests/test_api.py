@@ -3,6 +3,7 @@
 import unittest
 
 from .api_harness import ApiCase, zip_names
+from .test_album import adopt_two_frames
 
 
 class GoldenStoryTests(ApiCase):
@@ -121,7 +122,9 @@ class CrudTests(ApiCase):
             [(i["adopted_count"], i["cover_asset_id"]) for i in items], [(0, None)] * 2
         )
 
-        ep = self.adopt_all(ep)
+        # Two panels cover plural/single/empty progress and cover selection; the
+        # golden story separately exercises the full twelve-frame render path.
+        ep = adopt_two_frames(self, ep)
         first = min(ep["panels"], key=lambda p: p["order"])["id"]
         cover = next(t["asset_id"] for t in ep["takes"] if t["panel_id"] == first)
         items = self.ok(self.client.get(f"/api/series/{sid}/episodes"))["items"]
