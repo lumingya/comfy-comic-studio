@@ -9,6 +9,10 @@ import re
 _CANVAS_PORTS = {"latent_image", "latent", "samples", "image", "images", "pixels"}
 _MODEL_PORTS = {"model", "guider", "pipe"}
 _SIZE_PORTS = {"width", "height", "batch_size"}
+_GEOMETRY_CONTROL = re.compile(
+    r"(?:^|_)(?:aspect_?ratio|ratio|resolution|preset|size|scale|swap|crop|fit|mode)(?:$|_)",
+    re.I,
+)
 _CANVAS_SIZE = re.compile(
     r"^(?:(?:empty_)?(?:latent|canvas|image|pixels)_)?(width|height|batch_size)$"
 )
@@ -64,6 +68,10 @@ class _Dimensions:
                 _, branches, _ = self.routes.selection(nid)
                 routes = [(field, self.inputs(nid)[field]) for field in branches]
             elif reason == "not-router":
+                # A numeric helper can transform or replace its inputs. Width/height
+                # input names do not prove that either consumed output is identity.
+                if domain == "size":
+                    continue
                 ports = (
                     _MODEL_PORTS
                     if domain == "model"
@@ -111,7 +119,16 @@ class _Dimensions:
             if len(prefixes) != 1:
                 continue
             prefix = prefixes[0]
-            candidates[nid] = {"width": prefix + "width", "height": prefix + "height"}
+            # A preset/mode may ignore both literal dimensions. Even a value named
+            # "custom" needs a trusted contract; never guess or change that control.
+            candidates[nid] = (
+                {}
+                if any(
+                    _GEOMETRY_CONTROL.search(field) and not _CANVAS_SIZE.fullmatch(field)
+                    for field in inputs
+                )
+                else {"width": prefix + "width", "height": prefix + "height"}
+            )
             batch = prefix + "batch_size" if prefix + "batch_size" in inputs else "batch_size"
             if batch in inputs:
                 candidates[nid]["batch"] = batch

@@ -1,0 +1,53 @@
+{
+  "preset_dimensions": {
+    "before": [
+      1152,
+      896
+    ],
+    "after": [
+      1152,
+      896
+    ],
+    "requested": [
+      768,
+      640
+    ],
+    "written_scalars": [
+      768,
+      640
+    ],
+    "preset_unchanged": true,
+    "effective_output_unchanged": true,
+    "method_has_calls": false
+  },
+  "implicit_broadcast_diagnosis": {
+    "ok": false,
+    "missing_required_cr_inputs": [
+      {
+        "node": "817",
+        "input": "model"
+      },
+      {
+        "node": "817",
+        "input": "clip"
+      },
+      {
+        "node": "1249",
+        "input": "model"
+      },
+      {
+        "node": "1249",
+        "input": "clip"
+      },
+      {
+        "node": "1251",
+        "input": "model"
+      },
+      {
+        "node": "1251",
+        "input": "clip"
+      }
+    ],
+    "partial_catalog": true
+  }
+}

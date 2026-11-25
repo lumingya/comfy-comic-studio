@@ -323,7 +323,7 @@ def compile_workflow(
     if merged_slot_overrides:
         _validate_slot_routes(applied["plan"], merged_slot_overrides, graph)
     warnings.extend(problems)
-    for kind in ("prompt", "negative", "seed", "width", "height", "region") + IMAGE_KINDS:
+    for kind in sorted(B.VALUE_KINDS):
         wanted = [k for k in merged if k == kind or k.startswith(kind + ":")]
         for key in wanted:
             base, _, qual = key.partition(":")
@@ -340,7 +340,9 @@ def compile_workflow(
             ):
                 if base in IMAGE_KINDS:
                     raise B.BindingError(f"工作流里没有 [mio:{key}] 输入节点，无法接收图片")
-                warnings.append(f"工作流没有 {key} 的绑定，值被忽略")
+                warnings.append(
+                    f"工作流没有 {key} 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。"
+                )
     frontend_state = _frontend_plan(doc, graph, var_cfg, registry)
     output_adapters = {}
     selected_adapters = {node_id: OutputAdapterConfig(id="history-images") for node_id in outputs}

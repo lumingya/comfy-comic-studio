@@ -324,10 +324,11 @@ class SemanticBindingsTests(unittest.TestCase):
         )
         graph["decode"]["inputs"]["samples"] = ["later_sample", 0]
         before = copy.deepcopy(graph)
-        self.assertEqual(targets(graph, "prompt"), {("text", "clip_l"), ("text", "t5xxl")})
+        # A reference latent does not establish generation-canvas lineage.
+        self.assertEqual(targets(graph, "prompt"), {("later_text", "text")})
         self.assertEqual(targets(graph, "negative"), {("negative", "text")})
-        self.assertEqual(targets(graph, "width"), {("latent", "width")})
-        self.assertEqual(targets(graph, "height"), {("latent", "height")})
+        self.assertEqual(targets(graph, "width"), {("later_latent", "width")})
+        self.assertEqual(targets(graph, "height"), {("later_latent", "height")})
         self.assertEqual(targets(graph, "seed"), {("seed", "value"), ("later_sample", "seed")})
         bound, _ = B.resolve(graph)
         changed = B.apply_values(
@@ -341,8 +342,11 @@ class SemanticBindingsTests(unittest.TestCase):
                 "seed": 99,
             },
         )
-        self.assertEqual(changed["later_text"], graph["later_text"])
-        self.assertEqual(changed["later_latent"], graph["later_latent"])
+        self.assertEqual(changed["text"], graph["text"])
+        self.assertEqual(changed["latent"], graph["latent"])
+        self.assertEqual(changed["later_text"]["inputs"]["text"], "new")
+        self.assertEqual(changed["later_latent"]["inputs"]["width"], 832)
+        self.assertEqual(changed["later_latent"]["inputs"]["height"], 1216)
         self.assertEqual(changed["reference"], graph["reference"])
         self.assertEqual(changed["later_sample"]["inputs"]["steps"], 9)
         self.assertEqual(changed["negative"]["inputs"]["text"], "new exclusion")
@@ -420,10 +424,12 @@ class SemanticBindingsTests(unittest.TestCase):
             self.assertEqual(changed[nid], graph[nid])
         self.assertEqual(graph, before)
         graph["patch_canvas"]["inputs"].update(width=768, height=1024)
-        self.assertEqual(
-            targets(graph, "width"),
-            {("latent", "width"), ("patch_canvas", "width"), ("calibration", "width")},
-        )
+        # Equal values and opaque operand names do not prove canvas roles.
+        self.assertEqual(targets(graph, "width"), set())
+        self.assertEqual(targets(graph, "height"), set())
+        graph["latent"]["_meta"] = {"title": "[mio:width] [mio:height]"}
+        self.assertEqual(targets(graph, "width"), {("latent", "width")})
+        self.assertEqual(targets(graph, "height"), {("latent", "height")})
 
     def test_one_shared_numeric_source_is_not_claimed_as_independent_dimensions(self):
         graph = modern_graph()
@@ -686,7 +692,9 @@ class SemanticBindingsTests(unittest.TestCase):
         bound, _ = B.resolve(graph)
         changed = B.apply_values(graph, bound, {"width": 832, "height": 1216, "batch": 2})
         expected = copy.deepcopy(graph)
-        expected["latent"]["inputs"].update(width=832, height=1216, batch_size=2)
+        # Model-reference causality does not make its source the main canvas.
+        expected["later_canvas"]["inputs"].update(width=832, height=1216, batch_size=2)
+        expected["later_calibration"]["inputs"].update(width=832, height=1216)
         self.assertEqual(changed, expected)
         self.assertEqual(graph, before)
 

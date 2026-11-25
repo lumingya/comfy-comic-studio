@@ -10,7 +10,7 @@ from .workflow_slot_plan_groups import _plan_groups
 from .workflow_slot_plan_models import _manual_sites, _model_targets
 from .workflow_slot_values import _pinned, keyed_loras
 
-ANALYSIS_REVISION = 2
+ANALYSIS_REVISION = 3
 
 
 def _plan_output(wf, g, targets, groups, object_info):

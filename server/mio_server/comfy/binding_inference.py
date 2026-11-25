@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 
 from .binding_dimensions import infer_dimension_bindings
+from .binding_scope import BindingScope
 from .workflow_graph import SemanticGraph
 
 TEXT_PORTS = (
@@ -96,19 +97,8 @@ class _Inference:
     def __init__(self, graph, roots):
         self.graph = graph
         self.routes = SemanticGraph(graph)
-        self.scope = set()
-        pending = list(roots) if roots else list(graph)
-        while pending:
-            nid = pending.pop()
-            if nid in self.scope or nid not in graph or graph[nid].get("mode") == 2:
-                continue
-            self.scope.add(nid)
-            selected, branches, _ = self.routes.selection(nid)
-            pending.extend(
-                v[0]
-                for k, v in self.inputs(nid).items()
-                if _link(v, graph) and (selected is None or k not in branches or k == selected)
-            )
+        self.binding_scope = BindingScope(graph, self.routes, roots)
+        self.scope = self.binding_scope.nodes
         self.users = {}
         for nid in self.scope:
             for field, value in self.inputs(nid).items():
@@ -289,46 +279,7 @@ class _Inference:
         return sites
 
     def primary_sites(self, sites):
-        primary = []
-        site_ids = set(sites)
-        for nid in sites:
-            roots = [
-                v[0]
-                for k, v in self.inputs(nid).items()
-                if k
-                not in {
-                    "seed",
-                    "noise_seed",
-                    "seed_num",
-                    "noise",
-                    "steps",
-                    "cfg",
-                    "sigmas",
-                    "sampler",
-                    "scheduler",
-                    "sampler_name",
-                    "denoise",
-                }
-                and _link(v, self.graph)
-            ]
-            if not (self.dependencies(roots) & (site_ids - {nid})):
-                primary.append(nid)
-        return primary
-
-    def dependencies(self, roots):
-        seen, pending = set(), list(roots)
-        while pending:
-            nid = pending.pop()
-            if nid in seen or nid not in self.scope:
-                continue
-            seen.add(nid)
-            selected, branches, _ = self.routes.selection(nid)
-            pending.extend(
-                v[0]
-                for k, v in self.inputs(nid).items()
-                if _link(v, self.graph) and (selected is None or k not in branches or k == selected)
-            )
-        return seen
+        return self.binding_scope.primary_sites(sites)
 
     def prompt_owners(self, sites, *, primary_only=True):
         owners = set(self.primary_sites(sites) if primary_only else sites)

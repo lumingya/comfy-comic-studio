@@ -11,14 +11,15 @@ from .workflow_slot_common import (
     _is_number,
     _write_field,
 )
-from .workflow_slot_syntax import _num, format_tag, lora_display_name
-from .workflow_slot_values import _is_empty_name, _name_key, _switch_enabled
+from .workflow_slot_syntax import _num, format_tag
+from .workflow_slot_values import _chain_value, _is_empty_name, _name_key, _switch_enabled
 
 
 def _apply_chain(workflow, lora, loras, notices):
     chain = copy.deepcopy(lora["chain"])
     if not chain:
         raise LibraryError("工作流里没有可用的 LoRA 加载节点")
+    originals = [_chain_value(workflow[d["nodeId"]]["inputs"], d) for d in chain]
     while len(chain) < len(loras):
         tail = chain[-1]
         tail_node = workflow[tail["nodeId"]]
@@ -37,23 +38,11 @@ def _apply_chain(workflow, lora, loras, notices):
             clone["inputs"][key] = [tail["nodeId"], i]
         workflow[new_id] = clone
         chain.append({**tail, "nodeId": new_id})
+        originals.append(None)
     for i, d in enumerate(chain):
         node = workflow[d["nodeId"]]
-        if i < len(loras) and loras[i].get("enabled", True):
-            l = loras[i]
-            _write_field(workflow, d["nodeId"], d["namePath"], lora_display_name(l["name"], "file"))
-            if d["strengthPath"]:
-                _write_field(workflow, d["nodeId"], d["strengthPath"], l["strength"])
-            if d["clipPath"]:
-                _write_field(workflow, d["nodeId"], d["clipPath"], l.get("clip", l["strength"]))
-            continue
         if i < len(loras):
-            l = loras[i]
-            _write_field(workflow, d["nodeId"], d["namePath"], lora_display_name(l["name"], "file"))
-            if d["strengthPath"]:
-                _write_field(workflow, d["nodeId"], d["strengthPath"], 0)
-            if d["clipPath"]:
-                _write_field(workflow, d["nodeId"], d["clipPath"], 0)
+            _edit_chain(workflow, d, originals[i], loras[i])
             continue
         users = _consumer_index(workflow).get(d["nodeId"], [])
         bypassable = bool(d["passthrough"]) and all(
@@ -83,6 +72,25 @@ def _changes(before, after):
         or before.get(key, True if key == "enabled" else None)
         != after.get(key, True if key == "enabled" else None)
     }
+
+
+def _edit_chain(workflow, descriptor, before, item):
+    changes = _changes(before, item)
+    node_id = descriptor["nodeId"]
+    if "name" in changes:
+        _write_field(workflow, node_id, descriptor["namePath"], item["name"])
+    disabled = not item.get("enabled", True)
+    for path, field in (
+        (descriptor["strengthPath"], "strength"),
+        (descriptor["clipPath"], "clip"),
+    ):
+        if path and (field in changes or "enabled" in changes):
+            _write_field(
+                workflow,
+                node_id,
+                path,
+                0 if disabled else item.get(field, item["strength"]),
+            )
 
 
 def _object_value(entry):
@@ -323,7 +331,7 @@ def _mirror_object_tags(text, originals, assigned, pending):
     matches = list(LORA_TAG.finditer(text))
     if not any(_name_key(match[1].strip()) in owned for match in matches):
         return text
-    used, mirrored, unowned = {}, set(), set()
+    used, unowned = {}, set()
 
     def replace(match):
         key = _name_key(match[1].strip())
@@ -334,7 +342,6 @@ def _mirror_object_tags(text, originals, assigned, pending):
             unowned.add(key)
             return match[0]
         index = positions[occurrence]
-        mirrored.add(index)
         item = assigned.get(index)
         changes = _changes(originals[index], item) if item is not None else set()
         if item is not None and not changes:
@@ -367,10 +374,7 @@ def _mirror_object_tags(text, originals, assigned, pending):
     updated = LORA_TAG.sub(replace, text)
     additions = [
         format_tag(item, "path")
-        for item in [
-            *(item for index, item in assigned.items() if index not in mirrored),
-            *pending,
-        ]
+        for item in pending
         if item.get("enabled", True) and _name_key(item["name"]) not in unowned
     ]
     if additions:

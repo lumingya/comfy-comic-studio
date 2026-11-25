@@ -17,20 +17,28 @@ class Graph:
         self.semantic = SemanticGraph(workflow, info)
         self.users = _consumer_index(workflow)
         self.blocked = set()
-        for nid in _node_ids(workflow):
-            selected, branches, _ = self.semantic.selection(nid)
-            if selected:
-                self.blocked.update((nid, key) for key in branches if key != selected)
-        # A branch shared by a live consumer must never be classified as dead.
         self.dead = set()
+        # A payload input is globally unused only if every possible consumer output
+        # has a declared route excluding it. Unknown auxiliary ports prove nothing.
         for _ in workflow:
+            for nid in _node_ids(workflow):
+                _, branches, _ = self.semantic.selection(nid)
+                ports = {
+                    user["index"]
+                    for user in self.users.get(nid, [])
+                    if user["consumer"] not in self.dead
+                }
+                routes = [self.semantic.route([nid, port]) for port in ports]
+                if branches and routes and all(not reason for _, reason in routes):
+                    used = {key for payloads, _ in routes for key, _ in payloads}
+                    self.blocked.update((nid, key) for key in branches if key not in used)
             added = {
                 nid
                 for nid, users in self.users.items()
                 if users
                 and all(
-                    (u["consumer"], u["key"]) in self.blocked or u["consumer"] in self.dead
-                    for u in users
+                    (user["consumer"], user["key"]) in self.blocked or user["consumer"] in self.dead
+                    for user in users
                 )
             }
             if added <= self.dead:
@@ -89,18 +97,26 @@ class Graph:
         return True, ""
 
     def reaches(self, start, end):
-        seen, todo = set(), [start]
-        while todo:
-            nid = todo.pop()
-            if nid in seen:
+        seen = set()
+        pending = [(start, user) for user in self.users.get(start, [])]
+        while pending:
+            source, user = pending.pop()
+            consumer, key = user["consumer"], user["key"]
+            marker = (source, consumer, key, user["index"])
+            if marker in seen:
                 continue
-            seen.add(nid)
-            for user in self.users.get(nid, []):
-                if not self.edge(nid, user) or (user["consumer"], user["key"]) in self.blocked:
+            seen.add(marker)
+            if not self.edge(source, user):
+                continue
+            if consumer == end:
+                return True
+            for downstream in self.users.get(consumer, []):
+                routes, reason = self.semantic.route([consumer, downstream["index"]], "MODEL")
+                if reason == "" and not any(path == key for path, _ in routes):
                     continue
-                if user["consumer"] == end:
-                    return True
-                todo.append(user["consumer"])
+                if reason not in ("", "not-router"):
+                    continue
+                pending.append((consumer, downstream))
         return False
 
 

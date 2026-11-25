@@ -2,7 +2,7 @@
 
 本轮以真实公开静态工作流检验导入、识别、LoRA 控制、冻结编译和诊断。改前代码固定为 `aa06d0a`；所有下载原件、临时脚本与样图都在仓库外，永久回归只保留自行构造的最小中性拓扑。
 
-当前固定的 75 份复测语料中，46 份 API 图全部可静态编译，230 个独立标注参数组合的定向覆写全部符合整图预期；另 29 份 UI-only 提供 API 导出指引。该语料由原件精确恢复 50 份和补采 25 份组成，与下文历史 75 份分别计量。前两轮终审缺陷已修复并定向复验；完整门禁及下一轮五路独立终审仍在收口，当前不是最终通过声明。
+当前固定的 75 份复测语料在第二轮集成时，46 份 API 图全部可静态编译，230 个独立标注参数组合的定向覆写全部符合整图预期；另 29 份 UI-only 提供 API 导出指引。该语料由原件精确恢复 50 份和补采 25 份组成，与下文历史 75 份分别计量。第三轮终审再次要求修改，参考画布、输出端口、模式 LoRA、预设尺寸与长标题修复已落地；终态复测、完整门禁与下一轮五路独立终审仍待收口，当前不是最终通过声明。
 
 ## 样本与测量口径
 
@@ -111,6 +111,12 @@ Civitai 原件通过已有浏览器页面正常下载；没有读取或保存 Co
 
 原 130 项盲测预写真值没有修改：严格一致由 99/130 提升至 102/130。剩余 28 项为文本/图片人工边界、阶段参数策略和保留双保存分支的策略差异，全部保留而非改成成功。原 138 次请求重放为 137 次精确写入和 1 次明确警告的安全忽略；不能把它写成 138 次自动覆写成功。原始失败、修复证据和永久回归见[第二轮修复台账](COMFY_WORKFLOW_R2_REPAIRS_2026-11-26.md)。这轮修复复测不替代下一轮全新五审。
 
+### 第三轮独立终审与修复
+
+第三轮固定 `50bb3fa`，整体仍为 **REQUEST CHANGES**。新增 15 份真实盲测含 11 API、4 UI-only，最大 API 为 153 节点，最大 UI 为 683 节点；前述当前 75 份的规模限制没有因此改写。真实 simple/count 堆栈暴露了 10 项有效 LoRA 被报告为 12 项、7 项 CLIP 显示错误，20 次负值/关闭操作额外重写未激活字段的问题。预设尺寸的两项字面写入虽准确，实际有效输出不变。两类问题均保留原失败，正在进行修复后复测。
+
+通用性和编译审查另确认参考生成支路误作主阶段、未知辅助输出作用域、局部文本镜像跨项注入和 numeric-string 权重失真；真实 Chrome 发现长文件名标题横向溢出。修复、永久回归、完整原报告与尚未完成的门禁记录见[第三轮修复台账](COMFY_WORKFLOW_R3_REPAIRS_2026-11-26.md)。私有 138 节点的未知尺寸 helper 两项不安全自动绑定也随之撤回，不再将“字段写入成功”当作“有效尺寸控制”。
+
 ### 终审前发现与修复台账
 
 以下为已补修并纳入永久回归的预检问题，供独立终审逐项核对；不代替五位全新审查者的分级结论或 `VERIFIED PASS`。
@@ -132,7 +138,7 @@ Civitai 原件通过已有浏览器页面正常下载；没有读取或保存 Co
 | P09 | 损坏的节点元数据可能触发500；预检、保存和修改统一返回可行动格式错误 | [test_workflow_import_media.py](../server/tests/test_workflow_import_media.py)：`test_malformed_metadata_is_an_actionable_review_and_import_error` |
 | P10 | 非有限数与溢出JSON存在失真风险；文件、图与覆写统一拒绝，避免静默丢值 | [test_workflow_import_media.py](../server/tests/test_workflow_import_media.py)：`test_overflowing_json_and_direct_nonfinite_values_are_rejected`、`test_nonfinite_json_is_rejected_in_file_review_graph_and_overrides` |
 | P11 | 动态输出路由使可能分支的标量控制漏检；保留真实依赖范围，异文提示词保持人工接管 | [test_workflow_semantic_bindings.py](../server/tests/test_workflow_semantic_bindings.py)：动态图片选择器合成回归 |
-| P12 | 通过参考潜空间连接的后续阶段未被识别；现在按完整因果依赖选择首阶段，只改其文本与尺寸，保留全部采样种子 | [test_workflow_semantic_bindings.py](../server/tests/test_workflow_semantic_bindings.py)：参考条件连接与模型尺寸校准回归；真实漫画样本只读参数覆写复验 |
+| P12 | 历史修复曾按完整因果依赖选择首阶段；R3 证明参考支路不等于生成画布串联，现改为沿实际图像/潜空间血缘确定。旧真实/合成测量保留为历史，错误依据明确撤回 | [test_workflow_canvas_scope.py](../server/tests/test_workflow_canvas_scope.py)；[R3 语义纠正](COMFY_WORKFLOW_R3_REPAIRS_2026-11-26.md) |
 
 ## 适配边界
 

@@ -3,7 +3,7 @@
 import copy
 import hashlib
 
-from .workflow_slot_common import _is_number
+from .workflow_slot_common import LibraryError, _is_number
 from .workflow_slot_shapes import stack_slots
 from .workflow_slot_syntax import _num, parse_lora_syntax, strip_extension
 
@@ -14,6 +14,27 @@ def _is_empty_name(name):
 
 def _switch_enabled(value):
     return value is not False and value != "Off" and not (_is_number(value) and value == 0)
+
+
+def _chain_value(inputs, descriptor):
+    name = inputs.get(descriptor["namePath"])
+    if _is_empty_name(name):
+        return None
+
+    def number(path, default=None):
+        raw = inputs.get(path)
+        if _is_number(raw) or isinstance(raw, str):
+            try:
+                return _num(raw)
+            except LibraryError:
+                pass
+        return default
+
+    result = {"name": name, "strength": number(descriptor["strengthPath"], 1)}
+    clip = number(descriptor["clipPath"])
+    if clip is not None:
+        result["clip"] = clip
+    return result
 
 
 def _stack_current_loras(workflow, lora, include_disabled=False):
@@ -61,6 +82,12 @@ def _pinned(site, wf, include_disabled=False):
     if kind == "object":
         raw = inputs[path]
         entries = raw if isinstance(raw, list) else raw["__value__"]
+        if any(
+            not isinstance(e.get("name", e.get("lora")), str)
+            and e.get("name", e.get("lora")) is not None
+            for e in entries
+        ):
+            raise LibraryError("LoRA 对象条目名称必须是字符串")
         return [
             dict(
                 name=e.get("name", e.get("lora")),
@@ -83,16 +110,8 @@ def _pinned(site, wf, include_disabled=False):
     if kind == "syntax":
         return parse_lora_syntax(inputs[path])["loras"] if isinstance(inputs[path], str) else []
     if kind in ("chain", "embedded"):
-        d = site["chain"][0]
-        if _is_empty_name(d["value"]):
-            return []
-        return [
-            dict(
-                name=d["value"],
-                strength=d["strength"] if _is_number(d["strength"]) else 1,
-                **({"clip": d["clip"]} if _is_number(d["clip"]) else {}),
-            )
-        ]
+        value = _chain_value(inputs, site["chain"][0])
+        return [value] if value is not None else []
     return _stack_current_loras(wf, {"nodeId": nid}, include_disabled)
 
 
