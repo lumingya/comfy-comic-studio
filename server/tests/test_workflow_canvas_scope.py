@@ -156,6 +156,117 @@ class OutputCanvasScopeTests(unittest.TestCase):
         expected["b_sample"]["inputs"]["steps"] = VALUES["steps"]
         self.assertEqual(compile_graph(graph).graph, expected)
 
+    def test_compound_regions_keep_distinct_prompts_manual_and_first_stage_controls(self):
+        graph = {}
+        for index, prefix in enumerate(("first_", "second_", "third_")):
+            region = base(prefix)
+            del region[prefix + "save"], region[prefix + "decode"]
+            region[prefix + "canvas"]["inputs"]["width"] = 320 + index * 128
+            graph.update(region)
+        graph["compound"] = node(
+            "NeutralCompound", samples_to=["first_sample", 0], samples_from=["second_sample", 0]
+        )
+        graph["compound_again"] = node(
+            "NeutralCompound", samples_to=["compound", 0], samples_from=["third_sample", 0]
+        )
+        graph["final_text"] = node("NeutralEncoder", text="fixed finishing instructions")
+        graph["final"] = node(
+            "NeutralGeneration",
+            model=["first_model", 0],
+            positive=["final_text", 0],
+            latent_image=["compound_again", 0],
+            seed=31,
+            steps=4,
+        )
+        graph["decode"] = node("NeutralDecode", samples=["final", 0])
+        graph["save"] = node("SaveImage", images=["decode", 0])
+        requested = {**VALUES, "batch": 2}
+        expected = copy.deepcopy(graph)
+        for prefix in ("first_", "second_", "third_"):
+            expected[prefix + "sample"]["inputs"]["steps"] = VALUES["steps"]
+            expected[prefix + "canvas"]["inputs"]["batch_size"] = 2
+        result = compile_graph(graph, requested)
+        self.assertEqual(result.graph, expected)
+        self.assertFalse({"prompt", "width", "height"}.intersection(result.bindings))
+        self.assertTrue(
+            all(
+                any(kind in warning for warning in result.warnings)
+                for kind in ("prompt", "width", "height")
+            )
+        )
+
+    def test_unknown_canvas_dependency_does_not_promote_downstream_sampler(self):
+        graph = base()
+        del graph["decode"], graph["save"]
+        graph["unknown"] = node("NeutralOpaqueCanvas", operand=["sample", 0])
+        graph["final_text"] = node("NeutralEncoder", text="fixed finishing instructions")
+        graph["final"] = node(
+            "NeutralGeneration",
+            model=["model", 0],
+            positive=["final_text", 0],
+            latent_image=["unknown", 0],
+            seed=31,
+            steps=4,
+        )
+        graph["decode"] = node("NeutralDecode", samples=["final", 0])
+        graph["save"] = node("SaveImage", images=["decode", 0])
+        result = compile_graph(graph)
+        self.assertEqual(result.graph, graph)
+        self.assertFalse(set(VALUES).intersection(result.bindings))
+        seed_result = compile_graph(graph, {"seed": 99})
+        expected = copy.deepcopy(graph)
+        expected["sample"]["inputs"]["seed"] = 99
+        expected["final"]["inputs"]["seed"] = 99
+        self.assertEqual(seed_result.graph, expected)
+
+    def test_canvas_source_size_model_and_vae_dependencies_are_not_unknown_payloads(self):
+        graph = base()
+        graph["width"] = node("PrimitiveNode", value=640)
+        graph["height"] = node("PrimitiveNode", value=896)
+        graph["canvas"]["inputs"].update(
+            width=["width", 0], height=["height", 0], model=["model", 0], vae=["model", 2]
+        )
+        expected = main_expected(graph)
+        expected["canvas"]["inputs"].update(width=["width", 0], height=["height", 0])
+        expected["width"]["inputs"]["value"] = VALUES["width"]
+        expected["height"]["inputs"]["value"] = VALUES["height"]
+        self.assertEqual(compile_graph(graph).graph, expected)
+
+    def test_known_canvas_payload_does_not_hide_an_unknown_region_dependency(self):
+        for field in ("operand", "source", "target"):
+            with self.subTest(field=field):
+                graph = {**base("first_"), **base("second_")}
+                del graph["first_save"], graph["second_save"]
+                graph["mixed"] = node(
+                    "NeutralMixedPayload",
+                    image=["first_decode", 0],
+                    **{field: ["second_decode", 0]},
+                )
+                graph["save"] = node("SaveImage", images=["mixed", 0])
+                requested = {**VALUES, "batch": 2}
+                result = compile_graph(graph, requested)
+                self.assertEqual(result.graph, graph)
+                self.assertFalse(set(requested).intersection(result.bindings))
+                self.assertTrue(
+                    all(any(kind in warning for warning in result.warnings) for kind in requested)
+                )
+
+    def test_reference_mask_and_upscaler_configuration_do_not_obscure_a_known_canvas(self):
+        graph = base()
+        graph["reference"] = node("NeutralImage", width=128, height=128)
+        graph["mask"] = node("NeutralMask", width=256, height=256)
+        graph["configuration"] = node("NeutralConfiguration", model=["model", 0])
+        graph["transform"] = node(
+            "NeutralImageTransform",
+            image=["decode", 0],
+            reference_image=["reference", 0],
+            mask=["mask", 0],
+            attn_mask=["mask", 0],
+            upscaler=["configuration", 0],
+        )
+        graph["save"]["inputs"]["images"] = ["transform", 0]
+        self.assertEqual(compile_graph(graph).graph, main_expected(graph))
+
 
 if __name__ == "__main__":
     unittest.main()

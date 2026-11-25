@@ -1,0 +1,565 @@
+{
+  "public_samples": [
+    {
+      "group": "blind-r1",
+      "public_sample": "noisy_latents_3_subjects.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/noisy_latent_composition/noisy_latents_3_subjects.png",
+      "changed_kinds_with_complete_pointer_multisets": {
+        "batch": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/5/inputs/batch_size",
+            "/62/inputs/batch_size",
+            "/65/inputs/batch_size"
+          ],
+          "50bb3fa": [
+            "/5/inputs/batch_size",
+            "/62/inputs/batch_size",
+            "/65/inputs/batch_size"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "cfg": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/57/inputs/cfg",
+            "/60/inputs/cfg",
+            "/64/inputs/cfg",
+            "/73/inputs/cfg"
+          ],
+          "50bb3fa": [
+            "/57/inputs/cfg",
+            "/60/inputs/cfg",
+            "/64/inputs/cfg",
+            "/73/inputs/cfg"
+          ],
+          "current": [
+            "/58/inputs/cfg"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "prompt": {
+          "original_truth_mode": "manual",
+          "original_truth": [],
+          "6f9bdf2": [],
+          "50bb3fa": [],
+          "current": [
+            "/71/inputs/text"
+          ],
+          "current_truth_status": "incorrect",
+          "current_whole_graph_exact": false
+        },
+        "sampler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/57/inputs/sampler_name",
+            "/60/inputs/sampler_name",
+            "/64/inputs/sampler_name",
+            "/73/inputs/sampler_name"
+          ],
+          "50bb3fa": [
+            "/57/inputs/sampler_name",
+            "/60/inputs/sampler_name",
+            "/64/inputs/sampler_name",
+            "/73/inputs/sampler_name"
+          ],
+          "current": [
+            "/58/inputs/sampler_name"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "scheduler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/57/inputs/scheduler",
+            "/60/inputs/scheduler",
+            "/64/inputs/scheduler",
+            "/73/inputs/scheduler"
+          ],
+          "50bb3fa": [
+            "/57/inputs/scheduler",
+            "/60/inputs/scheduler",
+            "/64/inputs/scheduler",
+            "/73/inputs/scheduler"
+          ],
+          "current": [
+            "/58/inputs/scheduler"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "steps": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/57/inputs/steps",
+            "/60/inputs/steps",
+            "/64/inputs/steps",
+            "/73/inputs/steps"
+          ],
+          "50bb3fa": [
+            "/57/inputs/steps",
+            "/60/inputs/steps",
+            "/64/inputs/steps",
+            "/73/inputs/steps"
+          ],
+          "current": [
+            "/58/inputs/steps"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        }
+      },
+      "current_inspection_issue_codes": [
+        "ambiguous",
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "interpretation": {
+        "classification": "unsafe regression; original truth remains failing",
+        "causal_chain": [
+          "SaveImage9.images <- VAEDecode8.samples <- KSamplerAdvanced58.latent_image <- LatentComposite75",
+          "LatentComposite75/69/61 carry upstream samplers through samples_to/samples_from",
+          "KSamplerAdvanced58.positive <- CLIPTextEncode71.text"
+        ],
+        "source_reason": "binding_scope._CANVAS_PORTS omits samples_to/samples_from. Canvas ancestry therefore stops at a LatentComposite, promoting downstream sampler58 to primary. Primary prompt ownership exposes71 and hides distinct upstream prompts57/60/64/73.",
+        "affected_truth_check": "manual prompt expected no automatic write, current /71/inputs/text; compile_exact false",
+        "warning_boundary": "Generic ambiguous/dependencies_unchecked/unbound inspection codes do not make an incorrect automatic prompt safe."
+      }
+    },
+    {
+      "group": "blind-r1",
+      "public_sample": "helper/hf-lora-stack.json",
+      "source_url": "https://huggingface.co/minhnhatdo/colab-notebook/resolve/ee749d145346cd4221107a1d22f5527e40f0f024/workflow/workflow_api.json",
+      "changed_kinds_with_complete_pointer_multisets": {
+        "batch": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/134/inputs/batch_size"
+          ],
+          "50bb3fa": [
+            "/134/inputs/batch_size"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "cfg": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/135/inputs/cfg"
+          ],
+          "50bb3fa": [
+            "/135/inputs/cfg"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "height": {
+          "original_truth_mode": "automatic",
+          "original_truth": [
+            "/134/inputs/height"
+          ],
+          "6f9bdf2": [
+            "/134/inputs/height"
+          ],
+          "50bb3fa": [
+            "/134/inputs/height"
+          ],
+          "current": [],
+          "current_truth_status": "missing",
+          "current_whole_graph_exact": false
+        },
+        "sampler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/135/inputs/sampler_name"
+          ],
+          "50bb3fa": [
+            "/135/inputs/sampler_name"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "scheduler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/135/inputs/scheduler"
+          ],
+          "50bb3fa": [
+            "/135/inputs/scheduler"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "steps": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/135/inputs/steps"
+          ],
+          "50bb3fa": [
+            "/135/inputs/steps"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "width": {
+          "original_truth_mode": "automatic",
+          "original_truth": [
+            "/134/inputs/width"
+          ],
+          "6f9bdf2": [
+            "/134/inputs/width"
+          ],
+          "50bb3fa": [
+            "/134/inputs/width"
+          ],
+          "current": [],
+          "current_truth_status": "missing",
+          "current_whole_graph_exact": false
+        }
+      },
+      "current_inspection_issue_codes": [
+        "ambiguous",
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "interpretation": {
+        "classification": "observed safety withdrawal; two original automatic truth checks remain missing",
+        "causal_chain": [
+          "SaveImageWebsocket229.images <- MMakerColorEnhance227.image <- Runtime44ColorMatch225",
+          "Runtime44ColorMatch225.source <- VAEDecode136.samples <- KSamplerAdvanced135.latent_image <- EmptyLatentImage134",
+          "Runtime44ColorMatch225.target <- ImageSharpen213.image <- UltimateSDUpscale210.image <- UltimateSDUpscale200.image <- ImageSharpen145.image <- VAEDecode136"
+        ],
+        "source_reason": "source/target are not declared canvas payload ports and no trusted output-port contract establishes which branch owns generation. BindingScope primary set becomes empty rather than guessing through ColorMatch225.",
+        "affected_truth_check": "width /134/inputs/width and height /134/inputs/height become []; both missing and compile_exact false. batch134 and sampler135 controls are also withdrawn, without independent old truth for those extra kinds.",
+        "warning_boundary": "Current visible issue codes include ambiguous, dependencies_unchecked and unbound. A manual mapping must be an explicit user choice, not counted as auto success."
+      }
+    },
+    {
+      "group": "supplement",
+      "public_sample": "7b2a5c320f0b",
+      "source_url": "https://raw.githubusercontent.com/nerdyrodent/AVeryComfyNerd/main/workflows/SDXL/SDXL_Instant_LoRA_1.png",
+      "changed_kinds_with_complete_pointer_multisets": {
+        "cfg": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/cfg",
+            "/6/inputs/cfg"
+          ],
+          "50bb3fa": [
+            "/30/inputs/cfg",
+            "/6/inputs/cfg"
+          ],
+          "current": [
+            "/6/inputs/cfg"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "denoise": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/denoise"
+          ],
+          "50bb3fa": [
+            "/30/inputs/denoise"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "sampler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/sampler_name",
+            "/6/inputs/sampler_name"
+          ],
+          "50bb3fa": [
+            "/30/inputs/sampler_name",
+            "/6/inputs/sampler_name"
+          ],
+          "current": [
+            "/6/inputs/sampler_name"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "scheduler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/scheduler",
+            "/6/inputs/scheduler"
+          ],
+          "50bb3fa": [
+            "/30/inputs/scheduler",
+            "/6/inputs/scheduler"
+          ],
+          "current": [
+            "/6/inputs/scheduler"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "steps": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/steps",
+            "/6/inputs/steps"
+          ],
+          "50bb3fa": [
+            "/30/inputs/steps",
+            "/6/inputs/steps"
+          ],
+          "current": [
+            "/6/inputs/steps"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        }
+      },
+      "current_inspection_issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "interpretation": {
+        "classification": "observed scope policy narrowing; five annotated core checks remain exact",
+        "causal_chain": [
+          "KSamplerAdvanced6 output -> IterativeLatentUpscale14.samples",
+          "PixelKSampleUpscalerProvider30 output -> IterativeLatentUpscale14.upscaler configuration port"
+        ],
+        "source_reason": "Provider30 is an execution dependency through upscaler, not a first generation canvas sampler. Only its steps/cfg/denoise/sampler/scheduler auto writes are withdrawn; seed30 remains under the all-executable-seed policy.",
+        "affected_truth_check": "No change to independently annotated prompt/negative/seed/width/height checks. Provider control semantics were not independently annotated, so this is not a new PASS proof."
+      }
+    },
+    {
+      "group": "supplement",
+      "public_sample": "e160259f512e",
+      "source_url": "https://raw.githubusercontent.com/nerdyrodent/AVeryComfyNerd/main/workflows/SDXL/SDXL_Instant_LoRA_2.png",
+      "changed_kinds_with_complete_pointer_multisets": {
+        "cfg": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/cfg",
+            "/6/inputs/cfg"
+          ],
+          "50bb3fa": [
+            "/30/inputs/cfg",
+            "/6/inputs/cfg"
+          ],
+          "current": [
+            "/6/inputs/cfg"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "denoise": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/denoise"
+          ],
+          "50bb3fa": [
+            "/30/inputs/denoise"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "sampler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/sampler_name",
+            "/6/inputs/sampler_name"
+          ],
+          "50bb3fa": [
+            "/30/inputs/sampler_name",
+            "/6/inputs/sampler_name"
+          ],
+          "current": [
+            "/6/inputs/sampler_name"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "scheduler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/scheduler",
+            "/6/inputs/scheduler"
+          ],
+          "50bb3fa": [
+            "/30/inputs/scheduler",
+            "/6/inputs/scheduler"
+          ],
+          "current": [
+            "/6/inputs/scheduler"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "steps": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/steps",
+            "/6/inputs/steps"
+          ],
+          "50bb3fa": [
+            "/30/inputs/steps",
+            "/6/inputs/steps"
+          ],
+          "current": [
+            "/6/inputs/steps"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        }
+      },
+      "current_inspection_issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "interpretation": {
+        "classification": "observed scope policy narrowing; five annotated core checks remain exact",
+        "causal_chain": [
+          "KSamplerAdvanced6 output -> IterativeLatentUpscale14.samples",
+          "PixelKSampleUpscalerProvider30 output -> IterativeLatentUpscale14.upscaler configuration port"
+        ],
+        "source_reason": "Provider30 is an execution dependency through upscaler, not a first generation canvas sampler. Only its steps/cfg/denoise/sampler/scheduler auto writes are withdrawn; seed30 remains under the all-executable-seed policy.",
+        "affected_truth_check": "No change to independently annotated prompt/negative/seed/width/height checks. Provider control semantics were not independently annotated, so this is not a new PASS proof."
+      }
+    },
+    {
+      "group": "supplement",
+      "public_sample": "7c4ec6c02960",
+      "source_url": "https://raw.githubusercontent.com/nerdyrodent/AVeryComfyNerd/main/workflows/SDXL/SDXL_Instant_LoRA_3.png",
+      "changed_kinds_with_complete_pointer_multisets": {
+        "cfg": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/cfg",
+            "/6/inputs/cfg"
+          ],
+          "50bb3fa": [
+            "/30/inputs/cfg",
+            "/6/inputs/cfg"
+          ],
+          "current": [
+            "/6/inputs/cfg"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "denoise": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/denoise"
+          ],
+          "50bb3fa": [
+            "/30/inputs/denoise"
+          ],
+          "current": [],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "sampler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/sampler_name",
+            "/6/inputs/sampler_name"
+          ],
+          "50bb3fa": [
+            "/30/inputs/sampler_name",
+            "/6/inputs/sampler_name"
+          ],
+          "current": [
+            "/6/inputs/sampler_name"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "scheduler": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/scheduler",
+            "/6/inputs/scheduler"
+          ],
+          "50bb3fa": [
+            "/30/inputs/scheduler",
+            "/6/inputs/scheduler"
+          ],
+          "current": [
+            "/6/inputs/scheduler"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        },
+        "steps": {
+          "original_truth_mode": "not independently annotated",
+          "original_truth": null,
+          "6f9bdf2": [
+            "/30/inputs/steps",
+            "/6/inputs/steps"
+          ],
+          "50bb3fa": [
+            "/30/inputs/steps",
+            "/6/inputs/steps"
+          ],
+          "current": [
+            "/6/inputs/steps"
+          ],
+          "current_truth_status": null,
+          "current_whole_graph_exact": null
+        }
+      },
+      "current_inspection_issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "interpretation": {
+        "classification": "observed scope policy narrowing; five annotated core checks remain exact",
+        "causal_chain": [
+          "KSamplerAdvanced6 output -> IterativeLatentUpscale14.samples",
+          "PixelKSampleUpscalerProvider30 output -> IterativeLatentUpscale14.upscaler configuration port"
+        ],
+        "source_reason": "Provider30 is an execution dependency through upscaler, not a first generation canvas sampler. Only its steps/cfg/denoise/sampler/scheduler auto writes are withdrawn; seed30 remains under the all-executable-seed policy.",
+        "affected_truth_check": "No change to independently annotated prompt/negative/seed/width/height checks. Provider control semantics were not independently annotated, so this is not a new PASS proof."
+      }
+    }
+  ],
+  "private_observed_withdrawals": [
+    "width",
+    "height",
+    "batch"
+  ]
+}

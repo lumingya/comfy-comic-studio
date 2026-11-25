@@ -1,0 +1,879 @@
+{
+  "purpose": "Repair verification using the unchanged original R3 fixed cohort; not a new independent final audit",
+  "repair_check_status": "VERIFIED PASS FOR COMPLETED REPAIR CHECKS",
+  "independent_final_signoff": "NOT PERFORMED",
+  "oracle_alignment_status": "KNOWN SEED POLICY DISCREPANCY RETAINED; NOT COUNTED AS AUTOMATIC PASS",
+  "resource_constraint": {
+    "product_calls_after_stop": 0,
+    "new_tests_after_stop": 0,
+    "own_running_retest_python_processes_at_readonly_check": 0,
+    "organization_only_after_stop": true
+  },
+  "source_identity": {
+    "files_before": 399,
+    "files_after": 399,
+    "head_before": "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090",
+    "head_after": "eb876cfbb8cf14de34a99b6544469460c11acc24",
+    "aggregate_before": "fc05610ec3081baf270e2700a1b973cf25bcc0b0db576da30016fde0f0503d38",
+    "aggregate_after": "fc05610ec3081baf270e2700a1b973cf25bcc0b0db576da30016fde0f0503d38",
+    "changed": [],
+    "missing": [],
+    "added": [],
+    "cross_source_file_maps_identical": true,
+    "compact_json_aggregate": "4b9a7dbbc103779a63556e33693bdb02ffc2d5ffe57f67e9869390633319b5cd"
+  },
+  "original_evidence_integrity": {
+    "files_before": 86,
+    "files_after": 86,
+    "before_aggregate": "c581cd198ec46cdf1b8eea673986ef7bf61e32eb313c71627261ed571cfb7645",
+    "after_aggregate": "c581cd198ec46cdf1b8eea673986ef7bf61e32eb313c71627261ed571cfb7645",
+    "changed": [],
+    "missing": [],
+    "added": []
+  },
+  "original_key_artifact_sha256": {
+    "report.md": "41de347d55b8525a7ffd9edb6acdcdb0c29acfb62dbc7e9e3941fd6ca1d443e5",
+    "sanitized-results.json": "535bd8b7ffe8ab907808e8ea1e5fb9247fc8e1a23877b86038871664e538d978",
+    "pre-engine-expectations-private.json": "6517239fbf8669cc78737772970279ed1d76d2f25f814fe3113d989ce9bf88ef",
+    "selected-manifest.json": "d35a4b2b9614d1cbdd8a612c61dd43f4df7afac7360f7b104b6a1ad0543b390f",
+    "cross_checks.py": "c69e0de7c5a6d5881222d96a036380b4672253d1e972ae34f61b342e00d42ad5",
+    "cross-check-results.json": "90bf2883d3496bdeee87c680bc489d822f2027bc92e27c63721cdc0a3dc63910"
+  },
+  "copied_input_hashes": {
+    "collect.py": {
+      "original_sha256": "9ee5c76b58232bf20f07e5f6b84994caccb04afa556281aec37ffd0ba1c17117",
+      "copy_sha256": "9ee5c76b58232bf20f07e5f6b84994caccb04afa556281aec37ffd0ba1c17117",
+      "identical": true
+    },
+    "probe.py": {
+      "original_sha256": "ec8bbe2a520203932f434b9f32e6b4733b69967c58965860bf77fea09656426b",
+      "copy_sha256": "ec8bbe2a520203932f434b9f32e6b4733b69967c58965860bf77fea09656426b",
+      "identical": true
+    },
+    "selected-manifest.json": {
+      "original_sha256": "d35a4b2b9614d1cbdd8a612c61dd43f4df7afac7360f7b104b6a1ad0543b390f",
+      "copy_sha256": "d35a4b2b9614d1cbdd8a612c61dd43f4df7afac7360f7b104b6a1ad0543b390f",
+      "identical": true
+    },
+    "pre-engine-expectations-private.json": {
+      "original_sha256": "6517239fbf8669cc78737772970279ed1d76d2f25f814fe3113d989ce9bf88ef",
+      "copy_sha256": "6517239fbf8669cc78737772970279ed1d76d2f25f814fe3113d989ce9bf88ef",
+      "identical": true
+    }
+  },
+  "completed_result_sha256": {
+    "retest-results-private.json": "1f60cef5abbc52e7d40522c569ecd4e482ca1cca318e51c7c95c55a172b2856c",
+    "mode-variant-results.json": "9ce877a01b0fbaf87074e3f9cf032320389bc2ada13c8a48c48e13af503dab9a",
+    "cross/sanitized-results.json": "3f6fb51931a9fb58bc21a564aabd74cb7695d39fef92c86fa2c33c9caa974889"
+  },
+  "cohort": {
+    "fixed_real_sources": 15,
+    "json_files": 10,
+    "png_metadata_containers": 5,
+    "api": 11,
+    "ui_only": 4,
+    "replacement_after_results": false,
+    "prior_sampling_and_deduplication_reused_without_change": true
+  },
+  "handler_coverage": {
+    "raw_decode": 15,
+    "inspect_file": 15,
+    "inspect": 15,
+    "api_import_accepted_exact": 11,
+    "ui_import_rejected": 4,
+    "loras": 11,
+    "compile": 11,
+    "diagnose_empty_catalog": 11,
+    "ui_loras_compile_diagnose": "Not executed: rejected non-executable UI boundary; not imported successfully"
+  },
+  "checks": {
+    "automatic_links_preserved": {
+      "passed": 11,
+      "executed": 11
+    },
+    "automatic_selected_target_precision": {
+      "passed": 11,
+      "executed": 11
+    },
+    "baseline_surviving_nodes_unchanged": {
+      "passed": 11,
+      "executed": 11
+    },
+    "empty_catalog_not_runnable": {
+      "passed": 11,
+      "executed": 11
+    },
+    "file_and_inspect_match": {
+      "passed": 15,
+      "executed": 15
+    },
+    "format_correct": {
+      "passed": 15,
+      "executed": 15
+    },
+    "import_exact": {
+      "passed": 11,
+      "executed": 11
+    },
+    "input_graph_immutable": {
+      "passed": 15,
+      "executed": 15
+    },
+    "manual_links_preserved": {
+      "passed": 11,
+      "executed": 11
+    },
+    "manual_scalar_asset_precision": {
+      "passed": 11,
+      "executed": 11
+    },
+    "preset_automatic_dimensions_empty": {
+      "passed": 1,
+      "executed": 1
+    },
+    "preset_original_fields_unchanged": {
+      "passed": 1,
+      "executed": 1
+    },
+    "preset_requested_dimensions_warn": {
+      "passed": 1,
+      "executed": 1
+    },
+    "raw_decode_exact": {
+      "passed": 15,
+      "executed": 15
+    },
+    "raw_file_hash_unchanged": {
+      "passed": 15,
+      "executed": 15
+    },
+    "stored_graph_immutable": {
+      "passed": 11,
+      "executed": 11
+    },
+    "ui_actionable": {
+      "passed": 4,
+      "executed": 4
+    },
+    "ui_import_rejected": {
+      "passed": 4,
+      "executed": 4
+    },
+    "ui_not_executable": {
+      "passed": 4,
+      "executed": 4
+    }
+  },
+  "lora": {
+    "real_effective_entries": 13,
+    "real_samples_with_effective_entries": 3,
+    "mode_controlled_entries": 10,
+    "standard_chain_entries": 3,
+    "negative_and_disable_exact": 26,
+    "negative_and_disable_total": 26,
+    "standard_chain_exact": 6,
+    "standard_chain_total": 6,
+    "advanced_metamorphic_operations_exact": 20,
+    "advanced_metamorphic_operations_total": 20,
+    "advanced_source_and_links_immutable": true,
+    "comparison": "Type-sensitive complete compiled graph; links and source immutability separately checked; inactive mode/count drafts preserved"
+  },
+  "findings": [
+    {
+      "id": "B-H1",
+      "severity": "High",
+      "status": "CLOSED_IN_RETEST",
+      "evidence": {
+        "effective_entries_expected": 10,
+        "reported_before": 12,
+        "reported_after": 10,
+        "wrong_clip_defaults_before": 7,
+        "wrong_clip_defaults_after": 0,
+        "simple_operations_exact": 20,
+        "simple_operations_total": 20,
+        "advanced_operations_exact": 20,
+        "advanced_operations_total": 20
+      }
+    },
+    {
+      "id": "B-M1",
+      "severity": "Medium",
+      "status": "CLOSED_WITH_SAFE_ABSTENTION",
+      "evidence": {
+        "automatic_dimensions_empty": true,
+        "original_preset_node_unchanged": true,
+        "requested_dimensions_warn": true,
+        "manual_controlling_preset": {
+          "pointer": "/84/inputs/aspectRatio",
+          "whole_graph_exact": true,
+          "effective_before": [
+            1152,
+            896
+          ],
+          "effective_after": [
+            1024,
+            1024
+          ],
+          "links_preserved": true
+        }
+      },
+      "boundary": "A supported preset change is effective; arbitrary requested numeric dimensions remain unproven and are not claimed."
+    },
+    {
+      "id": "X-H1",
+      "severity": "High",
+      "status": "CLOSED_IN_RETEST",
+      "cases": [
+        "generated_control_reference",
+        "generated_style_reference"
+      ]
+    },
+    {
+      "id": "X-M1",
+      "severity": "Medium",
+      "status": "CLOSED_WITH_SAFE_ABSTENTION",
+      "cases": [
+        "undeclared_auxiliary_output"
+      ]
+    },
+    {
+      "id": "X-M2",
+      "severity": "Medium",
+      "status": "CLOSED_IN_RETEST",
+      "cases": [
+        "partial_object_text_mirror"
+      ]
+    },
+    {
+      "id": "X-M3",
+      "severity": "Medium",
+      "status": "CLOSED_IN_RETEST",
+      "cases": [
+        "numeric_string_clip_only"
+      ]
+    }
+  ],
+  "seed_oracle_differences": [
+    {
+      "sample": "R3-03",
+      "kind": "seed",
+      "target": "85:noise_seed",
+      "allowed": [
+        "67:seed"
+      ],
+      "classification": "documented_global_seed_policy_difference"
+    },
+    {
+      "sample": "R3-04",
+      "kind": "seed",
+      "target": "154:seed",
+      "allowed": [
+        "3:seed"
+      ],
+      "classification": "documented_global_seed_policy_difference"
+    },
+    {
+      "sample": "R3-04",
+      "kind": "seed",
+      "target": "253:seed",
+      "allowed": [
+        "3:seed"
+      ],
+      "classification": "documented_global_seed_policy_difference"
+    }
+  ],
+  "per_sample": [
+    {
+      "id": "R3-01",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 10,
+      "reported_lora_entries": 10,
+      "lora_default_mismatches": [],
+      "lora_tests": 20,
+      "lora_exact": 20,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-02",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 2,
+      "reported_lora_entries": 2,
+      "lora_default_mismatches": [],
+      "lora_tests": 4,
+      "lora_exact": 4,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-03",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "preset_automatic_dimensions_empty": true,
+        "preset_original_fields_unchanged": true,
+        "preset_requested_dimensions_warn": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [
+        {
+          "kind": "seed",
+          "target": "85:noise_seed",
+          "allowed": [
+            "67:seed"
+          ],
+          "classification": "documented_global_seed_policy_difference"
+        }
+      ],
+      "expected_lora_entries": 0,
+      "reported_lora_entries": 0,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": {
+        "pointer": "/84/inputs/aspectRatio",
+        "whole_graph_exact": true,
+        "effective_before": [
+          1152,
+          896
+        ],
+        "effective_after": [
+          1024,
+          1024
+        ],
+        "links_preserved": true
+      },
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-04",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [
+        {
+          "kind": "seed",
+          "target": "154:seed",
+          "allowed": [
+            "3:seed"
+          ],
+          "classification": "documented_global_seed_policy_difference"
+        },
+        {
+          "kind": "seed",
+          "target": "253:seed",
+          "allowed": [
+            "3:seed"
+          ],
+          "classification": "documented_global_seed_policy_difference"
+        }
+      ],
+      "expected_lora_entries": 0,
+      "reported_lora_entries": 0,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-05",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 0,
+      "reported_lora_entries": 0,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-06",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 0,
+      "reported_lora_entries": 0,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-07",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 0,
+      "reported_lora_entries": 0,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-08",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 0,
+      "reported_lora_entries": 0,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-09",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 0,
+      "reported_lora_entries": 0,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-10",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 0,
+      "reported_lora_entries": 0,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-11",
+      "format": "api",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "import_exact": true,
+        "baseline_surviving_nodes_unchanged": true,
+        "empty_catalog_not_runnable": true,
+        "automatic_selected_target_precision": true,
+        "automatic_links_preserved": true,
+        "manual_scalar_asset_precision": true,
+        "manual_links_preserved": true,
+        "stored_graph_immutable": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": 1,
+      "reported_lora_entries": 1,
+      "lora_default_mismatches": [],
+      "lora_tests": 2,
+      "lora_exact": 2,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-12",
+      "format": "ui",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "ui_not_executable": true,
+        "ui_actionable": true,
+        "ui_import_rejected": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": null,
+      "reported_lora_entries": null,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-13",
+      "format": "ui",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "ui_not_executable": true,
+        "ui_actionable": true,
+        "ui_import_rejected": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": null,
+      "reported_lora_entries": null,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-14",
+      "format": "ui",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "ui_not_executable": true,
+        "ui_actionable": true,
+        "ui_import_rejected": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": null,
+      "reported_lora_entries": null,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    },
+    {
+      "id": "R3-15",
+      "format": "ui",
+      "checks": {
+        "raw_decode_exact": true,
+        "file_and_inspect_match": true,
+        "format_correct": true,
+        "ui_not_executable": true,
+        "ui_actionable": true,
+        "ui_import_rejected": true,
+        "input_graph_immutable": true,
+        "raw_file_hash_unchanged": true
+      },
+      "error_type": null,
+      "frozen_oracle_differences": [],
+      "expected_lora_entries": null,
+      "reported_lora_entries": null,
+      "lora_default_mismatches": [],
+      "lora_tests": 0,
+      "lora_exact": 0,
+      "preset_manual_takeover": null,
+      "automatic_unexpected_delta": [],
+      "manual_unexpected_delta": []
+    }
+  ],
+  "neutral_cross_checks": [
+    {
+      "case": "generated_control_reference",
+      "expected_whole_graph_exact": true,
+      "safe_abstention": false,
+      "accepted": true,
+      "actual_delta_pointers": [
+        "/s/inputs/steps",
+        "/t/inputs/text",
+        "/z/inputs/width"
+      ],
+      "unexpected_delta_pointers": [],
+      "source_graph_immutable": true,
+      "document_graph_immutable": true,
+      "links_exact": true,
+      "warning_count": 0,
+      "inspection_compilable": true,
+      "inspection_missing": [],
+      "inspection_issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "json_finite": true,
+      "main_target_changed": true,
+      "auxiliary_target_changed": false,
+      "auxiliary_entire_subgraph_unchanged": true
+    },
+    {
+      "case": "generated_style_reference",
+      "expected_whole_graph_exact": true,
+      "safe_abstention": false,
+      "accepted": true,
+      "actual_delta_pointers": [
+        "/s/inputs/steps",
+        "/t/inputs/text",
+        "/z/inputs/width"
+      ],
+      "unexpected_delta_pointers": [],
+      "source_graph_immutable": true,
+      "document_graph_immutable": true,
+      "links_exact": true,
+      "warning_count": 0,
+      "inspection_compilable": true,
+      "inspection_missing": [],
+      "inspection_issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "json_finite": true,
+      "main_target_changed": true,
+      "auxiliary_target_changed": false,
+      "auxiliary_entire_subgraph_unchanged": true
+    },
+    {
+      "case": "undeclared_auxiliary_output",
+      "expected_whole_graph_exact": true,
+      "safe_abstention": true,
+      "accepted": true,
+      "actual_delta_pointers": [],
+      "unexpected_delta_pointers": [],
+      "source_graph_immutable": true,
+      "document_graph_immutable": true,
+      "links_exact": true,
+      "warning_count": 2,
+      "inspection_compilable": true,
+      "inspection_missing": [
+        "prompt",
+        "negative",
+        "seed",
+        "width",
+        "height"
+      ],
+      "inspection_issue_codes": [
+        "ambiguous",
+        "compile_warning",
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "json_finite": true,
+      "route_reason": "undeclared-output-port"
+    },
+    {
+      "case": "partial_object_text_mirror",
+      "expected_whole_graph_exact": true,
+      "safe_abstention": false,
+      "accepted": true,
+      "actual_delta_pointers": [
+        "/stack/inputs/loras/0/strength",
+        "/stack/inputs/text_a"
+      ],
+      "unexpected_delta_pointers": [],
+      "source_graph_immutable": true,
+      "document_graph_immutable": true,
+      "links_exact": true,
+      "warning_count": 1,
+      "inspection_compilable": true,
+      "inspection_missing": [],
+      "inspection_issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "json_finite": true,
+      "unrequested_cross_field_tag": false
+    },
+    {
+      "case": "numeric_string_clip_only",
+      "expected_whole_graph_exact": true,
+      "safe_abstention": false,
+      "accepted": true,
+      "actual_delta_pointers": [
+        "/lora/inputs/strength_clip"
+      ],
+      "unexpected_delta_pointers": [],
+      "source_graph_immutable": true,
+      "document_graph_immutable": true,
+      "links_exact": true,
+      "warning_count": 1,
+      "inspection_compilable": true,
+      "inspection_missing": [],
+      "inspection_issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "json_finite": true,
+      "model_strength_remains_string": true,
+      "unrequested_model_before": "0.7",
+      "unrequested_model_after": "0.7"
+    }
+  ],
+  "limitations": [
+    "No fresh independent resampling or final audit approval",
+    "No GPU/model load, dependency installation or live inference validation",
+    "No full repository gates or browser/UI interaction by this reviewer",
+    "Only empty dependency catalogue diagnosis was rerun; the original partial-authoritative-catalogue probe was not rerun",
+    "No post-stop stress or repeated product calls; only existing JSON and file hashes were read",
+    "UI-only graphs are not executable import successes",
+    "Manual numeric pointer precision is not proof that inactive preset numeric fields control effective dimensions",
+    "Two samples retain three seed targets outside the original prewritten first-stage-only oracle; the documented product policy is global executed-stage seed"
+  ],
+  "new_unexpected_graph_or_type_deltas_observed": 0
+}

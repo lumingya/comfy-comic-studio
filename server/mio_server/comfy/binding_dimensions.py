@@ -6,15 +6,14 @@ literal writes only and never alters image, reference, control, or selector link
 
 import re
 
-_CANVAS_PORTS = {"latent_image", "latent", "samples", "image", "images", "pixels"}
+from .binding_scope import CANVAS_PORTS, CANVAS_SIZE
+
+_CANVAS_PORTS = CANVAS_PORTS - {"pipe"}
 _MODEL_PORTS = {"model", "guider", "pipe"}
 _SIZE_PORTS = {"width", "height", "batch_size"}
 _GEOMETRY_CONTROL = re.compile(
     r"(?:^|_)(?:aspect_?ratio|ratio|resolution|preset|size|scale|swap|crop|fit|mode)(?:$|_)",
     re.I,
-)
-_CANVAS_SIZE = re.compile(
-    r"^(?:(?:empty_)?(?:latent|canvas|image|pixels)_)?(width|height|batch_size)$"
 )
 
 
@@ -82,7 +81,7 @@ class _Dimensions:
                 routes = [
                     (field, item)
                     for field, item in self.inputs(nid).items()
-                    if field in ports | _SIZE_PORTS or _CANVAS_SIZE.fullmatch(field)
+                    if field in ports | _SIZE_PORTS or CANVAS_SIZE.fullmatch(field)
                 ]
             elif reason:
                 continue
@@ -95,7 +94,7 @@ class _Dimensions:
             )
             found.setdefault(nid, set()).add(domain)
             pending.extend(
-                (item, "size" if _CANVAS_SIZE.fullmatch(field) else domain)
+                (item, "size" if CANVAS_SIZE.fullmatch(field) else domain)
                 for field, item in routes
                 if _link(item, self.graph)
             )
@@ -112,7 +111,7 @@ class _Dimensions:
                 field[:-5]
                 for field in inputs
                 if field.endswith("width")
-                and _CANVAS_SIZE.fullmatch(field)
+                and CANVAS_SIZE.fullmatch(field)
                 and (field == "width" or "canvas" in roles)
                 and field[:-5] + "height" in inputs
             ]
@@ -124,7 +123,7 @@ class _Dimensions:
             candidates[nid] = (
                 {}
                 if any(
-                    _GEOMETRY_CONTROL.search(field) and not _CANVAS_SIZE.fullmatch(field)
+                    _GEOMETRY_CONTROL.search(field) and not CANVAS_SIZE.fullmatch(field)
                     for field in inputs
                 )
                 else {"width": prefix + "width", "height": prefix + "height"}
@@ -139,7 +138,7 @@ class _Dimensions:
                 value[0]
                 for nid in self.graph
                 for field, value in self.inputs(nid).items()
-                if _CANVAS_SIZE.fullmatch(field)
+                if CANVAS_SIZE.fullmatch(field)
                 and field not in candidates.get(nid, {}).values()
                 and _link(value, self.graph)
             ],

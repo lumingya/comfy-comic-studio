@@ -4,7 +4,61 @@ Execution dependency is broader than automatic binding ownership. Reference/cont
 inputs remain in the possible execution scope, but never establish a canvas stage.
 """
 
-_CANVAS_PORTS = {"latent_image", "latent", "samples", "image", "images", "pixels", "pipe"}
+import re
+
+CANVAS_PORTS = {
+    "latent_image",
+    "latent",
+    "samples",
+    "samples_to",
+    "samples_from",
+    "image",
+    "images",
+    "pixels",
+    "pipe",
+}
+CANVAS_SIZE = re.compile(
+    r"^(?:(?:empty_)?(?:latent|canvas|image|pixels)_)?(width|height|batch_size)$"
+)
+_NON_CANVAS_PORTS = {
+    "model",
+    "clip",
+    "vae",
+    "positive",
+    "negative",
+    "conditioning",
+    "guider",
+    "noise",
+    "seed",
+    "noise_seed",
+    "seed_num",
+    "steps",
+    "cfg",
+    "sampler",
+    "sampler_name",
+    "sigmas",
+    "scheduler",
+    "denoise",
+    "mask",
+    "attn_mask",
+    "noise_mask",
+    "latent_mask",
+    "mask_image",
+    "reference_image",
+    "upscaler",
+    "upscale_model",
+    "upscale_model_opt",
+    "control_net",
+    "clip_vision",
+    "lora_stack",
+    "prev_lora",
+    "enable",
+    "positive_prompt",
+    "negative_prompt",
+    "lora_syntax",
+    "checkpoint_name",
+    "ckpt_name",
+}
 
 
 def _link(value, graph):
@@ -24,54 +78,64 @@ class BindingScope:
     def __init__(self, graph, semantic, roots):
         self.graph, self.semantic, self.roots = graph, semantic, list(roots)
         # A sink root names a node, rather than pretending to consume its output 0.
-        self.nodes = self._walk([(nid, None) for nid in self.roots or graph])
+        self.nodes, _ = self._walk([(nid, None) for nid in self.roots or graph])
 
     def _inputs(self, nid, slot, canvas):
         inputs = self.graph.get(nid, {}).get("inputs", {})
         if slot is None:
-            return [
-                (key, value) for key, value in inputs.items() if not canvas or key in _CANVAS_PORTS
-            ]
+            return self._role_inputs(inputs, canvas)
         routes, reason = self.semantic.route([nid, slot])
         if reason == "dynamic-selector":
             _, branches, _ = self.semantic.selection(nid)
-            return [(key, inputs[key]) for key in branches]
+            return [(key, inputs[key]) for key in branches], True
         if reason == "not-router":
-            return [
-                (key, value) for key, value in inputs.items() if not canvas or key in _CANVAS_PORTS
-            ]
+            return self._role_inputs(inputs, canvas)
         # In particular, an undeclared selector auxiliary output has no payload proof.
-        return routes if not reason else None
+        return (routes, True) if not reason else (None, False)
+
+    def _role_inputs(self, inputs, canvas):
+        routes = [
+            (key, value) for key, value in inputs.items() if not canvas or key in CANVAS_PORTS
+        ]
+        unresolved = canvas and any(
+            _link(value, self.graph)
+            and key not in CANVAS_PORTS
+            and key not in _NON_CANVAS_PORTS
+            and not CANVAS_SIZE.fullmatch(key)
+            for key, value in inputs.items()
+        )
+        return routes, not unresolved
 
     def _walk(self, roots, *, canvas=False):
-        found, seen, pending = set(), set(), list(roots)
+        found, seen, pending, complete = set(), set(), list(roots), True
         while pending:
             nid, slot = pending.pop()
             marker = (nid, slot)
             if marker in seen or nid not in self.graph or self.graph[nid].get("mode") == 2:
                 continue
             seen.add(marker)
-            inputs = self._inputs(nid, slot, canvas)
+            inputs, resolved = self._inputs(nid, slot, canvas)
+            complete = complete and resolved
             if inputs is None:
                 continue
             found.add(nid)
             pending.extend((value[0], value[1]) for _, value in inputs if _link(value, self.graph))
-        return found
+        return found, complete
 
     def primary_sites(self, sites):
         """Select first stages only among samplers proven on the output canvas path."""
         site_ids = set(sites)
-        pipeline = self._walk([(nid, None) for nid in self.roots], canvas=True) & site_ids
+        lineage, complete = self._walk([(nid, None) for nid in self.roots], canvas=True)
+        if not complete:
+            return set()
+        pipeline = lineage & site_ids
         primary = set()
         for nid in pipeline:
-            upstream = self._walk(
-                [
-                    (value[0], value[1])
-                    for _, value in self._inputs(nid, None, True)
-                    if _link(value, self.graph)
-                ],
+            inputs, _ = self._inputs(nid, None, True)
+            upstream, complete = self._walk(
+                [(value[0], value[1]) for _, value in inputs if _link(value, self.graph)],
                 canvas=True,
             )
-            if not upstream.intersection(pipeline - {nid}) and nid not in upstream:
+            if complete and not upstream.intersection(pipeline - {nid}) and nid not in upstream:
                 primary.add(nid)
         return primary
