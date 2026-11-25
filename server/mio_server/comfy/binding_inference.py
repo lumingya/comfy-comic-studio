@@ -200,15 +200,26 @@ class _Inference:
             seen.add((nid, slot))
             inputs = self.inputs(nid)
             cls = str(self.graph[nid].get("class_type", "")).lower()
-            if "textencode" in cls or ("clip" in inputs and "text" in inputs):
+            routes, reason = self.routes.route(link, "CONDITIONING")
+            if reason not in ("", "not-router") and not all_origins:
+                return []
+            if (
+                reason == "not-router"
+                and self.routes.is_active(nid)
+                and ("textencode" in cls or ("clip" in inputs and "text" in inputs))
+            ):
                 sources = self.encoder_sources(nid, all_origins=all_origins)
                 if not sources and not all_origins:
                     return []
                 found.update(sources)
-                continue
-            routes, reason = self.routes.route(link, "CONDITIONING")
-            if reason not in ("", "not-router") and not all_origins:
-                return []
+                # A text-bearing node may append regional conditioning to an existing
+                # chain. Its local text does not replace the incoming text's meaning.
+                if not any(
+                    _link(item, self.graph)
+                    and (field in ("positive", "negative") or "conditioning" in field.lower())
+                    for field, item in inputs.items()
+                ):
+                    continue
             if reason != "":
                 port = "positive" if kind == "prompt" else "negative"
                 if "positive" in inputs and "negative" in inputs:
@@ -377,6 +388,26 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
             and _link(v, graph)
         ]
     )
+    canvas_dependencies = engine.dependencies(
+        [
+            v[0]
+            for nid in primary
+            for k, v in engine.inputs(nid).items()
+            if k in ("latent_image", "latent", "samples", "pipe", "image", "images", "pixels")
+            and _link(v, graph)
+        ]
+    )
+    canvas_sizes = set()
+    for nid in canvas_dependencies:
+        inputs = engine.inputs(nid)
+        if "model" in inputs or any(
+            k in inputs for k in ("image", "images", "pixels", "samples", "latent", "latent_image")
+        ):
+            continue
+        sizes = [engine.scalar(nid, field, field) for field in ("width", "height")]
+        if all(sizes):
+            canvas_sizes.add(tuple(engine.inputs(n).get(field) for n, field in sizes))
+    ambiguous_size = len(canvas_sizes) > 1
     text_targets = {"prompt": [], "negative": []}
     for nid in owners:
         inputs = engine.inputs(nid)
@@ -433,6 +464,8 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
             scalar_kinds.update(("width", "height", "batch"))
         for kind in SCALAR_PORTS:
             if kind not in missing or kind not in scalar_kinds:
+                continue
+            if ambiguous_size and kind in ("width", "height"):
                 continue
             for field in SCALAR_PORTS[kind]:
                 if field in inputs:

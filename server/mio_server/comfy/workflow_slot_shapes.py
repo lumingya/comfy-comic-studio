@@ -24,12 +24,31 @@ def _first_key(inputs, keys):
 
 
 def stack_slots(node, workflow):
+    inputs = node["inputs"]
+    # Some flat stacks expose two complete weight sets selected by a literal mode.
+    # Only this full structural contract proves which fields actually affect execution;
+    # writing every apparent mirror would overwrite the other mode's saved values.
+    mode_slots = [
+        match.group(2)
+        for key in inputs
+        if (match := STACK_KEY.match(key))
+        and all(
+            prefix + match.group(2) in inputs for prefix in ("lora_wt_", "model_str_", "clip_str_")
+        )
+    ]
+    switched_weights = bool(mode_slots) and "input_mode" in inputs and "lora_count" in inputs
+    if switched_weights:
+        mode, count = inputs["input_mode"], inputs["lora_count"]
+        if mode not in ("simple", "advanced") or type(count) is not int or count < 0:
+            return []
     slots = []
-    for key, value in node["inputs"].items():
+    for key, value in inputs.items():
         match = STACK_KEY.match(key)
         if not match or _is_link(value, workflow):
             continue
         token = match.group(2)
+        if switched_weights and (token not in mode_slots or not 1 <= int(token) <= count):
+            continue
         object_style = isinstance(value, dict)
         if not object_style and not isinstance(value, str):
             continue
@@ -53,6 +72,11 @@ def stack_slots(node, workflow):
             siblings(STACK_CLIP_PREFIXES),
             siblings(STACK_SWITCH_PREFIXES),
         )
+        if switched_weights:
+            strength_paths = [("lora_wt_" if mode == "simple" else "model_str_") + token]
+            clip_paths = [("lora_wt_" if mode == "simple" else "clip_str_") + token]
+            if any(_is_link(inputs[path], workflow) for path in strength_paths + clip_paths):
+                continue
         slots.append(
             {
                 "index": int(token),
@@ -64,8 +88,9 @@ def stack_slots(node, workflow):
                 "strengthPaths": strength_paths,
                 "clipPaths": clip_paths,
                 "strengthPath": strength_paths[0] if strength_paths else "",
-                "clipPath": clip_paths[0] if clip_paths else "",
+                "clipPath": clip_paths[0] if clip_paths and clip_paths != strength_paths else "",
                 "switchPath": switch_paths[0] if switch_paths else "",
+                **({"preserveEmpty": True} if switched_weights else {}),
             }
         )
     slots.sort(key=lambda s: s["index"])

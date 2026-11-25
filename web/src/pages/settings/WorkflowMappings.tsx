@@ -1,5 +1,5 @@
 import { Plus, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkflowConfig, WorkflowDocument } from '../../api/types';
 import type { WorkflowInspection } from '../../api/system';
@@ -16,16 +16,77 @@ export function WorkflowMappings({
   bindings,
   recommendations,
   onChange,
+  disabled = false,
 }: {
   graph: Record<string, unknown> | null;
   config: WorkflowConfig | null;
   bindings: WorkflowDocument['describe']['bindings'];
   recommendations?: WorkflowInspection['bindings'];
   onChange: (config: WorkflowConfig) => void;
+  disabled?: boolean;
 }) {
   const { t } = useTranslation();
   const [newKey, setNewKey] = useState('');
+  const section = useRef<HTMLElement>(null);
+  const keyboardOrigin = useRef<HTMLInputElement | null>(null);
+  const focusAfterCommit = useRef<{
+    key: string;
+    target: string;
+    input: HTMLInputElement;
+    trigger?: HTMLButtonElement;
+  } | null>(null);
   const mapping = config?.mapping ?? {};
+  useEffect(() => {
+    // A later user action owns focus, even if the inspection request is still pending.
+    const cancel = () => {
+      keyboardOrigin.current = null;
+      focusAfterCommit.current = null;
+    };
+    document.addEventListener('keydown', cancel, true);
+    document.addEventListener('pointerdown', cancel, true);
+    return () => {
+      document.removeEventListener('keydown', cancel, true);
+      document.removeEventListener('pointerdown', cancel, true);
+    };
+  }, []);
+  useEffect(() => {
+    if (disabled || !focusAfterCommit.current) return;
+    // Let the popover finish its close-focus handling before focusing the new row.
+    let frame: number;
+    let timer: number | undefined;
+    let attempts = 0;
+    const restore = () => {
+      const pending = focusAfterCommit.current;
+      if (!pending) return;
+      if (pending.input.isConnected) {
+        // A popover that stays open must not leave a background retry loop running.
+        if (++attempts < 30) frame = requestAnimationFrame(restore);
+        else focusAfterCommit.current = null;
+        return;
+      }
+      timer = window.setTimeout(() => {
+        if (focusAfterCommit.current !== pending) return;
+        focusAfterCommit.current = null;
+        const active = document.activeElement;
+        if (active !== document.body && active !== pending.input && active !== pending.trigger)
+          return;
+        const row = [
+          ...(section.current?.querySelectorAll<HTMLElement>('.config-mapping-target') ?? []),
+        ].find(
+          (item) =>
+            item.dataset.mappingKey === pending.key &&
+            item.dataset.mappingTarget === pending.target,
+        );
+        const trigger = row?.querySelector<HTMLButtonElement>('button[role="combobox"]');
+        if (trigger && !trigger.matches(':disabled')) trigger.focus();
+      }, 0);
+    };
+    frame = requestAnimationFrame(restore);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+    };
+  }, [mapping, disabled]);
   const { fields, nodes } = useMemo(() => {
     const nodes = Object.entries(graph ?? {}).flatMap(([id, node]) => {
       if (!node || typeof node !== 'object' || Array.isArray(node)) return [];
@@ -83,8 +144,16 @@ export function WorkflowMappings({
     }
     return next;
   }, [recommendations, mapping, fields, nodes]);
-  const setTargets = (key: string, targets: string[]) => {
+  const setTargets = (key: string, targets: string[], focusTarget?: string) => {
     if (!config) return;
+    const input = keyboardOrigin.current;
+    if (input && input === document.activeElement && focusTarget) {
+      const trigger = [
+        ...(section.current?.querySelectorAll<HTMLButtonElement>('button[role="combobox"]') ?? []),
+      ].find((item) => item.getAttribute('aria-controls') === input.getAttribute('aria-controls'));
+      focusAfterCommit.current = { key, target: focusTarget, input, trigger };
+    }
+    keyboardOrigin.current = null;
     const unique = [...new Set(targets.filter(Boolean))];
     onChange({
       ...config,
@@ -105,7 +174,22 @@ export function WorkflowMappings({
   };
 
   return (
-    <section className="config-mappings" aria-label={t('config.workflow.mapping')}>
+    <section
+      ref={section}
+      className="config-mappings"
+      aria-label={t('config.workflow.mapping')}
+      onKeyDownCapture={(event) => {
+        const input = event.target;
+        if (
+          event.key === 'Enter' &&
+          !event.nativeEvent.isComposing &&
+          input instanceof HTMLInputElement &&
+          input.getAttribute('role') === 'combobox' &&
+          input.hasAttribute('aria-activedescendant')
+        )
+          keyboardOrigin.current = input;
+      }}
+    >
       <div className="concept-hint-heading">
         <h3>{t('config.workflow.mapping')}</h3>
         <ConceptHint concept="mappings" />
@@ -166,7 +250,12 @@ export function WorkflowMappings({
                 const value = nodeSelector ? target.replace(/\/inputs\/.*$/, '') : target;
                 const missing = !options.some((option) => option.value === value);
                 return (
-                  <div className="config-mapping-target" key={`${index}-${target}`}>
+                  <div
+                    className="config-mapping-target"
+                    key={`${index}-${target}`}
+                    data-mapping-key={key}
+                    data-mapping-target={target}
+                  >
                     <SearchableSelect
                       label={
                         index
@@ -174,7 +263,7 @@ export function WorkflowMappings({
                           : label
                       }
                       value={value}
-                      disabled={!config}
+                      disabled={!config || disabled}
                       options={[
                         ...(missing ? [{ value, label: t('config.missing', { id: value }) }] : []),
                         ...options.filter(
@@ -185,6 +274,7 @@ export function WorkflowMappings({
                         setTargets(
                           key,
                           targets.map((current, i) => (i === index ? next : current)),
+                          next,
                         )
                       }
                     />
@@ -212,7 +302,7 @@ export function WorkflowMappings({
               <SearchableSelect
                 label={targets.length ? t('config.workflow.addTargetFor', { name: label }) : label}
                 value=""
-                disabled={!config}
+                disabled={!config || disabled}
                 options={[
                   {
                     value: '',
@@ -223,7 +313,7 @@ export function WorkflowMappings({
                   ...available,
                 ]}
                 onChange={(target) => {
-                  if (target) setTargets(key, [...targets, target]);
+                  if (target) setTargets(key, [...targets, target], target);
                 }}
               />
               {!targets.length ? (

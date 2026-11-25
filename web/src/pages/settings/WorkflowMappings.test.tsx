@@ -182,7 +182,7 @@ it('searches a 200-node graph with a bounded option list and keyboard selection'
   );
   expect(screen.getAllByRole('option')).toHaveLength(1);
   await userEvent.keyboard('{Enter}');
-  expect(screen.getByRole('combobox', { name: '为正向提示词添加目标' })).toHaveFocus();
+  await waitFor(() => expect(screen.getByRole('combobox', { name: '正向提示词' })).toHaveFocus());
   await userEvent.click(screen.getByRole('button', { name: '保存' }));
   await waitFor(() => expect(calls.find((call) => call.method === 'PATCH')).toBeDefined());
   expect(

@@ -10,7 +10,7 @@ from .workflow_slot_values import _pinned
 def _plan_groups(wf, g, sites, object_info, issues, issue):
     suppressed = set()
     for nid, s in sites.items():
-        if s["kind"] not in ("object", "embedded"):
+        if s["kind"] != "object":
             continue
         todo = [
             str(v[0])

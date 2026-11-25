@@ -83,7 +83,7 @@ class WildWorkflowContractsTests(TestCase):
         graph["subject"] = operation("TextValue", text="editable subject")
         graph["prefix"] = operation("TextValue", text="fixed style prefix")
         graph["join"] = operation("StringConcatenate", text_a=["prefix", 0], text_b=["subject", 0])
-        graph["noise"] = operation("IntegerValue", value=11)
+        graph["noise"] = operation("PrimitiveNode", value=11)
         graph["noise"]["_meta"] = {"title": "[mio:seed=value]"}
         graph["sample"]["inputs"]["seed"] = ["noise", 0]
         doc = WorkflowDoc(
@@ -192,7 +192,7 @@ class WildWorkflowContractsTests(TestCase):
     def test_modern_guider_with_deep_text_and_noise_routes_writes_only_literal_origins(self):
         graph = static_graph()
         graph["subject"] = operation("TextValue", value="synthetic routed subject")
-        graph["seed-source"] = operation("IntegerValue", value=11)
+        graph["seed-source"] = operation("PrimitiveNode", value=11)
         text_source, seed_source = "subject", "seed-source"
         for index in range(20):
             text_route, seed_route = f"text-{index}", f"seed-{index}"

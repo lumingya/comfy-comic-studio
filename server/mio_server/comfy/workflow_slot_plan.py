@@ -10,6 +10,8 @@ from .workflow_slot_plan_groups import _plan_groups
 from .workflow_slot_plan_models import _manual_sites, _model_targets
 from .workflow_slot_values import _pinned, keyed_loras
 
+ANALYSIS_REVISION = 2
+
 
 def _plan_output(wf, g, targets, groups, object_info):
     def drives_sampler(target):
@@ -91,6 +93,7 @@ def analyze(workflow, object_info=None, manual=None, legacy=None, *, adapters=()
         issue("no-lora-site", "", reason)
     plan = {
         "version": 3,
+        "analysisRevision": ANALYSIS_REVISION,
         "analyzedAt": datetime.now(timezone.utc).isoformat(),
         "objectInfoHash": info_hash(object_info),
         "workflowHash": info_hash(wf),
@@ -167,6 +170,7 @@ def ensure_plan(workflow, slots=None, object_info=None, *, adapters=()):
         adapters
         or any(g["kind"] == "extension" for g in plan.get("lora", {}).get("groups", []))
         or plan.get("version") != 3
+        or plan.get("analysisRevision") != ANALYSIS_REVISION
         or plan.get("objectInfoHash") != info_hash(object_info)
         or plan.get("workflowHash") != info_hash(workflow)
     ):

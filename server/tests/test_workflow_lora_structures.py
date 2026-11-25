@@ -249,3 +249,104 @@ class SparseLoRAStructureTests(TestCase):
             self.assertEqual(entry["strength"], -(i + 1) / 100)
             self.assertEqual(entry["marker"], i)
         self.assertEqual(doc.model_dump(), before)
+
+    def test_object_pin_edits_preserve_prose_and_unowned_tags_in_each_string(self):
+        for wrapped in (False, True):
+            with self.subTest(wrapped=wrapped):
+                entries = [
+                    {
+                        "name": "ink.safetensors",
+                        "strength": 0.7,
+                        "clipStrength": 0.3,
+                        "active": True,
+                        "marker": {"retained": True},
+                    }
+                ]
+                source = graph(
+                    {
+                        "loras": {"__value__": entries, "widget": "retained"}
+                        if wrapped
+                        else entries,
+                        "text": "a quiet bookstore, morning light",
+                        "caption": "native context <lora:ink:0.7:0.3> retained words <lora:other:0.8>",
+                        "unknown": "<lora:unknown:0.4> untouched text",
+                    }
+                )
+                doc = WorkflowDoc(name="Synthetic mirrored prose", graph=source)
+                before = doc.model_dump()
+                group = slot_adapters.describe(doc)["groups"][0]
+                result = compile_workflow(
+                    doc, {}, slot_overrides=override(group, group["loras"][0], strength=0.4)
+                )
+                expected = deepcopy(source)
+                rows = expected["stack"]["inputs"]["loras"]
+                (rows["__value__"] if wrapped else rows)[0]["strength"] = 0.4
+                expected["stack"]["inputs"]["caption"] = (
+                    "native context <lora:ink:0.4:0.3> retained words <lora:other:0.8>"
+                )
+                self.assertEqual(result.graph, expected)
+                self.assertEqual(doc.model_dump(), before)
+                self.assertEqual(slot_adapters.describe(doc)["groups"][0]["loras"], group["loras"])
+
+    def test_object_mirror_preserves_duplicate_occurrence_tags_and_avoids_unowned_duplicates(self):
+        source = graph(
+            {
+                "loras": [
+                    {"name": "ink.safetensors", "strength": 0.7, "active": True},
+                    {"name": "ink.safetensors", "strength": -0.6, "active": True},
+                ],
+                "text": "fixed  <lora:ink:0.7> middle\n<lora:ink:-0.6> <lora:wash:0.9> suffix",
+            }
+        )
+        doc = WorkflowDoc(name="Synthetic owned repeated tags", graph=source)
+        before = doc.model_dump()
+        group = slot_adapters.describe(doc)["groups"][0]
+        self.assertNotEqual(group["loras"][0]["key"], group["loras"][1]["key"])
+        changes = override(group, group["loras"][1], strength=-0.123456789)
+        changes["loras"] = [{"name": "wash.safetensors", "strength": 0.4}]
+        result = compile_workflow(doc, {}, slot_overrides=changes)
+        self.assertEqual(
+            result.graph["stack"]["inputs"]["text"],
+            ("fixed  <lora:ink:0.7> middle\n<lora:ink:-0.123456789> <lora:wash:0.9> suffix"),
+        )
+        self.assertEqual(doc.model_dump(), before)
+
+    def test_unchanged_disabled_object_pins_preserve_native_weights_and_flags(self):
+        for wrapped in (False, True):
+            for gate in ("active", "on"):
+                with self.subTest(wrapped=wrapped, gate=gate):
+                    entries = [
+                        {
+                            "name": "ink.safetensors",
+                            "strength": 0.7,
+                            "clipStrength": 0.3,
+                            "active": True,
+                        },
+                        {
+                            "lora": "wash.safetensors",
+                            "strength": "-0.6",
+                            "clipStrength": "0.2",
+                            gate: False,
+                            "marker": {"retained": True},
+                        },
+                    ]
+                    source = graph(
+                        {
+                            "loras": {"__value__": entries, "widget": "retained"}
+                            if wrapped
+                            else entries
+                        }
+                    )
+                    doc = WorkflowDoc(name="Synthetic disabled object neighbor", graph=source)
+                    before = doc.model_dump()
+                    group = slot_adapters.describe(doc)["groups"][0]
+                    result = compile_workflow(
+                        doc, {}, slot_overrides=override(group, group["loras"][0], strength=0.4)
+                    )
+                    expected = deepcopy(source)
+                    rows = expected["stack"]["inputs"]["loras"]
+                    (rows["__value__"] if wrapped else rows)[0]["strength"] = 0.4
+                    self.assertEqual(result.graph, expected)
+                    actual = result.graph["stack"]["inputs"]["loras"]
+                    (actual["__value__"] if wrapped else actual)[1]["marker"]["retained"] = False
+                    self.assertEqual(doc.model_dump(), before)

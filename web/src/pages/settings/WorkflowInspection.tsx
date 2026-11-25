@@ -344,6 +344,7 @@ export function WorkflowImportPreview({
               disabled={saving || query.isFetching || query.isPlaceholderData || query.isError}
             >
               <WorkflowMappings
+                disabled={saving || query.isFetching || query.isPlaceholderData || query.isError}
                 graph={graph}
                 config={draftConfig ?? config ?? {}}
                 bindings={bindingSummary(query.data.bindings ?? [])}

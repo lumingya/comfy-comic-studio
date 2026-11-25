@@ -7,7 +7,7 @@ from mio_server.comfy.workflow_graph import SemanticGraph
 from mio_server.comfy.workflow_slot_graph import Graph, trace_origin
 
 
-def node(kind="Unspecified", **inputs):
+def node(kind="PrimitiveNode", **inputs):
     return {"class_type": kind, "inputs": inputs}
 
 
@@ -17,7 +17,7 @@ def definition(outputs, *, names=(), **inputs):
 
 class SemanticGraphTests(unittest.TestCase):
     def test_deep_reroutes_find_single_literal_without_mutating_edges(self):
-        workflow = {"leaf": node("TextValue", value="synthetic text")}
+        workflow = {"leaf": node(value="synthetic text")}
         parent = "leaf"
         for i in range(180):
             workflow[str(i)] = node("Reroute", input=[parent, 0])
@@ -32,7 +32,7 @@ class SemanticGraphTests(unittest.TestCase):
         workflow = {
             "first": node(value="first"),
             "second": node(value="second"),
-            "index": node("IntegerValue", value=2),
+            "index": node(value=2),
         }
         parent = "index"
         for i in range(20):
@@ -81,12 +81,16 @@ class SemanticGraphTests(unittest.TestCase):
                 negative=["STRING"],
             )
         }
+        # Matching names/types describe ports, not the implementation's identity behavior.
         graph = SemanticGraph(workflow, info)
+        self.assertFalse(graph.literal_origin(["bus", 1], "STRING")["writable"])
+        graph = SemanticGraph(
+            workflow, info, route_contracts={"ExampleBus": {0: "positive", 1: "negative"}}
+        )
         self.assertEqual(graph.literal_origin(["bus", 1], "STRING")["nodeId"], "b")
-        info["ExampleBus"].pop("output_name")
         origin = SemanticGraph(workflow, info).literal_origin(["bus", 1], "STRING")
         self.assertFalse(origin["writable"])
-        self.assertEqual(origin["reason"], "ambiguous-port")
+        self.assertEqual(origin["reason"], "undeclared-origin")
 
     def test_distinct_bus_types_follow_requested_output_slot(self):
         workflow = {
@@ -95,7 +99,9 @@ class SemanticGraphTests(unittest.TestCase):
             "bus": node("ExampleBus", text=["text", 0], number=["number", 0]),
         }
         info = {"ExampleBus": definition(["STRING", "INT"], text=["STRING"], number=["INT"])}
-        graph = SemanticGraph(workflow, info)
+        graph = SemanticGraph(
+            workflow, info, route_contracts={"ExampleBus": {0: "text", 1: "number"}}
+        )
         self.assertEqual(graph.literal_origin(["bus", 1], "INT")["nodeId"], "number")
         self.assertEqual(graph.literal_origin(["bus", 0], "STRING")["nodeId"], "text")
         self.assertEqual(graph.literal_origin(["bus", 1], "STRING")["reason"], "type-mismatch")
@@ -111,6 +117,13 @@ class SemanticGraphTests(unittest.TestCase):
         self.assertEqual(graph.literal_origin(["muted", 0], "STRING")["reason"], "inactive-node")
         self.assertEqual(graph.literal_origin(["bypass", 0], "STRING")["nodeId"], "leaf")
         self.assertFalse(graph.literal_origin(["bypass_value", 0], "STRING")["writable"])
+        self.assertFalse(
+            graph.literal_origin(
+                ["bypass_value", 0],
+                "STRING",
+                {"bypass_value": {"kind": "syntax", "path": "value"}},
+            )["writable"]
+        )
 
     def test_invalid_cycles_ports_and_non_scalar_origins_are_readonly(self):
         workflow = {
@@ -125,14 +138,106 @@ class SemanticGraphTests(unittest.TestCase):
             (["a", 0], "cycle"),
             (["missing", 0], "missing-node"),
             (["leaf", -1], "invalid-port"),
-            (["leaf", 0], "ambiguous-origin"),
-            (["list", 0], "ambiguous-origin"),
-            (["concat", 0], "ambiguous-origin"),
+            (["leaf", 0], "type-mismatch"),
+            (["list", 0], "type-mismatch"),
+            (["concat", 0], "undeclared-origin"),
         ):
             with self.subTest(link=link):
                 origin = graph.literal_origin(link, "INT" if link[0] == "leaf" else "STRING")
                 self.assertFalse(origin["writable"])
                 self.assertEqual(origin["reason"], reason)
+
+    def test_unknown_unary_transform_does_not_declare_identity(self):
+        workflow = {
+            "boolean": node("UnseenNegation", value=True),
+            "forwarded": node("UnseenNegation", value=["boolean", 0]),
+            "switch": node(
+                "UnseenSwitch", on_true="first", on_false="second", boolean=["forwarded", 0]
+            ),
+        }
+        info = {"UnseenNegation": definition(["BOOLEAN"], names=["value"], value=["BOOLEAN"])}
+        original = copy.deepcopy(workflow)
+        for metadata in (None, info):
+            graph = SemanticGraph(workflow, metadata)
+            self.assertFalse(graph.literal_origin(["boolean", 0], "BOOLEAN")["writable"])
+            self.assertFalse(graph.literal_origin(["forwarded", 0], "BOOLEAN")["writable"])
+            self.assertEqual(graph.selection("switch")[2], "dynamic-selector")
+            self.assertFalse(graph.literal_origin(["switch", 0], "STRING")["writable"])
+        self.assertEqual(workflow, original)
+
+    def test_selector_auxiliary_outputs_never_inherit_the_payload_route(self):
+        workflow = {
+            "a": node(value=100),
+            "b": node(value=200),
+            "switch": node("UnseenSwitch", input1=["a", 0], input2=["b", 0], select=2),
+        }
+        info = {"UnseenSwitch": definition(["*", "STRING", "INT"])}
+        for metadata in (None, info):
+            graph = SemanticGraph(workflow, metadata)
+            self.assertEqual(graph.literal_origin(["switch", 0], "INT")["nodeId"], "b")
+            for slot, kind in ((1, "STRING"), (2, "INT")):
+                self.assertEqual(graph.route(["switch", slot], kind)[1], "undeclared-output-port")
+                self.assertFalse(graph.literal_origin(["switch", slot], kind)["writable"])
+
+    def test_nested_selector_controls_are_iterative_and_cycle_safe(self):
+        workflow = {"flag": node(value=True)}
+        parent = "flag"
+        for index in range(600):
+            current = str(index)
+            workflow[current] = node(
+                "UnseenBooleanSwitch", on_true=True, on_false=False, boolean=[parent, 0]
+            )
+            parent = current
+        workflow["result"] = node(
+            "UnseenSwitch", on_true="first", on_false="second", boolean=[parent, 0]
+        )
+        original = copy.deepcopy(workflow)
+        graph = SemanticGraph(workflow)
+        self.assertEqual(graph.selection("result")[0], "on_true")
+        self.assertEqual(graph.literal_origin(["result", 0], "STRING")["path"], "on_true")
+        self.assertEqual(workflow, original)
+        workflow["flag"] = node("Reroute", value=[parent, 0])
+        self.assertEqual(SemanticGraph(workflow).selection("result")[2], "dynamic-selector")
+
+    def test_public_compile_rejects_guessed_auxiliary_and_transformed_controls(self):
+        from mio_server.comfy.compile import compile_workflow
+        from mio_server.comfy.inspection import InspectRequest, inspect
+        from mio_server.render_models import WorkflowDoc
+
+        workflow = {
+            "first": node("CLIPTextEncode", text="first"),
+            "second": node("CLIPTextEncode", text="second"),
+            "transformation": node("UnseenNegation", value=True),
+            "switch": node(
+                "UnseenSwitch",
+                on_true=["first", 0],
+                on_false=["second", 0],
+                boolean=["transformation", 0],
+            ),
+            "index": node("UnseenSwitch", input1=100, input2=200, select=2),
+            "latent": node("EmptyLatentImage", width=512, height=768, batch_size=1),
+            "sample": node(
+                "KSampler", positive=["switch", 0], seed=["index", 2], latent_image=["latent", 0]
+            ),
+            "save": node("SaveImage", images=["sample", 0]),
+        }
+        original = copy.deepcopy(workflow)
+        compiled = compile_workflow(
+            WorkflowDoc(name="Synthetic route contracts", graph=workflow),
+            {"prompt": "replacement", "seed": 999},
+        )
+        self.assertNotIn("prompt", compiled.bindings)
+        self.assertNotIn("seed", compiled.bindings)
+        self.assertEqual(compiled.graph["first"], workflow["first"])
+        self.assertEqual(compiled.graph["second"], workflow["second"])
+        self.assertEqual(compiled.graph["index"], workflow["index"])
+        result = inspect(
+            InspectRequest(workflow=workflow, values={"prompt": "replacement", "seed": 999})
+        )
+        self.assertIn("prompt", result.missing)
+        self.assertIn("seed", result.missing)
+        self.assertTrue(any(binding.kind == "prompt" for binding in result.candidates))
+        self.assertEqual(workflow, original)
 
 
 class ModelRouteTests(unittest.TestCase):

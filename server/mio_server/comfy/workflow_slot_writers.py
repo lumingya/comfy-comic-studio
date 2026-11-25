@@ -3,7 +3,14 @@
 import copy
 import re
 
-from .workflow_slot_common import LibraryError, _consumer_index, _is_link, _is_number, _write_field
+from .workflow_slot_common import (
+    LORA_TAG,
+    LibraryError,
+    _consumer_index,
+    _is_link,
+    _is_number,
+    _write_field,
+)
 from .workflow_slot_syntax import format_tag, lora_display_name
 from .workflow_slot_values import _is_empty_name, _name_key
 
@@ -116,7 +123,7 @@ def _apply_stack(workflow, lora, loras):
         if (
             l is None
             and names[i] is None
-            and (slot["objectStyle"] or i < max(assigned, default=-1))
+            and (slot["objectStyle"] or slot.get("preserveEmpty") or i < max(assigned, default=-1))
         ):
             continue
         if slot["objectStyle"]:
@@ -146,6 +153,12 @@ def _apply_stack(workflow, lora, loras):
         switch_value = node["inputs"][slot["switchPath"]] if slot["switchPath"] else None
         on, off = (True, False) if isinstance(switch_value, bool) else ("On", "Off")
         if l is not None:
+            if (
+                set(slot["strengthPaths"]) & set(slot["clipPaths"])
+                and l.get("enabled", True)
+                and l.get("clip", l["strength"]) != l["strength"]
+            ):
+                raise LibraryError("此 LoRA 位置共用模型与 CLIP 强度，请使用相同权重或切换高级模式")
             strength = node["inputs"].get(slot["strengthPath"])
             clip = node["inputs"].get(slot["clipPath"])
             if (
@@ -181,7 +194,10 @@ def _apply_stack(workflow, lora, loras):
             # surviving pin at position 3 must not be hidden by setting the count to 1.
             first_index = min(slot["index"] for slot in slots)
             extent = max((slots[i]["index"] for i in assigned), default=-(first_index == 0))
-            _write_field(workflow, lora["nodeId"], count, extent + (first_index == 0))
+            value = extent + (first_index == 0)
+            if any(slot.get("preserveEmpty") for slot in slots):
+                value = max(node["inputs"][count], value)
+            _write_field(workflow, lora["nodeId"], count, value)
 
 
 def _write_object(wf, writer, loras):
@@ -213,7 +229,18 @@ def _write_object(wf, writer, loras):
             for entry in entries
             if _name_key(entry.get("name", entry.get("lora", ""))) == name_key
         ]
-        e = copy.deepcopy(originals[occurrence] if occurrence < len(originals) else template)
+        original = originals[occurrence] if occurrence < len(originals) else None
+        e = copy.deepcopy(original if original is not None else template)
+        if (
+            original is not None
+            and (e.get("active") is False or e.get("on") is False)
+            and not lora.get("enabled", True)
+            and float(e.get("strength", 1)) == lora["strength"]
+            and (float(e["clipStrength"]) if e.get("clipStrength") not in (None, "") else None)
+            == lora.get("clip")
+        ):
+            values.append(e)
+            continue
         e["lora" if "lora" in e and "name" not in e else "name"] = lora["name"]
         enabled = lora.get("enabled", True)
         e.update(strength=lora["strength"] if enabled else 0, active=enabled)
@@ -224,6 +251,40 @@ def _write_object(wf, writer, loras):
         values.append(e)
     node["inputs"][path] = {**raw, "__value__": values} if wrapped else values
     for text_path in writer.get("textPaths", []):
-        node["inputs"][text_path] = " ".join(
-            format_tag(lora, "path") for lora in loras if lora.get("enabled", True)
-        )
+        text = node["inputs"].get(text_path)
+        if isinstance(text, str):
+            node["inputs"][text_path] = _mirror_object_tags(text, entries, loras)
+
+
+def _mirror_object_tags(text, entries, loras):
+    """Update evidenced object-owned tags; arbitrary sibling prose is not a mirror."""
+    owned = {_name_key(str(entry.get("name", entry.get("lora", "")))) for entry in entries}
+    matches = list(LORA_TAG.finditer(text))
+    if not any(_name_key(match[1].strip()) in owned for match in matches):
+        return text
+    desired = {}
+    for lora in loras:
+        if lora.get("enabled", True):
+            desired.setdefault(_name_key(lora["name"]), []).append(lora)
+    used, unowned = {}, set()
+
+    def replace(match):
+        key = _name_key(match[1].strip())
+        if key not in owned:
+            unowned.add(key)
+            return match[0]
+        occurrence = used.get(key, 0)
+        used[key] = occurrence + 1
+        values = desired.get(key, [])
+        return format_tag(values[occurrence], "path") if occurrence < len(values) else ""
+
+    updated = LORA_TAG.sub(replace, text)
+    additions = [
+        format_tag(lora, "path")
+        for key, values in desired.items()
+        if key not in unowned
+        for lora in values[used.get(key, 0) :]
+    ]
+    if additions:
+        updated += ("" if not updated or updated[-1].isspace() else " ") + " ".join(additions)
+    return updated

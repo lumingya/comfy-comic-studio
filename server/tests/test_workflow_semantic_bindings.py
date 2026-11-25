@@ -134,6 +134,52 @@ class SemanticBindingsTests(unittest.TestCase):
         graph["guidance"]["inputs"]["conditioning"] = ["combine", 0]
         self.assertFalse(targets(graph, "prompt"))
 
+    def test_regional_text_append_chain_requires_mapping_and_preserves_all_origins(self):
+        from mio_server.comfy.compile import compile_workflow
+        from mio_server.render_models import WorkflowConfig, WorkflowDoc
+
+        graph = modern_graph()
+        graph["text"] = node("CLIPTextEncode", clip=["clip", 0], text="global scene")
+        graph["region_a"] = node(
+            "UnseenRegionalAppend",
+            conditioning_to=["text", 0],
+            clip=["clip", 0],
+            text="first region",
+            x=32,
+            y=64,
+        )
+        graph["region_b"] = node(
+            "UnseenTextEncodeAppend",
+            conditioning_to=["region_a", 0],
+            clip=["clip", 0],
+            text="second region",
+            x=384,
+            y=128,
+        )
+        graph["guidance"]["inputs"]["conditioning"] = ["region_b", 0]
+        graph["guider"] = node(
+            "UnseenCFGGuider",
+            model=["model", 0],
+            positive=["guidance", 0],
+            negative=["text", 0],
+            cfg=1.0,
+        )
+        original = copy.deepcopy(graph)
+        self.assertEqual(targets(graph, "prompt"), set())
+        # The global encoder is also a positive dependency, despite no automatic prompt.
+        self.assertEqual(targets(graph, "negative"), set())
+        doc = WorkflowDoc(name="Synthetic regional append", graph=graph)
+        result = compile_workflow(doc, {"prompt": "replacement", "negative": "exclusion"})
+        self.assertEqual(result.graph, original)
+        self.assertNotIn("prompt", result.bindings)
+        self.assertNotIn("negative", result.bindings)
+        doc.config = WorkflowConfig(mapping={"prompt": "/text/inputs/text"})
+        result = compile_workflow(doc, {"prompt": "replacement", "negative": "exclusion"})
+        expected = copy.deepcopy(original)
+        expected["text"]["inputs"]["text"] = "replacement"
+        self.assertEqual(result.graph, expected)
+        self.assertEqual(graph, original)
+
     def test_string_helper_controls_are_not_prompt_targets_and_concat_is_ambiguous(self):
         graph = modern_graph()
         graph["source"] = node("NovelTextEditor", text="subject", language="en", delimiter=", ")
@@ -319,6 +365,64 @@ class SemanticBindingsTests(unittest.TestCase):
         self.assertEqual(targets(graph, "width"), {("latent", "width"), ("calibration", "width")})
         self.assertEqual(
             targets(graph, "height"), {("latent", "height"), ("calibration", "height")}
+        )
+
+    def test_bypassed_encoder_widgets_are_not_automatic_targets(self):
+        for mode in (2, 4):
+            with self.subTest(mode=mode):
+                graph = modern_graph()
+                graph["text"]["mode"] = mode
+                before = copy.deepcopy(graph)
+                bound, _ = B.resolve(graph)
+                self.assertEqual(targets(graph, "prompt"), set())
+                changed = B.apply_values(graph, bound, {"prompt": "new"})
+                self.assertEqual(changed["text"], graph["text"])
+                bound, _ = B.resolve(graph, {"prompt": "/text/inputs/clip_l"})
+                changed = B.apply_values(graph, bound, {"prompt": "manual"})
+                self.assertEqual(changed["text"]["inputs"]["clip_l"], "manual")
+                self.assertEqual(graph, before)
+
+    def test_unequal_composition_canvas_domains_require_explicit_size_mapping(self):
+        graph = modern_graph()
+        graph["patch_canvas"] = node("UnseenCanvas", width=384, height=768, batch_size=1)
+        graph["patch_sample"] = node(
+            "UnseenSampler",
+            model=["model", 0],
+            positive=["text", 0],
+            latent_image=["patch_canvas", 0],
+            seed=8,
+        )
+        graph["compose"] = node(
+            "UnseenComposition",
+            operand_a=["sample", 0],
+            operand_b=["patch_sample", 0],
+            offset_x=384,
+            offset_y=128,
+        )
+        graph["decode"]["inputs"]["samples"] = ["compose", 0]
+        graph["calibration"] = node(
+            "UnseenModelCalibration", model=["model", 0], width=768, height=1024
+        )
+        graph["guider"]["inputs"]["model"] = ["calibration", 0]
+        before = copy.deepcopy(graph)
+        bound, _ = B.resolve(graph)
+        self.assertEqual(targets(graph, "width"), set())
+        self.assertEqual(targets(graph, "height"), set())
+        changed = B.apply_values(graph, bound, {"width": 832, "height": 1216})
+        self.assertEqual(changed, graph)
+        bound, _ = B.resolve(
+            graph, {"width": "/latent/inputs/width", "height": "/latent/inputs/height"}
+        )
+        changed = B.apply_values(graph, bound, {"width": 832, "height": 1216})
+        self.assertEqual(changed["latent"]["inputs"]["width"], 832)
+        self.assertEqual(changed["latent"]["inputs"]["height"], 1216)
+        for nid in ("patch_canvas", "compose", "calibration"):
+            self.assertEqual(changed[nid], graph[nid])
+        self.assertEqual(graph, before)
+        graph["patch_canvas"]["inputs"].update(width=768, height=1024)
+        self.assertEqual(
+            targets(graph, "width"),
+            {("latent", "width"), ("patch_canvas", "width"), ("calibration", "width")},
         )
 
     def test_one_shared_numeric_source_is_not_claimed_as_independent_dimensions(self):
