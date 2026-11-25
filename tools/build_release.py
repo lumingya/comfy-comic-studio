@@ -55,6 +55,16 @@ SKIP_SUFFIXES = {".pyc", ".pyo"}
 FIXED_TIME = (2020, 1, 1, 0, 0, 0)
 
 
+def include_release_file(relative: Path, *, entry: str) -> bool:
+    """Select a release file by its repository-relative path, without accessing the filesystem."""
+    return (
+        not (set(relative.parts) & SKIP_PARTS)
+        and relative.suffix not in SKIP_SUFFIXES
+        and not relative.name.startswith(".env.")
+        and not (entry == "extensions" and (".test." in relative.name or ".spec." in relative.name))
+    )
+
+
 def shipped_manifest(data: Path) -> dict:
     """Load the release-only data verifier without importing it as a runtime module."""
     root = Path(__file__).resolve().parents[1]
@@ -78,13 +88,7 @@ def files() -> list[Path]:
             continue
         for item in sorted(path.rglob("*")):
             rel = item.relative_to(ROOT)
-            if (
-                item.is_file()
-                and not (set(rel.parts) & SKIP_PARTS)
-                and item.suffix not in SKIP_SUFFIXES
-                and not item.name.startswith(".env.")
-                and not (entry == "extensions" and (".test." in item.name or ".spec." in item.name))
-            ):
+            if item.is_file() and include_release_file(rel, entry=entry):
                 out.append(item)
     return sorted(out, key=lambda p: p.relative_to(ROOT).as_posix())
 

@@ -1,16 +1,42 @@
-"""Check every bundled/example package, or run the companion offline panel tests."""
+"""Check published views of bundled/example packages, or run offline panel tests."""
 
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "server"))
 
 from mio_server.extensions.ctk import check_package  # noqa: E402
+from mio_server.private_store import regular_path  # noqa: E402
+
+from build_release import include_release_file  # noqa: E402
+
+
+def check_published_package(folder: Path, kind: str):
+    """Validate a disposable publication view, never relaxing CTK or runtime trust checks."""
+    regular_path(folder, directory=True, missing=False)
+    entry = "extensions" if kind == "extension" else "themes"
+    with tempfile.TemporaryDirectory(prefix="mio-published-package-") as temporary:
+        staged = Path(temporary) / folder.name
+        staged.mkdir()
+        for source in sorted(folder.rglob("*")):
+            relative = source.relative_to(folder)
+            if not source.is_file() or not include_release_file(
+                Path(entry) / folder.name / relative, entry=entry
+            ):
+                continue
+            # Reject package links/junctions before copying can hide their redirected origin.
+            regular_path(source, directory=False, missing=False, root=folder)
+            target = staged / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+        return check_package(staged, kind)
 
 
 def packages() -> int:
@@ -30,7 +56,7 @@ def packages() -> int:
         for folder in sorted((ROOT / relative).iterdir()):
             if not folder.is_dir() or not (folder / manifest).is_file():
                 continue
-            report = check_package(folder, kind)
+            report = check_published_package(folder, kind)
             checked += 1
             label = folder.relative_to(ROOT).as_posix()
             print(f"{'PASS' if report.valid else 'FAIL'} {label}")
@@ -46,9 +72,11 @@ def packages() -> int:
 
 def panel_tests() -> int:
     scripts = [ROOT / "server/tests/professional_review_panels.cjs"]
-    for folder in sorted((ROOT / "examples/extensions").iterdir()):
-        if folder.is_dir() and (folder / "mio-extension.json").is_file():
-            scripts.extend(sorted(folder.glob("*.test.cjs")))
+    for directory in (ROOT / "extensions", ROOT / "examples/extensions"):
+        for folder in sorted(directory.iterdir()):
+            if folder.is_dir() and (folder / "mio-extension.json").is_file():
+                scripts.extend(sorted(folder.glob("*.test.cjs")))
+                scripts.extend(sorted((folder / "tests").glob("*.test.cjs")))
     for script in scripts:
         print(f"Testing {script.relative_to(ROOT).as_posix()}", flush=True)
         subprocess.run(["node", str(script)], cwd=ROOT, check=True)
