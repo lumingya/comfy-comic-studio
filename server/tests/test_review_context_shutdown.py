@@ -108,10 +108,13 @@ class ContextShutdownTests(unittest.TestCase):
             "test_v2_read_previews_write_commands_and_revision_contract"
         )
         case.setUp()
-        self.addCleanup(shutil.rmtree, recovery_root(case.ctx.data_dir))
-        self.addCleanup(
-            lambda: self.assertTrue(case.doCleanups(), "longform fixture cleanup failed")
-        )
+        fixture_root = case.ctx.data_dir.parent
+
+        def cleanup():
+            self.assertTrue(case.doCleanups(), "longform fixture cleanup failed")
+            self.assertFalse(fixture_root.exists(), "longform fixture left its temporary parent")
+
+        self.addCleanup(cleanup)
         case.test_v2_read_previews_write_commands_and_revision_contract()
         self.assertEqual(self.requests, [])
         self.assertIsNone(case.ctx.updater._worker)

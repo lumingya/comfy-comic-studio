@@ -24,6 +24,7 @@ class ApiHarnessIsolationTests(unittest.TestCase):
                 case = ApiCase(methodName="runTest")
                 try:
                     case.setUp()
+                    fixture_root = case.ctx.data_dir.parent
                     headers = {}
                     if scoped:
                         issued = case.ok(
@@ -37,11 +38,13 @@ class ApiHarnessIsolationTests(unittest.TestCase):
                     self.assertEqual(response.status_code, 200)
                     loader.assert_not_called()
                     self.assertEqual(
-                        case.ctx.legacy_root.resolve(), (Path(case.tmp) / "empty-legacy").resolve()
+                        case.ctx.legacy_root.resolve(), (fixture_root / "empty-legacy").resolve()
                     )
                     self.assertFalse(case.ctx.legacy_root.exists())
                 finally:
-                    case.doCleanups()
+                    self.assertTrue(case.doCleanups(), "API fixture cleanup failed")
+                self.assertFalse(fixture_root.exists())
+                self.assertTrue(sentinel.is_dir())
 
     def test_local_workshop_does_not_read_the_default_legacy_root(self):
         self.assert_workshop_isolated("/api/workshop")
