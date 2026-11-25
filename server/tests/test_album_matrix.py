@@ -1,4 +1,4 @@
-"""All built-in templates preserve offline security and album interchange under extreme data."""
+"""All built-in templates preserve offline security and interchange payloads at data extremes."""
 
 from __future__ import annotations
 
@@ -19,6 +19,24 @@ from mio_server.album.templates import builtin_templates, parse_template
 
 ATTACK = '"><svg onload="alert(42)"></svg></script><script>alert(42)</script>{{title}} & 中文'
 COLORS = ("#204060", "#a03c58", "#e4c47c")
+FRAME_COUNTS = {
+    "single": 1,
+    "four": 4,
+    "twelve": 12,
+    "sixty": 60,
+    "one_twenty": 120,
+    "missing": 4,
+    "mixed": 4,
+    "ultra_wide": 4,
+    "ultra_tall": 4,
+    "image_only": 4,
+    "long_title": 4,
+    "xss": 4,
+    "collection": 4,
+}
+STANDARD_SIZES = ((32, 48), (80, 24), (24, 100), (40, 40))
+WIDE_SIZE = (1280, 64)  # 20:1, encoded below the export preview's 1400px width limit.
+TALL_SIZE = (64, 2560)  # 1:40, not just a portrait labelled with synthetic dimensions.
 
 
 class AlbumDocument(HTMLParser):
@@ -47,20 +65,35 @@ class AlbumDocument(HTMLParser):
 
 
 def sample_books(case: str) -> list[Book]:
-    count = {"single": 1, "twelve": 12}.get(case, 4)
-    images = [
-        data_url(Image.new("RGB", size, COLORS[index % 3]), 1400)
-        for index, size in enumerate(((32, 48), (80, 24), (24, 100), (40, 40)))
-    ]
+    sizes = {
+        "mixed": (STANDARD_SIZES[0], WIDE_SIZE, TALL_SIZE, STANDARD_SIZES[3]),
+        "ultra_wide": (WIDE_SIZE,),
+        "ultra_tall": (TALL_SIZE,),
+    }.get(case, STANDARD_SIZES)
+    images = []
+    for index, size in enumerate(sizes):
+        with Image.new("RGB", size, COLORS[index % len(COLORS)]) as image:
+            images.append(data_url(image, 1400))
+    image_only = case == "image_only"
     frames = []
-    for index in range(count):
-        width, height = ((32, 48), (80, 24), (24, 100), (40, 40))[index % 4]
+    for index in range(FRAME_COUNTS[case]):
+        width, height = sizes[index % len(sizes)]
         frames.append(
             Frame(
-                "" if case == "missing" and index % 2 == 0 else images[index % 4],
-                name=f"Frame {index + 1} / 幕" + (ATTACK if case == "xss" else ""),
-                caption=ATTACK if case == "xss" else f"第 {index + 1} 幕的台词 & caption",
-                prompt=ATTACK if case == "xss" else f"neutral landscape, scene {index}",
+                "" if case == "missing" and index % 2 == 0 else images[index % len(images)],
+                name=""
+                if image_only
+                else f"Frame {index + 1} / 幕" + (ATTACK if case == "xss" else ""),
+                caption=""
+                if image_only
+                else ATTACK
+                if case == "xss"
+                else f"第 {index + 1} 幕的台词 & caption",
+                prompt=""
+                if image_only
+                else ATTACK
+                if case == "xss"
+                else f"neutral landscape, scene {index}",
                 width=width,
                 height=height,
                 palette=list(COLORS),
@@ -69,7 +102,13 @@ def sample_books(case: str) -> list[Book]:
     title = "极长标题 Long title · " * 100 if case == "long_title" else "Story · 第一话"
     if case == "xss":
         title = ATTACK
-    first = Book(title, frames, synopsis=ATTACK if case == "xss" else "作品简介 & synopsis")
+    if image_only:
+        title = ""
+    first = Book(
+        title,
+        frames,
+        synopsis="" if image_only else ATTACK if case == "xss" else "作品简介 & synopsis",
+    )
     if case == "collection":
         return [first, Book("Story · 第二话", deepcopy(frames[:2]), synopsis="Another book")]
     return [first]
@@ -118,10 +157,16 @@ class AlbumTemplateMatrixTests(unittest.TestCase):
         self.assertNotIn("<script>alert(42)", document)
         return parsed
 
-    def assert_round_trip(self, parsed: AlbumDocument, books: list[Book]):
+    def assert_interchange_payload(self, parsed: AlbumDocument, books: list[Book]):
+        # This verifies the exported v1 payload and encoded assets, not an importer execution.
         payload = json.loads(parsed.scripts[1][1])
         self.assertEqual(payload["schema"], "mio.album-html.v1")
         self.assertEqual(len(payload["books"]), len(books))
+        self.assertEqual(sum("data-cc-book" in attrs for _, attrs in parsed.nodes), len(books))
+        self.assertEqual(
+            sum("data-cc-frame" in attrs for _, attrs in parsed.nodes),
+            sum(len(book.frames) for book in books),
+        )
         images = {
             attrs["data-mio-asset"]: attrs["src"]
             for tag, attrs in parsed.nodes
@@ -152,16 +197,43 @@ class AlbumTemplateMatrixTests(unittest.TestCase):
         template = next(t for t in builtin_templates() if t.id == template_id)
         books = sample_books(case)
         original = [asdict(book) for book in books]
-        options = AlbumOptions(show_prompts=True, signature=ATTACK if case == "xss" else "作者 Mio")
+        options = AlbumOptions(
+            show_prompts=True,
+            signature="" if case == "image_only" else ATTACK if case == "xss" else "作者 Mio",
+        )
         document = render_album(template, books, options)
         self.assertIn(f'data-layout="{template.layout}"', document)
-        self.assert_round_trip(self.assert_safe_document(document), books)
+        self.assert_interchange_payload(self.assert_safe_document(document), books)
         self.assertEqual([asdict(book) for book in books], original)
         self.assertNotRegex(document.split('<script nonce="', 1)[0], r"\{\{[#/]?\w+\}\}")
         # Palette variables must be resolved where a template elects to use them.
         for token, color in zip(("palette1", "palette2", "palette3"), COLORS, strict=True):
             if "{{" + token + "}}" in template.html:
                 self.assertIn(color, document)
+
+    def test_extreme_samples_contain_the_claimed_frames_and_real_image_dimensions(self):
+        for case, count in (("sixty", 60), ("one_twenty", 120)):
+            with self.subTest(case=case):
+                self.assertEqual(len(sample_books(case)[0].frames), count)
+        for case, size in (("ultra_wide", WIDE_SIZE), ("ultra_tall", TALL_SIZE)):
+            for frame in sample_books(case)[0].frames:
+                with self.subTest(case=case):
+                    self.assertEqual((frame.width, frame.height), size)
+                    encoded = base64.b64decode(frame.image.split(",", 1)[1])
+                    with Image.open(io.BytesIO(encoded)) as image:
+                        self.assertEqual(image.size, size)
+        mixed_sizes = {(frame.width, frame.height) for frame in sample_books("mixed")[0].frames}
+        self.assertTrue({WIDE_SIZE, TALL_SIZE}.issubset(mixed_sizes))
+
+    def test_image_only_sample_has_images_and_no_authored_text(self):
+        book = sample_books("image_only")[0]
+        self.assertEqual(
+            (book.title, book.synopsis, book.character_name, book.story_title), ("",) * 4
+        )
+        self.assertTrue(book.frames)
+        for frame in book.frames:
+            self.assertTrue(frame.image.startswith("data:image/"))
+            self.assertEqual((frame.name, frame.caption, frame.prompt), ("", "", ""))
 
     def test_each_export_uses_a_new_nonce_and_one_policy(self):
         templates = builtin_templates()
@@ -199,7 +271,7 @@ class AlbumTemplateMatrixTests(unittest.TestCase):
         books = sample_books("xss")
         document = render_album(template, books, AlbumOptions(signature=ATTACK, show_prompts=True))
         parsed = self.assert_safe_document(document)
-        self.assert_round_trip(parsed, books)
+        self.assert_interchange_payload(parsed, books)
         self.assertIn('data-palette="#204060|#a03c58|#e4c47c"', document)
         positions = [attrs["data-position"] for tag, attrs in parsed.nodes if tag == "output"]
         self.assertEqual(positions, ["1|4|0.25", "2|4|0.5", "3|4|0.75", "4|4|1.0"])
@@ -219,16 +291,7 @@ def _matrix_test(template_id: str, case: str):
 
 
 for _template in builtin_templates():
-    for _case in (
-        "single",
-        "four",
-        "twelve",
-        "missing",
-        "mixed",
-        "long_title",
-        "xss",
-        "collection",
-    ):
+    for _case in FRAME_COUNTS:
         setattr(
             AlbumTemplateMatrixTests,
             "test_" + _template.id.replace("-", "_") + "_" + _case,
