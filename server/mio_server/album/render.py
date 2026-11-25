@@ -9,6 +9,7 @@ template syntax), images are inlined as data URLs, and the page runs nothing but
 from __future__ import annotations
 
 import base64
+import hashlib
 import html
 import json
 import re
@@ -18,6 +19,7 @@ from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
+from .. import album_interchange as interchange
 from .document import DocumentShell, document_shell
 from .templates import LAYOUTS, AlbumTemplate
 
@@ -63,6 +65,7 @@ class Frame:
     height: int | None = None
     palette: list[str] = field(default_factory=list)
     source_region: tuple[int, int, int, int] | None = None
+    source_caption: str | None = None
 
 
 @dataclass
@@ -83,6 +86,7 @@ class AlbumOptions:
     signature: str = ""
     theme_color: str = ""
     collection_title: str = ""
+    include_source_data: bool = False
 
 
 def escaped(value) -> str:
@@ -110,10 +114,24 @@ def runtime_css() -> str:
     return Path(__file__).with_name("runtime.css").read_text(encoding="utf-8")
 
 
-def render_album(tpl: AlbumTemplate, books: list[Book], opts: AlbumOptions | None = None) -> str:
+def render_album(
+    tpl: AlbumTemplate,
+    books: list[Book],
+    opts: AlbumOptions | None = None,
+    *,
+    _spooled=None,
+    _checkpoint=lambda: None,
+) -> str:
     opts = opts or AlbumOptions()
     if not books or not any(b.frames for b in books):
         raise ValueError("没有可导出的格，请先采用图片")
+    if opts.include_source_data:
+        if (
+            len(books) > interchange.MAX_BOOKS
+            or sum(len(b.frames) for b in books) > interchange.MAX_FRAMES
+        ):
+            raise ValueError("album exceeds the book or frame count limit")
+        _check_source_assets(books, _spooled, _checkpoint)
     o = tpl.options
     theme = opts.theme_color or o.accent
     if not HEX.match(theme):
@@ -217,9 +235,64 @@ def render_album(tpl: AlbumTemplate, books: list[Book], opts: AlbumOptions | Non
             extra += '<img class="edition-cover" src="{{coverImage}}" alt="">'
         body = body.replace("<h1>{{title}}</h1>", "<h1>{{title}}</h1>" + extra, 1)
     body = BOOKS_RE.sub(render_books, body, count=1)
-    return _finish(
+    document = _finish(
         tpl, shell, fill(head, globals_), fill(body, globals_), books, assets, tagged, opts
     )
+    if opts.include_source_data and _spooled is None:
+        _check_html_size(_utf8_size(document))
+    return document
+
+
+def _utf8_size(text: str) -> int:
+    return sum(len(text[i : i + 65536].encode("utf-8")) for i in range(0, len(text), 65536))
+
+
+def _check_html_size(size: int) -> None:
+    if size > interchange.MAX_HTML_BYTES:
+        raise ValueError("album exceeds the HTML byte limit")
+
+
+def _check_source_assets(books, spooled, checkpoint):
+    """Use the importer's image contract without retaining another encoded album."""
+    images = {frame.image for book in books for frame in book.frames if frame.image}
+    interchange.enforce_asset_limits(len(images), 0)
+    seen, sizes, total = set(), {}, 0
+    for image in images:
+        checkpoint()
+        digest = hashlib.sha256()
+        if spooled is not None:
+            mime, path = spooled[image]
+            size = Path(path).stat().st_size
+            _, width, height = interchange.validate_image_file(path, mime)
+            with Path(path).open("rb") as source:
+                while chunk := source.read(65536):
+                    checkpoint()
+                    digest.update(chunk)
+        else:
+            header, separator, encoded = image.partition(",")
+            if not separator or not header.startswith("data:") or not header.endswith(";base64"):
+                raise ValueError("album source image must be a base64 data URL")
+            if len(encoded) > 4 * ((interchange.MAX_IMAGE_BYTES + 2) // 3):
+                raise ValueError("album image exceeds the encoded image byte limit")
+            try:
+                data = base64.b64decode(encoded, validate=True)
+            except ValueError as exc:
+                raise ValueError("album source image is not valid base64") from exc
+            mime = header[5:-7]
+            _, width, height = interchange.validate_image_bytes(data, mime)
+            size = len(data)
+            digest.update(data)
+        sizes[image] = (width, height)
+        key = digest.digest()
+        if key not in seen:
+            seen.add(key)
+            total += size
+            interchange.enforce_asset_limits(len(seen), total)
+    for book in books:
+        for frame in book.frames:
+            if frame.image and frame.width is not None and frame.height is not None:
+                if (frame.width, frame.height) != sizes[frame.image]:
+                    raise ValueError("album frame dimensions do not match its image")
 
 
 def _finish(tpl, shell: DocumentShell, head, body, books, assets, tagged, opts) -> str:
@@ -292,6 +365,37 @@ def _metadata(books, assets, tagged, opts) -> str:
         if book.composition is not None:
             album["composition"] = book.composition
         payload["books"].append({"album": {**album, "steps": steps}, "storyboard": None})
+    if opts.include_source_data:
+        source_books = []
+        for book in books:
+            frames = []
+            for frame in book.frames:
+                entry = {
+                    "name": frame.name,
+                    "caption": frame.caption
+                    if frame.source_caption is None
+                    else frame.source_caption,
+                    "prompt": frame.prompt,
+                    "image": {"$mioImage": assets[frame.image]} if frame.image else "",
+                }
+                if frame.width is not None:
+                    entry["width"] = frame.width
+                if frame.height is not None:
+                    entry["height"] = frame.height
+                if frame.source_region is not None:
+                    entry["sourceRegion"] = list(frame.source_region)
+                frames.append(entry)
+            source = {
+                "title": book.title,
+                "synopsis": book.synopsis,
+                "characterName": book.character_name,
+                "storyTitle": book.story_title,
+                "frames": frames,
+            }
+            if book.composition is not None:
+                source["composition"] = book.composition
+            source_books.append(source)
+        payload["sourceData"] = {"schema": "mio.album-source.v1", "books": source_books}
     holder = "".join(
         f'<img data-mio-asset="{key}" src="{data}">'
         for data, key in assets.items()
@@ -299,6 +403,10 @@ def _metadata(books, assets, tagged, opts) -> str:
     )
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     text = text.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    if opts.include_source_data:
+        interchange.validate_album_payload(payload)
+        if _utf8_size(text) > interchange.MAX_JSON_BYTES:
+            raise ValueError("album exceeds the JSON byte limit")
     out = f'<template id="mio-shared-assets">{holder}</template>' if holder else ""
     return out + f'<script id="mio-album-data" type="application/json">{text}</script>'
 
@@ -310,8 +418,16 @@ def write_album(tpl, books, path, opts, spooled, *, checkpoint=lambda: None):
     only these tiny tokens, retaining its escaping, asset deduplication and nonce policy.
     No complete episode's encoded images or base64 document is held in memory.
     """
-    document = render_album(tpl, books, opts)
+    document = render_album(tpl, books, opts, _spooled=spooled, _checkpoint=checkpoint)
     pattern = re.compile("|".join(re.escape(token) for token in spooled)) if spooled else None
+    if opts.include_source_data:
+        size = _utf8_size(document)
+        for match in pattern.finditer(document) if pattern else ():
+            checkpoint()
+            mime, file = spooled[match.group()]
+            size += len(f"data:{mime};base64,") + 4 * ((Path(file).stat().st_size + 2) // 3)
+            size -= len(match.group())
+        _check_html_size(size)
     with Path(path).open("wb") as stream:
         cursor = 0
         for match in pattern.finditer(document) if pattern else ():

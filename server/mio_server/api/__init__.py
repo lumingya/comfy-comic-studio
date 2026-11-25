@@ -26,9 +26,11 @@ from ..update import UpdateError
 from . import (
     access,
     album,
+    album_import,
     backups,
     canvas,
     checkpoints,
+    collections,
     deliverables,
     export_jobs,
     extension_market,
@@ -57,7 +59,7 @@ from .validation import request_validation_error
 
 API_VERSION = "1"
 WEB_DIST = Path(__file__).resolve().parents[3] / "web" / "dist"
-WEB_FRAME_CSP = "frame-src 'self' blob: data"
+WEB_FRAME_CSP = "frame-src 'self' blob:"
 
 ERRORS: list[tuple[type[Exception], int, str]] = [
     (NotFound, 404, "not_found"),
@@ -108,6 +110,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
         production,
         canvas,
         checkpoints,
+        collections,
         library,
         longform,
         jobs,
@@ -117,6 +120,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
         theme_preferences,
         theme_packages,
         album,
+        album_import,
         export_jobs,
         deliverables,
         backups,

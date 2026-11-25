@@ -23,6 +23,27 @@ const DOWNLOAD_MIMES = new Set([
   'video/mp4',
   'video/webm',
 ]);
+const MAX_FILENAME_CHARS = 190;
+
+function panelFilename(response: Response): string {
+  const encoded = response.headers.get('x-mio-panel-filename');
+  // UTF-8 uses at most four bytes per character, with three ASCII characters per escape.
+  if (
+    !encoded ||
+    encoded.length > MAX_FILENAME_CHARS * 12 ||
+    !/^(?:[A-Za-z0-9._~-]|%[0-9a-f]{2})+$/i.test(encoded)
+  )
+    throw new Error('Panel download filename is invalid.');
+  let filename: string;
+  try {
+    filename = decodeURIComponent(encoded);
+  } catch {
+    throw new Error('Panel download filename is invalid.');
+  }
+  if ([...filename].length > MAX_FILENAME_CHARS)
+    throw new Error('Panel download filename is invalid.');
+  return filename.replace(/[\x00-\x1f\x7f<>:"/\\|?*]/g, '_');
+}
 
 /** Read the reviewed response as bytes, with an actual stream limit rather than trusting length. */
 export async function readPanelBinary(
@@ -48,6 +69,13 @@ export async function readPanelBinary(
     throw new Error('Panel media exceeds its byte limit.');
   }
   const expected = header === null ? null : Number(header);
+  let filename: string;
+  try {
+    filename = panelFilename(response);
+  } catch (error) {
+    await response.body?.cancel();
+    throw error;
+  }
   const reader = response.body?.getReader();
   if (!reader) throw new Error('Panel media response has no body.');
   const abort = () => {
@@ -75,17 +103,6 @@ export async function readPanelBinary(
     signal.removeEventListener('abort', abort);
     reader.releaseLock();
   }
-  const disposition = response.headers.get('content-disposition') ?? '';
-  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
-  let filename = 'mio-download.bin';
-  if (encoded) {
-    try {
-      filename = decodeURIComponent(encoded);
-    } catch {
-      throw new Error('Panel download filename is invalid.');
-    }
-  }
-  filename = filename.replace(/[\x00-\x1f\x7f<>:"/\\|?*]/g, '_').slice(0, 190);
   return { blob: new Blob(chunks, { type: mime }), filename };
 }
 

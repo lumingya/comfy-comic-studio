@@ -150,6 +150,21 @@ small {
   margin: 7px 2px 0;
   font-size: 12px;
 }
+.confirmation {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.confirmation p {
+  margin: 0 0 10px;
+}
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .status,
 .job {
   margin: 12px 0;

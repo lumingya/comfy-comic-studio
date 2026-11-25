@@ -67,3 +67,68 @@ body.shelf-marquee-active {
   user-select: none;
   cursor: crosshair;
 }
+
+.shelf-collections {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+.shelf-collection-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  min-width: 0;
+  padding: 4px;
+}
+.shelf-collection-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 5px);
+  background: transparent;
+  color: var(--soft);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.shelf-collection-tab .mono {
+  color: var(--muted);
+  font-size: 11px;
+}
+.shelf-collection-tab:hover,
+.shelf-collection-tab.active {
+  background: var(--tint);
+  color: var(--accent);
+}
+.shelf-collection-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.shelf-collection-tab.is-collection-drop-target {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--bg));
+  color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.shelf-drag-ghost[data-count]::after {
+  content: attr(data-count);
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 26px;
+  padding: 3px 7px;
+  border-radius: 20px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+#gallery-results .shelf-exhibit.is-dragging .exhibit-cover {
+  opacity: 0.35;
+}

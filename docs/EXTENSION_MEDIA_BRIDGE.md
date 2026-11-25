@@ -2,7 +2,14 @@
 
 普通扩展面板继续使用 `sandbox="allow-scripts"`，没有同源权限、任意网络请求或浏览器下载权限。
 图片和文件走审阅过的清单操作，宿主负责请求、大小校验和生命周期；二进制不进入 JSON 或 base64 消息。
-本协议沿用面板消息版本 `1`，新增字段均为可选能力；旧 JSON 请求保持原语义。
+本协议使用面板消息版本 `2`，所有业务消息经子文档创建的 MessagePort 传输；JSON 操作语义不变。
+
+蒙版等图片上传也走同一文档端口：声明 `input:"image"` 的 `POST /assets` + `write` 请求后，发送
+`{type:'mio:panel:upload',version:2,session,rid,request_id,filename,blob}`。Blob 单独传递，元数据仍限
+64 KiB，图片限 32 MiB / 16 × 1024 × 1024 像素。宿主与服务器分别校验，服务器完整解码并拒绝
+多帧、SVG、伪装及超像素图片，再经原始字节素材接口保存；不使用 base64 或普通 JSON 请求承载图片。
+HTTP 上传使用 `/api[/v2]/extension-panels/{ext_id}/{panel_id}/uploads` 的 multipart
+`metadata` JSON 文件及 `image` 原始文件两部分。完整声明与授权边界见[SDK 上传说明](../server/mio_server/extensions/README.md#界面面板)。
 
 ## 声明
 
@@ -38,6 +45,8 @@
 
 ```js
 const session = new URLSearchParams(location.hash.slice(1)).get('mio-session');
+const channel = new MessageChannel();
+const transport = channel.port1;
 const pending = new Map();
 const media = new Map();
 let context = null;
@@ -50,35 +59,34 @@ function releaseImage(id) {
   for (const image of document.querySelectorAll('img'))
     if (image.src === item.url) image.removeAttribute('src');
   media.delete(id);
-  parent.postMessage({
-    type: 'mio:panel:release', version: 1, session, media_id: id,
-  }, '*');
+  transport.postMessage({
+    type: 'mio:panel:release', version: 2, session, media_id: id,
+  });
 }
 
 function request(request_id, payload = {}) {
   return new Promise((resolve, reject) => {
     const rid = crypto.randomUUID();
     pending.set(rid, { resolve, reject });
-    parent.postMessage({
-      type: 'mio:panel:request', version: 1, session,
+    transport.postMessage({
+      type: 'mio:panel:request', version: 2, session,
       rid, request_id, ...payload,
-    }, '*');
+    });
   });
 }
 
-addEventListener('message', (event) => {
+transport.onmessage = (event) => {
   const message = event.data;
-  if (event.source !== parent || !message ||
-      message.version !== 1 || message.session !== session) return;
+  if (!message || message.version !== 2 || message.session !== session) return;
   if (message.type === 'mio:panel:init') context = message.context;
   if (message.type === 'mio:panel:media') {
     const port = event.ports[0];
     const waiting = pending.get(message.rid);
     if (!port || !waiting) {
       port?.close();
-      parent.postMessage({
-        type: 'mio:panel:release', version: 1, session, media_id: message.media_id,
-      }, '*');
+      transport.postMessage({
+        type: 'mio:panel:release', version: 2, session, media_id: message.media_id,
+      });
       return;
     }
     port.onmessage = ({ data }) => {
@@ -104,8 +112,10 @@ addEventListener('message', (event) => {
   pending.delete(message.rid);
   if (message.ok) waiting.resolve(message.data);
   else waiting.reject(new Error(message.data?.detail || `HTTP ${message.status}`));
-});
-parent.postMessage({ type: 'mio:panel:ready', version: 1, session }, '*');
+};
+transport.start();
+parent.postMessage({ type: 'mio:panel:ready', version: 2, session }, '*', [channel.port2]);
+addEventListener('pagehide', () => transport.close(), { once: true });
 
 let shown = null;
 async function showTake(takeId, imageElement) {
@@ -151,6 +161,10 @@ HTML 始终作为附件保存，不在宿主文档中插入、预览或执行。
 服务端按实际分块字节数限制响应，并验证声明的长度；缺少或伪造 `Content-Length` 无法绕过上限。
 临时文件只在宿主临时目录存在，失败、取消及流结束会关闭并清除。不转发上游 Cookie 或任意响应 header。
 文件名清理控制字符、路径、Windows 保留字符和设备名，并按已允许的 MIME 加安全后缀。
+桥接成功响应不设置 `Content-Disposition`，避免浏览器下载处理器抢先接管宿主的 `fetch`。
+清理后的文件名通过 `X-Mio-Panel-Filename` 传递：UTF-8 字节按严格百分号编码，仅保留
+ASCII 字母、数字和 `-._~`。宿主要求该头存在，拒绝损坏编码、无效 UTF-8 和超长文件名，
+解码后继续清理控制字符和路径；文件仍须点击宿主下载按钮才保存。直接导出 API 的附件响应不变。
 请求失败不自动重试生成操作；先读取任务状态或复用该操作的幂等键，再由用户决定重试。
 
 实现入口：[`panel_bridge.py`](../server/mio_server/extensions/panel_bridge.py)、

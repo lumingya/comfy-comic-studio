@@ -1,14 +1,18 @@
-/* Vendored standard v1 sandbox client; this package has no host-internal dependency. */
+/* Vendored standard v2 sandbox client; this package has no host-internal dependency. */
 (() => {
   const session = new URLSearchParams(location.hash.slice(1)).get(
     "mio-session",
   );
+  const channel = new MessageChannel();
+  const transport = channel.port1;
+  let connected = false;
+  const initListeners = new Set();
   const pending = new Map();
   const media = new Map();
   const ports = new Map();
   let context;
   const send = (type, payload = {}) =>
-    parent.postMessage({ type, version: 1, session, ...payload }, "*");
+    transport.postMessage({ type, version: 2, session, ...payload });
   const release = (value) => {
     if (!value?.media_id) return;
     const resource = ports.get(value.media_id);
@@ -66,18 +70,23 @@
       element.src = value.url;
     },
     connect(onInit) {
-      addEventListener("message", (event) => {
+      initListeners.add(onInit);
+      if (connected) {
+        if (context) onInit(context);
+        return;
+      }
+      connected = true;
+      transport.addEventListener("message", (event) => {
         const message = event.data;
         if (
-          event.source !== parent ||
           !message ||
-          message.version !== 1 ||
+          message.version !== 2 ||
           message.session !== session
         )
           return;
         if (message.type === "mio:panel:init") {
           context = message.context;
-          onInit(context);
+          for (const listener of initListeners) listener(context);
         }
         if (message.type === "mio:panel:media") {
           const port = event.ports?.[0];
@@ -147,8 +156,15 @@
         for (const media_id of ports.keys()) release({ media_id });
         for (const value of pending.values()) clearTimeout(value.timeout);
         pending.clear();
+        transport.close();
       });
-      if (session) send("mio:panel:ready");
+      transport.start();
+      if (session)
+        parent.postMessage(
+          { type: "mio:panel:ready", version: 2, session },
+          "*",
+          [channel.port2],
+        );
       else
         api.status("请在 Mio 的话页面从扩展菜单打开。独立打开不会提交任务。");
     },

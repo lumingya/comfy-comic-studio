@@ -30,6 +30,10 @@ html[data-nav-collapsed='true'] .workspace-profile-button {
   html[data-nav-collapsed] {
     --nav-width: 0px;
   }
+
+  :root[data-theme-dynamic-background='true'] #sidebar {
+    background: var(--wallpaper-surface);
+  }
 }
 
 /* Legacy line icons (app/icons.tsx). Scoped to <svg> so `.btn.icon` buttons are untouched. */
@@ -137,6 +141,11 @@ a.workspace-profile-button {
 }
 
 /* Top bar: the service chip is a button (legacy styles it as such); queue badge. */
+/* Scrolled page text must not show through the fixed bars' wallpaper surface. */
+:root[data-theme-dynamic-background='true'] :is(.topbar, .statusbar) {
+  background: var(--wallpaper-surface);
+}
+
 .image-service-chip.tone-good .dot {
   background: var(--live);
 }

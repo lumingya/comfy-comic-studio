@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTrashSeries } from '../../api/series';
 import { useRestore } from '../../api/system';
@@ -76,6 +76,7 @@ export function BulkBar(props: {
   pinned?: boolean;
   onMore: (event: MouseEvent<HTMLButtonElement>) => void;
   onExport: () => void;
+  moveAction?: ReactNode;
 }) {
   const { t } = useTranslation();
   const { chosen, actions: a } = props;
@@ -111,6 +112,7 @@ export function BulkBar(props: {
           </button>
         </>
       ) : null}
+      {props.moveAction}
       <button
         type="button"
         className="selection-action"

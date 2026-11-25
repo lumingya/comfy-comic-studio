@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useImportAlbumTemplate } from '../../api/open';
 import { useExportPresets } from '../../api/production';
@@ -22,6 +22,11 @@ export function AlbumExportOptions(
 ) {
   const { t } = useTranslation();
   const { draft: d, onDraft, format } = props;
+  const onDraftRef = useRef(onDraft);
+  onDraftRef.current = onDraft;
+  useEffect(() => {
+    if (props.open) onDraftRef.current({ includeSourceData: false });
+  }, [props.open]);
   const native = props.look === props.native;
   const rendered = ['html', 'pdf', 'zip'].includes(format);
   const selectedInfo = props.infos.find((x) => x.id === props.look);
@@ -52,6 +57,10 @@ export function AlbumExportOptions(
       {format === 'html' ? (
         <>
           <AlbumTemplatePicker {...props} accent={accent} />
+          <AlbumSourceDataOption
+            checked={d.includeSourceData === true}
+            onChange={(includeSourceData) => onDraft({ includeSourceData })}
+          />
           {native ? (
             <Field label={t('reader.readMode')}>
               <Select
@@ -178,6 +187,28 @@ export function AlbumExportOptions(
         </details>
       ) : null}
     </>
+  );
+}
+
+/** Deliberate backup consent; separate from visible prompt/caption display choices. */
+export function AlbumSourceDataOption(props: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div>
+      <label className="export-check">
+        <input
+          type="checkbox"
+          checked={props.checked}
+          onChange={(event) => props.onChange(event.target.checked)}
+        />
+        {t('exportUi.includeSourceData')}
+      </label>
+      <p className="help">{t('exportUi.sourceDataWarning')}</p>
+      <p className="help">{t('exportUi.sourceDataScope')}</p>
+    </div>
   );
 }
 

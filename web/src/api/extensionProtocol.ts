@@ -12,12 +12,13 @@ export const BRIDGE = {
     intervalMs: 100,
   },
   panel: {
-    version: 1,
+    version: 2,
     types: {
       ready: 'mio:panel:ready',
       init: 'mio:panel:init',
       appearance: 'mio:panel:appearance',
       request: 'mio:panel:request',
+      upload: 'mio:panel:upload',
       response: 'mio:panel:response',
       release: 'mio:panel:release',
       media: 'mio:panel:media',

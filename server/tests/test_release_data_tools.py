@@ -1,6 +1,8 @@
 import hashlib
 import importlib.util
 import json
+import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -11,6 +13,30 @@ from unittest.mock import patch
 from . import shipped_data_fixture
 
 TOOLS = Path(__file__).resolve().parents[2] / "tools"
+
+
+def init_test_repository(root):
+    try:
+        subprocess.run(
+            ["git", "init", str(root)],
+            check=True,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except subprocess.CalledProcessError as exc:
+        stderr = exc.stderr or ""
+        for key, value in os.environ.items():
+            if key.startswith("GIT_CONFIG_VALUE_") and value:
+                stderr = stderr.replace(value, "<redacted>")
+        for pattern in (
+            r"(?im)(\bauthorization(?:\s*[:=]\s*|\s+))[^\r\n]*",
+            r"""(?ix)(\b(?:bearer|basic)\s+|\b(?:token|password)(?:\s*[:=]\s*|\s+))
+            (?:"[^"]*"|'[^']*'|[^\s,;]+)""",
+        ):
+            stderr = re.sub(pattern, r"\1<redacted>", stderr)
+        exc.add_note(f"git init rc={exc.returncode}; stderr={stderr}")
+        raise
 
 
 def load_module(filename, name):
@@ -34,6 +60,48 @@ finally:
 
 
 class ReleaseDataToolsTests(unittest.TestCase):
+    def test_git_init_failure_preserves_exception_and_redacts_diagnostics(self):
+        root = Path("diagnostic-repository")
+        secrets = (
+            "configured-secret",
+            "authorization-secret",
+            "bearer-secret",
+            "basic-secret",
+            "token-secret",
+            "password-secret",
+        )
+        stderr = (
+            "fatal: cannot read C:/local/config\n"
+            f"{secrets[0]}\nAuthorization: Bearer {secrets[1]}\n"
+            f"Bearer {secrets[2]}\nBasic {secrets[3]}\n"
+            f"token={secrets[4]} password: '{secrets[5]}'\n"
+        )
+        failure = subprocess.CalledProcessError(128, ["git", "init", str(root)], stderr=stderr)
+        with (
+            patch.object(
+                os, "environ", {"GIT_CONFIG_VALUE_99": secrets[0], "GIT_CONFIG_VALUE_98": ""}
+            ),
+            patch.object(subprocess, "run", side_effect=failure) as run,
+            self.assertRaises(subprocess.CalledProcessError) as caught,
+        ):
+            init_test_repository(root)
+        self.assertIs(caught.exception, failure)
+        self.assertEqual(caught.exception.returncode, 128)
+        self.assertEqual(caught.exception.stderr, stderr)
+        diagnostic = "\n".join(caught.exception.__notes__)
+        self.assertIn("rc=128", diagnostic)
+        self.assertIn("C:/local/config", diagnostic)
+        self.assertIn("<redacted>", diagnostic)
+        for secret in secrets:
+            self.assertNotIn(secret, diagnostic)
+        run.assert_called_once_with(
+            ["git", "init", str(root)],
+            check=True,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+
     def test_verifies_manifest_and_rejects_modified_seed(self):
         with tempfile.TemporaryDirectory() as tmp:
             data = Path(tmp)
@@ -94,7 +162,7 @@ class ReleaseDataToolsTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            subprocess.run(["git", "init", str(root)], check=True, capture_output=True)
+            init_test_repository(root)
             subprocess.run(["git", "-C", str(root), "add", "."], check=True, capture_output=True)
             subprocess.run(
                 [
@@ -137,7 +205,7 @@ class ReleaseDataToolsTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            subprocess.run(["git", "init", str(root)], check=True, capture_output=True)
+            init_test_repository(root)
             subprocess.run(["git", "-C", str(root), "add", "."], check=True, capture_output=True)
             subprocess.run(
                 [

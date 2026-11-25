@@ -777,6 +777,26 @@ class MioClient(_Base):
             json=body,
         )
 
+    def list_collections(self) -> Any:
+        """GET /collections — List Collections."""
+        return self._request("GET", "/collections")
+
+    def create_collection(self, body: dict | list | None = None) -> Any:
+        """POST /collections — Create Collection."""
+        return self._request("POST", "/collections", json=body)
+
+    def rename_collection(self, collection_id: str, body: dict | list | None = None) -> Any:
+        """PATCH /collections/{collection_id} — Rename Collection."""
+        return self._request("PATCH", f"/collections/{_q(collection_id)}", json=body)
+
+    def delete_collection(self, collection_id: str) -> Any:
+        """DELETE /collections/{collection_id} — Delete Collection."""
+        return self._request("DELETE", f"/collections/{_q(collection_id)}")
+
+    def assign_collection_memberships(self, body: dict | list | None = None) -> Any:
+        """POST /collections/memberships — Assign Collection Memberships."""
+        return self._request("POST", "/collections/memberships", json=body)
+
     def list_workflows(self) -> Any:
         """GET /workflows — List Workflows."""
         return self._request("GET", "/workflows")
@@ -1061,6 +1081,13 @@ class MioClient(_Base):
         Write panel images to a ZIP or PDF without retaining every decoded page.
         """
         return self._request("POST", "/export/portable", json=body)
+
+    def import_html_album(self, body: bytes) -> Any:
+        """POST /imports/album-html — Import Html Album.
+
+        Import embedded reading images/metadata; source ZIP is the complete editable format.
+        """
+        return self._request("POST", "/imports/album-html", content=body)
 
     def submit_strip_export(self, body: dict | list | None = None) -> Any:
         """POST /export/jobs/strip — Submit Strip Export."""
@@ -1501,6 +1528,22 @@ class MioClient(_Base):
             "POST",
             f"/extension-panels/{_q(ext_id)}/{_q(panel_id)}/requests",
             json=body,
+        )
+
+    def panel_upload(
+        self,
+        ext_id: str,
+        panel_id: str,
+        files: list[tuple[str, tuple[str, bytes]]],
+    ) -> Any:
+        """POST /extension-panels/{ext_id}/{panel_id}/uploads — Panel Upload.
+
+        Upload a bounded image using only the reviewed POST /assets declaration (write scope).
+        """
+        return self._request(
+            "POST",
+            f"/extension-panels/{_q(ext_id)}/{_q(panel_id)}/uploads",
+            files=files,
         )
 
     def get_extension_settings(self, ext_id: str) -> Any:

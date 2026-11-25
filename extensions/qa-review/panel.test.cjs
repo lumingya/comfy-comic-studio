@@ -103,97 +103,151 @@ async function createPanel(
   });
   const w = dom.window;
   const calls = [];
-  const confirms = [];
-  const parent = {
-    postMessage(message) {
-      if (message.type !== "mio:panel:request") return;
-      calls.push(message);
-      queueMicrotask(async () => {
-        const result = await handler(message);
-        const status = result.status ?? 200;
-        const data = result.data ?? {};
-        if (message.request_id === "image" && status < 400) {
-          const port = {
-            onmessage: null,
-            start() {},
-            close() {},
-            postMessage() {},
-          };
-          w.dispatchEvent(
-            new w.MessageEvent("message", {
-              source: parent,
-              ports: [port],
-              data: {
-                type: "mio:panel:media",
-                version: 1,
-                session: "test-session",
-                rid: message.rid,
-                media_id: `media-${message.rid}`,
-                mime: "image/png",
-                bytes: 4,
-              },
-            }),
-          );
-          queueMicrotask(() =>
-            port.onmessage?.({
-              data: {
-                type: "image",
-                blob: new w.Blob(["png"], { type: "image/png" }),
-              },
-            }),
-          );
-          return;
-        }
-        w.dispatchEvent(
-          new w.MessageEvent("message", {
-            source: parent,
+  const windowSent = [];
+  let hostPort, childPort;
+  class MessageChannel {
+    constructor() {
+      const makePort = () => ({
+        closed: false,
+        addEventListener(name, listener) {
+          this[`on${name}`] = listener;
+        },
+        start() {},
+        close() {
+          this.closed = true;
+        },
+        postMessage(data, ports = []) {
+          if (!this.closed && !this.peer.closed)
+            this.peer.onmessage?.({ data, ports });
+        },
+      });
+      this.port1 = childPort = makePort();
+      this.port2 = makePort();
+      this.port1.peer = this.port2;
+      this.port2.peer = this.port1;
+    }
+  }
+  const receive = ({ data: message }) => {
+    if (message.type !== "mio:panel:request") return;
+    calls.push(message);
+    queueMicrotask(async () => {
+      const result = await handler(message);
+      const status = result.status ?? 200;
+      const data = result.data ?? {};
+      if (message.request_id === "image" && status < 400) {
+        const port = {
+          onmessage: null,
+          start() {},
+          close() {},
+          postMessage() {},
+        };
+        hostPort.postMessage(
+          {
+            type: "mio:panel:media",
+            version: 2,
+            session: "test-session",
+            rid: message.rid,
+            media_id: `media-${message.rid}`,
+            mime: "image/png",
+            bytes: 4,
+          },
+          [port],
+        );
+        queueMicrotask(() =>
+          port.onmessage?.({
             data: {
-              type: "mio:panel:response",
-              version: 1,
-              session: "test-session",
-              rid: message.rid,
-              status,
-              ok: status >= 200 && status < 300,
-              data,
+              type: "image",
+              blob: new w.Blob(["png"], { type: "image/png" }),
             },
           }),
         );
+        return;
+      }
+      hostPort.postMessage({
+        type: "mio:panel:response",
+        version: 2,
+        session: "test-session",
+        rid: message.rid,
+        status,
+        ok: status >= 200 && status < 300,
+        data,
       });
+    });
+  };
+  const parent = {
+    postMessage(message, origin, transfer) {
+      windowSent.push(message);
+      assert.equal(message.type, "mio:panel:ready");
+      assert.equal(message.version, 2);
+      assert.equal(origin, "*");
+      assert.equal(transfer.length, 1);
+      hostPort = transfer[0];
+      hostPort.addEventListener("message", receive);
+      hostPort.start();
     },
   };
   Object.defineProperty(w, "parent", { value: parent });
+  Object.defineProperty(w, "MessageChannel", { value: MessageChannel });
   Object.defineProperty(w.crypto, "randomUUID", { value: randomUUID });
   Object.defineProperty(w.URL, "createObjectURL", {
     value: () => "blob:fixture",
   });
   Object.defineProperty(w.URL, "revokeObjectURL", { value: () => {} });
-  w.confirm = (message) => {
-    confirms.push(message);
-    return true;
-  };
+  w.confirm = () =>
+    assert.fail("sandbox panels must use the inline confirmation controls");
   w.HTMLElement.prototype.scrollIntoView = function () {
     this.dataset.located = "true";
   };
   w.eval(script);
   const send = (type, extra = {}) =>
-    w.dispatchEvent(
-      new w.MessageEvent("message", {
-        source: parent,
-        data: { type, version: 1, session: "test-session", ...extra },
-      }),
-    );
+    hostPort.postMessage({
+      type,
+      version: 2,
+      session: "test-session",
+      ...extra,
+    });
+  w.dispatchEvent(
+    new w.MessageEvent("message", {
+      source: parent,
+      data: {
+        type: "mio:panel:init",
+        version: 2,
+        session: "test-session",
+        context: { episode_id: "wrong" },
+      },
+    }),
+  );
+  assert.equal(calls.length, 0, "window init cannot start business requests");
   send("mio:panel:init", {
     context: { episode_id: "ep", series_id: "series" },
     appearance,
   });
+  const initialTheme = w.document.documentElement.dataset.theme;
+  w.dispatchEvent(
+    new w.MessageEvent("message", {
+      source: parent,
+      data: {
+        type: "mio:panel:appearance",
+        version: 2,
+        session: "test-session",
+        appearance: { theme: initialTheme === "dark" ? "light" : "dark" },
+      },
+    }),
+  );
+  assert.equal(
+    w.document.documentElement.dataset.theme,
+    initialTheme,
+    "window appearance cannot change the panel",
+  );
   return {
     w,
     calls,
-    confirms,
     send,
     $: (id) => w.document.getElementById(id),
     close: () => {
       w.dispatchEvent(new w.Event("pagehide"));
+      assert.equal(childPort.closed, true);
+      assert.equal(windowSent.length, 1, "only ready uses the window channel");
       w.close();
     },
     click: async (id) => {
@@ -268,6 +322,11 @@ async function verifyAppearanceAndScoring() {
       p.calls.length,
       0,
       "opening a panel must not read or submit anything",
+    );
+    assert.equal(
+      p.$("confirmation").hidden,
+      true,
+      "confirmation starts hidden",
     );
     assert.equal(
       p.w.document.querySelector("h1").textContent,
@@ -366,18 +425,62 @@ async function verifyReviewActionsAndBatchAdoption() {
   try {
     await p.click("load");
     p.choose("low");
+    const beforeSelected = p.calls.length;
     await p.click("review-selected");
+    assert.equal(p.$("confirmation").hidden, false);
+    assert.match(p.$("confirmation-message").textContent, /1/);
+    assert.equal(p.w.document.activeElement, p.$("cancel-action"));
+    assert.equal(
+      p.calls.length,
+      beforeSelected,
+      "selected review waits for confirmation",
+    );
+    await p.click("cancel-action");
+    assert.equal(p.$("confirmation").hidden, true);
+    assert.equal(
+      p.calls.length,
+      beforeSelected,
+      "cancelling selected review submits nothing",
+    );
+    await p.click("review-selected");
+    p.choose("low", false);
+    p.choose("high");
+    await p.click("confirm-action");
     const review = p.calls
       .filter((call) => call.request_id === "review")
       .at(-1);
-    assert.deepEqual(Array.from(review.body.take_ids), ["low"]);
+    assert.deepEqual(
+      Array.from(review.body.take_ids),
+      ["low"],
+      "confirming uses the selection captured when the prompt opened",
+    );
     assert.equal(review.body.auto_adopt, false);
     assert.ok(review.body.idempotency_key);
     assert.equal(
       p.$("status").textContent,
       "Review queued. Refresh to check progress. Retrying the same selection reuses its idempotency key.",
     );
+    const beforeWhole = p.calls.length;
     await p.click("review-episode");
+    assert.equal(p.$("confirmation").hidden, false);
+    assert.match(p.$("confirmation-message").textContent, /4/);
+    assert.equal(
+      p.calls.length,
+      beforeWhole,
+      "whole-episode review waits for confirmation",
+    );
+    p.$("cancel-action").dispatchEvent(
+      new p.w.KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+    await flush();
+    assert.equal(p.$("confirmation").hidden, true);
+    assert.equal(
+      p.calls.length,
+      beforeWhole,
+      "Escape cancels whole-episode review",
+    );
+    await p.click("review-episode");
+    await p.click("confirm-action");
     const whole = p.calls.filter((call) => call.request_id === "review").at(-1);
     assert.equal(whole.body.auto_adopt, false);
     assert.deepEqual(Array.from(whole.body.take_ids).sort(), [
@@ -386,7 +489,24 @@ async function verifyReviewActionsAndBatchAdoption() {
       "middle",
       "unreviewed",
     ]);
+    const beforeAdopt = p.calls.length;
     await p.click("adopt-top");
+    assert.equal(p.$("confirmation").hidden, false);
+    assert.match(p.$("confirmation-message").textContent, /1/);
+    assert.equal(
+      p.calls.length,
+      beforeAdopt,
+      "batch adoption waits for confirmation",
+    );
+    await p.click("cancel-action");
+    assert.equal(p.$("confirmation").hidden, true);
+    assert.equal(
+      p.calls.length,
+      beforeAdopt,
+      "cancelling batch adoption submits nothing",
+    );
+    await p.click("adopt-top");
+    await p.click("confirm-action");
     const adoptions = p.calls.filter((call) => call.request_id === "adopt");
     assert.deepEqual(
       adoptions.map((call) => call.path_params.take_id),
@@ -406,12 +526,27 @@ async function verifyReviewActionsAndBatchAdoption() {
     );
     await p.click("refresh-job");
     assert.match(p.$("job").textContent, /completed.*1\/1/);
-    assert.equal(p.confirms.length, 3);
+    const beforeClose = p.calls.length;
+    await p.click("review-episode");
+    assert.equal(p.$("confirmation").hidden, false);
+    p.w.dispatchEvent(new p.w.Event("pagehide"));
+    await flush();
+    assert.equal(
+      p.$("confirmation").hidden,
+      true,
+      "pagehide cancels pending confirmation",
+    );
+    await p.click("confirm-action");
+    assert.equal(
+      p.calls.length,
+      beforeClose,
+      "a closed confirmation cannot submit a request",
+    );
   } finally {
     p.close();
   }
   console.log(
-    "Single/episode VLM review, explicit adoption/rejection, top-score batch, and job refresh PASS",
+    "Inline confirmation/cancellation/Escape, single/episode VLM review, explicit adoption/rejection, top-score batch, pagehide and job refresh PASS",
   );
 }
 

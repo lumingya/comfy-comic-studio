@@ -1,14 +1,14 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { ExtensionPanel } from '../api/open';
 import { raw } from '../api/client';
 import type { CreationContext } from './creationContext';
 import { createCreationChannel } from './creationChannel';
 
 export function useCreationChannel(
-  frame: RefObject<HTMLIFrameElement | null>,
   session: string,
   panel: ExtensionPanel,
   context: CreationContext | undefined,
+  send: (message: unknown) => void,
 ) {
   const channel = useRef<ReturnType<typeof createCreationChannel> | null>(null);
   const declaration = JSON.stringify(panel);
@@ -19,7 +19,7 @@ export function useCreationChannel(
       panel,
       session,
       context,
-      frame: () => frame.current?.contentWindow ?? null,
+      send,
       authorize: async (signal) => {
         const response = await raw('/api/extension-panels', { signal });
         const panels = (await response.json()) as ExtensionPanel[];
@@ -34,9 +34,7 @@ export function useCreationChannel(
       },
     });
     channel.current = current;
-    window.addEventListener('message', current.handle);
     return () => {
-      window.removeEventListener('message', current.handle);
       current.dispose();
       channel.current = null;
     };
@@ -44,5 +42,12 @@ export function useCreationChannel(
   useEffect(() => {
     if (context) channel.current?.update(context);
   }, [context]);
-  return () => channel.current?.navigated();
+  return useMemo(
+    () => ({
+      handle: (message: unknown) => channel.current?.handle(message),
+      ready: () => channel.current?.ready(),
+      dispose: () => channel.current?.dispose(),
+    }),
+    [],
+  );
 }

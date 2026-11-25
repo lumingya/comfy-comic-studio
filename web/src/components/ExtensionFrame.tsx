@@ -57,6 +57,9 @@ export function ExtensionFrame(props: {
     ...(episode ? { episode } : {}),
     ...(series ? { series } : {}),
   }).toString();
+  const creation = useCreationChannel(session, props.panel, props.creationContext, (message) =>
+    bridge.current?.postMessage(message),
+  );
   useEffect(() => {
     const panel = JSON.parse(declaration) as ExtensionPanel;
     const send = (body: unknown, signal: AbortSignal) =>
@@ -84,10 +87,27 @@ export function ExtensionFrame(props: {
       },
       binaryRequest: async (body, kind, signal) =>
         readPanelBinary(await send(body, signal), kind, signal),
+      uploadRequest: async (body, blob, signal) => {
+        const form = new FormData();
+        form.append(
+          'metadata',
+          new Blob([JSON.stringify(body)], { type: 'application/json' }),
+          'metadata.json',
+        );
+        form.append('image', blob, body.filename);
+        const response = await raw(
+          `/api/extension-panels/${encodeURIComponent(panel.extension)}/${encodeURIComponent(panel.id)}/uploads`,
+          { method: 'POST', body: form, signal },
+        );
+        return (await response.json()) as PanelResult;
+      },
       onDownloadChange: (value) => setDownload(value ? { session, value } : null),
       onMutation: () => {
         void qc.invalidateQueries();
       },
+      onReady: creation.ready,
+      onMessage: creation.handle,
+      onDispose: creation.dispose,
     });
     bridge.current = current;
     window.addEventListener('message', current.handle);
@@ -104,8 +124,7 @@ export function ExtensionFrame(props: {
       current.dispose();
       bridge.current = null;
     };
-  }, [declaration, session, episode, series, qc]);
-  const creationLoaded = useCreationChannel(frame, session, props.panel, props.creationContext);
+  }, [declaration, session, episode, series, qc, creation]);
   return (
     <>
       {download?.session === session ? (
@@ -141,8 +160,6 @@ export function ExtensionFrame(props: {
             return;
           }
           loads.loaded = true;
-          bridge.current?.abort();
-          creationLoaded();
         }}
         style={{ height: props.height ?? 480 }}
       />

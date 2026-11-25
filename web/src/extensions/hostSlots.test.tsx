@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { components } from '../api/schema';
+import { BRIDGE } from '../api/extensionProtocol';
 import { mockFetch, renderWithProviders } from '../test/utils';
 import { toastError } from '../components/toast';
 import { ContextMenu } from '../components/ContextMenu';
@@ -13,7 +14,13 @@ import {
   useHostSlotActions,
   useHostSlotMenu,
 } from './hostSlots';
-import { publishCreationContext, usePublishCreationContext } from './creationContext';
+import {
+  getCreationContext,
+  publishCreationContext,
+  releaseCreationContext,
+  usePublishCreationContext,
+  type CreationContext,
+} from './creationContext';
 
 vi.mock('../components/toast', () => ({ toastError: vi.fn() }));
 const panel = {
@@ -128,31 +135,68 @@ describe('reviewed native creation entry points', () => {
       'GET /api/extension-host-slots': entries.map((entry) => ({ ...entry, panel: subscribed })),
       'GET /api/extension-panels': [subscribed],
     });
-    renderWithProviders(<Harness targetIds={['panel-b']} />);
+    const view = renderWithProviders(<Harness targetIds={['panel-b']} />);
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Entry 1' }));
     const frame = (await screen.findByTitle('Inspect')) as HTMLIFrameElement;
     const session = new URLSearchParams(new URL(frame.src).hash.slice(1)).get('mio-session');
     const post = vi.spyOn(frame.contentWindow!, 'postMessage');
-    for (const data of [
-      { type: 'mio:panel:ready' },
-      { type: 'mio:creation:subscribe', event: 'creation.context.changed', enabled: true },
-    ]) {
-      act(() =>
+    const channel = new MessageChannel();
+    const received: { type: string; context?: CreationContext }[] = [];
+    channel.port1.onmessage = ({ data }) => received.push(data);
+    channel.port1.start();
+    const updatedOwner = Symbol('context-update');
+    try {
+      fireEvent.load(frame);
+      act(() => {
         window.dispatchEvent(
           new MessageEvent('message', {
             origin: 'null',
             source: frame.contentWindow,
-            data: { ...data, session, version: 1 },
+            data: { type: BRIDGE.panel.types.ready, session, version: BRIDGE.panel.version },
+            ports: [channel.port2],
           }),
-        ),
+        );
+      });
+      await waitFor(() =>
+        expect(received.some((message) => message.type === BRIDGE.panel.types.init)).toBe(true),
       );
+      channel.port1.postMessage({
+        type: BRIDGE.creation.subscribe,
+        session,
+        version: BRIDGE.creation.version,
+        event: 'creation.context.changed',
+        enabled: true,
+      });
+      await waitFor(() =>
+        expect(
+          received.find((message) => message.type === BRIDGE.creation.event)?.context?.selection
+            .ids,
+        ).toEqual(['panel-b']),
+      );
+      expect(getCreationContext().selection.ids).toEqual(['panel-a']);
+
+      act(() =>
+        publishCreationContext(updatedOwner, {
+          route: 'script',
+          series_id: 'work-a',
+          episode_id: 'episode-a',
+          panel_ids: ['panel-c'],
+          revision: 3,
+        }),
+      );
+      await waitFor(() =>
+        expect(
+          received.filter((message) => message.type === BRIDGE.creation.event).at(-1)?.context
+            ?.selection.ids,
+        ).toEqual(['panel-c']),
+      );
+      expect(post).not.toHaveBeenCalled();
+    } finally {
+      view.unmount();
+      channel.port1.close();
+      channel.port2.close();
+      releaseCreationContext(updatedOwner);
     }
-    await waitFor(() =>
-      expect(
-        post.mock.calls.find(([message]) => message.type === 'mio:creation:event')?.[0].context
-          .selection.ids,
-      ).toEqual(['panel-b']),
-    );
   });
 
   it('rechecks activation before opening and does not revive disabled declarations', async () => {

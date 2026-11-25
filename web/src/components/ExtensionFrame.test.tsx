@@ -1,6 +1,7 @@
 import { act, fireEvent, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ExtensionPanel } from '../api/open';
+import { BRIDGE } from '../api/extensionProtocol';
 import { renderWithProviders } from '../test/utils';
 import { ExtensionFrame } from './ExtensionFrame';
 
@@ -12,6 +13,10 @@ const panel: ExtensionPanel = {
   url: '/api/extensions/demo/files/panel.html',
   requests: [],
 };
+
+function documentPort() {
+  return { postMessage: vi.fn(), close: vi.fn(), start: vi.fn(), onmessage: null };
+}
 
 afterEach(() => {
   document.documentElement.removeAttribute('style');
@@ -31,7 +36,9 @@ describe('sandbox panel appearance context', () => {
     const view = renderWithProviders(<ExtensionFrame panel={panel} params={{ episode: 'ep-1' }} />);
     const iframe = view.getByTitle('Appearance probe') as HTMLIFrameElement;
     const child = iframe.contentWindow!;
-    const post = vi.spyOn(child, 'postMessage');
+    const windowPost = vi.spyOn(child, 'postMessage');
+    const port = documentPort();
+    const post = port.postMessage;
     fireEvent.load(iframe);
     const session = new URL(iframe.src).hash.match(/mio-session=([^&]+)/)?.[1];
     expect(session).toBeTruthy();
@@ -41,11 +48,12 @@ describe('sandbox panel appearance context', () => {
         new MessageEvent('message', {
           source: child,
           origin: 'null',
-          data: { type: 'mio:panel:ready', version: 1, session },
+          data: { type: 'mio:panel:ready', version: BRIDGE.panel.version, session },
+          ports: [port as unknown as MessagePort],
         }),
       );
     });
-    await waitFor(() => expect(post).toHaveBeenCalledWith(expect.any(Object), '*'));
+    await waitFor(() => expect(post).toHaveBeenCalledWith(expect.any(Object)));
     const init = post.mock.calls.find(([message]) => message.type === 'mio:panel:init')?.[0];
     expect(init).toEqual(
       expect.objectContaining({
@@ -74,19 +82,22 @@ describe('sandbox panel appearance context', () => {
             locale: 'en',
           },
         }),
-        '*',
       ),
     );
     const update = post.mock.calls[0][0];
     expect(update).not.toHaveProperty('context');
+    expect(windowPost).not.toHaveBeenCalled();
     view.unmount();
+    expect(port.close).toHaveBeenCalledOnce();
   });
 
   it('revokes the bridge and returns to a blank document after the panel navigates', () => {
     const view = renderWithProviders(<ExtensionFrame panel={panel} />);
     const iframe = view.getByTitle('Appearance probe') as HTMLIFrameElement;
     const child = iframe.contentWindow!;
-    const post = vi.spyOn(child, 'postMessage');
+    const windowPost = vi.spyOn(child, 'postMessage');
+    const port = documentPort();
+    const post = port.postMessage;
     const session = new URL(iframe.src).hash.match(/mio-session=([^&]+)/)?.[1];
     fireEvent.load(iframe);
     act(() => {
@@ -94,7 +105,8 @@ describe('sandbox panel appearance context', () => {
         new MessageEvent('message', {
           source: child,
           origin: 'null',
-          data: { type: 'mio:panel:ready', version: 1, session },
+          data: { type: 'mio:panel:ready', version: BRIDGE.panel.version, session },
+          ports: [port as unknown as MessagePort],
         }),
       );
     });
@@ -102,16 +114,19 @@ describe('sandbox panel appearance context', () => {
     post.mockClear();
     fireEvent.load(iframe);
     expect(iframe.getAttribute('src')).toBe('about:blank');
+    expect(port.close).toHaveBeenCalledOnce();
     act(() => {
       window.dispatchEvent(
         new MessageEvent('message', {
           source: child,
           origin: 'null',
-          data: { type: 'mio:panel:ready', version: 1, session },
+          data: { type: 'mio:panel:ready', version: BRIDGE.panel.version, session },
+          ports: [documentPort() as unknown as MessagePort],
         }),
       );
     });
     expect(post).not.toHaveBeenCalled();
+    expect(windowPost).not.toHaveBeenCalled();
     view.unmount();
   });
 });

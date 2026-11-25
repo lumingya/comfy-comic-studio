@@ -12,9 +12,16 @@ function initial(): Locale {
   return typeof navigator !== 'undefined' && navigator.language.startsWith('zh') ? 'zh-CN' : 'en';
 }
 
+const initialLocale = initial();
+const syncDocumentLanguage = (locale: string) => {
+  if (typeof document !== 'undefined') document.documentElement.lang = locale;
+};
+syncDocumentLanguage(initialLocale);
+i18n.on('languageChanged', syncDocumentLanguage);
+
 void i18n.use(initReactI18next).init({
   resources: { 'zh-CN': { translation: zh }, en: { translation: en } },
-  lng: initial(),
+  lng: initialLocale,
   fallbackLng: 'zh-CN',
   interpolation: { escapeValue: false },
   returnNull: false,

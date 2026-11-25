@@ -1,6 +1,8 @@
 "use strict";
 
 const session = new URLSearchParams(location.hash.slice(1)).get("mio-session");
+const channel = new MessageChannel();
+const transport = channel.port1;
 const pending = new Map();
 const $ = (id) => document.getElementById(id);
 let context = null;
@@ -17,16 +19,15 @@ function request(request_id, payload = {}) {
       reject(new Error("请求超时，请先检查任务状态，再决定是否重试。"));
     }, 32000);
     pending.set(rid, { resolve, reject, timer });
-    parent.postMessage(
+    transport.postMessage(
       {
         type: "mio:panel:request",
-        version: 1,
+        version: 2,
         session,
         rid,
         request_id,
         ...payload,
       },
-      "*",
     );
   });
 }
@@ -248,12 +249,11 @@ $("refresh-job").addEventListener("click", () =>
   }),
 );
 
-addEventListener("message", (event) => {
+transport.addEventListener("message", (event) => {
   const message = event.data;
   if (
-    event.source !== parent ||
     !message ||
-    message.version !== 1 ||
+    message.version !== 2 ||
     message.session !== session
   )
     return;
@@ -280,4 +280,14 @@ addEventListener("message", (event) => {
       );
   }
 });
-parent.postMessage({ type: "mio:panel:ready", version: 1, session }, "*");
+addEventListener("pagehide", () => {
+  for (const value of pending.values()) clearTimeout(value.timer);
+  pending.clear();
+  transport.close();
+});
+transport.start();
+parent.postMessage(
+  { type: "mio:panel:ready", version: 2, session },
+  "*",
+  [channel.port2],
+);

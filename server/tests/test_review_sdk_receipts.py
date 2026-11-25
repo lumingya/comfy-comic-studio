@@ -8,6 +8,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
+from mio_server.album_interchange import ImportedAlbumBook, ImportedAlbumFrame
 from mio_server.models import Dialogue, Episode, Panel, PanelOverrides, Strip
 
 from . import test_sdk_automation as automation_tests
@@ -151,6 +152,51 @@ class SDKReceiptReviewTests(ApiCase):
                     self.automation.submission_content(minimal, kind),
                     self.automation.submission_content(model.model_dump(mode="json"), kind),
                 )
+
+    def test_nonempty_album_sources_remain_part_of_full_submission_comparison(self):
+        board = self.automation.parse_markdown(STORY)
+        actual = self.mio.create_storyboard(board)
+        for path, source, field in (
+            (
+                (),
+                ImportedAlbumBook(
+                    title="Original album",
+                    synopsis="A quiet moment.",
+                    character_name="",
+                    story_title="Neutral",
+                    mapped_series_title="Original album",
+                    mapped_episode_title="Neutral",
+                    mapped_synopsis="A quiet moment.",
+                ).model_dump(mode="json"),
+                "title",
+            ),
+            (
+                ("panels", 0),
+                ImportedAlbumFrame(
+                    name="First",
+                    prompt="a red chair",
+                    mapped_description="First",
+                    mapped_caption="Hello.",
+                    mapped_prompt="a red chair",
+                ).model_dump(mode="json"),
+                "prompt",
+            ),
+        ):
+            with self.subTest(path=path):
+                sourced = json.loads(json.dumps(actual))
+                target = sourced
+                for key in path:
+                    target = target[key]
+                target["album_source"] = source
+                self.assertFalse(self.automation.matches_submission(board, sourced))
+                expected = json.loads(json.dumps(board))
+                expected_target = expected
+                for key in path:
+                    expected_target = expected_target[key]
+                expected_target["album_source"] = dict(source)
+                self.assertTrue(self.automation.matches_submission(expected, sourced))
+                target["album_source"][field] = "Different source content"
+                self.assertFalse(self.automation.matches_submission(expected, sourced))
 
     def test_pending_binding_rejects_changed_canvas_without_post_or_private_output(self):
         destination = Path(self.tmp) / "pending-canvas"

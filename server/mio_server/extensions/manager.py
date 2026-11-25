@@ -358,14 +358,12 @@ class ExtensionManager:
             log.warning("MIO_SAFE_MODE=1: extensions are not loaded")
             return
         for ext_id, state in self.ctx.settings().extensions.items():
-            if (
-                state.enabled
-                and not (self.root / ext_id / MANIFEST).is_file()
-                and (BUILTIN_ROOT / ext_id / MANIFEST).is_file()
+            if state.enabled and (
+                (self.root / ext_id / MANIFEST).is_file()
+                or (BUILTIN_ROOT / ext_id / MANIFEST).is_file()
             ):
-                self._save_state(ext_id, True, self.info(ext_id).digest)
-                self.load(ext_id)
-            elif state.enabled and (self.root / ext_id / MANIFEST).is_file():
+                # Bundled packages retain the same reviewed pin as imported packages.
+                # A restart or application update cannot authorize changed executable content.
                 self.load(ext_id)
 
     @operation_serialized

@@ -232,7 +232,9 @@ async def dispatch_media(request, spec, path, body, validate, still_active, rele
             media_type=mime,
             headers={
                 "Content-Length": str(total),
-                "Content-Disposition": "attachment; filename*=UTF-8''" + quote(filename),
+                # The host fetches these bytes and offers its own explicit save action.
+                # A disposition can cause browser download handlers to intercept fetch.
+                "X-Mio-Panel-Filename": quote(filename, safe=""),
                 "Cache-Control": "no-store",
                 "X-Content-Type-Options": "nosniff",
                 "Content-Security-Policy": "default-src 'none'; sandbox",

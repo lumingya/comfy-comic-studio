@@ -4,10 +4,16 @@
   const session = new URLSearchParams(location.hash.slice(1)).get(
     "mio-session",
   );
+  const channel = new MessageChannel();
+  const transport = channel.port1;
   const events = new Set(["creation.context.changed", "selection.changed"]);
   const $ = (id) => document.getElementById(id);
   const post = (message) =>
-    parent.postMessage({ version: 1, session, ...message }, "*");
+    transport.postMessage({
+      version: message.type.startsWith("mio:creation:") ? 1 : 2,
+      session,
+      ...message,
+    });
   const say = (text) => {
     $("status").textContent = text;
   };
@@ -127,9 +133,8 @@
     const message = event.data;
     if (
       closed ||
-      event.source !== parent ||
       !message ||
-      message.version !== 1 ||
+      message.version !== (message.type === "mio:creation:event" ? 1 : 2) ||
       message.session !== session
     )
       return;
@@ -168,13 +173,19 @@
     closed = true;
     if (pending) clearTimeout(pending.timeout);
     pending = null;
-    removeEventListener("message", onMessage);
+    transport.removeEventListener("message", onMessage);
+    transport.close();
     $("read").removeEventListener("click", read);
     removeEventListener("pagehide", close);
     update();
   }
-  addEventListener("message", onMessage);
+  transport.addEventListener("message", onMessage);
   addEventListener("pagehide", close);
   $("read").addEventListener("click", read);
-  post({ type: "mio:panel:ready" });
+  transport.start();
+  parent.postMessage(
+    { type: "mio:panel:ready", version: 2, session },
+    "*",
+    [channel.port2],
+  );
 })();

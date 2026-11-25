@@ -106,6 +106,7 @@ SUBMISSION_DEFAULTS = {
         "panels": [],
         "takes": [],
         "strip": {},
+        "album_source": None,
         "deleted_at": None,
     },
     "panel": {
@@ -132,6 +133,7 @@ SUBMISSION_DEFAULTS = {
         "locked": False,
         "overrides": {},
         "motion": None,
+        "album_source": None,
     },
     "dialogue": {"speaker_id": None, "kind": "speech", "bridge": False},
     "overrides": {

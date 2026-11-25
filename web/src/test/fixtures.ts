@@ -109,6 +109,7 @@ function panel(i: number, extra: Partial<Panel> = {}): Panel {
       profile_id: null,
     },
     motion: null,
+    album_source: null,
     ...extra,
   };
 }
@@ -176,6 +177,7 @@ export const episode: Episode = {
   updated_at: T,
   deleted_at: null,
   revision: 3,
+  album_source: null,
 };
 
 export const job: Job = {

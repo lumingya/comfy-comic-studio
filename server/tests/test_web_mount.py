@@ -45,6 +45,11 @@ class WebMountTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertIn("immutable", r.headers["cache-control"])
 
+    def test_shell_limits_frame_destinations_without_allowing_data_host_or_data_urls(self):
+        for path in ("/", "/settings", "/index.html"):
+            response = self.client.get(path)
+            self.assertEqual(response.headers["content-security-policy"], "frame-src 'self' blob:")
+
     def test_unknown_api_and_missing_files_are_404(self):
         for path in ("/api/nope", "/api", "/assets/index-old.js", "/favicon.ico"):
             r = self.client.get(path)

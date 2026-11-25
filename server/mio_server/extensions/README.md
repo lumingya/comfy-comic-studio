@@ -374,17 +374,36 @@ def activate(mio):
 每面板最多 32 个声明，只声明实际需要的接口。管理员允许敏感接口意味着面板可收到其原始 JSON
 结果，包括接口正常返回的设置或新建令牌；桥不会自行增加权限或向面板透露请求头。
 
-协议版本为 `1`。面板从 `location.hash` 的 `mio-session` 读取会话 nonce，然后向 `parent` 发送
-`{type:"mio:panel:ready", version:1, session}`。父窗口返回同会话的 `mio:panel:init`，包含
-`context:{episode_id?,series_id?}`、`appearance:{tokens,theme,locale}`、`requests` 与 `limits`。面板也必须检查 `event.source === parent`
-和会话。只有用户明确点击操作时，发送：
+面板协议版本为 `2`。面板从 `location.hash` 的 `mio-session` 读取会话 nonce，在自己的文档中
+创建 `MessageChannel`，只在首次 ready 时向 `parent` 转交 `port2`：
+
+```js
+const session = new URLSearchParams(location.hash.slice(1)).get('mio-session');
+const channel = new MessageChannel();
+const transport = channel.port1;
+transport.onmessage = (event) => {
+  const message = event.data;
+  if (!message || message.version !== 2 || message.session !== session) return;
+  // 处理 init / appearance / response / media；图片子端口位于 event.ports。
+};
+transport.start();
+parent.postMessage({ type: 'mio:panel:ready', version: 2, session }, '*', [channel.port2]);
+addEventListener('pagehide', () => transport.close(), { once: true });
+```
+
+父窗口只接受与 opaque origin、实际 iframe、会话匹配的一次端口握手，不允许重绑。
+其后所有面板请求、回复、媒体交付和创作上下文订阅都走同一个 `transport`，没有 window 消息回退。
+端口绑定创建它的文档，导航目标不会继承它；宿主不向可能已导航的 WindowProxy 回传端口或业务数据。
+关闭、切换或重载面板会关闭端口。父窗口通过端口返回同会话的 `mio:panel:init`，包含
+`context:{episode_id?,series_id?}`、`appearance:{tokens,theme,locale}`、`requests` 与 `limits`。
+面板必须检查端口消息的会话和版本。只有用户明确点击操作时，发送：
 
 应用外观会在 `mio:panel:init` 中提供，并在明暗主题或界面语言改变时通过 `mio:panel:appearance` 更新：
 
 ```json
 {
   "type": "mio:panel:appearance",
-  "version": 1,
+  "version": 2,
   "session": "当前 iframe 会话值",
   "appearance": {
     "tokens": { "bg": "#17191b", "accent": "#e0a070" },
@@ -394,17 +413,17 @@ def activate(mio):
 }
 ```
 
-`tokens` 只包含已知颜色令牌，未定义的值省略；`theme` 为 `dark`、`light` 或 `null`，`locale` 例如 `zh-CN` / `en`。这是只读显示上下文，不会进入面板 API 请求或业务 `context`。面板仍须校验 session 与 `event.source === parent`。
+`tokens` 只包含已知颜色令牌，未定义的值省略；`theme` 为 `dark`、`light` 或 `null`，`locale` 例如 `zh-CN` / `en`。这是只读显示上下文，不会进入面板 API 请求或业务 `context`。面板仍须校验端口消息的 session 与版本。
 
 ```js
-parent.postMessage({
-  type: 'mio:panel:request', version: 1, session, rid: crypto.randomUUID(),
+transport.postMessage({
+  type: 'mio:panel:request', version: 2, session, rid: crypto.randomUUID(),
   request_id: 'episode', path_params: { episode_id: context.episode_id },
   // 可选 query（标量或字符串数组）和 JSON body；不能指定 URL、headers 或 context。
-}, '*');
+});
 ```
 
-回应为 `{type:"mio:panel:response", version:1, session, rid, status, ok, data}`；操作失败会返回
+回应为 `{type:"mio:panel:response", version:2, session, rid, status, ok, data}`；操作失败会返回
 原 HTTP 状态与 JSON 错误。父窗口只接受实际 iframe 的消息、匹配的随机会话与未使用的 `rid`。
 每会话最多 256 个请求、同时 4 个、输入 64 KiB，默认 JSON 输出最多 1 MiB，支持 JSON/204。
 不能跟随重定向或递归调用桥。切换、重载或关闭面板会中止未完成请求并丢弃迟到结果。
@@ -423,6 +442,18 @@ parent.postMessage({
 由面板在自己的 opaque origin 创建临时 URL，不传宿主 Blob URL 字符串。换图及撤销时释放
 本地 URL、端口，并发送 `mio:panel:release`。下载走原操作权限，宿主准备文件后显示原生按钮，
 由用户手势完成保存；面板没有静默下载权限。完整消息、额度与复制示例见[媒体桥契约](../../../docs/EXTENSION_MEDIA_BRIDGE.md)。
+
+需要提交蒙版等图片时，声明 `{"id":"upload-mask","method":"POST","path":"/assets","scope":"write","input":"image"}`。
+`input:"image"` 仅允许这个目标与 JSON 响应；普通 JSON 请求不能使用该声明。面板在握手端口发送
+`{type:"mio:panel:upload",version:2,session,rid,request_id:"upload-mask",filename:"mask.png",blob}`，
+其中 `blob` 必须是原生图片 Blob，不是 base64。图片最多 32 MiB、16 × 1024 × 1024 像素；
+PNG / JPEG / WebP / GIF 必须可完整解码且只有一帧，SVG、伪装格式与解码炸弹拒绝。
+独立元数据仍限 64 KiB，原 JSON 请求限额不变。返回普通的 `mio:panel:response`，其 data 为原素材操作结果。
+
+宿主把受信任的 activation、digest、绑定 context 与图片元数据放进 multipart 的 `metadata`
+JSON 文件部分，原字节放进 `image` 部分，发送到 `POST /api/extension-panels/{ext_id}/{panel_id}/uploads`
+（开放接口前缀为 `/api/v2`）。激活身份不放 URL。服务端复核摘要、声明、上下文、字节与像素后，
+以原始字节调用既有 `POST /assets?filename=...`；入口及真实目标都要求 `write` 权限，不暴露任意上传 URL 或请求头。
 
 ## 显式 QA 扩展示例
 

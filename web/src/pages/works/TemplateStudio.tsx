@@ -168,6 +168,7 @@ export function TemplateStudio(props: {
           lettered: props.preview.lettered,
           show_captions: props.preview.captions,
           deduplicate_captions: props.preview.deduplicateCaptions ?? true,
+          include_source_data: false,
           image_profile: 'preview',
           max_width: 900,
         }

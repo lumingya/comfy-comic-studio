@@ -38,6 +38,12 @@
       "title": "Image Profile",
       "type": "string"
      },
+     "include_source_data": {
+      "default": false,
+      "description": "Include captions and compiled positive prompts for reimporting the exported reading projection; independent of visible captions/prompts. Use a .mio.zip source file to preserve the complete editable project.",
+      "title": "Include Source Data",
+      "type": "boolean"
+     },
      "lettered": {
       "default": true,
       "description": "Preserve a saved canvas as complete full-width composition parts; without a saved composition, or when false, use complete adopted originals",
@@ -164,6 +170,12 @@
       "title": "Image Profile",
       "type": "string"
      },
+     "include_source_data": {
+      "default": false,
+      "description": "Include captions and compiled positive prompts for reimporting the exported reading projection; independent of visible captions/prompts. Use a .mio.zip source file to preserve the complete editable project.",
+      "title": "Include Source Data",
+      "type": "boolean"
+     },
      "lettered": {
       "default": true,
       "description": "Preserve a saved canvas as complete full-width composition parts; without a saved composition, or when false, use complete adopted originals",
@@ -238,6 +250,58 @@
      "episode_ids"
     ],
     "title": "AlbumExportJob",
+    "type": "object"
+   },
+   "AlbumImportResult": {
+    "properties": {
+     "episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Episode Ids",
+      "type": "array"
+     },
+     "imported_assets": {
+      "title": "Imported Assets",
+      "type": "integer"
+     },
+     "imported_books": {
+      "title": "Imported Books",
+      "type": "integer"
+     },
+     "imported_frames": {
+      "title": "Imported Frames",
+      "type": "integer"
+     },
+     "series_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Series Ids",
+      "type": "array"
+     },
+     "source_data_used": {
+      "title": "Source Data Used",
+      "type": "boolean"
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+     }
+    },
+    "required": [
+     "series_ids",
+     "episode_ids",
+     "imported_books",
+     "imported_frames",
+     "imported_assets",
+     "source_data_used",
+     "warnings"
+    ],
+    "title": "AlbumImportResult",
     "type": "object"
    },
    "ApplyRequest": {
@@ -2054,6 +2118,268 @@
     "title": "CloudRequestedParameters",
     "type": "object"
    },
+   "Collection": {
+    "additionalProperties": false,
+    "properties": {
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     },
+     "updated_at": {
+      "title": "Updated At",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "created_at",
+     "updated_at"
+    ],
+    "title": "Collection",
+    "type": "object"
+   },
+   "CollectionAssignment": {
+    "additionalProperties": false,
+    "properties": {
+     "collection_id": {
+      "anyOf": [
+       {
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Collection Id"
+     },
+     "expected_revision": {
+      "minimum": 0.0,
+      "title": "Expected Revision",
+      "type": "integer"
+     },
+     "series_id": {
+      "minLength": 1,
+      "title": "Series Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "series_id",
+     "collection_id",
+     "expected_revision"
+    ],
+    "title": "CollectionAssignment",
+    "type": "object"
+   },
+   "CollectionAssignmentResult": {
+    "additionalProperties": false,
+    "properties": {
+     "changes": {
+      "items": {
+       "$ref": "#/components/schemas/CollectionMembershipChange"
+      },
+      "title": "Changes",
+      "type": "array"
+     },
+     "index": {
+      "$ref": "#/components/schemas/CollectionsIndex"
+     }
+    },
+    "required": [
+     "changes",
+     "index"
+    ],
+    "title": "CollectionAssignmentResult",
+    "type": "object"
+   },
+   "CollectionAssignments": {
+    "additionalProperties": false,
+    "properties": {
+     "assignments": {
+      "items": {
+       "$ref": "#/components/schemas/CollectionAssignment"
+      },
+      "minItems": 1,
+      "title": "Assignments",
+      "type": "array"
+     }
+    },
+    "required": [
+     "assignments"
+    ],
+    "title": "CollectionAssignments",
+    "type": "object"
+   },
+   "CollectionCard": {
+    "additionalProperties": false,
+    "properties": {
+     "album_count": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Album Count",
+      "type": "integer"
+     },
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     },
+     "updated_at": {
+      "title": "Updated At",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "created_at",
+     "updated_at",
+     "album_count"
+    ],
+    "title": "CollectionCard",
+    "type": "object"
+   },
+   "CollectionCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "CollectionCreate",
+    "type": "object"
+   },
+   "CollectionMembership": {
+    "additionalProperties": false,
+    "properties": {
+     "collection_id": {
+      "anyOf": [
+       {
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Collection Id"
+     },
+     "revision": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Revision",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "collection_id",
+     "revision"
+    ],
+    "title": "CollectionMembership",
+    "type": "object"
+   },
+   "CollectionMembershipChange": {
+    "additionalProperties": false,
+    "properties": {
+     "after": {
+      "$ref": "#/components/schemas/CollectionMembership"
+     },
+     "before": {
+      "$ref": "#/components/schemas/CollectionMembership"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "series_id",
+     "before",
+     "after"
+    ],
+    "title": "CollectionMembershipChange",
+    "type": "object"
+   },
+   "CollectionPatch": {
+    "additionalProperties": false,
+    "properties": {
+     "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "CollectionPatch",
+    "type": "object"
+   },
+   "CollectionsIndex": {
+    "additionalProperties": false,
+    "properties": {
+     "collections": {
+      "items": {
+       "$ref": "#/components/schemas/CollectionCard"
+      },
+      "title": "Collections",
+      "type": "array"
+     },
+     "memberships": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/CollectionMembership"
+      },
+      "title": "Memberships",
+      "type": "object"
+     },
+     "total_count": {
+      "minimum": 0.0,
+      "title": "Total Count",
+      "type": "integer"
+     },
+     "unfiled_count": {
+      "minimum": 0.0,
+      "title": "Unfiled Count",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "collections",
+     "memberships",
+     "total_count",
+     "unfiled_count"
+    ],
+    "title": "CollectionsIndex",
+    "type": "object"
+   },
    "ComfyInstance-Input": {
     "additionalProperties": false,
     "properties": {
@@ -2169,6 +2495,28 @@
      }
     },
     "title": "CompileRequest",
+    "type": "object"
+   },
+   "Composition": {
+    "additionalProperties": false,
+    "properties": {
+     "height": {
+      "exclusiveMinimum": 0.0,
+      "title": "Height",
+      "type": "integer"
+     },
+     "width": {
+      "maximum": 2400.0,
+      "minimum": 320.0,
+      "title": "Width",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "width",
+     "height"
+    ],
+    "title": "Composition",
     "type": "object"
    },
    "CompositionPreview": {
@@ -2761,6 +3109,17 @@
    "Episode": {
     "additionalProperties": false,
     "properties": {
+     "album_source": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ImportedAlbumBook"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Inert exact book metadata from an offline HTML album."
+     },
      "base_prompt": {
       "default": "",
       "description": "Starting template (起手模板) copied into the prompt of new blank panels; never resolved at render time.",
@@ -2841,6 +3200,7 @@
      "panels",
      "takes",
      "strip",
+     "album_source",
      "created_at",
      "updated_at",
      "deleted_at",
@@ -3906,6 +4266,180 @@
      "missing"
     ],
     "title": "IdentityCheck",
+    "type": "object"
+   },
+   "ImageReference": {
+    "additionalProperties": false,
+    "properties": {
+     "$mioImage": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "$Mioimage",
+      "type": "string"
+     }
+    },
+    "required": [
+     "$mioImage"
+    ],
+    "title": "ImageReference",
+    "type": "object"
+   },
+   "ImportedAlbumBook": {
+    "additionalProperties": false,
+    "properties": {
+     "character_name": {
+      "title": "Character Name",
+      "type": "string"
+     },
+     "composition": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Composition"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "mapped_episode_title": {
+      "title": "Mapped Episode Title",
+      "type": "string"
+     },
+     "mapped_series_title": {
+      "title": "Mapped Series Title",
+      "type": "string"
+     },
+     "mapped_synopsis": {
+      "title": "Mapped Synopsis",
+      "type": "string"
+     },
+     "story_title": {
+      "title": "Story Title",
+      "type": "string"
+     },
+     "synopsis": {
+      "title": "Synopsis",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "title",
+     "synopsis",
+     "character_name",
+     "story_title",
+     "mapped_series_title",
+     "mapped_episode_title",
+     "mapped_synopsis"
+    ],
+    "title": "ImportedAlbumBook",
+    "type": "object"
+   },
+   "ImportedAlbumFrame": {
+    "additionalProperties": false,
+    "description": "Exact inert import projection plus the corresponding initial editable fields.",
+    "properties": {
+     "caption": {
+      "default": "",
+      "title": "Caption",
+      "type": "string"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "image": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ImageReference"
+       },
+       {
+        "const": "",
+        "type": "string"
+       }
+      ],
+      "default": "",
+      "title": "Image"
+     },
+     "mapped_asset_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mapped Asset Id"
+     },
+     "mapped_caption": {
+      "title": "Mapped Caption",
+      "type": "string"
+     },
+     "mapped_description": {
+      "title": "Mapped Description",
+      "type": "string"
+     },
+     "mapped_prompt": {
+      "title": "Mapped Prompt",
+      "type": "string"
+     },
+     "name": {
+      "default": "",
+      "title": "Name",
+      "type": "string"
+     },
+     "prompt": {
+      "default": "",
+      "title": "Prompt",
+      "type": "string"
+     },
+     "sourceRegion": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "integer"
+        },
+        "maxItems": 4,
+        "minItems": 4,
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sourceregion"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     }
+    },
+    "required": [
+     "mapped_description",
+     "mapped_caption",
+     "mapped_prompt"
+    ],
+    "title": "ImportedAlbumFrame",
     "type": "object"
    },
    "InspectRequest": {
@@ -5777,7 +6311,7 @@
       "type": "string"
      },
      "version": {
-      "const": 1,
+      "const": 2,
       "title": "Version",
       "type": "integer"
      }
@@ -5922,6 +6456,9 @@
       "$ref": "#/components/schemas/MioContract_PanelRequestMessage"
      },
      {
+      "$ref": "#/components/schemas/MioContract_PanelUploadMessage"
+     },
+     {
       "$ref": "#/components/schemas/MioContract_PanelReleaseMessage"
      }
     ],
@@ -5958,7 +6495,7 @@
       "type": "string"
      },
      "version": {
-      "const": 1,
+      "const": 2,
       "title": "Version",
       "type": "integer"
      }
@@ -6061,7 +6598,7 @@
       "type": "string"
      },
      "version": {
-      "const": 1,
+      "const": 2,
       "title": "Version",
       "type": "integer"
      }
@@ -6093,7 +6630,7 @@
       "type": "string"
      },
      "version": {
-      "const": 1,
+      "const": 2,
       "title": "Version",
       "type": "integer"
      }
@@ -6126,7 +6663,7 @@
       "type": "string"
      },
      "version": {
-      "const": 1,
+      "const": 2,
       "title": "Version",
       "type": "integer"
      }
@@ -6205,7 +6742,7 @@
       "type": "string"
      },
      "version": {
-      "const": 1,
+      "const": 2,
       "title": "Version",
       "type": "integer"
      }
@@ -6226,6 +6763,15 @@
      "id": {
       "pattern": "^[a-z0-9][a-z0-9_-]{0,47}$",
       "title": "Id",
+      "type": "string"
+     },
+     "input": {
+      "default": "json",
+      "enum": [
+       "json",
+       "image"
+      ],
+      "title": "Input",
       "type": "string"
      },
      "method": {
@@ -6305,7 +6851,7 @@
       "type": "string"
      },
      "version": {
-      "const": 1,
+      "const": 2,
       "title": "Version",
       "type": "integer"
      }
@@ -6399,6 +6945,113 @@
     ],
     "title": "PanelToFrame"
    },
+   "MioContract_PanelUploadMessage": {
+    "additionalProperties": false,
+    "description": "Metadata only; the message's blob property is a native Blob, never JSON/base64.",
+    "properties": {
+     "filename": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Filename",
+      "type": "string"
+     },
+     "request_id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+     },
+     "rid": {
+      "pattern": "^[A-Za-z0-9_-]{1,80}$",
+      "title": "Rid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:panel:upload",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 2,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "rid",
+     "request_id",
+     "filename"
+    ],
+    "title": "PanelUploadMessage",
+    "type": "object"
+   },
+   "MioContract_PanelUploadRequest": {
+    "additionalProperties": false,
+    "description": "Bounded multipart metadata; the image is a separate native binary part.",
+    "properties": {
+     "activation": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Activation",
+      "type": "string"
+     },
+     "bytes": {
+      "exclusiveMinimum": 0,
+      "maximum": 33554432,
+      "title": "Bytes",
+      "type": "integer"
+     },
+     "context": {
+      "$ref": "#/components/schemas/MioContract_PanelContext"
+     },
+     "digest": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Digest",
+      "type": "string"
+     },
+     "filename": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Filename",
+      "type": "string"
+     },
+     "mime": {
+      "enum": [
+       "image/png",
+       "image/jpeg",
+       "image/webp",
+       "image/gif"
+      ],
+      "title": "Mime",
+      "type": "string"
+     },
+     "request_id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "activation",
+     "digest",
+     "request_id",
+     "filename",
+     "mime",
+     "bytes"
+    ],
+    "title": "PanelUploadRequest",
+    "type": "object"
+   },
    "MioContract_PlatformContracts": {
     "additionalProperties": false,
     "properties": {
@@ -6435,6 +7088,9 @@
      "panel_to_frame": {
       "$ref": "#/components/schemas/MioContract_PanelToFrame"
      },
+     "panel_upload": {
+      "$ref": "#/components/schemas/MioContract_PanelUploadRequest"
+     },
      "theme_settings_from_frame": {
       "$ref": "#/components/schemas/MioContract_ThemeSettingsFromFrame"
      },
@@ -6455,6 +7111,7 @@
      "panel_context",
      "panel_call",
      "panel_result",
+     "panel_upload",
      "panel_from_frame",
      "panel_to_frame",
      "workspace_from_frame",
@@ -7708,6 +8365,17 @@
    "Panel-Input": {
     "additionalProperties": false,
     "properties": {
+     "album_source": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ImportedAlbumFrame"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Inert exact projection retained from an offline HTML album."
+     },
      "angle": {
       "default": "",
       "enum": [
@@ -7906,6 +8574,17 @@
    "Panel-Output": {
     "additionalProperties": false,
     "properties": {
+     "album_source": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ImportedAlbumFrame"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Inert exact projection retained from an offline HTML album."
+     },
      "angle": {
       "default": "",
       "enum": [
@@ -8120,7 +8799,8 @@
      "regional",
      "locked",
      "overrides",
-     "motion"
+     "motion",
+     "album_source"
     ],
     "title": "Panel",
     "type": "object"
@@ -8807,6 +9487,15 @@
       "title": "Id",
       "type": "string"
      },
+     "input": {
+      "default": "json",
+      "enum": [
+       "json",
+       "image"
+      ],
+      "title": "Input",
+      "type": "string"
+     },
      "method": {
       "enum": [
        "GET",
@@ -8850,7 +9539,8 @@
      "method",
      "path",
      "scope",
-     "response"
+     "response",
+     "input"
     ],
     "title": "PanelRequestSpec",
     "type": "object"
@@ -15332,6 +16022,242 @@
     "x-mio-operation": "POST /bundles"
    }
   },
+  "/collections": {
+   "get": {
+    "operationId": "list_collections",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CollectionsIndex"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Collections",
+    "tags": [
+     "collections"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /collections"
+   },
+   "post": {
+    "operationId": "create_collection",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CollectionCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Collection"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Create Collection",
+    "tags": [
+     "collections"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "payload"
+    ],
+    "x-mio-operation": "POST /collections"
+   }
+  },
+  "/collections/memberships": {
+   "post": {
+    "operationId": "assign_collection_memberships",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CollectionAssignments"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CollectionAssignmentResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Assign Collection Memberships",
+    "tags": [
+     "collections"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "payload"
+    ],
+    "x-mio-operation": "POST /collections/memberships"
+   }
+  },
+  "/collections/{collection_id}": {
+   "delete": {
+    "operationId": "delete_collection",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "collection_id",
+      "required": true,
+      "schema": {
+       "title": "Collection Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Delete Collection",
+    "tags": [
+     "collections"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "collection_id"
+    ],
+    "x-mio-operation": "DELETE /collections/{collection_id}"
+   },
+   "patch": {
+    "operationId": "rename_collection",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "collection_id",
+      "required": true,
+      "schema": {
+       "title": "Collection Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CollectionPatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Collection"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Rename Collection",
+    "tags": [
+     "collections"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "collection_id",
+     "payload"
+    ],
+    "x-mio-operation": "PATCH /collections/{collection_id}"
+   }
+  },
   "/comfy-adapters": {
    "get": {
     "description": "Available adapter contracts and reviewed source identities.",
@@ -19604,6 +20530,96 @@
     "x-mio-operation": "POST /extension-panels/{ext_id}/{panel_id}/requests"
    }
   },
+  "/extension-panels/{ext_id}/{panel_id}/uploads": {
+   "post": {
+    "description": "Upload a bounded image using only the reviewed POST /assets declaration (write scope).",
+    "operationId": "panel_upload",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "panel_id",
+      "required": true,
+      "schema": {
+       "title": "Panel Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "properties": {
+         "image": {
+          "format": "binary",
+          "type": "string"
+         },
+         "metadata": {
+          "description": "UTF-8 PanelUploadRequest JSON file, at most 64 KiB",
+          "format": "binary",
+          "type": "string"
+         }
+        },
+        "required": [
+         "metadata",
+         "image"
+        ],
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PanelBridgeResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Panel Upload",
+    "tags": [
+     "extensions",
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request",
+     "ext_id",
+     "panel_id"
+    ],
+    "x-mio-operation": "POST /extension-panels/{ext_id}/{panel_id}/uploads"
+   }
+  },
   "/extension-surfaces": {
    "get": {
     "operationId": "extension_surfaces",
@@ -20258,6 +21274,49 @@
      "ctx"
     ],
     "x-mio-operation": "GET /image-channels"
+   }
+  },
+  "/imports/album-html": {
+   "post": {
+    "description": "Import embedded reading images/metadata; source ZIP is the complete editable format.",
+    "operationId": "import_html_album",
+    "requestBody": {
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AlbumImportResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Import Html Album",
+    "tags": [
+     "album"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "POST /imports/album-html"
    }
   },
   "/instances": {

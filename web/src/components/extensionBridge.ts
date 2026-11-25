@@ -9,6 +9,7 @@ import {
   type PanelToFrame,
 } from '../api/extensionProtocol';
 import { createPanelMedia, type PanelBinary, type PanelDownload } from './extensionMedia';
+import { readImageDimensions } from './imageHeader';
 
 export const PANEL_REQUEST_LIMIT = BRIDGE.panel.limits.requestBytes;
 export const PANEL_RESPONSE_LIMIT = BRIDGE.panel.limits.responseBytes;
@@ -19,6 +20,14 @@ export type PanelContext = ContractPanelContext;
 export type PanelAppearance = ContractPanelAppearance;
 export type PanelCall = PanelBridgeRequest;
 export type PanelResult = PanelBridgeResponse;
+export type PanelUploadCall = Pick<
+  PanelCall,
+  'activation' | 'digest' | 'request_id' | 'context'
+> & {
+  filename: string;
+  mime: string;
+  bytes: number;
+};
 
 function jsonSize(value: unknown): number {
   return new TextEncoder().encode(JSON.stringify(value)).byteLength;
@@ -28,8 +37,8 @@ function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-/** The nonce arrives in the initial frame URL fragment, never in a server log or API call.
- * A page navigated into the same opaque window cannot acquire a new nonce by asking for init.
+/** The first document supplies a port with its URL-fragment nonce. Unlike its WindowProxy,
+ * this endpoint does not follow the iframe to a later document, even before that document loads.
  */
 export function createPanelBridge(options: {
   panel: ExtensionPanel;
@@ -43,8 +52,12 @@ export function createPanelBridge(options: {
     kind: 'image' | 'download',
     signal: AbortSignal,
   ) => Promise<PanelBinary>;
+  uploadRequest?: (body: PanelUploadCall, blob: Blob, signal: AbortSignal) => Promise<PanelResult>;
   onDownloadChange?: (value: PanelDownload | null) => void;
   onMutation?: () => void;
+  onReady?: () => void;
+  onMessage?: (message: unknown) => void;
+  onDispose?: () => void;
 }) {
   const { panel, session, context } = options;
   let appearance = options.appearance;
@@ -53,13 +66,16 @@ export function createPanelBridge(options: {
   const media = createPanelMedia(options.onDownloadChange);
   let disposed = false;
   let ready = false;
+  let port: MessagePort | null = null;
 
   const envelope = { version: BRIDGE.panel.version, session };
-  const reply = (message: PanelToFrame, transfer?: Transferable[]) => {
-    if (disposed) return;
-    if (transfer) options.frame()?.postMessage(message, '*', transfer);
-    else options.frame()?.postMessage(message, '*');
+  const postMessage = (message: unknown, transfer?: Transferable[]) => {
+    if (disposed || !port) return;
+    if (transfer) port.postMessage(message, transfer);
+    else port.postMessage(message);
   };
+  const reply = (message: PanelToFrame, transfer?: Transferable[]) =>
+    postMessage(message, transfer);
   const error = (rid: string, status: number, detail: string) =>
     reply({
       ...envelope,
@@ -70,38 +86,18 @@ export function createPanelBridge(options: {
       ok: false,
     });
 
-  const handle = (event: MessageEvent) => {
-    if (disposed || event.origin !== 'null' || !options.frame() || event.source !== options.frame())
-      return;
+  const handlePort = (event: MessageEvent) => {
+    if (disposed) return;
     const message: unknown = event.data;
-    if (!record(message) || message.version !== BRIDGE.panel.version || message.session !== session)
-      return;
-    if (message.type === BRIDGE.panel.types.ready) {
-      ready = true;
-      reply({
-        ...envelope,
-        type: BRIDGE.panel.types.init,
-        context,
-        appearance,
-        requests: panel.requests ?? [],
-        limits: {
-          requestBytes: PANEL_REQUEST_LIMIT,
-          responseBytes: PANEL_RESPONSE_LIMIT,
-          concurrent: MAX_CONCURRENT,
-          imageBytes: BRIDGE.panel.limits.imageBytes,
-          downloadBytes: BRIDGE.panel.limits.downloadBytes,
-          mediaBytes: BRIDGE.panel.limits.mediaBytes,
-          mediaItems: BRIDGE.panel.limits.mediaItems,
-        },
-      });
-      return;
-    }
-    if (!ready) return;
+    if (!record(message) || message.session !== session) return;
+    options.onMessage?.(message);
+    if (message.version !== BRIDGE.panel.version || !ready) return;
     if (message.type === BRIDGE.panel.types.release) {
       if (typeof message.media_id === 'string') media.release(message.media_id);
       return;
     }
-    if (message.type !== BRIDGE.panel.types.request) return;
+    const uploading = message.type === BRIDGE.panel.types.upload;
+    if (message.type !== BRIDGE.panel.types.request && !uploading) return;
     const { rid } = message;
     if (typeof rid !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(rid)) return;
     if (seen.has(rid)) {
@@ -114,7 +110,10 @@ export function createPanelBridge(options: {
     }
     let size: number;
     try {
-      size = jsonSize(message);
+      if (uploading) {
+        const { blob: _blob, ...metadata } = message;
+        size = jsonSize(metadata);
+      } else size = jsonSize(message);
     } catch {
       error(rid, 400, 'Panel request must be JSON.');
       return;
@@ -127,6 +126,27 @@ export function createPanelBridge(options: {
     if (!declared || !panel.activation || !panel.digest) {
       error(rid, 403, 'Request was not declared by this panel.');
       return;
+    }
+    if ((declared.input === 'image') !== uploading) {
+      error(rid, 403, 'Panel request input does not match its declared transport.');
+      return;
+    }
+    let upload: { blob: Blob; filename: string } | null = null;
+    if (uploading) {
+      if (
+        !(message.blob instanceof Blob) ||
+        !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(message.blob.type) ||
+        !message.blob.size ||
+        message.blob.size > BRIDGE.panel.limits.imageBytes ||
+        typeof message.filename !== 'string' ||
+        !message.filename ||
+        message.filename.length > 200 ||
+        /[\x00-\x1f/\\]/.test(message.filename)
+      ) {
+        error(rid, 415, 'Panel upload requires a bounded image Blob and a plain filename.');
+        return;
+      }
+      upload = { blob: message.blob, filename: message.filename };
     }
     seen.add(rid);
     const controller = new AbortController();
@@ -144,6 +164,37 @@ export function createPanelBridge(options: {
     };
     const responseKind = declared.response ?? 'json';
     const execute = async (): Promise<PanelResult | null> => {
+      if (upload) {
+        if (!options.uploadRequest) throw new Error('Panel upload transport is unavailable.');
+        let dimensions: Awaited<ReturnType<typeof readImageDimensions>>;
+        try {
+          dimensions = await readImageDimensions(upload.blob, controller.signal);
+        } catch {
+          throw Object.assign(new Error('Panel upload image is invalid.'), { status: 415 });
+        }
+        if (!dimensions)
+          throw Object.assign(new Error('Panel upload image header is invalid or unsupported.'), {
+            status: 415,
+          });
+        if (dimensions.width * dimensions.height > BRIDGE.panel.limits.imagePixels)
+          throw Object.assign(new Error('Panel upload exceeds the pixel limit.'), {
+            status: 415,
+          });
+        controller.signal.throwIfAborted();
+        return options.uploadRequest(
+          {
+            activation: panel.activation!,
+            digest: panel.digest!,
+            request_id: declared.id,
+            context,
+            filename: upload.filename,
+            mime: upload.blob.type,
+            bytes: upload.blob.size,
+          },
+          upload.blob,
+          controller.signal,
+        );
+      }
       if (responseKind === 'json') return options.request(body, controller.signal);
       if (!options.binaryRequest) throw new Error('Panel media transport is unavailable.');
       const binary = await options.binaryRequest(body, responseKind, controller.signal);
@@ -198,7 +249,53 @@ export function createPanelBridge(options: {
     media.clear();
   };
   return {
-    handle,
+    handle: (event: MessageEvent) => {
+      // A window message only offers a child-created port. Never send credentials or a port back
+      // through the WindowProxy, and never replace the first document's endpoint.
+      if (
+        disposed ||
+        event.origin !== 'null' ||
+        !options.frame() ||
+        event.source !== options.frame()
+      )
+        return;
+      const message: unknown = event.data;
+      if (
+        !record(message) ||
+        message.version !== BRIDGE.panel.version ||
+        message.session !== session ||
+        message.type !== BRIDGE.panel.types.ready ||
+        event.ports.length !== 1
+      )
+        return;
+      const offered = event.ports[0];
+      if (port) {
+        offered.close();
+        return;
+      }
+      port = offered;
+      ready = true;
+      port.onmessage = handlePort;
+      port.start();
+      options.onReady?.();
+      reply({
+        ...envelope,
+        type: BRIDGE.panel.types.init,
+        context,
+        appearance,
+        requests: panel.requests ?? [],
+        limits: {
+          requestBytes: PANEL_REQUEST_LIMIT,
+          responseBytes: PANEL_RESPONSE_LIMIT,
+          concurrent: MAX_CONCURRENT,
+          imageBytes: BRIDGE.panel.limits.imageBytes,
+          downloadBytes: BRIDGE.panel.limits.downloadBytes,
+          mediaBytes: BRIDGE.panel.limits.mediaBytes,
+          mediaItems: BRIDGE.panel.limits.mediaItems,
+        },
+      });
+    },
+    postMessage,
     abort,
     updateAppearance: (next: PanelAppearance) => {
       if (JSON.stringify(appearance) === JSON.stringify(next)) return;
@@ -215,8 +312,13 @@ export function createPanelBridge(options: {
     },
     clearDownload: media.clearDownload,
     dispose: () => {
+      if (disposed) return;
       disposed = true;
+      port?.close();
+      if (port) port.onmessage = null;
+      port = null;
       abort();
+      options.onDispose?.();
     },
   };
 }

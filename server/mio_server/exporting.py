@@ -596,6 +596,7 @@ class ExportService:
                 signature=opts.get("signature", ""),
                 theme_color=opts.get("theme_color", ""),
                 collection_title=opts.get("title", ""),
+                include_source_data=opts.get("include_source_data", False),
             )
             if native:
                 write_album(tpl, books, path, options, spooled, checkpoint=checkpoint)

@@ -9,8 +9,44 @@ async function main() {
     created = [],
     revoked = [],
     timers = new Map();
+  let hostPort;
+  const windowSent = [];
+  const channelPorts = [];
+  class MessageChannel {
+    constructor() {
+      const makePort = () => ({
+        started: false,
+        closed: false,
+        addEventListener(name, listener) {
+          this[`on${name}`] = listener;
+        },
+        start() {
+          this.started = true;
+        },
+        close() {
+          this.closed = true;
+        },
+        postMessage(data, ports = []) {
+          if (!this.closed && !this.peer.closed)
+            this.peer.onmessage?.({ data, ports });
+        },
+      });
+      this.port1 = makePort();
+      this.port2 = makePort();
+      this.port1.peer = this.port2;
+      this.port2.peer = this.port1;
+      channelPorts.push(this.port1);
+    }
+  }
   const parent = {
-    postMessage(message) {
+    postMessage(message, origin, transfer) {
+      windowSent.push(message);
+      assert.equal(message.type, "mio:panel:ready");
+      assert.equal(message.version, 2);
+      assert.equal(origin, "*");
+      assert.equal(transfer.length, 1);
+      hostPort = transfer[0];
+      hostPort.onmessage = ({ data }) => sent.push(data);
       sent.push(message);
     },
   };
@@ -19,6 +55,7 @@ async function main() {
   vm.runInNewContext(fs.readFileSync(__dirname + "/bridge.js", "utf8"), {
     window,
     parent,
+    MessageChannel,
     location: { hash: "#mio-session=test-session" },
     URLSearchParams,
     Blob,
@@ -58,20 +95,30 @@ async function main() {
     context = value;
   });
   assert.equal(sent[0].type, "mio:panel:ready");
+  assert.equal(channelPorts[0].started, true);
   const event = (data, ports = []) =>
-    listeners.message({
-      source: parent,
-      data: { version: 1, session: "test-session", ...data },
+    hostPort.postMessage(
+      { version: 2, session: "test-session", ...data },
       ports,
-    });
-  listeners.message({
-    source: {},
+    );
+  listeners.message?.({
+    source: parent,
     data: {
       type: "mio:panel:init",
-      version: 1,
+      version: 2,
       session: "test-session",
       context: { episode_id: "wrong" },
     },
+  });
+  event({
+    type: "mio:panel:init",
+    session: "stale",
+    context: { episode_id: "wrong" },
+  });
+  event({
+    type: "mio:panel:init",
+    version: 1,
+    context: { episode_id: "wrong" },
   });
   assert.equal(context, undefined);
   event({
@@ -173,6 +220,12 @@ async function main() {
   });
   await assert.rejects(failure, /denied/);
   listeners.pagehide();
+  assert.equal(channelPorts[0].closed, true);
+  assert.equal(
+    windowSent.length,
+    1,
+    "only the ready handshake may use the window channel",
+  );
   assert.equal(img.src, undefined);
   assert.equal(timers.size, 0);
   console.log(

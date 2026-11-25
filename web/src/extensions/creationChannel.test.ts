@@ -38,43 +38,37 @@ afterEach(() => {
 
 function setup(authorize = vi.fn(async (_signal: AbortSignal) => true)) {
   const postMessage = vi.fn();
-  const frame = { postMessage } as unknown as Window;
   const channel = createCreationChannel({
     panel,
     session: 'session-a',
     context: makeContext(),
-    frame: () => frame,
+    send: postMessage,
     authorize,
   });
-  const message = (data: Record<string, unknown>, extra: Partial<MessageEventInit> = {}) =>
-    channel.handle(
-      new MessageEvent('message', {
-        origin: 'null',
-        source: frame,
-        data: { version: 1, session: 'session-a', ...data },
-        ...extra,
-      }),
-    );
-  const ready = () => message({ type: 'mio:panel:ready' });
+  const message = (data: Record<string, unknown>) =>
+    channel.handle({ version: 1, session: 'session-a', ...data });
+  const ready = () => channel.ready();
   const subscribe = (event = 'creation.context.changed', enabled = true) =>
     message({ type: 'mio:creation:subscribe', event, enabled });
   return { channel, authorize, message, ready, subscribe, postMessage };
 }
 
 describe('bounded creation metadata channel', () => {
-  it('requires opaque origin, exact source/session, ready and declared read-only subscription', async () => {
+  it('requires the document bridge handshake, session and declared read-only subscription', async () => {
     vi.useFakeTimers();
     const value = setup();
     value.subscribe();
-    value.message({ type: 'mio:panel:ready' }, { origin: location.origin });
+    value.message({ type: 'mio:panel:ready' });
     value.subscribe();
     await vi.advanceTimersByTimeAsync(120);
     expect(value.authorize).not.toHaveBeenCalled();
     value.ready();
-    value.message(
-      { type: 'mio:creation:subscribe', event: 'creation.context.changed', enabled: true },
-      { source: window },
-    );
+    value.message({
+      type: 'mio:creation:subscribe',
+      event: 'creation.context.changed',
+      enabled: true,
+      version: 2,
+    });
     value.message({
       type: 'mio:creation:subscribe',
       event: 'creation.context.changed',
@@ -156,8 +150,9 @@ describe('bounded creation metadata channel', () => {
     expect(value.postMessage).not.toHaveBeenCalled();
     value.ready();
     value.subscribe();
-    value.channel.navigated();
-    value.channel.navigated();
+    value.channel.dispose();
+    value.ready();
+    value.subscribe();
     await vi.advanceTimersByTimeAsync(120);
     expect(value.postMessage).not.toHaveBeenCalled();
     value.channel.dispose();

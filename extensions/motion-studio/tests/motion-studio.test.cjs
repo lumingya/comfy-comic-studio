@@ -64,6 +64,7 @@ function makeHarness({ failLoad = false } = {}) {
   });
   const { window } = dom;
   const calls = [];
+  const animations = [];
   let ready;
   const panels = [
     { id: "p1", description: "A street at night", motion: null, dialogues: [] },
@@ -143,7 +144,14 @@ function makeHarness({ failLoad = false } = {}) {
   window.matchMedia = () => ({ matches: false });
   window.CSS = { escape: (value) => value };
   window.Element.prototype.animate = function () {
-    return { pause() {}, cancel() {}, currentTime: 0 };
+    const animation = {
+      paused: false,
+      pause() { this.paused = true; },
+      cancel() {},
+      currentTime: 0,
+    };
+    animations.push(animation);
+    return animation;
   };
   const utterances = [];
   window.SpeechSynthesisUtterance = function (value) {
@@ -165,7 +173,7 @@ function makeHarness({ failLoad = false } = {}) {
     theme: "light",
     tokens: { accent: "#128070", text: "#101820" },
   });
-  return { dom, window, calls, utterances, panels };
+  return { dom, window, calls, utterances, panels, animations };
 }
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -255,4 +263,24 @@ test("shows API failures without blanking the panel, and rejects invalid duratio
     false,
   );
   h.dom.window.close();
+});
+
+test("first scrub after editing keeps the selected percentage and pauses at that time", async () => {
+  const h = makeHarness();
+  try {
+    h.window.document.getElementById("load").click();
+    await settle();
+    const hold = h.window.document.getElementById("hold");
+    hold.value = "4.5";
+    hold.dispatchEvent(new h.window.Event("input", { bubbles: true }));
+    const scrub = h.window.document.getElementById("scrub");
+    scrub.value = "100";
+    scrub.dispatchEvent(new h.window.Event("input", { bubbles: true }));
+    assert.equal(scrub.value, "100");
+    assert.equal(h.animations.at(-1).currentTime, 4500);
+    assert.equal(h.animations.at(-1).paused, true);
+    assert.equal(h.calls.some((call) => call.id === "patch-panel"), false);
+  } finally {
+    h.dom.window.close();
+  }
 });

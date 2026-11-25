@@ -10,7 +10,8 @@
     brushSize: $("brush-size"), brushSizeValue: $("brush-size-value"), featherValue: $("feather-value"), undo: $("undo"), redo: $("redo"), clear: $("clear-mask"),
     submit: $("submit"), newIntent: $("new-intent"), recent: $("recent-jobs"), jobId: $("job-id"), jobRefresh: $("job-refresh"), jobCancel: $("job-cancel"), watch: $("watch"),
     jobProgress: $("job-progress"), jobState: $("job-state"), jobItems: $("job-items"), result: $("result"), compare: $("compare-stage"), before: $("before-image"), after: $("after-image"),
-    slider: $("compare-slider"), divider: $("compare-divider"), adopt: $("adopt")
+    slider: $("compare-slider"), divider: $("compare-divider"), adopt: $("adopt"),
+    adoptConfirmation: $("adopt-confirmation"), confirmAdopt: $("confirm-adopt"), cancelAdopt: $("cancel-adopt")
   };
   let seriesItems = [];
   let episodeItems = [];
@@ -20,6 +21,7 @@
   let intent = null;
   let sourceUrl = "";
   let previewUrls = [];
+  let adoption = null;
   const maskUploads = new Map();
   const stateLabel = (state) => api.text(({ running: "running", queued: "queued", completed: "completedState", failed: "failedState", canceled: "canceledState", paused: "paused", uncertain: "uncertain" })[state] || state);
   const status = (key, vars = {}, kind = "") => {
@@ -49,10 +51,11 @@
     elements.adopt.disabled = busy || !result || result.status === "adopted";
     elements.jobCancel.disabled = busy || !elements.jobId.value || ["completed", "failed", "canceled"].includes(window.MioJobTracker?.state);
   };
-  const revoke = (value) => { if (value) URL.revokeObjectURL(value); };
+  const revoke = (value) => { if (value) { api.release?.(value); URL.revokeObjectURL(value); } };
   const clearSource = () => {
     revoke(sourceUrl);
     sourceUrl = "";
+    elements.image.dataset.generation = (elements.image.dataset.generation || "") + ".";
     elements.image.removeAttribute("src");
     elements.stage.classList.remove("ready");
     elements.canvas.width = 1;
@@ -61,9 +64,12 @@
   };
   const loadImage = async (takeId, target = elements.image) => {
     if (!takeId) return;
+    const generation = (target.dataset.generation || "") + ".";
+    target.dataset.generation = generation;
     const path = `/api/episodes/${encodeURIComponent(episode.id)}/takes/${encodeURIComponent(takeId)}/image`;
     const response = await api.request(path);
-    const url = URL.createObjectURL(await response.blob());
+    const url = response.url || URL.createObjectURL(await response.blob());
+    if (target.dataset.generation !== generation) { revoke(url); return; }
     if (target === elements.image) {
       revoke(sourceUrl);
       sourceUrl = url;
@@ -143,6 +149,10 @@
     else if (results.length) elements.result.value = results.at(-1).id;
   };
   const refreshPreview = async () => {
+    for (const image of [elements.before, elements.after]) {
+      image.dataset.generation = (image.dataset.generation || "") + ".";
+      image.removeAttribute("src");
+    }
     for (const url of previewUrls) revoke(url);
     previewUrls = [];
     const result = episode?.takes.find((take) => take.id === elements.result.value);
@@ -273,13 +283,32 @@
   elements.newIntent.addEventListener("click", () => { intent = null; status("requestNew"); });
   elements.result.addEventListener("change", () => refreshPreview().catch((error) => status("imageError", { error: error.message }, "error")));
   elements.slider.addEventListener("input", setSlider);
+  const finishAdoption = (accepted) => {
+    if (!adoption) return;
+    const resolve = adoption;
+    adoption = null;
+    elements.adoptConfirmation.hidden = true;
+    resolve(accepted);
+  };
+  elements.confirmAdopt.addEventListener("click", () => finishAdoption(true));
+  elements.cancelAdopt.addEventListener("click", () => finishAdoption(false));
+  elements.adoptConfirmation.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    finishAdoption(false);
+  });
   elements.adopt.addEventListener("click", async () => {
+    if (busy) return;
     const take = episode?.takes.find((item) => item.id === elements.result.value);
     if (!take || take.status === "adopted") return;
-    if (!confirm(api.text("adoptConfirm"))) return;
+    const episodeId = episode.id;
+    const takeId = take.id;
     busy = true; update();
     try {
-      episode = await api.post(`episodes/${encodeURIComponent(episode.id)}/takes/${encodeURIComponent(take.id)}/adopt`);
+      elements.adoptConfirmation.hidden = false;
+      elements.cancelAdopt.focus();
+      if (!(await new Promise((resolve) => { adoption = resolve; }))) return;
+      episode = await api.post(`episodes/${encodeURIComponent(episodeId)}/takes/${encodeURIComponent(takeId)}/adopt`);
       fillTakes(episode);
       await refreshPreview();
       status("adopted", {}, "success");
@@ -309,7 +338,7 @@
     else window.MioJobTracker.refresh().catch(() => {});
   });
   document.addEventListener("mio-context", () => { api.localize(); status("chooseEpisode"); });
-  addEventListener("pagehide", () => { window.MioJobTracker.stop(); revoke(sourceUrl); for (const url of previewUrls) revoke(url); });
+  addEventListener("pagehide", () => { finishAdoption(false); window.MioJobTracker.stop(); revoke(sourceUrl); for (const url of previewUrls) revoke(url); });
   window.MioJobApp = Object.freeze({ init, loadEpisode, createJob, status, onJobComplete });
   init();
 })();

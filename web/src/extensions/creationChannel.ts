@@ -9,7 +9,7 @@ export function createCreationChannel(options: {
   panel: ExtensionPanel;
   session: string;
   context: CreationContext;
-  frame: () => Window | null;
+  send: (message: unknown) => void;
   authorize: (signal: AbortSignal) => Promise<boolean>;
 }) {
   const subscriptions = new Set<CreationEventName>();
@@ -17,7 +17,6 @@ export function createCreationChannel(options: {
   let context = options.context;
   let ready = false;
   let disposed = false;
-  let loaded = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let checking: AbortController | null = null;
   let windowStart = 0;
@@ -25,7 +24,7 @@ export function createCreationChannel(options: {
   const permitsRead = options.panel.requests?.some(
     (request) => request.method === 'GET' && request.scope === 'read',
   );
-  const allowed = new Set(options.panel.subscriptions ?? []);
+  const allowed = new Set<string>(options.panel.subscriptions ?? []);
   const abort = () => {
     if (timer !== null) clearTimeout(timer);
     timer = null;
@@ -69,7 +68,7 @@ export function createCreationChannel(options: {
               new TextEncoder().encode(JSON.stringify(message)).byteLength <=
               BRIDGE.creation.maxBytes
             )
-              options.frame()?.postMessage(message, '*');
+              options.send(message);
           }
         })
         .catch(() => {
@@ -78,37 +77,32 @@ export function createCreationChannel(options: {
     }, BRIDGE.creation.intervalMs);
   };
   return {
-    handle(event: MessageEvent) {
-      // Ordinary panels have an opaque origin. Same-origin workspace scripts are not this channel.
-      if (
-        disposed ||
-        event.origin !== 'null' ||
-        !options.frame() ||
-        event.source !== options.frame()
-      )
-        return;
-      const message = event.data;
+    // Only the document-bound bridge may feed this channel; no global window listener.
+    handle(message: unknown) {
+      if (disposed) return;
       if (
         !message ||
         typeof message !== 'object' ||
         Array.isArray(message) ||
-        message.version !== 1 ||
+        !('version' in message) ||
+        !('session' in message) ||
         message.session !== options.session
       )
         return;
-      if (message.type === BRIDGE.panel.types.ready) {
-        ready = true;
-        return;
-      }
       if (
+        !('type' in message) ||
+        !('enabled' in message) ||
+        !('event' in message) ||
+        message.version !== BRIDGE.creation.version ||
         message.type !== BRIDGE.creation.subscribe ||
         !ready ||
         !permitsRead ||
         !options.panel.activation ||
         !options.panel.digest ||
         typeof message.enabled !== 'boolean' ||
+        typeof message.event !== 'string' ||
         !allowed.has(message.event) ||
-        !BRIDGE.creation.events.includes(message.event) ||
+        !(BRIDGE.creation.events as readonly string[]).includes(message.event) ||
         Object.keys(message).some(
           (key) => !['type', 'version', 'session', 'event', 'enabled'].includes(key),
         )
@@ -121,13 +115,16 @@ export function createCreationChannel(options: {
       }
       if (++messages > 20) return;
       if (message.enabled) {
-        subscriptions.add(message.event);
-        queued.add(message.event);
+        subscriptions.add(message.event as CreationEventName);
+        queued.add(message.event as CreationEventName);
         schedule();
       } else {
-        subscriptions.delete(message.event);
-        queued.delete(message.event);
+        subscriptions.delete(message.event as CreationEventName);
+        queued.delete(message.event as CreationEventName);
       }
+    },
+    ready() {
+      if (!disposed) ready = true;
     },
     update(next: CreationContext) {
       if (disposed || next.seq <= context.seq || next.context_id === context.context_id) return;
@@ -144,10 +141,6 @@ export function createCreationChannel(options: {
       if (selectionChanged && subscriptions.has('selection.changed'))
         queued.add('selection.changed');
       schedule();
-    },
-    navigated() {
-      if (loaded) abort();
-      loaded = true;
     },
     dispose() {
       disposed = true;

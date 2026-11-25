@@ -83,6 +83,33 @@
       <p class="filter-note" data-i18n="filterNote">
         严重度由本地按通过状态和分数归类；后端问题记录没有严重度字段。
       </p>
+      <section
+        id="confirmation"
+        class="confirmation"
+        role="group"
+        aria-labelledby="confirmation-message"
+        hidden
+      >
+        <p id="confirmation-message"></p>
+        <div class="confirmation-actions">
+          <button
+            id="confirm-action"
+            class="button primary"
+            type="button"
+            data-i18n="confirm"
+          >
+            确认
+          </button>
+          <button
+            id="cancel-action"
+            class="button"
+            type="button"
+            data-i18n="cancel"
+          >
+            取消
+          </button>
+        </div>
+      </section>
       <p
         id="status"
         class="status"

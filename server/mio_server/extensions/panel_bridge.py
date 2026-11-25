@@ -99,7 +99,13 @@ def _context(ctx, context: PanelContext):
 
 
 async def dispatch_panel(
-    ctx, request: Request, ext_id: str, panel_id: str, body: PanelBridgeRequest
+    ctx,
+    request: Request,
+    ext_id: str,
+    panel_id: str,
+    body: PanelBridgeRequest,
+    *,
+    image: tuple[bytes, str] | None = None,
 ):
     if len(body.model_dump_json().encode("utf-8")) > MAX_REQUEST_BYTES:
         raise HTTPException(413, "panel request exceeds 64 KiB")
@@ -107,6 +113,8 @@ async def dispatch_panel(
     spec = next((item for item in panel.requests if item.id == body.request_id), None)
     if spec is None:
         raise HTTPException(403, "request was not declared by this panel")
+    if (spec.input == "image") != (image is not None):
+        raise HTTPException(403, "panel request input does not match its declared transport")
     template = _target(request.app, ext_id, spec)
     path = _path(template, body.path_params)
     # A concrete parameter must not accidentally select an earlier static route.
@@ -164,7 +172,7 @@ async def dispatch_panel(
 
     # Forward only the caller's credential. The local UI has no bearer; the v2 app runs its
     # normal token dependency again for the actual target scope. No cookies or response headers.
-    headers = {}
+    headers = {"content-type": image[1]} if image is not None else {}
     if request.headers.get("authorization"):
         headers["authorization"] = request.headers["authorization"]
     try:
@@ -175,7 +183,7 @@ async def dispatch_panel(
                     spec.method,
                     path,
                     params=body.query,
-                    json=body.body,
+                    **({"content": image[0]} if image is not None else {"json": body.body}),
                     headers=headers,
                     follow_redirects=False,
                 )

@@ -11,13 +11,14 @@ from urllib.parse import quote
 from fastapi import Request, Response
 from fastapi.responses import FileResponse
 
-from ..extensions.manifest import ManifestError, digest, inside
+from ..extensions.manifest import ManifestError, digest, inside, read_manifest
 from ..extensions.panel_bridge import (
     PanelBridgeRequest,
     PanelBridgeResponse,
     active_panel,
     dispatch_panel,
 )
+from ..extensions.panel_upload import UPLOAD_BODY, upload_panel_image
 from ..extensions.protocol import client_constants
 from ..storage import NotFound
 from .deps import Ctx
@@ -261,12 +262,20 @@ def extension_workspace(ctx: Ctx, ext_id: str, path: str) -> Response:
 def extension_panels(ctx: Ctx) -> list[dict]:
     """UI panels of active extensions; the web app shows them in sandboxed iframes."""
     out = []
-    for info in ctx.extensions.list():
-        if info.status != "active" or info.manifest is None:
+    for ext_id, candidate in list(ctx.extensions.loaded.items()):
+        try:
+            # Unreviewed metadata only filters out packages with no panels. Every returned
+            # declaration still comes from the reviewed package and active-panel check.
+            if not read_manifest(candidate.api.folder).contributes.panels:
+                continue
+            info = ctx.extensions.reviewed_info(ext_id)
+        except (OSError, ValueError):
+            continue
+        if info is None or info.manifest is None:
             continue
         for p in info.manifest.contributes.panels:
             try:
-                _, loaded, pinned = active_panel(ctx, info.id, p.id)
+                p, loaded, pinned = active_panel(ctx, info.id, p.id)
             except NotFound:
                 continue
             out.append(
@@ -292,6 +301,16 @@ async def panel_request(
 ) -> PanelBridgeResponse:
     """Call only a reviewed panel's declared operation; target validation and scope still apply."""
     return await dispatch_panel(ctx, request, ext_id, panel_id, body)
+
+
+@router.post(
+    "/extension-panels/{ext_id}/{panel_id}/uploads",
+    response_model=PanelBridgeResponse,
+    openapi_extra=UPLOAD_BODY,
+)
+async def panel_upload(ctx: Ctx, request: Request, ext_id: str, panel_id: str):
+    """Upload a bounded image using only the reviewed POST /assets declaration (write scope)."""
+    return await upload_panel_image(ctx, request, ext_id, panel_id)
 
 
 @router.get("/extensions/{ext_id}/files/{path:path}", include_in_schema=False)

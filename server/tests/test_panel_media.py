@@ -1,6 +1,7 @@
 """Binary panel operations keep declarations, real scopes and bounded inert delivery."""
 
 from unittest.mock import patch
+from urllib.parse import quote, unquote
 
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
@@ -52,6 +53,11 @@ def activate(mio):
         return Response(b"<!doctype html><script>window.executed = true</script>",
             media_type="text/html", headers={"Content-Disposition":
                 "attachment; filename*=UTF-8''..%2F..%2FCON.exe"})
+    @mio.route("GET", "/pdf", scope="read")
+    def pdf():
+        return Response(b"%PDF-1.7\\n%%EOF", media_type="application/pdf",
+            headers={"Content-Disposition":
+                "attachment; filename*=UTF-8''%E9%9B%A8%201%20%28A%29%21%25.pdf"})
 """
 
 
@@ -81,6 +87,13 @@ class PanelMediaTests(ApiCase):
                 "method": "POST",
                 "path": "/ext/demo/download",
                 "scope": "render",
+                "response": "download",
+            },
+            {
+                "id": "pdf",
+                "method": "GET",
+                "path": "/ext/demo/pdf",
+                "scope": "read",
                 "response": "download",
             },
             {
@@ -134,6 +147,8 @@ class PanelMediaTests(ApiCase):
             self.assertEqual(response.headers["x-mio-panel-response"], "image")
             self.assertEqual(response.headers["cache-control"], "no-store")
             self.assertEqual(response.headers["x-content-type-options"], "nosniff")
+            self.assertEqual(response.headers["x-mio-panel-filename"], "mio-download.png")
+            self.assertNotIn("content-disposition", response.headers)
             self.assertNotIn("set-cookie", response.headers)
         self.assertEqual(self.call(url="https://example.invalid").status_code, 422)
 
@@ -153,17 +168,34 @@ class PanelMediaTests(ApiCase):
             self.assertEqual(self.call().status_code, 415)
         self.assertEqual(self.call().status_code, 200)
 
-    def test_download_is_attachment_with_inert_content_and_safe_filename(self):
+    def test_download_uses_inert_bytes_and_safe_filename_without_a_disposition(self):
         response = self.call("download")
         self.assertEqual(response.status_code, 200, response.text)
         self.assertIn(b"<script>", response.content)
         self.assertEqual(response.headers["content-security-policy"], "default-src 'none'; sandbox")
-        header = response.headers["content-disposition"]
-        self.assertTrue(header.startswith("attachment;"))
-        self.assertNotIn("%2F", header)
-        self.assertTrue(header.endswith(".html"))
+        self.assertNotIn("content-disposition", response.headers)
+        filename = unquote(response.headers["x-mio-panel-filename"], errors="strict")
+        self.assertEqual(filename, safe_filename("attachment; filename=../../CON.exe", "text/html"))
+        self.assertNotIn("/", filename)
+        self.assertTrue(filename.endswith(".html"))
         with patch("mio_server.extensions.panel_media.MAX_DOWNLOAD_BYTES", 20):
             self.assertEqual(self.call("download").status_code, 413)
+
+    def test_pdf_filename_is_strictly_encoded_only_for_the_fetch_bridge(self):
+        response = self.call("pdf")
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.headers["content-type"], "application/pdf")
+        self.assertEqual(response.content, b"%PDF-1.7\n%%EOF")
+        self.assertNotIn("content-disposition", response.headers)
+        self.assertEqual(response.headers["x-mio-panel-filename"], quote("雨 1 (A)!%.pdf", safe=""))
+        self.assertEqual(response.headers["x-content-type-options"], "nosniff")
+        self.assertEqual(response.headers["content-security-policy"], "default-src 'none'; sandbox")
+
+        direct = self.client.get("/api/ext/demo/pdf")
+        self.assertEqual(direct.status_code, 200, direct.text)
+        self.assertEqual(direct.content, response.content)
+        self.assertTrue(direct.headers["content-disposition"].startswith("attachment;"))
+        self.assertNotIn("x-mio-panel-filename", direct.headers)
 
     def test_actual_v2_scope_is_rechecked_and_no_redirect_or_scope_lowering(self):
         read = self.token("read")

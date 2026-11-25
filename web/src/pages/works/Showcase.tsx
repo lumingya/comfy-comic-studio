@@ -7,7 +7,7 @@ import {
   RefreshCw,
   Star,
 } from 'lucide-react';
-import { useEffect, type MouseEvent } from 'react';
+import { useEffect, type MouseEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
@@ -125,6 +125,8 @@ export function Showcase(props: {
   selected?: boolean;
   context?: boolean;
   disabled?: boolean;
+  onPointerDown?: (event: PointerEvent<HTMLElement>) => void;
+  readerSearch?: string;
 }) {
   const { t, i18n } = useTranslation();
   const { books, index, onIndex } = props;
@@ -153,7 +155,7 @@ export function Showcase(props: {
   }, [index, books.length, onIndex, props.disabled]);
 
   if (!b) return null;
-  const to = `/gallery/${b.id}`;
+  const to = `/gallery/${b.id}${props.readerSearch ?? ''}`;
   const cast = (b.bible?.characters ?? []).map((c) => c.name).filter(Boolean);
   const state = props.stateOf(b);
   const missing = missingOf(b);
@@ -166,6 +168,7 @@ export function Showcase(props: {
       data-shelf-id={b.id}
       tabIndex={0}
       aria-selected={props.selected || undefined}
+      onPointerDown={props.onPointerDown}
     >
       <div className="exhibit-cover">
         <Link

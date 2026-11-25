@@ -1,6 +1,6 @@
 """Reviewed, declarative entry points; actions can only open their own existing panel."""
 
-from ..extensions.manifest import HostSlotSpec, PanelSpec
+from ..extensions.manifest import HostSlotSpec, PanelSpec, read_manifest
 from ..extensions.panel_bridge import active_panel
 from ..storage import NotFound
 from .deps import Ctx
@@ -24,8 +24,15 @@ class HostSlotEntry(HostSlotSpec):
 @router.get("/extension-host-slots", response_model=list[HostSlotEntry])
 def host_slots(ctx: Ctx) -> list[HostSlotEntry]:
     result = []
-    for info in ctx.extensions.list():
-        if info.status != "active" or info.manifest is None:
+    for ext_id, candidate in list(ctx.extensions.loaded.items()):
+        try:
+            # This first read only selects candidates; it cannot authorize slot metadata.
+            if not read_manifest(candidate.api.folder).contributes.host_slots:
+                continue
+            info = ctx.extensions.reviewed_info(ext_id)
+        except (OSError, ValueError):
+            continue
+        if info is None or info.manifest is None:
             continue
         for slot in info.manifest.contributes.host_slots:
             try:

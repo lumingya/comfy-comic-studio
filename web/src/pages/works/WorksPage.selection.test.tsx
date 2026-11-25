@@ -53,7 +53,7 @@ async function mount(view: 'grid' | 'showcase' = 'grid') {
 }
 const card = (name = '甲册') => screen.getByRole('article', { name });
 const cover = (name = '甲册') => within(card(name)).getByRole('button', { name });
-const picked = () => [...document.querySelectorAll('[aria-selected="true"]')];
+const picked = () => [...document.querySelectorAll('[data-shelf-id][aria-selected="true"]')];
 const key = (value: string, mods = {}) =>
   fireEvent.keyDown(document.activeElement ?? window, { key: value, ...mods });
 const root = () => document.getElementById('gallery-results')!;

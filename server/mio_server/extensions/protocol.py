@@ -16,7 +16,7 @@ from ..themes import COLOR_TOKENS
 from .manifest import FloatingPosition, Manifest, PanelRequestSpec
 
 CONTRACT_VERSION = 1
-PANEL_VERSION = 1
+PANEL_VERSION = 2
 MAX_REQUEST_BYTES = 64 * 1024
 MAX_RESPONSE_BYTES = 1024 * 1024
 MAX_CONCURRENT = 4
@@ -39,6 +39,7 @@ class PanelTag(str, Enum):
     init = "mio:panel:init"
     appearance = "mio:panel:appearance"
     request = "mio:panel:request"
+    upload = "mio:panel:upload"
     response = "mio:panel:response"
     release = "mio:panel:release"
     media = "mio:panel:media"
@@ -169,6 +170,18 @@ class PanelBridgeResponse(StrictModel):
     data: JsonValue = None
 
 
+class PanelUploadRequest(StrictModel):
+    """Bounded multipart metadata; the image is a separate native binary part."""
+
+    activation: str = Field(min_length=1, max_length=100)
+    digest: str = Field(pattern=r"^[a-f0-9]{64}$")
+    request_id: str = Field(min_length=1, max_length=48)
+    context: PanelContext = Field(default_factory=PanelContext)
+    filename: str = Field(min_length=1, max_length=200)
+    mime: Literal["image/png", "image/jpeg", "image/webp", "image/gif"]
+    bytes: int = Field(strict=True, gt=0, le=MAX_IMAGE_BYTES)
+
+
 class PanelMessage(SessionMessage):
     version: Literal[PANEL_VERSION]
 
@@ -193,6 +206,15 @@ class PanelRequestMessage(PanelMessage):
         default_factory=dict, max_length=40
     )
     body: JsonValue = None
+
+
+class PanelUploadMessage(PanelMessage):
+    """Metadata only; the message's blob property is a native Blob, never JSON/base64."""
+
+    type: Literal[PanelTag.upload]
+    rid: str = Field(pattern=r"^[A-Za-z0-9_-]{1,80}$")
+    request_id: str = Field(min_length=1, max_length=48)
+    filename: str = Field(min_length=1, max_length=200)
 
 
 class PanelLimits(StrictModel):
@@ -241,7 +263,9 @@ class PanelMediaMessage(PanelMessage):
     bytes: int = Field(ge=0, le=MAX_IMAGE_BYTES)
 
 
-class PanelFromFrame(RootModel[PanelReady | PanelRequestMessage | PanelReleaseMessage]):
+class PanelFromFrame(
+    RootModel[PanelReady | PanelRequestMessage | PanelUploadMessage | PanelReleaseMessage]
+):
     pass
 
 
@@ -393,6 +417,7 @@ class PlatformContracts(StrictModel):
     panel_context: PanelContext
     panel_call: PanelBridgeRequest
     panel_result: PanelBridgeResponse
+    panel_upload: PanelUploadRequest
     panel_from_frame: PanelFromFrame
     panel_to_frame: PanelToFrame
     workspace_from_frame: WorkspaceFromFrame

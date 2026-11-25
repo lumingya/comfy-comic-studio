@@ -24,6 +24,7 @@ export function ExportPreviewDialog(props: {
           { episodeId: props.episodeId, templateId: props.templateId, lettered: props.lettered },
           props.draft,
         ),
+        include_source_data: false,
         image_profile: 'preview',
         max_width: 1600,
       }

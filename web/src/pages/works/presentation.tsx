@@ -17,6 +17,8 @@ export interface ExportDraft {
   captions: boolean;
   deduplicateCaptions: boolean;
   prompts: boolean;
+  /** Sensitive backup data: only the current export dialog can opt in. */
+  includeSourceData?: boolean;
   profile: Profile;
   preset: string;
   quality: Quality;
@@ -30,6 +32,7 @@ const DEFAULT_DRAFT: ExportDraft = {
   captions: true,
   deduplicateCaptions: true,
   prompts: false,
+  includeSourceData: false,
   profile: 'auto',
   preset: 'webtoon',
   quality: 'q90',
@@ -50,7 +53,7 @@ export function useExportDraft(): [ExportDraft, (patch: Partial<ExportDraft>) =>
   const [draft, setDraft] = useState<StoredDraft>(() => {
     try {
       const stored = JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}');
-      return { ...DEFAULT_DRAFT, ...stored, signature: null };
+      return { ...DEFAULT_DRAFT, ...stored, signature: null, includeSourceData: false };
     } catch {
       return { ...DEFAULT_DRAFT, signature: null };
     }
@@ -59,7 +62,7 @@ export function useExportDraft(): [ExportDraft, (patch: Partial<ExportDraft>) =>
     setDraft((d) => {
       const next = { ...d, ...patch };
       if (patch.captions !== undefined) next.captionPreference = patch.captions;
-      const { signature: _signature, ...kept } = next;
+      const { signature: _signature, includeSourceData: _sourceData, ...kept } = next;
       localStorage.setItem(DRAFT_KEY, JSON.stringify(kept));
       return next;
     });
@@ -97,6 +100,7 @@ export function albumBody(
     show_captions: d.captions,
     deduplicate_captions: d.deduplicateCaptions,
     show_prompts: d.prompts,
+    include_source_data: d.includeSourceData === true,
     theme_color: d.themeColor,
     border: d.border,
     signature: d.signature,
@@ -126,7 +130,12 @@ export function TemplatePreview(props: {
   const spot = `${props.episodeId}|${props.templateId}`;
   const request = useDebounced(
     {
-      body: { ...albumBody(props, props.draft), image_profile: 'preview', max_width: 1400 },
+      body: {
+        ...albumBody(props, props.draft),
+        include_source_data: false,
+        image_profile: 'preview',
+        max_width: 1400,
+      },
       revision: props.revision ?? 0,
     },
     300,

@@ -893,6 +893,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Collections */
+        get: operations["list_collections_api_collections_get"];
+        put?: never;
+        /** Create Collection */
+        post: operations["create_collection_api_collections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collections/{collection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Collection */
+        delete: operations["delete_collection_api_collections__collection_id__delete"];
+        options?: never;
+        head?: never;
+        /** Rename Collection */
+        patch: operations["rename_collection_api_collections__collection_id__patch"];
+        trace?: never;
+    };
+    "/api/collections/memberships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign Collection Memberships */
+        post: operations["assign_collection_memberships_api_collections_memberships_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workflows": {
         parameters: {
             query?: never;
@@ -2039,6 +2092,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/extension-panels/{ext_id}/{panel_id}/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Panel Upload
+         * @description Upload a bounded image using only the reviewed POST /assets declaration (write scope).
+         */
+        post: operations["panel_upload_api_extension_panels__ext_id___panel_id__uploads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/extensions/{ext_id}/settings": {
         parameters: {
             query?: never;
@@ -2360,6 +2433,26 @@ export interface paths {
          * @description Write panel images to a ZIP or PDF without retaining every decoded page.
          */
         post: operations["export_portable_api_export_portable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/album-html": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Html Album
+         * @description Import embedded reading images/metadata; source ZIP is the complete editable format.
+         */
+        post: operations["import_html_album_api_imports_album_html_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3448,6 +3541,12 @@ export interface components {
              */
             show_prompts?: boolean;
             /**
+             * Include Source Data
+             * @description Include captions and compiled positive prompts for reimporting the exported reading projection; independent of visible captions/prompts. Use a .mio.zip source file to preserve the complete editable project.
+             * @default false
+             */
+            include_source_data?: boolean;
+            /**
              * Theme Color
              * @default
              */
@@ -3520,6 +3619,12 @@ export interface components {
              */
             show_prompts?: boolean;
             /**
+             * Include Source Data
+             * @description Include captions and compiled positive prompts for reimporting the exported reading projection; independent of visible captions/prompts. Use a .mio.zip source file to preserve the complete editable project.
+             * @default false
+             */
+            include_source_data?: boolean;
+            /**
              * Theme Color
              * @default
              */
@@ -3554,6 +3659,23 @@ export interface components {
             image_profile?: "auto" | "clean" | "publish" | "archive" | "preview";
             /** Idempotency Key */
             idempotency_key?: string | null;
+        };
+        /** AlbumImportResult */
+        AlbumImportResult: {
+            /** Series Ids */
+            series_ids: string[];
+            /** Episode Ids */
+            episode_ids: string[];
+            /** Imported Books */
+            imported_books: number;
+            /** Imported Frames */
+            imported_frames: number;
+            /** Imported Assets */
+            imported_assets: number;
+            /** Source Data Used */
+            source_data_used: boolean;
+            /** Warnings */
+            warnings: string[];
         };
         /** ApplyRequest */
         ApplyRequest: {
@@ -4243,6 +4365,93 @@ export interface components {
             /** Refs */
             refs: components["schemas"]["CloudReference"][];
         };
+        /** Collection */
+        Collection: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+        };
+        /** CollectionAssignment */
+        CollectionAssignment: {
+            /** Series Id */
+            series_id: string;
+            /** Collection Id */
+            collection_id: string | null;
+            /** Expected Revision */
+            expected_revision: number;
+        };
+        /** CollectionAssignmentResult */
+        CollectionAssignmentResult: {
+            /** Changes */
+            changes: components["schemas"]["CollectionMembershipChange"][];
+            index: components["schemas"]["CollectionsIndex"];
+        };
+        /** CollectionAssignments */
+        CollectionAssignments: {
+            /** Assignments */
+            assignments: components["schemas"]["CollectionAssignment"][];
+        };
+        /** CollectionCard */
+        CollectionCard: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+            /**
+             * Album Count
+             * @default 0
+             */
+            album_count: number;
+        };
+        /** CollectionCreate */
+        CollectionCreate: {
+            /** Name */
+            name: string;
+        };
+        /** CollectionMembership */
+        CollectionMembership: {
+            /** Collection Id */
+            collection_id: string | null;
+            /**
+             * Revision
+             * @default 0
+             */
+            revision: number;
+        };
+        /** CollectionMembershipChange */
+        CollectionMembershipChange: {
+            /** Series Id */
+            series_id: string;
+            before: components["schemas"]["CollectionMembership"];
+            after: components["schemas"]["CollectionMembership"];
+        };
+        /** CollectionPatch */
+        CollectionPatch: {
+            /** Name */
+            name: string;
+        };
+        /** CollectionsIndex */
+        CollectionsIndex: {
+            /** Collections */
+            collections: components["schemas"]["CollectionCard"][];
+            /** Memberships */
+            memberships: {
+                [key: string]: components["schemas"]["CollectionMembership"];
+            };
+            /** Total Count */
+            total_count: number;
+            /** Unfiled Count */
+            unfiled_count: number;
+        };
         /** ComfyInstance */
         "ComfyInstance-Input": {
             /** Id */
@@ -4307,6 +4516,13 @@ export interface components {
             overrides?: Record<string, unknown>;
             /** Slot Overrides */
             slot_overrides?: Record<string, unknown>;
+        };
+        /** Composition */
+        Composition: {
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
         };
         /** CompositionPreview */
         CompositionPreview: {
@@ -4549,6 +4765,8 @@ export interface components {
             /** Takes */
             takes: components["schemas"]["Take"][];
             strip: components["schemas"]["Strip-Output"];
+            /** @description Inert exact book metadata from an offline HTML album. */
+            album_source: components["schemas"]["ImportedAlbumBook"] | null;
             /** Created At */
             created_at: string;
             /** Updated At */
@@ -4919,6 +5137,69 @@ export interface components {
             score: number;
             /** Missing */
             missing: string[];
+        };
+        /** ImageReference */
+        ImageReference: {
+            /** $Mioimage */
+            $mioImage: string;
+        };
+        /** ImportedAlbumBook */
+        ImportedAlbumBook: {
+            /** Title */
+            title: string;
+            /** Synopsis */
+            synopsis: string;
+            /** Character Name */
+            character_name: string;
+            /** Story Title */
+            story_title: string;
+            composition?: components["schemas"]["Composition"] | null;
+            /** Mapped Series Title */
+            mapped_series_title: string;
+            /** Mapped Episode Title */
+            mapped_episode_title: string;
+            /** Mapped Synopsis */
+            mapped_synopsis: string;
+        };
+        /**
+         * ImportedAlbumFrame
+         * @description Exact inert import projection plus the corresponding initial editable fields.
+         */
+        ImportedAlbumFrame: {
+            /**
+             * Name
+             * @default
+             */
+            name?: string;
+            /**
+             * Caption
+             * @default
+             */
+            caption?: string;
+            /**
+             * Prompt
+             * @default
+             */
+            prompt?: string;
+            /** Width */
+            width?: number | null;
+            /** Height */
+            height?: number | null;
+            /** Sourceregion */
+            sourceRegion?: number[] | null;
+            /**
+             * Image
+             * @default
+             */
+            image?: components["schemas"]["ImageReference"] | "";
+            /** Mapped Description */
+            mapped_description: string;
+            /** Mapped Caption */
+            mapped_caption: string;
+            /** Mapped Prompt */
+            mapped_prompt: string;
+            /** Mapped Asset Id */
+            mapped_asset_id?: string | null;
         };
         /** InspectRequest */
         InspectRequest: {
@@ -5729,6 +6010,8 @@ export interface components {
             overrides?: components["schemas"]["PanelOverrides-Input"];
             /** @description Dynamic comic; None = auto */
             motion?: components["schemas"]["PanelMotion-Input"] | null;
+            /** @description Inert exact projection retained from an offline HTML album. */
+            album_source?: components["schemas"]["ImportedAlbumFrame"] | null;
         };
         /** Panel */
         "Panel-Output": {
@@ -5831,6 +6114,8 @@ export interface components {
             overrides: components["schemas"]["PanelOverrides-Output"];
             /** @description Dynamic comic; None = auto */
             motion: components["schemas"]["PanelMotion-Output"] | null;
+            /** @description Inert exact projection retained from an offline HTML album. */
+            album_source: components["schemas"]["ImportedAlbumFrame"] | null;
         };
         /**
          * PanelBatch
@@ -6124,6 +6409,12 @@ export interface components {
              * @enum {string}
              */
             response: "json" | "image" | "download";
+            /**
+             * Input
+             * @default json
+             * @enum {string}
+             */
+            input: "json" | "image";
         };
         /** PanelRestore */
         PanelRestore: {
@@ -8478,7 +8769,7 @@ export interface components {
              * Version
              * @constant
              */
-            version: 1;
+            version: 2;
             /**
              * Type
              * @constant
@@ -8527,7 +8818,7 @@ export interface components {
             series_id?: string | null;
         };
         /** PanelFromFrame */
-        MioContract_PanelFromFrame: components["schemas"]["MioContract_PanelReady"] | components["schemas"]["MioContract_PanelRequestMessage"] | components["schemas"]["MioContract_PanelReleaseMessage"];
+        MioContract_PanelFromFrame: components["schemas"]["MioContract_PanelReady"] | components["schemas"]["MioContract_PanelRequestMessage"] | components["schemas"]["MioContract_PanelUploadMessage"] | components["schemas"]["MioContract_PanelReleaseMessage"];
         /** PanelInit */
         MioContract_PanelInit: {
             /** Session */
@@ -8536,7 +8827,7 @@ export interface components {
              * Version
              * @constant
              */
-            version: 1;
+            version: 2;
             /**
              * Type
              * @constant
@@ -8576,7 +8867,7 @@ export interface components {
              * Version
              * @constant
              */
-            version: 1;
+            version: 2;
             /**
              * Type
              * @constant
@@ -8602,7 +8893,7 @@ export interface components {
              * Version
              * @constant
              */
-            version: 1;
+            version: 2;
             /**
              * Type
              * @constant
@@ -8617,7 +8908,7 @@ export interface components {
              * Version
              * @constant
              */
-            version: 1;
+            version: 2;
             /**
              * Type
              * @constant
@@ -8634,7 +8925,7 @@ export interface components {
              * Version
              * @constant
              */
-            version: 1;
+            version: 2;
             /**
              * Type
              * @constant
@@ -8677,6 +8968,12 @@ export interface components {
              * @enum {string}
              */
             response?: "json" | "image" | "download";
+            /**
+             * Input
+             * @default json
+             * @enum {string}
+             */
+            input?: "json" | "image";
         };
         /** PanelResponseMessage */
         MioContract_PanelResponseMessage: {
@@ -8686,7 +8983,7 @@ export interface components {
              * Version
              * @constant
              */
-            version: 1;
+            version: 2;
             /**
              * Type
              * @constant
@@ -8728,6 +9025,52 @@ export interface components {
         };
         /** PanelToFrame */
         MioContract_PanelToFrame: components["schemas"]["MioContract_PanelInit"] | components["schemas"]["MioContract_PanelAppearanceMessage"] | components["schemas"]["MioContract_PanelResponseMessage"] | components["schemas"]["MioContract_PanelMediaMessage"];
+        /**
+         * PanelUploadMessage
+         * @description Metadata only; the message's blob property is a native Blob, never JSON/base64.
+         */
+        MioContract_PanelUploadMessage: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 2;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:panel:upload";
+            /** Rid */
+            rid: string;
+            /** Request Id */
+            request_id: string;
+            /** Filename */
+            filename: string;
+        };
+        /**
+         * PanelUploadRequest
+         * @description Bounded multipart metadata; the image is a separate native binary part.
+         */
+        MioContract_PanelUploadRequest: {
+            /** Activation */
+            activation: string;
+            /** Digest */
+            digest: string;
+            /** Request Id */
+            request_id: string;
+            context?: components["schemas"]["MioContract_PanelContext"];
+            /** Filename */
+            filename: string;
+            /**
+             * Mime
+             * @enum {string}
+             */
+            mime: "image/png" | "image/jpeg" | "image/webp" | "image/gif";
+            /** Bytes */
+            bytes: number;
+        };
         /** SlicePresetSpec */
         MioContract_SlicePresetSpec: {
             /** Id */
@@ -9031,6 +9374,7 @@ export interface components {
             panel_context: components["schemas"]["MioContract_PanelContext"];
             panel_call: components["schemas"]["MioContract_PanelBridgeRequest"];
             panel_result: components["schemas"]["MioContract_PanelBridgeResponse"];
+            panel_upload: components["schemas"]["MioContract_PanelUploadRequest"];
             panel_from_frame: components["schemas"]["MioContract_PanelFromFrame"];
             panel_to_frame: components["schemas"]["MioContract_PanelToFrame"];
             workspace_from_frame: components["schemas"]["MioContract_WorkspaceFromFrame"];
@@ -10935,6 +11279,156 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckpointRestored"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_collections_api_collections_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionsIndex"];
+                };
+            };
+        };
+    };
+    create_collection_api_collections_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Collection"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_collection_api_collections__collection_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rename_collection_api_collections__collection_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Collection"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_collection_memberships_api_collections_memberships_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionAssignments"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionAssignmentResult"];
                 };
             };
             /** @description Validation Error */
@@ -13146,6 +13640,50 @@ export interface operations {
             };
         };
     };
+    panel_upload_api_extension_panels__ext_id___panel_id__uploads_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+                panel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description UTF-8 PanelUploadRequest JSON file, at most 64 KiB
+                     */
+                    metadata: string;
+                    /** Format: binary */
+                    image: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanelBridgeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_extension_settings_api_extensions__ext_id__settings_get: {
         parameters: {
             query?: never;
@@ -14020,6 +14558,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_html_album_api_imports_album_html_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumImportResult"];
                 };
             };
         };

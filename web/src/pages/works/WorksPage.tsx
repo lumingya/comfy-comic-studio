@@ -1,5 +1,5 @@
 import { Search, Star } from 'lucide-react';
-import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { BulkBar, useBulkActions } from './BulkBar';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useMatch, useNavigate, useSearchParams } from 'react-router-dom';
@@ -16,6 +16,9 @@ import { toast, toastError } from '../../components/toast';
 import { Empty } from '../../components/ui';
 import { CreationKitImport } from '../workshop/CreationKitImport';
 import { CoverPicker } from './CoverPicker';
+import { AlbumHtmlImport } from './AlbumHtmlImport';
+import { CollectionTabs } from './CollectionTabs';
+import { CollectionMoveMenu } from './CollectionMoveMenu';
 import { Showcase, ShowcaseNav } from './Showcase';
 import { ExportBooks, RenameBooks } from './ShelfDialogs';
 import {
@@ -30,6 +33,7 @@ import {
 } from './shelf';
 import { WorksHero } from './WorksHero';
 import { useShelfReorder } from './useShelfReorder';
+import { booksInCollection, useShelfCollections } from './useShelfCollections';
 import { useShelfSelection, type ShelfContext } from './useShelfSelection';
 import {
   CollectionTitle,
@@ -58,6 +62,14 @@ export default function WorksPage() {
   const generatingKey = [...generating].sort().join(',');
   // Search and status live in the URL so Back returns to the same view; the sort is remembered.
   const [params, setParams] = useSearchParams();
+  const collection = params.get('collection') ?? '';
+  const setCollection = (value: string) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set('collection', value);
+    else next.delete('collection');
+    setParams(next, { replace: true });
+  };
+  const collections = useShelfCollections(items, collection, () => setCollection(''));
   const status = params.get('status') ?? '';
   const filter: ShelfQuery = {
     q: params.get('q') ?? '',
@@ -73,15 +85,34 @@ export default function WorksPage() {
   const setFilter = (patch: Partial<ShelfQuery>) => {
     if (patch.sort) setSort(patch.sort);
     const next = { ...filter, ...patch };
-    const p = new URLSearchParams();
+    const p = new URLSearchParams(params);
+    p.delete('q');
+    p.delete('status');
+    p.delete('starred');
     if (next.q) p.set('q', next.q);
     if (next.filter !== 'all') p.set('status', next.filter);
     setParams(p, { replace: true });
   };
   const books = useMemo(
-    () => filterShelf(items, filter, { starred, generating, order }, i18n.language),
+    () =>
+      booksInCollection(
+        filterShelf(items, filter, { starred, generating, order }, i18n.language),
+        collection,
+        collections.query.data,
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, filter.q, filter.filter, sort, starred, generatingKey, order, i18n.language],
+    [
+      items,
+      collection,
+      collections.query.data,
+      filter.q,
+      filter.filter,
+      sort,
+      starred,
+      generatingKey,
+      order,
+      i18n.language,
+    ],
   );
   const counts = useMemo<Counts>(
     () => ({
@@ -99,6 +130,9 @@ export default function WorksPage() {
   const [coverFor, setCoverFor] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<SeriesCard[] | null>(null);
   const [exporting, setExporting] = useState<SeriesCard[] | null>(null);
+  const [collectionDialog, setCollectionDialog] = useState(false);
+  const [albumImportOpen, setAlbumImportOpen] = useState(false);
+  const targetsRoot = useRef<HTMLElement>(null);
   // Multi-select (legacy desktop selection): Ctrl / ⌘ / Shift + click, right-click for batch
   // actions, Ctrl+A / Esc / Delete. 批量管理 is the touch fallback that makes a tap select.
   const [bulk, setBulk] = useState(false);
@@ -107,7 +141,7 @@ export default function WorksPage() {
   const showGrid = view === 'grid' || bulk;
   const bulkActions = useBulkActions(() => selection.clear());
   const menu = useContextMenu<ShelfContext>();
-  const dialogOpen = !!coverFor || !!renaming || !!exporting;
+  const dialogOpen = !!coverFor || !!renaming || !!exporting || collectionDialog || albumImportOpen;
   const setBulkMode = (on: boolean) => {
     setBulk(on);
     selection.clear();
@@ -147,14 +181,19 @@ export default function WorksPage() {
   };
   const reorder = useShelfReorder({
     root: shelf.ref,
+    targetsRoot,
     enabled: !readerOpen && !dialogOpen && !menu.state,
+    canDrag: !collections.busy,
     sortable: !bulk && books.length > 1,
     selectedIds: selectedBookIds,
     onDrop: moveBook,
+    onCollectionDrop: collections.query.data
+      ? (ids, target) => void collections.move(ids, target)
+      : undefined,
   });
   useEffect(() => {
     menu.close();
-  }, [view, filter.q, filter.filter, sort, menu.close]);
+  }, [view, collection, filter.q, filter.filter, sort, menu.close]);
   useEffect(() => {
     if (menu.state?.payload.ids.some((id) => !bookIds.includes(id))) menu.close();
   }, [bookIds, menu.state, menu.close]);
@@ -168,7 +207,7 @@ export default function WorksPage() {
   });
   // The featured book (showcase); back to the first one whenever the filter changes.
   const [featured, setFeatured] = useState(0);
-  const filterKey = `${filter.q}|${filter.filter}|${sort}`;
+  const filterKey = `${collection}|${filter.q}|${filter.filter}|${sort}`;
   useEffect(() => setFeatured(0), [filterKey]);
   const index = Math.min(featured, Math.max(0, books.length - 1));
   const coverSeries = items.find((s) => s.id === coverFor);
@@ -217,7 +256,13 @@ export default function WorksPage() {
 
   return (
     <div className="art-fade">
-      <section className="art-fade" id="collection-home">
+      <section
+        className="art-fade"
+        id="collection-home"
+        ref={targetsRoot}
+        onPointerDownCapture={reorder.onPointerDownCapture}
+        onClickCapture={reorder.onClickCapture}
+      >
         <div className="collection-heading">
           <div className="grow">
             <CollectionTitle
@@ -229,6 +274,7 @@ export default function WorksPage() {
             />
           </div>
           <div className="resource-actions">
+            <AlbumHtmlImport onDialogChange={setAlbumImportOpen} />
             <CreationKitImport
               label={t('works.importBundle')}
               legacyLabel={t('works.importBundle')}
@@ -242,6 +288,20 @@ export default function WorksPage() {
             </button>
           </div>
         </div>
+
+        <CollectionTabs
+          index={collections.query.data}
+          value={collection}
+          onChange={setCollection}
+          busy={collections.busy}
+          onCreate={collections.create}
+          onRename={collections.rename}
+          onDelete={collections.remove}
+          onDialogChange={setCollectionDialog}
+        />
+        {collections.query.error ? (
+          <QueryError error={collections.query.error} onRetry={collections.query.refetch} />
+        ) : null}
 
         {list.isLoading ? <SkeletonGrid /> : null}
         {list.error ? <QueryError error={list.error} onRetry={list.refetch} /> : null}
@@ -277,10 +337,8 @@ export default function WorksPage() {
           aria-label={t('classic.shelf.listLabel')}
           className={selection.ids.length ? 'has-selection' : undefined}
           onClickCapture={(e) => {
-            reorder.onClickCapture(e);
             if (!e.defaultPrevented) shelf.onClickCapture(e);
           }}
-          onPointerDownCapture={reorder.onPointerDownCapture}
           onPointerDown={shelf.onPointerDown}
           onDragStartCapture={shelf.onDragStartCapture}
           onContextMenu={shelf.onContextMenu}
@@ -318,6 +376,18 @@ export default function WorksPage() {
               chosen={chosen}
               actions={bulkActions}
               onExport={() => setExporting(chosen)}
+              moveAction={
+                <CollectionMoveMenu
+                  index={collections.query.data}
+                  disabled={!chosen.length || collections.busy}
+                  onMove={(target) =>
+                    void collections.move(
+                      chosen.map((book) => book.id!),
+                      target,
+                    )
+                  }
+                />
+              }
               onAll={selection.all}
               onNone={selection.clear}
               onExit={() => setBulkMode(false)}
@@ -342,6 +412,8 @@ export default function WorksPage() {
               selected={!!books[index] && selection.has(books[index].id!)}
               context={menu.state?.payload.focusId === books[index]?.id}
               disabled={readerOpen || dialogOpen}
+              onPointerDown={reorder.onPointerDown}
+              readerSearch={gallerySearch(params)}
             />
           ) : null}
           {books.length > 1 && !bulk && !chosen.length && !shelf.touch && !hintSeen ? (
@@ -363,7 +435,7 @@ export default function WorksPage() {
                   onMenu={(e) => openMenu(s, e)}
                   onPointerDown={reorder.onPointerDown}
                   sortable={
-                    !bulk && books.length > 1 && (!selection.ids.length || selection.has(s.id!))
+                    !collections.busy && (!!collections.query.data || (!bulk && books.length > 1))
                   }
                   selecting={bulk}
                   selected={selection.has(s.id!)}

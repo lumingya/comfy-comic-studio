@@ -97,7 +97,8 @@ class ExtensionMarketTests(ApiCase):
             with self.subTest(extension=identifier):
                 self.assertEqual(packages[identifier].status, "disabled")
                 manifest = packages[identifier].manifest
-                self.assertTrue(manifest.contributes.panels or manifest.workspace)
+                self.assertTrue(manifest.contributes.panels)
+                self.assertIsNone(manifest.workspace)
         for item in result["items"]:
             self.assertEqual(item["source"], "bundled")
             self.assertTrue(item["installed"]["builtin"])
@@ -126,12 +127,10 @@ class ExtensionMarketTests(ApiCase):
                     )
                 )
                 self.assertEqual(enabled["status"], "active")
-                if identifier == "panel-retouch":
-                    surfaces = self.ok(self.client.get("/api/extension-surfaces"))["items"]
-                    self.assertIn(identifier, {item["extension_id"] for item in surfaces})
-                else:
-                    panels = self.ok(self.client.get("/api/extension-panels"))
-                    self.assertIn(identifier, {item["extension"] for item in panels})
+                panels = self.ok(self.client.get("/api/extension-panels"))
+                self.assertIn(identifier, {item["extension"] for item in panels})
+                surfaces = self.ok(self.client.get("/api/extension-surfaces"))["items"]
+                self.assertNotIn(identifier, {item["extension_id"] for item in surfaces})
                 disabled = self.ok(self.client.post(f"/api/extensions/{identifier}/disable"))
                 self.assertEqual(disabled["status"], "disabled")
                 panels = self.ok(self.client.get("/api/extension-panels"))

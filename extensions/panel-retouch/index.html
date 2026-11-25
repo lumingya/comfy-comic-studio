@@ -149,6 +149,13 @@
           <input id="compare-slider" type="range" min="0" max="100" value="50" aria-label="原图与候选对比滑杆" />
         </div>
         <div class="tool-row"><button id="adopt" class="primary" disabled data-i18n="adopt">采用此候选</button><span class="hint" data-i18n="adoptHint">采用会更新该格阅读中的画面，原候选仍保留。</span></div>
+        <section id="adopt-confirmation" class="adopt-confirmation" role="group" aria-labelledby="adopt-confirm-message" hidden>
+          <p id="adopt-confirm-message" data-i18n="adoptConfirm">采用这张精修候选？这会替换该格当前采用图，旧图仍保留为候选。</p>
+          <div class="tool-row">
+            <button id="confirm-adopt" class="primary" data-i18n="confirmAdopt">确认采用</button>
+            <button id="cancel-adopt" data-i18n="cancelAdopt">取消</button>
+          </div>
+        </section>
       </section>
     </main>
   </body>

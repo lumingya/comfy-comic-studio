@@ -35,6 +35,12 @@ class AlbumExport(BaseModel):
         default=False, description="Omit dialogue lines already fully visible in a lettered panel"
     )
     show_prompts: bool = False
+    include_source_data: bool = Field(
+        default=False,
+        description="Include captions and compiled positive prompts for reimporting the exported "
+        "reading projection; independent of visible captions/prompts. Use a .mio.zip source file "
+        "to preserve the complete editable project.",
+    )
     theme_color: str = ""
     border: int = Field(default=0, ge=0, le=8)
     signature: str = Field(default="", max_length=120)

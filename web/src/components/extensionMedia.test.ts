@@ -4,7 +4,12 @@ import { createPanelMedia, readPanelBinary } from './extensionMedia';
 
 const response = (bytes = new Uint8Array([1, 2, 3]), headers: Record<string, string> = {}) =>
   new Response(bytes, {
-    headers: { 'content-type': 'image/png', 'x-mio-panel-response': 'image', ...headers },
+    headers: {
+      'content-type': 'image/png',
+      'x-mio-panel-response': 'image',
+      'x-mio-panel-filename': 'image.png',
+      ...headers,
+    },
   });
 
 describe('bounded panel binary transport', () => {
@@ -13,6 +18,7 @@ describe('bounded panel binary transport', () => {
     const result = await readPanelBinary(response(), 'image', signal);
     expect(result.blob.size).toBe(3);
     expect(result.blob.type).toBe('image/png');
+    expect(result.filename).toBe('image.png');
     const invalidHeaders: Record<string, string>[] = [
       { 'content-type': 'image/svg+xml' },
       { 'x-mio-panel-response': 'download' },
@@ -26,6 +32,74 @@ describe('bounded panel binary transport', () => {
       ).rejects.toThrow();
   });
 
+  it('reads the dedicated UTF-8 filename header without requiring a download disposition', async () => {
+    const signal = new AbortController().signal;
+    const file = new Response('%PDF-1.7\n%%EOF', {
+      headers: {
+        'content-type': 'application/pdf',
+        'x-mio-panel-response': 'download',
+        'x-mio-panel-filename': '%E9%9B%A8%201%20%28A%29%21%25.pdf',
+      },
+    });
+    expect(file.headers.has('content-disposition')).toBe(false);
+    const result = await readPanelBinary(file, 'download', signal);
+    expect(result.filename).toBe('雨 1 (A)!%.pdf');
+    expect(result.blob.type).toBe('application/pdf');
+    expect(result.blob.size).toBe(14);
+  });
+
+  it('normalizes decoded filename paths and controls and uses the dedicated header as authoritative', async () => {
+    const result = await readPanelBinary(
+      response(undefined, {
+        'x-mio-panel-filename': '..%2Fdir%5Cbad%00%0A%7F%3C%3E%3A%22%7C%3F%2A.png',
+        'content-disposition': "attachment; filename*=UTF-8''different.png",
+      }),
+      'image',
+      new AbortController().signal,
+    );
+    expect(result.filename).toBe('.._dir_bad__________.png');
+  });
+
+  it('rejects missing, malformed, non-UTF-8 and oversized filename headers before reading bytes', async () => {
+    const invalid = [
+      null,
+      '',
+      'bad%.png',
+      'bad%2.png',
+      'bad%GG.png',
+      '%C3%28.png',
+      'raw space.png',
+      'raw/path.png',
+      'raw+name.png',
+      `${'a'.repeat(191)}.png`,
+      '%41'.repeat(190 * 4 + 1),
+    ];
+    for (const filename of invalid) {
+      const cancel = vi.fn();
+      const headers = new Headers({
+        'content-type': 'image/png',
+        'x-mio-panel-response': 'image',
+        'content-disposition': "attachment; filename*=UTF-8''fallback.png",
+      });
+      if (filename !== null) headers.set('x-mio-panel-filename', filename);
+      const file = new Response(new ReadableStream({ cancel }), { headers });
+      await expect(readPanelBinary(file, 'image', new AbortController().signal)).rejects.toThrow(
+        'filename is invalid',
+      );
+      expect(cancel).toHaveBeenCalledOnce();
+    }
+  });
+
+  it('accepts bounded supplementary Unicode without cutting off the filename suffix', async () => {
+    const filename = `${'🌧'.repeat(180)}.png`;
+    const result = await readPanelBinary(
+      response(undefined, { 'x-mio-panel-filename': encodeURIComponent(filename) }),
+      'image',
+      new AbortController().signal,
+    );
+    expect(result.filename).toBe(filename);
+  });
+
   it('counts chunked bytes even without a length header and rejects aborts', async () => {
     const signal = new AbortController().signal;
     const overflow = new Response(
@@ -36,7 +110,13 @@ describe('bounded panel binary transport', () => {
           controller.close();
         },
       }),
-      { headers: { 'content-type': 'image/png', 'x-mio-panel-response': 'image' } },
+      {
+        headers: {
+          'content-type': 'image/png',
+          'x-mio-panel-response': 'image',
+          'x-mio-panel-filename': 'image.png',
+        },
+      },
     );
     await expect(readPanelBinary(overflow, 'image', signal)).rejects.toThrow('byte limit');
     const aborted = new AbortController();

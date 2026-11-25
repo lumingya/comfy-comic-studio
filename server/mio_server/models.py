@@ -24,6 +24,8 @@ from pydantic import (
     model_validator,
 )
 
+from .album_interchange import ImportedAlbumBook, ImportedAlbumFrame
+
 SHOTS = ("extreme_close", "close", "medium", "cowboy", "full", "wide")
 ANGLES = ("eye", "high", "low", "side", "back", "dutch")
 TIMES = ("", "morning", "day", "evening", "night")
@@ -313,6 +315,9 @@ class Panel(StrictModel):
     )
     overrides: PanelOverrides = Field(default_factory=PanelOverrides)
     motion: PanelMotion | None = Field(default=None, description="Dynamic comic; None = auto")
+    album_source: ImportedAlbumFrame | None = Field(
+        default=None, description="Inert exact projection retained from an offline HTML album."
+    )
 
     @field_validator("aspect_ratio")
     @classmethod
@@ -518,6 +523,9 @@ class Episode(StrictModel):
     panels: list[Panel] = Field(default_factory=list)
     takes: list[Take] = Field(default_factory=list)
     strip: Strip = Field(default_factory=Strip)
+    album_source: ImportedAlbumBook | None = Field(
+        default=None, description="Inert exact book metadata from an offline HTML album."
+    )
     created_at: str = Field(default_factory=now_iso)
     updated_at: str = Field(default_factory=now_iso)
     deleted_at: str | None = None

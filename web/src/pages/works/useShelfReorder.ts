@@ -10,6 +10,7 @@ import { shortcutBlocked } from '../../app/shortcuts';
 /** Below this the press is a click; above it the album lifts (legacy THRESHOLD). */
 const THRESHOLD = 6;
 const CARD = '[data-shelf-id]';
+const COLLECTION = '[data-shelf-collection]';
 const CONTROL = 'input,textarea,select,[contenteditable],button,a,[role="button"],summary,label';
 
 interface Gesture {
@@ -23,6 +24,7 @@ interface Gesture {
   card: HTMLElement;
   active: boolean;
   target: HTMLElement | null;
+  collectionTarget: boolean;
   after: boolean;
   sortable: boolean;
 }
@@ -34,14 +36,19 @@ interface Gesture {
  */
 export function useShelfReorder(options: {
   root: RefObject<HTMLElement | null>;
+  targetsRoot?: RefObject<HTMLElement | null>;
   enabled: boolean;
+  canDrag?: boolean;
   sortable: boolean;
   selectedIds?: readonly string[];
   onDrop: (source: string, target: string, after: boolean, moving?: string[]) => void;
+  onCollectionDrop?: (moving: string[], collectionId: string | null) => void;
 }) {
   const latest = useRef(options);
   latest.current = options;
   const cleanup = useRef<(() => void) | null>(null);
+  const cancelGesture = useRef<(() => void) | null>(null);
+  const dragging = useRef(false);
   const suppressClick = useRef(false);
   const findCard = (root: HTMLElement, id: string) =>
     [...root.querySelectorAll<HTMLElement>(CARD)].find((el) => el.dataset.shelfId === id);
@@ -50,6 +57,7 @@ export function useShelfReorder(options: {
   const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
     if (
       !latest.current.enabled ||
+      latest.current.canDrag === false ||
       e.button !== 0 ||
       e.pointerType === 'touch' ||
       !(e.target instanceof Element)
@@ -57,7 +65,7 @@ export function useShelfReorder(options: {
       return;
     const card = e.currentTarget.closest<HTMLElement>(CARD);
     const root = latest.current.root.current;
-    if (!card || !root) return;
+    if (!card || !root?.contains(card)) return;
     const control = e.target.closest(CONTROL);
     if (control && !control.matches('[data-shelf-open]')) return;
     const selectedIds = latest.current.selectedIds ?? [];
@@ -76,6 +84,7 @@ export function useShelfReorder(options: {
       card,
       active: false,
       target: null,
+      collectionTarget: false,
       after: false,
       sortable:
         latest.current.sortable &&
@@ -90,9 +99,10 @@ export function useShelfReorder(options: {
     let ghost: HTMLElement | null = null;
     let raf = 0;
 
-    const clearTarget = () => g.target?.classList.remove('is-drop-target', 'is-drop-after');
+    const clearTarget = () =>
+      g.target?.classList.remove('is-drop-target', 'is-drop-after', 'is-collection-drop-target');
     const makeGhost = () => {
-      const cover = card.querySelector<HTMLElement>('.shelf-cover') ?? card;
+      const cover = card.querySelector<HTMLElement>('.shelf-cover, .exhibit-cover-link') ?? card;
       const rect = cover.getBoundingClientRect();
       const el = document.createElement('div');
       el.className = 'shelf-drag-ghost';
@@ -121,17 +131,28 @@ export function useShelfReorder(options: {
     };
     const hit = (x: number, y: number) => {
       const el = document.elementFromPoint(x, y);
+      const collection = el?.closest<HTMLElement>(COLLECTION);
+      const targetsRoot = latest.current.targetsRoot?.current ?? root;
+      if (
+        latest.current.onCollectionDrop &&
+        collection &&
+        targetsRoot.contains(collection) &&
+        !collection.matches(':disabled,[aria-disabled="true"]')
+      ) {
+        return { card: collection, after: false, collection: true };
+      }
+      if (!g.sortable) return null;
       const over = el?.closest<HTMLElement>(CARD);
       if (over && root.contains(over) && !g.moving.includes(over.dataset.shelfId ?? '')) {
         const r = over.getBoundingClientRect();
-        return { card: over, after: x > r.left + r.width / 2 };
+        return { card: over, after: x > r.left + r.width / 2, collection: false };
       }
       // The marker sits in the gutter. Moving onto it must not cancel that drop target.
-      if (g.target && !over && root.contains(el)) {
+      if (g.target && !g.collectionTarget && !over && root.contains(el)) {
         const r = g.target.getBoundingClientRect();
         const distance = g.after ? x - r.right : r.left - x;
         if (y >= r.top && y <= r.bottom && distance >= 0 && distance <= 12) {
-          return { card: g.target, after: g.after };
+          return { card: g.target, after: g.after, collection: false };
         }
       }
       return null;
@@ -145,9 +166,13 @@ export function useShelfReorder(options: {
       clearTarget();
       g.target = h?.card ?? null;
       g.after = !!h?.after;
+      g.collectionTarget = !!h?.collection;
       if (h) {
-        h.card.classList.add('is-drop-target');
-        h.card.classList.toggle('is-drop-after', h.after);
+        if (h.collection) h.card.classList.add('is-collection-drop-target');
+        else {
+          h.card.classList.add('is-drop-target');
+          h.card.classList.toggle('is-drop-after', h.after);
+        }
       }
     };
     const scheduleScroll = () => {
@@ -186,6 +211,8 @@ export function useShelfReorder(options: {
       window.removeEventListener('keydown', key, true);
       window.removeEventListener('blur', abort);
       cleanup.current = null;
+      cancelGesture.current = null;
+      dragging.current = false;
     };
     const abort = () => {
       suppressClick.current = true;
@@ -196,12 +223,14 @@ export function useShelfReorder(options: {
     };
     function move(ev: PointerEvent) {
       if (ev.pointerId !== g.pointerId) return;
-      if (!(ev.buttons & 1) || !latest.current.enabled) return abort();
+      if (!(ev.buttons & 1) || !latest.current.enabled || latest.current.canDrag === false)
+        return abort();
       if (!g.active) {
         if (Math.hypot(ev.clientX - g.startX, ev.clientY - g.startY) < THRESHOLD) return;
         g.active = true;
+        dragging.current = true;
         document.getSelection?.()?.removeAllRanges();
-        if (g.sortable) {
+        if (g.sortable || latest.current.onCollectionDrop) {
           ghost = makeGhost();
           for (const id of g.moving) {
             findCard(root!, id)?.classList.add('is-dragging');
@@ -210,24 +239,30 @@ export function useShelfReorder(options: {
         }
       }
       ev.preventDefault();
-      if (g.sortable) {
+      if (g.sortable || latest.current.onCollectionDrop) {
         track(ev.clientX, ev.clientY);
         scheduleScroll();
       }
     }
     function up(ev: PointerEvent) {
       if (ev.pointerId !== g.pointerId) return;
-      const { active, after } = g;
+      const { active, after, collectionTarget } = g;
       const target = g.target?.dataset.shelfId;
+      const collectionId = g.target?.dataset.shelfCollection;
       finish();
       if (!active) return;
       suppressClick.current = true;
-      if (latest.current.enabled && g.sortable && target && target !== g.id)
+      if (!latest.current.enabled || latest.current.canDrag === false) return;
+      if (collectionTarget && collectionId !== undefined) {
+        latest.current.onCollectionDrop?.(g.moving, collectionId || null);
+      } else if (g.sortable && target && target !== g.id)
         latest.current.onDrop(g.id, target, after, g.moving);
     }
     function key(ev: KeyboardEvent) {
       if (ev.key !== 'Escape' || shortcutBlocked(ev, root, true)) return;
-      // Let the selection adapter also leave bulk mode on this same Escape.
+      // A drag owns the first Escape; the selection adapter receives the next one.
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
       abort();
     }
     window.addEventListener('pointermove', move, true);
@@ -236,9 +271,16 @@ export function useShelfReorder(options: {
     window.addEventListener('keydown', key, true);
     window.addEventListener('blur', abort);
     cleanup.current = finish;
+    cancelGesture.current = abort;
   };
 
   return {
+    cancel: () => {
+      if (!cancelGesture.current) return false;
+      cancelGesture.current();
+      return true;
+    },
+    isDragging: () => dragging.current,
     onPointerDown,
     onPointerDownCapture: () => {
       suppressClick.current = false;

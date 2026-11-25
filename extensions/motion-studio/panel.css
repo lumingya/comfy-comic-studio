@@ -115,7 +115,7 @@ p {
   white-space: pre-line;
   color: var(--motion-soft);
 }
-#discard-confirm {
+#discard-confirm:not([hidden]) {
   display: flex;
   align-items: center;
   flex-wrap: wrap;

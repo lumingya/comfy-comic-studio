@@ -1,9 +1,11 @@
-/* Standalone version-1 sandbox-panel bridge. It never fetches or receives credentials. */
+/* Standalone version-2 sandbox-panel bridge. It never fetches or receives credentials. */
 (() => {
   "use strict";
   const session = new URLSearchParams(location.hash.slice(1)).get(
     "mio-session",
   );
+  const channel = new MessageChannel();
+  const transport = channel.port1;
   const pending = new Map();
   const media = new Map();
   const appearanceListeners = new Set();
@@ -13,7 +15,7 @@
   });
   let context = null;
   const send = (message) =>
-    parent.postMessage({ version: 1, session, ...message }, "*");
+    transport.postMessage({ version: 2, session, ...message });
   const forgetMedia = (id) => {
     const owned = media.get(id);
     if (!owned) return;
@@ -54,12 +56,11 @@
       return () => appearanceListeners.delete(callback);
     },
   };
-  addEventListener("message", (event) => {
+  transport.addEventListener("message", (event) => {
     const message = event.data;
     if (
-      event.source !== parent ||
       !message ||
-      message.version !== 1 ||
+      message.version !== 2 ||
       message.session !== session
     )
       return;
@@ -164,6 +165,12 @@
     });
     pending.clear();
     for (const id of media.keys()) window.panelBridge.release(id);
+    transport.close();
   });
-  send({ type: "mio:panel:ready" });
+  transport.start();
+  parent.postMessage(
+    { type: "mio:panel:ready", version: 2, session },
+    "*",
+    [channel.port2],
+  );
 })();

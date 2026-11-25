@@ -2,6 +2,8 @@
   "use strict";
 
   const session = new URLSearchParams(location.hash.slice(1)).get("mio-session");
+  const channel = new MessageChannel();
+  const transport = channel.port1;
   const pending = new Map();
   const $ = (id) => document.getElementById(id);
   const strings = {
@@ -153,12 +155,12 @@
         reject(error);
       }, 29000);
       pending.set(rid, { resolve, reject, timer });
-      parent.postMessage({
-        type: "mio:panel:request", version: 1, session, rid, request_id: requestId,
+      transport.postMessage({
+        type: "mio:panel:request", version: 2, session, rid, request_id: requestId,
         ...(payload.path_params ? { path_params: payload.path_params } : {}),
         ...(payload.query ? { query: payload.query } : {}),
         ...(payload.body !== undefined ? { body: payload.body } : {}),
-      }, "*");
+      });
     });
   }
 
@@ -288,6 +290,12 @@
     status(t("proposing"));
     try {
       episode = await request("episode", { path_params: pathEpisode() });
+      if (!episode.panels?.length) {
+        proposal = { base_revision: episode.revision, ops: [] };
+        renderProposal();
+        status(t("panelMissing"));
+        return;
+      }
       proposal = await request("propose", { path_params: pathEpisode(), body: { instruction: $("instruction").value.trim() } });
       renderProposal();
       status(t("proposalReady"));
@@ -388,6 +396,12 @@
     $("pacing-status").textContent = t("pacingBusy");
     try {
       episode = await request("episode", { path_params: pathEpisode() });
+      if (!episode.panels?.length) {
+        pacingPreview = { revision: episode.revision, suggestions: [] };
+        renderPacing();
+        $("pacing-status").textContent = t("panelMissing");
+        return;
+      }
       pacingPreview = await request("pacing-suggest", { path_params: pathEpisode(), query: { preset: $("pacing-preset").value } });
       renderPacing();
       $("pacing-status").textContent = t(pacingPreview.suggestions?.length ? "pacingReady" : "pacingEmpty", { count: pacingPreview.suggestions?.length ?? 0 });
@@ -434,9 +448,9 @@
     update();
   });
 
-  addEventListener("message", (event) => {
+  transport.addEventListener("message", (event) => {
     const message = event.data;
-    if (event.source !== parent || !message || message.version !== 1 || message.session !== session) return;
+    if (!message || message.version !== 2 || message.session !== session) return;
     if (message.type === "mio:panel:init") {
       context = message.context || {};
       applyAppearance(message.appearance || {});
@@ -461,6 +475,16 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && running) event.preventDefault();
   });
-  parent.postMessage({ type: "mio:panel:ready", version: 1, session }, "*");
+  addEventListener("pagehide", () => {
+    for (const value of pending.values()) clearTimeout(value.timer);
+    pending.clear();
+    transport.close();
+  });
+  transport.start();
+  parent.postMessage(
+    { type: "mio:panel:ready", version: 2, session },
+    "*",
+    [channel.port2],
+  );
   applyAppearance({ locale: navigator.language || "zh-CN" });
 })();

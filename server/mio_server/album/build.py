@@ -46,6 +46,7 @@ class Page:
     palette: list[str]
     source_region: tuple[int, int, int, int] | None = None
     composition: dict | None = None
+    source_caption: str | None = None
 
 
 def palette(im: Image.Image, n: int = 3) -> list[str]:
@@ -114,6 +115,26 @@ def caption(series: Series, panel, embedded_strip=None) -> str:
     return "　".join(lines)
 
 
+def _source_caption(series, panel, current):
+    source = panel.album_source
+    return source.caption if source and current == source.mapped_caption else current
+
+
+def _positive(series, episode, panel):
+    current = compile_panel(series, episode, panel, dialect="tags", seed=0).positive
+    source = panel.album_source
+    if source and panel.overrides.raw_prompt == source.mapped_prompt:
+        return source.prompt
+    return current
+
+
+def _frame_name(panel, fallback):
+    source = panel.album_source
+    if source:
+        return source.name if panel.description == source.mapped_description else panel.description
+    return fallback
+
+
 def episode_pages(
     ctx,
     episode_id: str,
@@ -180,7 +201,7 @@ def iter_episode_pages(
             remaining = {p.id for p in panels}
             for i, box in enumerate(band_regions(snapshot), start=1):
                 checkpoint()
-                captions, prompts = [], []
+                captions, source_captions, prompts, included = [], [], [], []
                 for panel in panels:
                     if panel.id not in remaining:
                         continue
@@ -189,22 +210,31 @@ def iter_episode_pages(
                     anchor = max(0, min(snapshot.strip.height - 1, anchor))
                     if box[1] <= anchor < box[3]:
                         remaining.remove(panel.id)
+                        included.append(panel)
+                        full_caption = caption(series, panel)
+                        source_captions.append(_source_caption(series, panel, full_caption))
                         captions.append(
-                            caption(series, panel, snapshot.strip if deduplicate_captions else None)
+                            caption(series, panel, snapshot.strip)
+                            if deduplicate_captions
+                            else full_caption
                         )
-                        prompts.append(
-                            compile_panel(series, ep, panel, dialect="tags", seed=0).positive
-                        )
+                        prompts.append(_positive(series, ep, panel))
                 with snapshot.render_region(box) as im:
                     data, mime = M.process(
                         profile, original=None, image=im, stats=stats, max_width=max_width
                     )
                     with Image.open(io.BytesIO(data)) as encoded:
                         width, height = encoded.size
+                    name = f"画布第 {i} 段"
+                    if len(included) == 1:
+                        panel = included[0]
+                        source = panel.album_source
+                        if source and source.source_region == list(box):
+                            name = _frame_name(panel, name)
                     yield Page(
                         data=data,
                         mime=mime,
-                        name=f"画布第 {i} 段",
+                        name=name,
                         caption="　".join(filter(None, captions)),
                         prompt="\n".join(prompts),
                         width=width,
@@ -212,6 +242,7 @@ def iter_episode_pages(
                         palette=palette(im),
                         source_region=box,
                         composition=metadata(snapshot),
+                        source_caption="　".join(filter(None, source_captions)),
                     )
             return
         for i, panel in enumerate(ep.ordered_panels(), start=1):
@@ -232,18 +263,20 @@ def iter_episode_pages(
                 )
                 with Image.open(io.BytesIO(data)) as encoded:
                     width, height = encoded.size
-                prompt = compile_panel(series, ep, panel, dialect="tags", seed=0).positive
+                prompt = _positive(series, ep, panel)
+                full_caption = caption(series, panel)
                 page = Page(
                     data=data,
                     mime=mime,
-                    name=f"第 {i} 格",
-                    caption=caption(
-                        series, panel, snapshot.strip if snapshot and deduplicate_captions else None
-                    ),
+                    name=_frame_name(panel, f"第 {i} 格"),
+                    caption=caption(series, panel, snapshot.strip)
+                    if snapshot and deduplicate_captions
+                    else full_caption,
                     prompt=prompt,
                     width=width,
                     height=height,
                     palette=palette(im),
+                    source_caption=_source_caption(series, panel, full_caption),
                 )
             yield page
 
@@ -283,9 +316,16 @@ def episode_book(
     for i, page in enumerate(pages, start=1):
         if page is None:
             panel = ep.ordered_panels()[i - 1]
-            prompt = compile_panel(series, ep, panel, dialect="tags", seed=0).positive
+            prompt = _positive(series, ep, panel)
+            full_caption = caption(series, panel)
             frames.append(
-                Frame(image="", name=f"第 {i} 格", caption=caption(series, panel), prompt=prompt)
+                Frame(
+                    image="",
+                    name=_frame_name(panel, f"第 {i} 格"),
+                    caption=full_caption,
+                    source_caption=_source_caption(series, panel, full_caption),
+                    prompt=prompt,
+                )
             )
             continue
         if spool_dir is not None:
@@ -307,6 +347,7 @@ def episode_book(
                 height=page.height,
                 palette=page.palette,
                 source_region=page.source_region,
+                source_caption=page.source_caption,
             )
         )
     # Text outside the panels uses the album's variables too: a synopsis written in the workshop
@@ -317,7 +358,7 @@ def episode_book(
     # Legacy books: the cover shows the album's own name and 「CHAPTER 01 / …」 the story's; an
     # album of several episodes names each book after its episode.
     single = count <= 1 and bool(series.title.strip())
-    return Book(
+    book = Book(
         title=series.title if single else episode_title,
         frames=frames,
         synopsis=V.display(ep.synopsis, values),
@@ -325,3 +366,14 @@ def episode_book(
         story_title=episode_title if single else series.title,
         composition=composition,
     )
+    source = ep.album_source
+    if source:
+        if series.title == source.mapped_series_title:
+            book.title = source.title
+        if ep.title == source.mapped_episode_title:
+            book.story_title = source.story_title
+        if ep.synopsis == source.mapped_synopsis:
+            book.synopsis = source.synopsis
+        if not book.character_name:
+            book.character_name = source.character_name
+    return book

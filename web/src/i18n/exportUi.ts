@@ -29,6 +29,9 @@ export const exportZh = {
   batchCombined: '合并为一个文件。',
   batchSeparate: '每本单独保存。',
   includePresets: '包含角色与画风预设',
+  includeSourceData: '附带可回导资料（包含完整提示词及隐藏台词）',
+  sourceDataWarning: '任何拿到此 HTML 的人都能提取这些资料。仅在需要本地备份或回导时启用。',
+  sourceDataScope: '仅保留阅读页、完整台词和展开后的正向提示词；完整项目请导出可编辑源文件。',
   tooMany: '已选 {{count}} 话，单次最多合并 50 话。',
   partial: '已导出 {{done}} / {{total}} 本。',
   captions: '包含旁白与台词',
@@ -67,6 +70,11 @@ export const exportEn = {
   batchCombined: 'Combined into one file.',
   batchSeparate: 'One file per album.',
   includePresets: 'Include character and style presets',
+  includeSourceData: 'Include importable data (full prompts and hidden dialogue)',
+  sourceDataWarning:
+    'Anyone with this HTML can extract these details. Enable only for local backup or reimport.',
+  sourceDataScope:
+    'Preserves reading pages, full dialogue and expanded positive prompts. Export an editable project for the complete source.',
   tooMany: '{{count}} episodes selected; at most 50 can be combined.',
   partial: 'Exported {{done}} / {{total}} albums.',
   captions: 'Include narration and dialogue',

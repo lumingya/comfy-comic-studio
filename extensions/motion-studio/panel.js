@@ -593,6 +593,7 @@
       animation.pause();
       animation.currentTime = hold() * 10 * percent;
     }
+    $("scrub").value = String(percent);
   });
   $("aspect").addEventListener("change", () => {
     $("stage").dataset.aspect = $("aspect").value;

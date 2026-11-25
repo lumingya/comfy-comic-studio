@@ -47,13 +47,14 @@
 }
 ```
 
-沿用普通面板 ready/init 握手，收到初始化后发送：
+沿用普通面板版本 2 的端口 ready/init 握手，收到初始化后在同一文档端口发送
+（创作事件载荷版本仍为 `1`）：
 
 ```js
-parent.postMessage({
+transport.postMessage({
   type: 'mio:creation:subscribe', version: 1, session,
   event: 'creation.context.changed', enabled: true,
-}, '*');
+});
 ```
 
 宿主通知形状为：
@@ -81,7 +82,7 @@ parent.postMessage({
 旧序号、旧上下文、跨话结果、未知事件和额外 payload 不发送；不接受面板自定义业务事件。
 导航、关闭、停用或激活替换会清除订阅、计时器与在途校验。页面内恢复显示不赋予额外能力。
 
-面板应检查 `event.source === parent`、`session` 和版本，固定激活身份，丢弃较小 `seq`；相同 `seq`
+面板只接受握手端口上的消息，检查 `session` 和版本，固定激活身份，丢弃较小 `seq`；相同 `seq`
 可以分别收到两个白名单事件。关闭时以 `enabled:false` 取消订阅。可安装的完整只读消费者见
 [创作上下文示例](../examples/extensions/creation-inspector/README.md)。
 

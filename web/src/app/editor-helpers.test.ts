@@ -28,10 +28,10 @@ describe('editing and navigation boundaries', () => {
   it('returns to the same collection filters without carrying reader-only parameters', () => {
     const search = gallerySearch(
       new URLSearchParams(
-        'q=rain&sort=title&status=active&starred=1&ep=second&secret=not-retained',
+        'q=rain&sort=title&status=active&starred=1&collection=collection_rain&ep=second&secret=not-retained',
       ),
     );
-    expect(search).toBe('?q=rain&status=active&sort=title&starred=1');
+    expect(search).toBe('?q=rain&status=active&sort=title&starred=1&collection=collection_rain');
   });
   it('keeps IME, text fields and nested dialog keys out of the underlying editor', () => {
     const scope = document.createElement('div');

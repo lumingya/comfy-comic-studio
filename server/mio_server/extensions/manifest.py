@@ -41,9 +41,19 @@ class PanelRequestSpec(StrictModel):
     path: str = Field(min_length=1, max_length=240)
     scope: Literal["read", "write", "render", "admin"]
     response: Literal["json", "image", "download"] = "json"
+    input: Literal["json", "image"] = "json"
 
     @model_validator(mode="after")
     def binary_request_kind(self):
+        if self.input == "image" and (
+            self.method != "POST"
+            or self.path != "/assets"
+            or self.scope != "write"
+            or self.response != "json"
+        ):
+            raise ValueError(
+                "panel image uploads require POST /assets, write scope and JSON response"
+            )
         if self.response == "image" and (self.method != "GET" or self.scope != "read"):
             raise ValueError("panel images require a read-only GET operation")
         if self.response == "download" and self.method not in {"GET", "POST"}:

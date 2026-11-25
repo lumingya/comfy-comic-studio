@@ -22,6 +22,7 @@ from pydantic import BaseModel
 
 from .album.templates import AlbumTemplate
 from .auth import ApiToken
+from .collection_models import CollectionLibrary
 from .models import Episode, Series, WorkshopQueue, now_iso
 from .render_models import Asset, ComfyInstance, RenderProfile, WorkflowDoc
 from .settings import AppSettings
@@ -39,6 +40,7 @@ DOC_KINDS: dict[str, type[BaseModel]] = {
     "api_token": ApiToken,
     "webhook": Webhook,
     "workshop_queue": WorkshopQueue,
+    "collection_library": CollectionLibrary,
 }
 T = TypeVar("T", bound=BaseModel)
 

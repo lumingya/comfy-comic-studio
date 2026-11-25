@@ -32,6 +32,16 @@ afterEach(() => {
 async function mount(failSecond = false) {
   const removed = new Set<string>();
   const calls = mockFetch({
+    'GET /api/collections': () => ({
+      collections: [],
+      memberships: Object.fromEntries(
+        books
+          .filter((book) => !removed.has(book.id!))
+          .map((book) => [book.id!, { collection_id: null, revision: 0 }]),
+      ),
+      total_count: books.length - removed.size,
+      unfiled_count: books.length - removed.size,
+    }),
     'GET /api/series': () => books.filter((book) => !removed.has(book.id!)),
     'GET /api/settings': { collection_title: '回收站操作测试' },
     'GET /api/update': {},

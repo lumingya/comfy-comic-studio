@@ -1,6 +1,8 @@
 "use strict";
 
 const session = new URLSearchParams(location.hash.slice(1)).get("mio-session");
+const channel = new MessageChannel();
+const transport = channel.port1;
 const pending = new Map();
 const media = new Map();
 const $ = (id) => document.getElementById(id);
@@ -51,6 +53,8 @@ const messages = {
     preview: "预览图片",
     hidePreview: "收起预览",
     locating: "点击问题定位",
+    confirm: "确认",
+    cancel: "取消",
     reviewConfirm: (count) =>
       `将提交 ${count} 张候选给已配置的视觉模型。此操作可能消耗额度，且不会自动采纳。继续？`,
     batchConfirm: (count) =>
@@ -126,6 +130,8 @@ const messages = {
     preview: "Preview image",
     hidePreview: "Hide preview",
     locating: "Click an issue to locate",
+    confirm: "Confirm",
+    cancel: "Cancel",
     reviewConfirm: (count) =>
       `Submit ${count} take(s) to your configured vision model? This may incur usage and will not auto-adopt.`,
     batchConfirm: (count) =>
@@ -166,9 +172,27 @@ let attempt = null;
 let jobId = null;
 let episode = null;
 let running = false;
+let confirmation = null;
 const selectedIds = new Set();
 let locale = navigator.language?.toLowerCase().startsWith("en") ? "en" : "zh";
 let t = messages[locale];
+
+function finishConfirmation(accepted) {
+  if (!confirmation) return;
+  const resolve = confirmation;
+  confirmation = null;
+  $("confirmation").hidden = true;
+  resolve(accepted);
+}
+
+function confirmAction(message) {
+  $("confirmation-message").textContent = message;
+  $("confirmation").hidden = false;
+  $("cancel-action").focus();
+  return new Promise((resolve) => {
+    confirmation = resolve;
+  });
+}
 
 function request(requestId, payload = {}, kind = "json") {
   return new Promise((resolve, reject) => {
@@ -178,16 +202,15 @@ function request(requestId, payload = {}, kind = "json") {
       reject(new Error(t.timeout));
     }, 32000);
     pending.set(rid, { resolve, reject, timer, kind });
-    parent.postMessage(
+    transport.postMessage(
       {
         type: "mio:panel:request",
-        version: 1,
+        version: 2,
         session,
         rid,
         request_id: requestId,
         ...payload,
       },
-      "*",
     );
   });
 }
@@ -263,9 +286,8 @@ function clearImages() {
   for (const [mediaId, value] of media) {
     if (value.url) URL.revokeObjectURL(value.url);
     value.port?.close();
-    parent.postMessage(
-      { type: "mio:panel:release", version: 1, session, media_id: mediaId },
-      "*",
+    transport.postMessage(
+      { type: "mio:panel:release", version: 2, session, media_id: mediaId },
     );
   }
   media.clear();
@@ -583,15 +605,16 @@ $("review-selected").addEventListener(
   () =>
     void act(async () => {
       const ids = selected();
+      const episodeId = context.episode_id;
       if (!ids.length) {
         $("status").textContent = t.emptySelection;
         return;
       }
-      if (!window.confirm(t.reviewConfirm(ids.length))) return;
+      if (!(await confirmAction(t.reviewConfirm(ids.length)))) return;
       makeAttempt(ids);
       $("status").textContent = t.reviewing;
       const job = await request("review", {
-        path_params: { episode_id: context.episode_id },
+        path_params: { episode_id: episodeId },
         body: attempt,
       });
       jobId = job.id;
@@ -608,12 +631,13 @@ $("review-episode").addEventListener(
       const ids = (episode?.takes ?? [])
         .filter((take) => take.status !== "rejected")
         .map((take) => take.id);
+      const episodeId = context.episode_id;
       if (!ids.length) return;
-      if (!window.confirm(t.reviewConfirm(ids.length))) return;
+      if (!(await confirmAction(t.reviewConfirm(ids.length)))) return;
       makeAttempt(ids);
       $("status").textContent = t.reviewing;
       const job = await request("review", {
-        path_params: { episode_id: context.episode_id },
+        path_params: { episode_id: episodeId },
         body: attempt,
       });
       jobId = job.id;
@@ -657,17 +681,18 @@ $("adopt-top").addEventListener(
   "click",
   () =>
     void act(async () => {
-      const selectedTakes = rankedTakes();
+      const takeIds = rankedTakes().map(({ take }) => take.id);
+      const episodeId = context.episode_id;
       if (
-        !selectedTakes.length ||
-        !window.confirm(t.batchConfirm(selectedTakes.length))
+        !takeIds.length ||
+        !(await confirmAction(t.batchConfirm(takeIds.length)))
       )
         return;
       let done = 0;
       try {
-        for (const { panel, take } of selectedTakes) {
+        for (const takeId of takeIds) {
           await request("adopt", {
-            path_params: { episode_id: context.episode_id, take_id: take.id },
+            path_params: { episode_id: episodeId, take_id: takeId },
           });
           done++;
         }
@@ -678,17 +703,24 @@ $("adopt-top").addEventListener(
         return;
       }
       await readEpisode();
-      const skipped = (episode?.panels ?? []).length - selectedTakes.length;
+      const skipped = (episode?.panels ?? []).length - takeIds.length;
       $("status").textContent = t.batchDone(done, skipped);
     }),
 );
 
-addEventListener("message", (event) => {
+$("confirm-action").addEventListener("click", () => finishConfirmation(true));
+$("cancel-action").addEventListener("click", () => finishConfirmation(false));
+$("confirmation").addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  finishConfirmation(false);
+});
+
+transport.addEventListener("message", (event) => {
   const message = event.data;
   if (
-    event.source !== parent ||
     !message ||
-    message.version !== 1 ||
+    message.version !== 2 ||
     message.session !== session
   )
     return;
@@ -748,11 +780,18 @@ addEventListener("message", (event) => {
 });
 
 addEventListener("pagehide", () => {
+  finishConfirmation(false);
   clearImages();
   for (const value of pending.values()) {
     clearTimeout(value.timer);
     value.reject(new Error(t.imageError));
   }
   pending.clear();
+  transport.close();
 });
-parent.postMessage({ type: "mio:panel:ready", version: 1, session }, "*");
+transport.start();
+parent.postMessage(
+  { type: "mio:panel:ready", version: 2, session },
+  "*",
+  [channel.port2],
+);

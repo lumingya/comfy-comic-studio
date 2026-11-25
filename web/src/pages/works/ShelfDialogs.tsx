@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, data, download, downloadPost } from '../../api/client';
 import { useAlbumTemplates } from '../../api/open';
@@ -10,6 +10,7 @@ import { toast, toastError } from '../../components/toast';
 import { Field, Modal, Select, TextInput } from '../../components/ui';
 import { templateRank } from './templateFile';
 import { useSettings } from '../../api/system';
+import { AlbumSourceDataOption } from './ExportOptions';
 
 /** Legacy 画册名称 limit (organize.js saveBookNames). */
 const MAX_TITLE = 150;
@@ -129,6 +130,8 @@ export function ExportBooks(props: {
   const [signature, setSignature] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [includePresets, setIncludePresets] = useState(true);
+  const [includeSourceData, setIncludeSourceData] = useState(false);
+  useEffect(() => setIncludeSourceData(false), [props.open]);
   const [captions, setCaptions] = useState(true);
   const [profile, setProfile] = useState('auto');
   const [completed, setCompleted] = useState<string[]>([]);
@@ -188,7 +191,12 @@ export function ExportBooks(props: {
         await downloadPost(
           format === 'html' ? '/api/export/album' : '/api/export/portable',
           format === 'html'
-            ? { ...options, template_id: templateId, signature: (signature ?? fallback).trim() }
+            ? {
+                ...options,
+                template_id: templateId,
+                signature: (signature ?? fallback).trim(),
+                include_source_data: includeSourceData,
+              }
             : { ...options, format },
           `${title.trim() || props.collectionTitle}.${format}`,
         );
@@ -257,6 +265,7 @@ export function ExportBooks(props: {
                 options={list.map((x) => ({ value: x.id, label: x.title }))}
               />
             </Field>
+            <AlbumSourceDataOption checked={includeSourceData} onChange={setIncludeSourceData} />
           </>
         ) : null}
         {!individual ? (

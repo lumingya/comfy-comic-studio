@@ -14,6 +14,7 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from mio_server.api import create_app
+from mio_server.context import AppContext
 from mio_server.extensions.manifest import digest, inside
 from mio_server.hooks import HookBus, HookError
 
@@ -99,6 +100,44 @@ class ExtensionApiTests(ApiCase):
             self.client.post(f"/api/extensions/{ext_id}/enable", json={"digest": info["digest"]}),
             code,
         )
+
+    def test_builtin_restart_keeps_reviewed_pin_and_refuses_changed_code(self):
+        builtins = Path(self.tmp).parent / "test-builtins"
+        folder = write_ext(builtins)
+        with mock.patch("mio_server.extensions.manager.BUILTIN_ROOT", builtins):
+            reviewed = self.enable()["digest"]
+            data_dir = self.ctx.data_dir
+            self.ctx.close()
+            (folder / "main.py").write_text(
+                MAIN + "\nraise AssertionError('unreviewed code executed')\n", encoding="utf-8"
+            )
+            restarted = AppContext.create(data_dir, autostart=False, seed_instance=False)
+            try:
+                state = restarted.settings().extensions["demo"]
+                self.assertTrue(state.enabled)
+                self.assertEqual(state.digest, reviewed)
+                self.assertEqual(restarted.extensions.info("demo").status, "changed")
+                self.assertNotIn("demo", restarted.extensions.loaded)
+            finally:
+                restarted.close()
+
+    def test_builtin_restart_loads_only_unchanged_explicitly_enabled_packages(self):
+        builtins = Path(self.tmp).parent / "test-builtins"
+        write_ext(builtins)
+        write_ext(builtins, "sleeping")
+        with mock.patch("mio_server.extensions.manager.BUILTIN_ROOT", builtins):
+            reviewed = self.enable()["digest"]
+            data_dir = self.ctx.data_dir
+            self.ctx.close()
+            restarted = AppContext.create(data_dir, autostart=False, seed_instance=False)
+            try:
+                self.assertEqual(restarted.extensions.info("demo").status, "active")
+                self.assertEqual(restarted.settings().extensions["demo"].digest, reviewed)
+                self.assertEqual(restarted.extensions.info("sleeping").status, "disabled")
+                self.assertNotIn("sleeping", restarted.settings().extensions)
+                self.assertNotIn("sleeping", restarted.extensions.loaded)
+            finally:
+                restarted.close()
 
     def test_enable_requires_reviewed_digest_and_contributes_everything(self):
         write_ext(self.root())

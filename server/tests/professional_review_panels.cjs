@@ -16,30 +16,60 @@ async function panel(id, backend) {
   });
   const w = dom.window;
   const calls = [];
-  const parent = {
-    postMessage(message) {
-      if (message.type !== "mio:panel:request") return;
-      calls.push(message);
-      queueMicrotask(async () => {
-        const reply = await backend(message);
-        w.dispatchEvent(
-          new w.MessageEvent("message", {
-            source: parent,
-            data: {
-              type: "mio:panel:response",
-              version: 1,
-              session: "fixture",
-              rid: message.rid,
-              status: reply.status ?? 200,
-              ok: (reply.status ?? 200) < 400,
-              data: reply.data,
-            },
-          }),
-        );
+  const windowSent = [];
+  let hostPort, childPort;
+  class MessageChannel {
+    constructor() {
+      const makePort = () => ({
+        closed: false,
+        addEventListener(name, listener) {
+          this[`on${name}`] = listener;
+        },
+        start() {},
+        close() {
+          this.closed = true;
+        },
+        postMessage(data, ports = []) {
+          if (!this.closed && !this.peer.closed)
+            this.peer.onmessage?.({ data, ports });
+        },
       });
+      this.port1 = childPort = makePort();
+      this.port2 = makePort();
+      this.port1.peer = this.port2;
+      this.port2.peer = this.port1;
+    }
+  }
+  const receive = ({ data: message }) => {
+    if (message.type !== "mio:panel:request") return;
+    calls.push(message);
+    queueMicrotask(async () => {
+      const reply = await backend(message);
+      hostPort.postMessage({
+        type: "mio:panel:response",
+        version: 2,
+        session: "fixture",
+        rid: message.rid,
+        status: reply.status ?? 200,
+        ok: (reply.status ?? 200) < 400,
+        data: reply.data,
+      });
+    });
+  };
+  const parent = {
+    postMessage(message, origin, transfer) {
+      windowSent.push(message);
+      assert.equal(message.type, "mio:panel:ready");
+      assert.equal(message.version, 2);
+      assert.equal(origin, "*");
+      assert.equal(transfer.length, 1);
+      hostPort = transfer[0];
+      hostPort.addEventListener("message", receive);
+      hostPort.start();
     },
   };
   Object.defineProperty(w, "parent", { value: parent });
+  Object.defineProperty(w, "MessageChannel", { value: MessageChannel });
   w.HTMLElement.prototype.scrollIntoView = function () {
     this.dataset.located = "true";
   };
@@ -49,16 +79,28 @@ async function panel(id, backend) {
       source: parent,
       data: {
         type: "mio:panel:init",
-        version: 1,
+        version: 2,
         session: "fixture",
-        context: { episode_id: "ep", series_id: "series" },
+        context: { episode_id: "wrong" },
       },
     }),
   );
+  assert.equal(calls.length, 0, "window init cannot start business requests");
+  hostPort.postMessage({
+    type: "mio:panel:init",
+    version: 2,
+    session: "fixture",
+    context: { episode_id: "ep", series_id: "series" },
+  });
   return {
     w,
     calls,
-    close: () => w.close(),
+    close: () => {
+      w.dispatchEvent(new w.Event("pagehide"));
+      assert.equal(childPort.closed, true);
+      assert.equal(windowSent.length, 1, "only ready uses the window channel");
+      w.close();
+    },
     $: (id) => w.document.getElementById(id),
     click: async (id) => {
       w.document.getElementById(id).click();

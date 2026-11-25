@@ -94,7 +94,7 @@ class ExtensionContractModelTests(TestCase):
             with self.assertRaises(ValidationError):
                 model.model_validate({**value, "session": ""})
         for value in (
-            {**panel, "version": 2},
+            {**panel, "version": constants["panel"]["version"] + 1},
             {**panel, "version": True},
             {**panel, "extra": True},
         ):
