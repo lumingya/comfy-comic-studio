@@ -3551,7 +3551,7 @@
           "196": {
             "class_type": "Lora Loader (LoraManager)",
             "inputs": {
-              "text": "<lora:刀刃:0.2> trigger words here <lora:mikage:0.30> <lora:Illustrious/foo bar:0.75> <lora:baz:1:0.5>",
+              "text": "<lora:刀刃:0.20> trigger words here <lora:mikage:0.30> <lora:Illustrious/foo bar:0.75> <lora:baz:1:0.5>",
               "loras": {
                 "__value__": [
                   {
@@ -3572,7 +3572,7 @@
                   },
                   {
                     "name": "baz.safetensors",
-                    "strength": 1,
+                    "strength": 1.0,
                     "active": true,
                     "expanded": false,
                     "clipStrength": 0.5,
@@ -4303,7 +4303,7 @@
           "196": {
             "class_type": "Lora Loader (LoraManager)",
             "inputs": {
-              "text": "<lora:刀刃:0.2> trigger words here <lora:mikage:0.30> <lora:Illustrious/foo:1>",
+              "text": "<lora:刀刃:0.20> trigger words here <lora:mikage:0.30> <lora:Illustrious/foo:1>",
               "loras": {
                 "__value__": [
                   {
@@ -4316,10 +4316,10 @@
                   },
                   {
                     "name": "Illustrious/foo.safetensors",
-                    "strength": 1,
+                    "strength": 1.0,
                     "active": true,
                     "expanded": false,
-                    "clipStrength": 1,
+                    "clipStrength": 1.0,
                     "locked": false
                   }
                 ]
@@ -9414,7 +9414,7 @@
                 "__value__": [
                   {
                     "name": "turbo",
-                    "strength": 0.5,
+                    "strength": "0.5",
                     "active": true
                   },
                   {
@@ -12543,8 +12543,7 @@
               "loras": [
                 {
                   "name": "own",
-                  "strength": 0.5,
-                  "active": true
+                  "strength": 0.5
                 },
                 {
                   "name": "A",
@@ -12782,8 +12781,7 @@
               "loras": [
                 {
                   "name": "own",
-                  "strength": 0.5,
-                  "active": true
+                  "strength": 0.5
                 },
                 {
                   "name": "A",
@@ -13467,9 +13465,9 @@
               "model_strength_1": 0.8,
               "clip_strength_1": 0.8,
               "lora_2_name": "None",
-              "strength_2": 0,
-              "model_strength_2": 0,
-              "clip_strength_2": 0,
+              "strength_2": 1,
+              "model_strength_2": 1,
+              "clip_strength_2": 1,
               "num_loras": 1,
               "mode": "simple"
             }
@@ -13661,9 +13659,9 @@
               "model_strength_1": 0.8,
               "clip_strength_1": 0.8,
               "lora_2_name": "None",
-              "strength_2": 0,
-              "model_strength_2": 0,
-              "clip_strength_2": 0,
+              "strength_2": 1,
+              "model_strength_2": 1,
+              "clip_strength_2": 1,
               "num_loras": 1,
               "mode": "advanced"
             }
@@ -20118,22 +20116,22 @@
           },
           "2295": {
             "inputs": {
-              "text": ", , , , , , , , , , , , , , , , , , , , , , , , , , , ,         <lora:QAQv2p2-150:0.58>    <lora:QAQv5p2_IL-40:0.75>   <lora:A:0.8>",
+              "text": ", , , , , , , , , , , , , , , , , , , , , , , , , , , ,  <lora:CunnystyleV9.2-000022:0.75>       <lora:QAQv2p2-150:0.58>    <lora:QAQv5p2_IL-40:0.75>   <lora:A:0.8>",
               "loras": {
                 "__value__": [
                   {
                     "name": "QAQv2p2-150",
-                    "strength": 0.58,
+                    "strength": "0.58",
                     "active": true,
                     "expanded": false,
-                    "clipStrength": 0.58
+                    "clipStrength": "0.58"
                   },
                   {
                     "name": "QAQv5p2_IL-40",
-                    "strength": 0.75,
+                    "strength": "0.75",
                     "active": true,
                     "expanded": false,
-                    "clipStrength": 0.75
+                    "clipStrength": "0.75"
                   },
                   {
                     "name": "A",

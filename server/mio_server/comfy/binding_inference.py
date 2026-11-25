@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 
+from .binding_dimensions import infer_dimension_bindings
 from .workflow_graph import SemanticGraph
 
 TEXT_PORTS = (
@@ -34,6 +35,7 @@ SCALAR_PORTS = {
     "sampler": ("sampler_name",),
     "scheduler": ("scheduler",),
 }
+_POSITIVE_PORT = re.compile(r"^(?:positive|cond(?:itioning)?)(?:_?\d+)?$", re.I)
 _TEXT_PORT = re.compile(r"^(?:text|prompt|string)(?:[_ \d].*)?$", re.I)
 _CONTROL_PORT = re.compile(
     r"(?:^|_)(?:clip|model|vae|filename|path|language|lang|separator|delimiter|mode|format)$", re.I
@@ -216,7 +218,11 @@ class _Inference:
                 # chain. Its local text does not replace the incoming text's meaning.
                 if not any(
                     _link(item, self.graph)
-                    and (field in ("positive", "negative") or "conditioning" in field.lower())
+                    and (
+                        field == "negative"
+                        or _POSITIVE_PORT.fullmatch(field)
+                        or "conditioning" in field.lower()
+                    )
                     for field, item in inputs.items()
                 ):
                     continue
@@ -231,10 +237,17 @@ class _Inference:
                 elif port in inputs:
                     routes = [(port, inputs[port])]
                 else:
-                    routes = [(k, v) for k, v in inputs.items() if "conditioning" in k.lower()]
+                    routes = [
+                        (k, v)
+                        for k, v in inputs.items()
+                        if "conditioning" in k.lower()
+                        or (all_origins and _POSITIVE_PORT.fullmatch(k))
+                    ]
                     if not routes and all_origins:
                         _, branches, _ = self.routes.selection(nid)
                         routes = [(k, inputs[k]) for k in branches]
+            if all_origins and reason != "":
+                routes.extend((k, v) for k, v in inputs.items() if _POSITIVE_PORT.fullmatch(k))
             if not routes:
                 if not all_origins:
                     return []
@@ -334,7 +347,7 @@ class _Inference:
                         pending.extend(v for _, v in routes)
                     elif reason == "not-router":
                         inputs = self.inputs(source)
-                        if any(k in inputs for k in ("positive", "negative", "conditioning")):
+                        if "negative" in inputs or any(_POSITIVE_PORT.fullmatch(k) for k in inputs):
                             owners.add(source)
                         elif port in inputs:
                             pending.append(inputs[port])
@@ -355,8 +368,9 @@ class _Inference:
         """
         literals = set()
         for nid in owners:
-            for field in ("positive", "conditioning"):
-                value = self.inputs(nid).get(field)
+            for field, value in self.inputs(nid).items():
+                if not _POSITIVE_PORT.fullmatch(field):
+                    continue
                 if isinstance(value, str):
                     literals.add((nid, field))
                 elif _link(value, self.graph):
@@ -372,42 +386,13 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
     sites = engine.sampling_sites()
     primary = set(engine.primary_sites(sites))
     owners = engine.prompt_owners(sites)
-    dimensions = engine.dependencies(
-        [
-            v[0]
-            for nid in primary | set(owners)
-            for k, v in engine.inputs(nid).items()
-            if (
-                k == "model"
-                or (
-                    nid in primary
-                    and k
-                    in ("latent_image", "latent", "samples", "pipe", "image", "images", "pixels")
-                )
-            )
-            and _link(v, graph)
-        ]
+    found.extend(
+        item
+        for item in infer_dimension_bindings(
+            graph, engine.routes, engine.scope, primary, owners, engine.scalar
+        )
+        if item[0] in missing
     )
-    canvas_dependencies = engine.dependencies(
-        [
-            v[0]
-            for nid in primary
-            for k, v in engine.inputs(nid).items()
-            if k in ("latent_image", "latent", "samples", "pipe", "image", "images", "pixels")
-            and _link(v, graph)
-        ]
-    )
-    canvas_sizes = set()
-    for nid in canvas_dependencies:
-        inputs = engine.inputs(nid)
-        if "model" in inputs or any(
-            k in inputs for k in ("image", "images", "pixels", "samples", "latent", "latent_image")
-        ):
-            continue
-        sizes = [engine.scalar(nid, field, field) for field in ("width", "height")]
-        if all(sizes):
-            canvas_sizes.add(tuple(engine.inputs(n).get(field) for n, field in sizes))
-    ambiguous_size = len(canvas_sizes) > 1
     text_targets = {"prompt": [], "negative": []}
     for nid in owners:
         inputs = engine.inputs(nid)
@@ -451,21 +436,8 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
             scalar_kinds.add("sampler")
         if noise or "noise" in cls or "seed" in cls:
             scalar_kinds.add("seed")
-        # Root dimension producers, including resolution helpers, are not resize/refiner targets.
-        if (
-            nid in dimensions
-            and "width" in inputs
-            and "height" in inputs
-            and not any(
-                k in inputs
-                for k in ("image", "images", "pixels", "samples", "latent", "latent_image")
-            )
-        ):
-            scalar_kinds.update(("width", "height", "batch"))
         for kind in SCALAR_PORTS:
             if kind not in missing or kind not in scalar_kinds:
-                continue
-            if ambiguous_size and kind in ("width", "height"):
                 continue
             for field in SCALAR_PORTS[kind]:
                 if field in inputs:

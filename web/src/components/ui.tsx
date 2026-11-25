@@ -8,6 +8,7 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
   type SelectHTMLAttributes,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -185,6 +186,7 @@ export function Modal(props: {
   size?: 'md' | 'lg';
   children: ReactNode;
   footer?: ReactNode;
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const { t } = useTranslation();
   // Inside an open modal <dialog> (the reader, …) a portal to <body> would sit behind it.
@@ -193,7 +195,11 @@ export function Modal(props: {
     <Dialog.Root open={props.open} onOpenChange={props.onOpenChange}>
       <Dialog.Portal container={host}>
         <Dialog.Overlay className="overlay" />
-        <Dialog.Content id={props.id} className={`dialog ${props.size === 'lg' ? 'lg' : ''}`}>
+        <Dialog.Content
+          id={props.id}
+          className={`dialog ${props.size === 'lg' ? 'lg' : ''}`}
+          onCloseAutoFocus={props.onCloseAutoFocus}
+        >
           <Dialog.Close asChild>
             <button className="btn ghost icon sm dialog-close" aria-label={t('common.close')}>
               <X size={16} />
@@ -311,16 +317,27 @@ export function Progress({ value, className }: { value: number; className?: stri
 
 /** Hidden file input behind a button. */
 export function FilePick(props: {
+  ref?: Ref<HTMLButtonElement>;
   accept?: string;
   onFile: (file: File) => void;
   children: ReactNode;
   className?: string;
   disabled?: boolean;
 }) {
+  const input = useRef<HTMLInputElement>(null);
   return (
-    <label className={props.className ?? 'btn'} aria-disabled={props.disabled}>
-      {props.children}
+    <>
+      <button
+        ref={props.ref}
+        type="button"
+        className={`file-pick ${props.className ?? 'btn'}`}
+        disabled={props.disabled}
+        onClick={() => input.current?.click()}
+      >
+        {props.children}
+      </button>
       <input
+        ref={input}
         type="file"
         hidden
         accept={props.accept}
@@ -331,7 +348,7 @@ export function FilePick(props: {
           e.target.value = '';
         }}
       />
-    </label>
+    </>
   );
 }
 

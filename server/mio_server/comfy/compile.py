@@ -4,8 +4,8 @@ Order of operations, each step keeping the user's structure intact (ROADMAP §2.
 
 1. model / LoRA slot overrides (legacy ``workflow_slots`` plan),
 2. resolve explicit bindings and keep the chosen output's actual dependency closure,
-3. infer bindings on effective values, including explicit values and pointer overrides,
-4. bind values, then apply JSON Pointer overrides (workflow config → variant → panel),
+3. stabilize inferred bindings after all bound values and pointer overrides,
+4. validate slot routes against that final effective graph,
 5. content guard on every literal string (negative fields excluded).
 
 Image inputs are written as ``{"$asset": <sha256>}`` placeholders; the executor uploads the files
@@ -220,9 +220,10 @@ def _effective_bindings(
 ):
     """Infer writable targets from the same selector state that will be submitted.
 
-    Only authoritative bindings can affect routing before inference. Output selection uses
-    actual links, so inactive switch inputs remain present and overrides in other output
-    variants remain ignored. Extension rules run once, before either copy is modified.
+    Bindings can themselves change selectors, so infer again after each complete write.
+    Each pass starts from the same base to avoid leaving writes in obsolete branches.
+    Output selection uses actual links, retaining inactive switch inputs and ignoring
+    overrides in other variants. Extension rules run once against the original graph.
     """
     tags, problems = B.tag_bindings(graph)
     maps = B.mapping_bindings(graph, mapping)
@@ -245,13 +246,29 @@ def _effective_bindings(
         set(B.CORE_KINDS) | {"batch", "steps", "cfg", "denoise", "sampler", "scheduler"}
     ) - have
     occupied = {(binding.node, binding.field): binding.kind for binding in explicit}
-    inferred = [
-        binding
-        for binding in B.heuristic_bindings(effective, missing, roots=outputs)
-        if (binding.node, binding.field) not in occupied
-        or occupied[binding.node, binding.field] == binding.kind
-    ]
-    return graph, explicit + inferred, outputs, problems + rule_problems
+    syntax_targets = {target for target in syntax_targets if target[0] in graph}
+    seen = set()
+    previous = None
+    for _ in range(64):
+        inferred = tuple(
+            binding
+            for binding in B.heuristic_bindings(effective, missing, roots=outputs)
+            if (binding.node, binding.field) not in occupied
+            or occupied[binding.node, binding.field] == binding.kind
+        )
+        if inferred == previous:
+            return effective, explicit + list(inferred), outputs, problems + rule_problems
+        if inferred in seen:
+            break
+        seen.add(inferred)
+        previous = inferred
+        effective = B.apply_values(graph, explicit + list(inferred), merged)
+        SA.preserve_bound_tags(graph, effective, syntax_targets)
+        effective = B.apply_overrides(effective, pointers)
+    raise B.BindingError(
+        "参数写入后自动绑定的分支无法稳定，无法安全确定提示词或尺寸的写入目标。"
+        "请将分支选择与生成参数拆为独立节点，或固定分支并显式映射参数后重试。"
+    )
 
 
 def _validate_slot_routes(plan, changes, effective):
@@ -304,9 +321,7 @@ def compile_workflow(
         graph, config.mapping or None, merged, pointers, variant, rules, syntax_targets
     )
     if merged_slot_overrides:
-        _validate_slot_routes(
-            applied["plan"], merged_slot_overrides, B.apply_overrides(graph, pointers)
-        )
+        _validate_slot_routes(applied["plan"], merged_slot_overrides, graph)
     warnings.extend(problems)
     for kind in ("prompt", "negative", "seed", "width", "height", "region") + IMAGE_KINDS:
         wanted = [k for k in merged if k == kind or k.startswith(kind + ":")]
@@ -326,12 +341,6 @@ def compile_workflow(
                 if base in IMAGE_KINDS:
                     raise B.BindingError(f"工作流里没有 [mio:{key}] 输入节点，无法接收图片")
                 warnings.append(f"工作流没有 {key} 的绑定，值被忽略")
-    before_bindings = graph
-    graph = B.apply_values(graph, bound, merged)
-    SA.preserve_bound_tags(
-        before_bindings, graph, {target for target in syntax_targets if target[0] in graph}
-    )
-    graph = B.apply_overrides(graph, pointers)
     frontend_state = _frontend_plan(doc, graph, var_cfg, registry)
     output_adapters = {}
     selected_adapters = {node_id: OutputAdapterConfig(id="history-images") for node_id in outputs}

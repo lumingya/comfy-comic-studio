@@ -251,6 +251,7 @@ export const configZh = {
       formats: {
         api: 'ComfyUI API',
         mio: 'Mio 工作流包',
+        image: '图片（ComfyUI API 元数据）',
         ui: 'ComfyUI 界面工作流',
         invalid: '无法识别',
       },
@@ -635,6 +636,7 @@ export const configEn = {
       formats: {
         api: 'ComfyUI API',
         mio: 'Mio workflow package',
+        image: 'Image (ComfyUI API metadata)',
         ui: 'ComfyUI editor workflow',
         invalid: 'Unrecognized',
       },

@@ -12,6 +12,10 @@ def _is_empty_name(name):
     return name is None or str(name).strip() == "" or str(name) == "None"
 
 
+def _switch_enabled(value):
+    return value is not False and value != "Off" and not (_is_number(value) and value == 0)
+
+
 def _stack_current_loras(workflow, lora, include_disabled=False):
     node = (workflow or {}).get(lora.get("nodeId"))
     if not isinstance(node, dict):
@@ -36,13 +40,13 @@ def _stack_current_loras(workflow, lora, include_disabled=False):
             if _is_empty_name(raw):
                 continue
             switch = node["inputs"][slot["switchPath"]] if slot["switchPath"] else True
-            if (switch is False or switch == "Off") and not include_disabled:
+            if not _switch_enabled(switch) and not include_disabled:
                 continue
             strength = node["inputs"][slot["strengthPath"]] if slot["strengthPath"] else 1
             clip = node["inputs"][slot["clipPath"]] if slot["clipPath"] else None
             entry = {"name": str(raw), "strength": strength if _is_number(strength) else 1}
             if include_disabled:
-                entry["enabled"] = switch is not False and switch != "Off"
+                entry["enabled"] = _switch_enabled(switch)
             if _is_number(clip):
                 entry["clip"] = clip
             out.append(entry)

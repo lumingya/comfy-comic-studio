@@ -1,6 +1,6 @@
 import { ResizableSplit } from '../../components/ResizableSplit';
 import { Copy, Download, Play, Stethoscope, Trash2, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useCopyWorkflow,
@@ -40,6 +40,8 @@ export function WorkflowsSection() {
   const [instance, setInstance] = useState('');
   const [diagnosisVariant, setDiagnosisVariant] = useState('');
   const [reading, setReading] = useState(false);
+  const importButton = useRef<HTMLButtonElement>(null);
+  const restoreImportFocus = useRef(false);
   const [pendingImport, setPendingImport] = useState<{
     workflow: Record<string, unknown> | null;
     name: string;
@@ -52,6 +54,15 @@ export function WorkflowsSection() {
   const active = list.find((w) => w.id === selected) ?? list[0];
   const detail = useWorkflow(active?.id);
   const busy = reading || importWf.isPending || copy.isPending || remove.isPending;
+  const focusImportButton = () => {
+    restoreImportFocus.current = false;
+    // A later explicit focus choice takes precedence over returning from the preview.
+    if (document.activeElement && document.activeElement !== document.body) return;
+    importButton.current?.focus({ preventScroll: true });
+  };
+  useEffect(() => {
+    if (!busy && !pendingImport && restoreImportFocus.current) focusImportButton();
+  }, [busy, pendingImport]);
   const instanceId =
     instance ||
     instances.data?.instances.find((i) => i.enabled)?.id ||
@@ -131,7 +142,12 @@ export function WorkflowsSection() {
         <div>
           <h2>{t('config.workflow.title')}</h2>
         </div>
-        <FilePick accept=".json,.png,.webp" disabled={busy || !!pendingImport} onFile={onFile}>
+        <FilePick
+          ref={importButton}
+          accept=".json,.png,.webp"
+          disabled={busy || !!pendingImport}
+          onFile={onFile}
+        >
           <Upload size={15} />
           {t('settings.importWorkflow')}
         </FilePick>
@@ -297,10 +313,16 @@ export function WorkflowsSection() {
           graph={pendingImport.graph}
           config={pendingImport.config}
           initialInspection={pendingImport.inspection}
+          imageMetadata={!!pendingImport.inspection}
           name={pendingImport.name}
           saving={importWf.isPending}
           saveError={importWf.error}
           onClose={() => setPendingImport(null)}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (importButton.current?.disabled) restoreImportFocus.current = true;
+            else focusImportButton();
+          }}
           onSave={async (config) => {
             if (!(await discard(dirty))) return;
             const { workflow: _workflow, inspection: _inspection, ...body } = pendingImport;

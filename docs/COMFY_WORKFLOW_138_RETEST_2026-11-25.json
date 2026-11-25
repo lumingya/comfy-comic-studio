@@ -1,0 +1,65 @@
+{
+  "scope": "Latest code read-only in-memory check of existing138-node workflow only. No graph, prompt, model name, database path, document id or slot key is exported.",
+  "source": "private local workflow document",
+  "readonly_mode": true,
+  "matching_138_node_documents": 1,
+  "checks": [
+    {
+      "node_count": 138,
+      "binding_kinds": [
+        "batch",
+        "height",
+        "output",
+        "seed",
+        "width"
+      ],
+      "binding_counts": {
+        "output": 1,
+        "batch": 1,
+        "width": 1,
+        "height": 1,
+        "seed": 2
+      },
+      "tag_binding_count": 0,
+      "tag_bindings_preserved": true,
+      "tag_issue_count": 0,
+      "resolve_issue_count": 0,
+      "slot_keys_repeatably_stable": true,
+      "lora_group_count": 1,
+      "lora_item_count": 43,
+      "plan_refresh_stable": true,
+      "cached_plan_revision_before": null,
+      "plan_revision_after": 2,
+      "binding_stage_exact_changes": true,
+      "binding_stage_source_immutable": true,
+      "compile_ok": false,
+      "compile_exception_type": "BindingError",
+      "compile_failure_code_path": [
+        "compile_workflow",
+        "_frontend_plan"
+      ],
+      "missing_frontend_state": true,
+      "inspection_importable": true,
+      "inspection_compilable": false,
+      "inspection_issue_codes": [
+        "ambiguous",
+        "compile_error",
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "source_document_immutable": true,
+      "database_payload_unchanged": true
+    }
+  ],
+  "code_snapshot": {
+    "revision": "6f9bdf2c56994397754f4ec2c782f1ab63bc75a0",
+    "working_backend_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "separate_committed_regressions": {
+    "command": "python -m unittest tests.test_bindings tests.test_workflow_slots_v3.V3Acceptance.test_alice -q",
+    "working_directory": "server",
+    "tests": 29,
+    "result": "OK",
+    "scope": "Explicit mio tags, manual mappings, draft/final output selection, overrides/guards and committed Alice slot acceptance. This is separate from the actual private138 graph, which currently has no explicit mio tags."
+  }
+}

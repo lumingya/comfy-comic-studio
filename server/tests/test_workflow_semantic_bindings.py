@@ -516,6 +516,344 @@ class SemanticBindingsTests(unittest.TestCase):
             ("editor", "width"), {(b.node, b.field) for b in bound if b.kind == "width"}
         )
 
+    def test_model_reference_and_control_canvases_keep_their_own_dimensions(self):
+        from mio_server.comfy.compile import compile_workflow
+        from mio_server.render_models import WorkflowDoc
+
+        graph = modern_graph()
+        graph["reference_a"] = node("UnseenImage", width=256, height=256, batch_size=1)
+        graph["reference_b"] = node("UnseenImage", width=384, height=512, batch_size=3)
+        graph["control_canvas"] = node("UnseenImage", width=320, height=480, batch_size=1)
+        graph["reference_resize"] = node(
+            "UnseenImageTransform", image=["reference_b", 0], width=128, height=128
+        )
+        graph["reference_join"] = node(
+            "UnseenImageComposition", image=["reference_a", 0], images=["reference_resize", 0]
+        )
+        graph["control"] = node("UnseenControlPreparation", pixels=["control_canvas", 0])
+        graph["adapter"] = node(
+            "UnseenModelAdapter",
+            model=["model", 0],
+            image=["reference_join", 0],
+            control=["control", 0],
+        )
+        graph["calibration"] = node(
+            "ModelSamplingFlux", model=["adapter", 0], width=768, height=1024
+        )
+        graph["guider"]["inputs"]["model"] = ["calibration", 0]
+        before = copy.deepcopy(graph)
+        doc = WorkflowDoc(name="Synthetic dimension domains", graph=graph)
+        result = compile_workflow(doc, {"width": 832, "height": 1216, "batch": 2})
+        expected = copy.deepcopy(graph)
+        expected["latent"]["inputs"].update(width=832, height=1216, batch_size=2)
+        expected["calibration"]["inputs"].update(width=832, height=1216)
+        self.assertEqual(result.graph, expected)
+        self.assertEqual(graph, before)
+
+    def test_generation_image_domain_excludes_reference_mask_and_control_inputs(self):
+        graph = modern_graph()
+        graph["generation"] = node("UnseenImage", width=768, height=1024, batch_size=1)
+        graph["reference"] = node("UnseenImage", width=256, height=256, batch_size=1)
+        graph["mask"] = node("UnseenMask", width=768, height=1024, batch_size=1)
+        graph["encode"] = node(
+            "UnseenImageEncode",
+            pixels=["generation", 0],
+            reference_image=["reference", 0],
+            mask=["mask", 0],
+            vae=["model", 2],
+        )
+        graph["sample"]["inputs"]["latent_image"] = ["encode", 0]
+        self.assertEqual(targets(graph, "width"), {("generation", "width")})
+        self.assertEqual(targets(graph, "height"), {("generation", "height")})
+        self.assertEqual(targets(graph, "batch"), {("generation", "batch_size")})
+
+    def test_canvas_shared_with_a_reference_data_branch_requires_explicit_mapping(self):
+        for reference_port in ("image", "reference_image", "attn_mask", "control"):
+            with self.subTest(reference_port=reference_port):
+                graph = modern_graph()
+                graph["canvas"] = node("UnseenImage", width=768, height=1024, batch_size=1)
+                graph["encode"] = node("UnseenEncode", pixels=["canvas", 0])
+                graph["sample"]["inputs"]["latent_image"] = ["encode", 0]
+                graph["adapter"] = node(
+                    "UnseenModelAdapter", model=["model", 0], **{reference_port: ["canvas", 0]}
+                )
+                graph["guider"]["inputs"]["model"] = ["adapter", 0]
+                before = copy.deepcopy(graph)
+                for kind in ("width", "height", "batch"):
+                    self.assertEqual(targets(graph, kind), set())
+                bound, _ = B.resolve(graph)
+                self.assertEqual(
+                    B.apply_values(graph, bound, {"width": 832, "height": 1216, "batch": 2}),
+                    graph,
+                )
+                bound, _ = B.resolve(graph, {"width": "/canvas/inputs/width"})
+                self.assertEqual(
+                    B.apply_values(graph, bound, {"width": 832})["canvas"]["inputs"]["width"], 832
+                )
+                self.assertEqual(graph, before)
+
+    def test_dynamic_model_selector_keeps_calibrations_and_excludes_selector_controls(self):
+        graph = modern_graph()
+        for index, size in (("a", 256), ("b", 384)):
+            graph["reference_" + index] = node("UnseenImage", width=size, height=size, batch_size=1)
+            graph["adapter_" + index] = node(
+                "UnseenModelAdapter", model=["model", 0], image=["reference_" + index, 0]
+            )
+            graph["calibration_" + index] = node(
+                "UnseenCalibration", model=["adapter_" + index, 0], width=768, height=1024
+            )
+        graph["decision_canvas"] = node("UnseenImage", width=64, height=64, batch_size=1)
+        graph["decision"] = node("UnseenRuntimeBoolean", image=["decision_canvas", 0])
+        graph["model_switch"] = node(
+            "UnseenSwitch",
+            boolean=["decision", 0],
+            on_true=["calibration_a", 0],
+            on_false=["calibration_b", 0],
+        )
+        graph["model_route"] = node("Reroute", value=["model_switch", 0])
+        graph["guider"]["inputs"]["model"] = ["model_route", 0]
+        for field in ("width", "height"):
+            self.assertEqual(
+                targets(graph, field),
+                {("latent", field), ("calibration_a", field), ("calibration_b", field)},
+            )
+        self.assertEqual(targets(graph, "batch"), {("latent", "batch_size")})
+        graph["model_switch"]["inputs"]["boolean"] = False
+        self.assertEqual(targets(graph, "width"), {("latent", "width"), ("calibration_b", "width")})
+
+    def test_reference_shared_resolution_literals_require_explicit_mapping(self):
+        for field, kind in (("width", "width"), ("height", "height"), ("batch_size", "batch")):
+            with self.subTest(field=field):
+                graph = modern_graph()
+                value = graph["latent"]["inputs"][field]
+                graph["shared"] = node("PrimitiveNode", value=value)
+                graph["route"] = node("Reroute", value=["shared", 0])
+                graph["latent"]["inputs"][field] = ["shared", 0]
+                graph["reference"] = node("UnseenImage", width=256, height=256, batch_size=1)
+                graph["reference"]["inputs"][field] = ["route", 0]
+                graph["adapter"] = node(
+                    "UnseenModelAdapter", model=["model", 0], image=["reference", 0]
+                )
+                graph["guider"]["inputs"]["model"] = ["adapter", 0]
+                before = copy.deepcopy(graph)
+                self.assertEqual(targets(graph, kind), set())
+                bound, _ = B.resolve(graph)
+                self.assertEqual(B.apply_values(graph, bound, {kind: 2}), graph)
+                bound, _ = B.resolve(graph, {kind: "/shared/inputs/value"})
+                self.assertEqual(
+                    B.apply_values(graph, bound, {kind: 2})["shared"]["inputs"]["value"], 2
+                )
+                self.assertEqual(graph, before)
+
+    def test_shared_resolution_helpers_and_calibration_remain_protected(self):
+        graph = modern_graph()
+        graph["resolution"] = node("UnseenResolution", width=768, height=1024, batch_size=1)
+        graph["latent"]["inputs"].update(width=["resolution", 0], height=["resolution", 1])
+        graph["reference"] = node("UnseenImage", width=["resolution", 0], height=["resolution", 1])
+        graph["adapter"] = node("UnseenModelAdapter", model=["model", 0], image=["reference", 0])
+        graph["calibration"] = node(
+            "UnseenCalibration",
+            model=["adapter", 0],
+            width=["resolution", 0],
+            height=["resolution", 1],
+        )
+        graph["guider"]["inputs"]["model"] = ["calibration", 0]
+        self.assertEqual(targets(graph, "width"), set())
+        self.assertEqual(targets(graph, "height"), set())
+        self.assertEqual(targets(graph, "batch"), {("latent", "batch_size")})
+
+    def test_model_reference_causal_stage_preserves_later_canvas_and_calibration(self):
+        graph = modern_graph()
+        graph["later_text"] = node("CLIPTextEncode", clip=["clip", 0], text="fixed later")
+        graph["later_canvas"] = node("UnseenLatent", width=1024, height=1024, batch_size=1)
+        graph["reference_model"] = node(
+            "UnseenModelAdapter", model=["model", 0], image=["decode", 0]
+        )
+        graph["later_calibration"] = node(
+            "UnseenCalibration", model=["reference_model", 0], width=1024, height=1024
+        )
+        graph["later_sample"] = node(
+            "UnseenSampler",
+            model=["later_calibration", 0],
+            positive=["later_text", 0],
+            latent_image=["later_canvas", 0],
+            seed=19,
+            steps=7,
+        )
+        graph["later_decode"] = node("UnseenDecode", samples=["later_sample", 0])
+        graph["out"]["inputs"]["images"] = ["later_decode", 0]
+        before = copy.deepcopy(graph)
+        bound, _ = B.resolve(graph)
+        changed = B.apply_values(graph, bound, {"width": 832, "height": 1216, "batch": 2})
+        expected = copy.deepcopy(graph)
+        expected["latent"]["inputs"].update(width=832, height=1216, batch_size=2)
+        self.assertEqual(changed, expected)
+        self.assertEqual(graph, before)
+
+    def test_dynamic_generation_image_domains_keep_sizes_and_reference_canvases(self):
+        graph = modern_graph()
+        graph["other_latent"] = node("UnseenLatent", width=768, height=1024, batch_size=1)
+        graph["reference"] = node("UnseenImage", width=256, height=256, batch_size=1)
+        graph["adapter"] = node("UnseenModelAdapter", model=["model", 0], image=["reference", 0])
+        graph["other_sample"] = node(
+            "UnseenSampler",
+            model=["adapter", 0],
+            positive=["text", 0],
+            latent_image=["other_latent", 0],
+            seed=19,
+        )
+        graph["other_decode"] = node("UnseenDecode", samples=["other_sample", 0])
+        graph["decision"] = node("UnseenRuntimeBoolean", model=["model", 0])
+        graph["image_switch"] = node(
+            "UnseenSwitch",
+            boolean=["decision", 0],
+            on_true=["decode", 0],
+            on_false=["other_decode", 0],
+        )
+        graph["out"]["inputs"]["images"] = ["image_switch", 0]
+        for field, kind in (("width", "width"), ("height", "height"), ("batch_size", "batch")):
+            self.assertEqual(targets(graph, kind), {("latent", field), ("other_latent", field)})
+        graph["image_switch"]["inputs"]["boolean"] = False
+        self.assertEqual(targets(graph, "width"), {("other_latent", "width")})
+
+    def test_prefixed_canvas_dimensions_do_not_bind_model_attention_masks(self):
+        from mio_server.comfy.compile import compile_workflow
+        from mio_server.render_models import WorkflowDoc
+
+        graph = modern_graph()
+        graph["bundle"] = node(
+            "UnseenGenerationBundle",
+            empty_latent_width=768,
+            empty_latent_height=1024,
+            batch_size=1,
+            checkpoint_name="synthetic.safetensors",
+        )
+        graph["mask_a"] = node("UnseenMaskCanvas", width=768, height=1024)
+        graph["mask_b"] = node("UnseenMaskCanvas", width=768, height=1024)
+        graph["feather"] = node("UnseenMaskTransform", mask=["mask_a", 0])
+        graph["composition"] = node(
+            "UnseenMaskComposition", source=["feather", 0], destination=["mask_b", 0]
+        )
+        graph["inverse"] = node("UnseenMaskTransform", mask=["composition", 0])
+        graph["reference_a"] = node("UnseenImage", width=256, height=256, batch_size=1)
+        graph["reference_b"] = node("UnseenImage", width=384, height=384, batch_size=1)
+        graph["adapter_a"] = node(
+            "UnseenModelAdapter",
+            model=["bundle", 0],
+            image=["reference_a", 0],
+            attn_mask=["composition", 0],
+        )
+        graph["adapter_b"] = node(
+            "UnseenModelAdapter",
+            model=["adapter_a", 0],
+            image=["reference_b", 0],
+            attn_mask=["inverse", 0],
+        )
+        graph["guider"]["inputs"]["model"] = ["adapter_b", 0]
+        graph["sample"]["inputs"]["latent_image"] = ["bundle", 3]
+        graph.pop("latent")
+        before = copy.deepcopy(graph)
+        compiled = compile_workflow(
+            WorkflowDoc(name="Synthetic bundled canvas", graph=graph),
+            {"width": 1152, "height": 896, "batch": 2},
+        )
+        expected = copy.deepcopy(graph)
+        expected["bundle"]["inputs"].update(
+            empty_latent_width=1152, empty_latent_height=896, batch_size=2
+        )
+        self.assertEqual(compiled.graph, expected)
+        self.assertEqual(graph, before)
+        self.assertEqual(compiled.warnings, [])
+
+    def test_prefixed_reference_dimensions_do_not_become_model_calibrations(self):
+        graph = modern_graph()
+        graph["adapter"] = node(
+            "UnseenModelAdapter",
+            model=["model", 0],
+            image_width=256,
+            image_height=256,
+            empty_latent_width=128,
+            empty_latent_height=128,
+        )
+        graph["guider"]["inputs"]["model"] = ["adapter", 0]
+        self.assertEqual(targets(graph, "width"), {("latent", "width")})
+        self.assertEqual(targets(graph, "height"), {("latent", "height")})
+
+    def test_multiple_conditioning_ports_protect_shared_positive_atoms(self):
+        from mio_server.comfy.compile import compile_workflow
+        from mio_server.render_models import WorkflowConfig, WorkflowDoc
+
+        graph = modern_graph()
+        graph["text"] = node("CLIPTextEncode", clip=["clip", 0], text="primary subject")
+        graph["exclusion"] = node("CLIPTextEncode", clip=["clip", 0], text="fixed exclusion")
+        graph["pair"] = node(
+            "UnseenConditioningPair", positive=["text", 0], negative=["exclusion", 0]
+        )
+        graph["nested"] = node("UnseenConditioningWrapper", cond1=["pair", 0])
+        graph["guider"] = node(
+            "UnseenMultipleGuider",
+            model=["model", 0],
+            cond1=["nested", 0],
+            cond2=["pair", 1],
+            negative=["text", 0],
+        )
+        graph.pop("guidance")
+        before = copy.deepcopy(graph)
+        self.assertEqual(targets(graph, "prompt"), set())
+        self.assertEqual(targets(graph, "negative"), set())
+        result = compile_workflow(
+            WorkflowDoc(name="Synthetic multiple conditioning", graph=graph),
+            {"prompt": "replacement", "negative": "new exclusion"},
+        )
+        self.assertEqual(result.graph, graph)
+        explicit = WorkflowDoc(
+            name="Explicit shared text",
+            graph=graph,
+            config=WorkflowConfig(mapping={"negative": "/text/inputs/text"}),
+        )
+        result = compile_workflow(explicit, {"negative": "manual choice"})
+        expected = copy.deepcopy(graph)
+        expected["text"]["inputs"]["text"] = "manual choice"
+        self.assertEqual(result.graph, expected)
+        self.assertEqual(graph, before)
+
+    def test_multiple_conditioning_ports_preserve_independent_negative_binding(self):
+        graph = modern_graph()
+        graph["text"] = node("CLIPTextEncode", clip=["clip", 0], text="primary subject")
+        graph["second"] = node("CLIPTextEncode", clip=["clip", 0], text="secondary subject")
+        graph["exclusion"] = node("CLIPTextEncode", clip=["clip", 0], text="exclusion")
+        graph["guider"] = node(
+            "UnseenMultipleGuider",
+            model=["model", 0],
+            cond1=["text", 0],
+            cond2=["second", 0],
+            negative=["exclusion", 0],
+        )
+        self.assertEqual(targets(graph, "prompt"), set())
+        self.assertEqual(targets(graph, "negative"), {("exclusion", "text")})
+
+    def test_multiple_conditioning_selector_protects_possible_positive_branches(self):
+        graph = modern_graph()
+        graph["text"] = node("CLIPTextEncode", clip=["clip", 0], text="primary subject")
+        graph["second"] = node("CLIPTextEncode", clip=["clip", 0], text="secondary subject")
+        graph["decision"] = node("UnseenRuntimeBoolean", model=["model", 0])
+        graph["switch"] = node(
+            "UnseenConditionSwitch",
+            boolean=["decision", 0],
+            on_true=["text", 0],
+            on_false=["second", 0],
+        )
+        graph["guider"] = node(
+            "UnseenMultipleGuider",
+            model=["model", 0],
+            cond1=["switch", 0],
+            cond2=["second", 0],
+            negative=["text", 0],
+        )
+        self.assertEqual(targets(graph, "negative"), set())
+        graph["switch"]["inputs"]["boolean"] = False
+        self.assertEqual(targets(graph, "negative"), {("text", "text")})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -134,7 +134,13 @@ describe('workflow import preview', () => {
   it.each(['png', 'webp'])(
     'previews embedded %s workflows as bytes and saves only the decoded graph',
     async (extension) => {
-      const calls = mockFetch(configurationRoutes({ 'POST /api/workflows': configWorkflow }));
+      const imageInspection = { ...inspection, format: 'mio' as const, variants: ['draft'] };
+      const calls = mockFetch(
+        configurationRoutes({
+          'POST /api/workflows': configWorkflow,
+          'POST /api/workflows/inspect': imageInspection,
+        }),
+      );
       const fallback = globalThis.fetch;
       const uploads: RequestInit[] = [];
       vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -143,7 +149,7 @@ describe('workflow import preview', () => {
           return new Response(
             JSON.stringify({
               workflow: { graph: configWorkflow.graph },
-              inspection,
+              inspection: imageInspection,
             }),
             { headers: { 'content-type': 'application/json' } },
           );
@@ -156,13 +162,24 @@ describe('workflow import preview', () => {
       });
       await userEvent.upload(container.querySelector('input[type="file"]')!, image);
       const dialog = await screen.findByRole('dialog');
-      await within(dialog).findByText('ComfyUI API');
+      await within(dialog).findByText('图片（ComfyUI API 元数据）');
+      expect(within(dialog).queryByText('Mio 工作流包')).toBeNull();
       expect(uploads).toHaveLength(1);
       expect(uploads[0].body).toBe(image);
       expect(uploads[0].headers).toEqual({ 'Content-Type': 'application/octet-stream' });
+      await userEvent.selectOptions(within(dialog).getByLabelText('输出变体'), 'draft');
+      await waitFor(() =>
+        expect(calls.some((call) => call.url === '/api/workflows/inspect')).toBe(true),
+      );
+      expect(within(dialog).getByText('图片（ComfyUI API 元数据）')).toBeVisible();
+      await waitFor(() =>
+        expect(within(dialog).getByRole('button', { name: '保存工作流' })).toBeEnabled(),
+      );
       await userEvent.click(within(dialog).getByRole('button', { name: '保存工作流' }));
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-      expect(calls.find((call) => call.method === 'POST')?.body).toEqual({
+      expect(
+        calls.find((call) => call.method === 'POST' && call.url === '/api/workflows')?.body,
+      ).toEqual({
         name: 'sample',
         graph: configWorkflow.graph,
         notes: '',
@@ -191,6 +208,8 @@ describe('workflow import preview', () => {
     );
     const dialog = await screen.findByRole('dialog');
     const instructions = await within(dialog).findByRole('alert');
+    expect(within(dialog).getByText('ComfyUI 界面工作流')).toBeVisible();
+    expect(within(dialog).queryByText('图片（ComfyUI API 元数据）')).toBeNull();
     expect(within(instructions).getAllByRole('listitem')).toHaveLength(3);
     expect(within(dialog).getByRole('button', { name: '保存工作流' })).toBeDisabled();
     expect(within(dialog).queryByText('原始工作流 JSON')).toBeNull();

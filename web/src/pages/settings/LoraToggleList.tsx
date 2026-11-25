@@ -138,7 +138,7 @@ export function LoraToggleList({
                   <div className="lora-toggle-row" data-off={off || undefined} key={source.key}>
                     <div className="lora-toggle-identity">
                       <label className="lora-toggle-switch">
-                        <span>{source.name}</span>
+                        <span title={source.name}>{source.name}</span>
                         {toggleOverride ? (
                           <select
                             disabled={!source.supports_independent_toggle}

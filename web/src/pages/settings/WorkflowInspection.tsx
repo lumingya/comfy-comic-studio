@@ -93,7 +93,13 @@ export function DiagnosisView({ d }: { d: WorkflowDiagnostic }) {
   );
 }
 
-function InspectionView({ report }: { report: WorkflowInspection }) {
+function InspectionView({
+  report,
+  imageMetadata,
+}: {
+  report: WorkflowInspection;
+  imageMetadata: boolean;
+}) {
   const { t } = useTranslation();
   const bindings = report.bindings ?? [];
   const candidates = report.candidates ?? [];
@@ -133,7 +139,17 @@ function InspectionView({ report }: { report: WorkflowInspection }) {
       <dl className="workflow-inspection-summary">
         <div>
           <dt>{t('config.workflow.inspection.format')}</dt>
-          <dd>{t(`config.workflow.inspection.formats.${report.format}`)}</dd>
+          <dd>
+            {t(
+              `config.workflow.inspection.formats.${
+                imageMetadata &&
+                report.importable &&
+                (report.format === 'api' || report.format === 'mio')
+                  ? 'image'
+                  : report.format
+              }`,
+            )}
+          </dd>
         </div>
         <div>
           <dt>{t('config.workflow.inspection.recognized')}</dt>
@@ -246,21 +262,25 @@ export function WorkflowImportPreview({
   graph,
   config,
   initialInspection,
+  imageMetadata = false,
   name,
   saving,
   saveError,
   onSave,
   onClose,
+  onCloseAutoFocus,
 }: {
   workflow: Record<string, unknown> | null;
   graph: Record<string, unknown>;
   config?: WorkflowConfig;
   initialInspection?: WorkflowInspection;
+  imageMetadata?: boolean;
   name: string;
   saving: boolean;
   saveError: unknown;
   onSave: (config?: WorkflowConfig) => void;
   onClose: () => void;
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const { t } = useTranslation();
   const id = useId();
@@ -286,6 +306,7 @@ export function WorkflowImportPreview({
   return (
     <Modal
       open
+      onCloseAutoFocus={onCloseAutoFocus}
       size="lg"
       onOpenChange={(open) => {
         if (!open && !saving) onClose();
@@ -335,7 +356,7 @@ export function WorkflowImportPreview({
         ) : query.isError ? (
           <QueryError error={query.error} onRetry={query.refetch} />
         ) : (
-          <InspectionView report={query.data} />
+          <InspectionView report={query.data} imageMetadata={imageMetadata} />
         )}
         {query.data?.importable && workflow ? (
           <Advanced lazy title={t('config.workflow.adjustMapping')}>
