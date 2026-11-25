@@ -370,7 +370,7 @@ class AdapterContracts(unittest.TestCase):
 class AdapterInstallTests(unittest.TestCase):
     def test_examples_install_enable_discover_compile_and_disable_via_v2(self):
         with tempfile.TemporaryDirectory() as tmp:
-            ctx = AppContext.create(tmp, autostart=False, seed_instance=False)
+            ctx = AppContext.create(Path(tmp) / "workspace", autostart=False, seed_instance=False)
             try:
                 client = TestClient(create_app(ctx, serve_web=False), base_url="http://127.0.0.1")
                 token = client.post(

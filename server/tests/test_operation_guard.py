@@ -19,7 +19,8 @@ class OperationGuardTests(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
-        self.ctx = AppContext.create(Path(tmp.name), autostart=False, seed_instance=False)
+        workspace = Path(tmp.name) / "workspace"
+        self.ctx = AppContext.create(workspace, autostart=False, seed_instance=False)
         self.addCleanup(self.ctx.close)
         self.engine = self.ctx.engine
         self.series = self.ctx.store.create_series(Series(title="Guarded"))

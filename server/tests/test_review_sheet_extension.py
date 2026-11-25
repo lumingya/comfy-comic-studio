@@ -71,7 +71,7 @@ class ReviewSheetTests(unittest.TestCase):
 
     def test_install_export_disable_through_v2_preserves_episode(self):
         with tempfile.TemporaryDirectory() as tmp:
-            ctx = AppContext.create(tmp, autostart=False, seed_instance=False)
+            ctx = AppContext.create(Path(tmp) / "workspace", autostart=False, seed_instance=False)
             try:
                 series = ctx.store.create_series(Series(title="Review & repeat"))
                 panel = Panel(order=0, description="A quiet room")

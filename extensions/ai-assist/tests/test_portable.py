@@ -1,10 +1,15 @@
 """The extension works when imported into a host with no bundled assistant package."""
 
+import importlib.util
 import io
 import json
+import shutil
+import sys
 import tempfile
 import unittest
 import zipfile
+from contextlib import contextmanager
+from functools import cache
 from pathlib import Path
 from unittest.mock import patch
 
@@ -17,7 +22,42 @@ from mio_server.extensions.trust import reviewed_packages
 PACKAGE = Path(__file__).resolve().parents[1]
 
 
+@cache
+def _release_extension_files() -> tuple[Path, ...]:
+    """Use the release inventory without reading unrelated local seed data."""
+    spec = importlib.util.spec_from_file_location(
+        "_mio_assistant_fixture_release", PACKAGE.parents[1] / "tools/build_release.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    original_path = sys.path[:]
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path[:] = original_path
+    with (
+        patch.object(module, "INCLUDE", ["extensions"]),
+        patch.object(module, "shipped_manifest", return_value={"files": {}}),
+    ):
+        return tuple(path for path in module.files() if path.is_relative_to(PACKAGE.parent))
+
+
+@contextmanager
+def released_extensions():
+    """Every context sees disposable release packages, never checkout dependencies or data."""
+    with tempfile.TemporaryDirectory(prefix="mio-extension-fixture-") as directory:
+        root = Path(directory) / "extensions"
+        for source in _release_extension_files():
+            target = root / source.relative_to(PACKAGE.parent)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+        with patch("mio_server.extensions.manager.BUILTIN_ROOT", root):
+            yield root
+
+
 class PortableTests(unittest.TestCase):
+    def setUp(self):
+        self.package = self.enterContext(released_extensions()) / "ai-assist"
+
     def test_clean_host_import_activate_chat_workspace_and_disable(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -30,8 +70,10 @@ class PortableTests(unittest.TestCase):
                     self.assertEqual(client.get("/api/extensions").json()["items"], [])
                     buffer = io.BytesIO()
                     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-                        for path in files(PACKAGE):
-                            archive.write(path, "portable/" + path.relative_to(PACKAGE).as_posix())
+                        for path in files(self.package):
+                            archive.write(
+                                path, "portable/" + path.relative_to(self.package).as_posix()
+                            )
                     imported = client.post("/api/extensions", content=buffer.getvalue())
                     self.assertEqual(imported.status_code, 201, imported.text)
                     info = imported.json()
@@ -99,7 +141,7 @@ class PortableTests(unittest.TestCase):
 
     def test_real_folder_import_overrides_builtin_and_uninstall_restores_disabled_builtin(self):
         with tempfile.TemporaryDirectory() as directory:
-            ctx = AppContext.create(directory, autostart=False, seed_instance=False)
+            ctx = AppContext.create(Path(directory) / "data", autostart=False, seed_instance=False)
             try:
                 client = TestClient(create_app(ctx, serve_web=False), base_url="http://127.0.0.1")
                 builtin = next(
@@ -114,11 +156,11 @@ class PortableTests(unittest.TestCase):
                         (
                             "files",
                             (
-                                "ai-assist/" + path.relative_to(PACKAGE).as_posix(),
+                                "ai-assist/" + path.relative_to(self.package).as_posix(),
                                 path.read_bytes(),
                             ),
                         )
-                        for path in files(PACKAGE)
+                        for path in files(self.package)
                     ],
                 )
                 self.assertEqual(imported.status_code, 201, imported.text)
@@ -144,7 +186,7 @@ class PortableTests(unittest.TestCase):
 
     def test_folder_import_ignores_dependencies_and_rejects_traversal(self):
         with tempfile.TemporaryDirectory() as directory:
-            ctx = AppContext.create(directory, autostart=False, seed_instance=False)
+            ctx = AppContext.create(Path(directory) / "data", autostart=False, seed_instance=False)
             try:
                 client = TestClient(create_app(ctx, serve_web=False), base_url="http://127.0.0.1")
                 content = json.dumps({"id": "simple-theme", "name": "Simple"}).encode()
@@ -157,12 +199,8 @@ class PortableTests(unittest.TestCase):
                     ],
                 )
                 self.assertEqual(imported.status_code, 201, imported.text)
-                self.assertFalse(
-                    (Path(directory) / "extensions/simple-theme/node_modules").exists()
-                )
-                self.assertTrue(
-                    (Path(directory) / "extensions/simple-theme/data/catalog.json").is_file()
-                )
+                self.assertFalse((ctx.extensions.root / "simple-theme/node_modules").exists())
+                self.assertTrue((ctx.extensions.root / "simple-theme/data/catalog.json").is_file())
                 bad = client.post(
                     "/api/extensions/folder", files=[("files", ("../escape", b"bad"))]
                 )

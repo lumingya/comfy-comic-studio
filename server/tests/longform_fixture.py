@@ -22,7 +22,8 @@ class LongformFixture(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
-        self.ctx = AppContext.create(Path(tmp.name), autostart=False, seed_instance=False)
+        workspace = Path(tmp.name) / "workspace"
+        self.ctx = AppContext.create(workspace, autostart=False, seed_instance=False)
         self.addCleanup(self.ctx.close)
         # TestClient starts the app lifespan. Keep update checks out of the
         # fixture so their background writes cannot race temporary cleanup.

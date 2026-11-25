@@ -57,7 +57,9 @@ class BackupThemesTests(unittest.TestCase):
 
     def test_theme_backup_rejects_unrecognized_package_files(self):
         with tempfile.TemporaryDirectory() as directory:
-            ctx = AppContext.create(directory, autostart=False, seed_instance=False)
+            ctx = AppContext.create(
+                Path(directory) / "workspace", autostart=False, seed_instance=False
+            )
             try:
                 theme = parse_theme(
                     {"id": "forest", "name": "Forest", "mode": "light", "tokens": {"bg": "#ffffff"}}

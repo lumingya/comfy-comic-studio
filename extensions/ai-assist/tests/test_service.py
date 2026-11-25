@@ -6,6 +6,7 @@ import json
 import os
 import threading
 import time
+from pathlib import Path
 from unittest.mock import patch
 
 from mio_server.api import create_app
@@ -15,9 +16,14 @@ from PIL import Image
 from tests.api_harness import ApiCase
 
 from ..core.storage import ConversationStore
+from .test_portable import released_extensions
 
 
 class AssistTests(ApiCase):
+    def setUp(self):
+        self.enterContext(released_extensions())
+        super().setUp()
+
     def enable(self):
         info = next(
             item
@@ -549,7 +555,7 @@ class AssistTests(ApiCase):
         import tempfile
 
         with tempfile.TemporaryDirectory() as root:
-            ctx = AppContext.create(root, autostart=False, seed_instance=False)
+            ctx = AppContext.create(Path(root) / "data", autostart=False, seed_instance=False)
             try:
                 with self.assertRaisesRegex(Exception, "文本模型"):
                     ctx.llm_factory()

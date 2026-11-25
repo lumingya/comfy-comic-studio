@@ -60,8 +60,9 @@ class ApiCase(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
+        workspace = Path(tmp.name) / "workspace"
         self.ctx = AppContext.create(
-            tmp.name,
+            workspace,
             autostart=False,
             llm_factory=FakeLLM,
             comfy_client_factory=FakeComfy,
