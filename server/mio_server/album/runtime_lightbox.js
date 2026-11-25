@@ -17,7 +17,16 @@ function imageSource(image) {
 function clamp(index, count) {
   return Math.max(0, Math.min(count - 1, index));
 }
-function mountAlbumLightbox(body, frames, name, source, motion, wake, element, button) {
+function mountAlbumLightbox(
+  body,
+  frames,
+  name,
+  source,
+  motion,
+  wake,
+  element,
+  button,
+) {
   const pictures = frames.filter(({ image }) => source(image));
   if (!pictures.length) return null;
   let selected = 0;
@@ -66,6 +75,9 @@ function mountAlbumLightbox(body, frames, name, source, motion, wake, element, b
       : panel.querySelector("[data-cc-caption]")?.textContent.trim() || "";
     previous.disabled = selected === 0;
     next.disabled = selected === pictures.length - 1;
+    const rtl = body.dataset.mioDirection === "rtl";
+    previous.textContent = rtl ? "›" : "‹";
+    next.textContent = rtl ? "‹" : "›";
     dialog.setAttribute(
       "aria-label",
       preview.alt + "，" + (selected + 1) + " / " + pictures.length,
@@ -73,7 +85,10 @@ function mountAlbumLightbox(body, frames, name, source, motion, wake, element, b
     setZoom(false);
   }
   function move(direction) {
-    const target = Math.max(0, Math.min(pictures.length - 1, selected + direction));
+    const target = Math.max(
+      0,
+      Math.min(pictures.length - 1, selected + direction),
+    );
     if (target === selected) return;
     selected = target;
     update();
@@ -85,7 +100,9 @@ function mountAlbumLightbox(body, frames, name, source, motion, wake, element, b
     returnFocus = trigger;
     overflow = body.style.overflow;
     body.style.overflow = "hidden";
-    background = [...body.children].filter((el) => el !== dialog && !el.hasAttribute("inert"));
+    background = [...body.children].filter(
+      (el) => el !== dialog && !el.hasAttribute("inert"),
+    );
     background.forEach((el) => el.setAttribute("inert", ""));
     update();
     dialog.hidden = false;
@@ -104,10 +121,42 @@ function mountAlbumLightbox(body, frames, name, source, motion, wake, element, b
   }
   pictures.forEach(({ panel, image }, index) => {
     const explicit = panel.querySelector("[data-ag-view]");
+    if (body.dataset.layout === "contact") {
+      // A contact print is one preview target, including its number and paper border.
+      panel.tabIndex = 0;
+      panel.setAttribute("role", "button");
+      panel.setAttribute(
+        "aria-label",
+        "打开画作预览：" + (image.alt || name(frames.indexOf(pictures[index]))),
+      );
+      image.tabIndex = -1;
+      panel.addEventListener("keydown", (event) => {
+        if (
+          event.target !== panel ||
+          (event.key !== "Enter" && event.key !== " ")
+        )
+          return;
+        event.preventDefault();
+        open(index, panel);
+      });
+      panel.addEventListener("click", (event) => {
+        const nested = event.target?.closest?.(
+          "button,a,input,select,textarea,[contenteditable],[role=button]",
+        );
+        if (event.defaultPrevented || (nested && nested !== panel)) return;
+        event.preventDefault();
+        open(index, panel);
+      });
+      explicit?.addEventListener("click", () => open(index, explicit));
+      return;
+    }
     image.tabIndex = explicit ? -1 : 0;
     if (!explicit) {
       image.setAttribute("role", "button");
-      image.setAttribute("aria-label", "打开画作预览：" + (image.alt || "画作"));
+      image.setAttribute(
+        "aria-label",
+        "打开画作预览：" + (image.alt || "画作"),
+      );
       image.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
@@ -128,14 +177,23 @@ function mountAlbumLightbox(body, frames, name, source, motion, wake, element, b
     (event) => {
       if (dialog.hidden || event.defaultPrevented) return;
       if (event.key === "Escape") hide();
-      else if (event.key === "ArrowLeft" && document.activeElement !== viewport) move(-1);
-      else if (event.key === "ArrowRight" && document.activeElement !== viewport) move(1);
+      else if (event.key === "ArrowLeft" && document.activeElement !== viewport)
+        move(body.dataset.mioDirection === "rtl" ? 1 : -1);
+      else if (
+        event.key === "ArrowRight" &&
+        document.activeElement !== viewport
+      )
+        move(body.dataset.mioDirection === "rtl" ? -1 : 1);
       else if (event.key === "Tab") {
         const stops = [close, zoom, previous, viewport, next].filter(
           (el) => !el.disabled && el.tabIndex >= 0,
         );
         const boundary = event.shiftKey ? stops[0] : stops.at(-1);
-        if (document.activeElement !== boundary && dialog.contains(document.activeElement)) return;
+        if (
+          document.activeElement !== boundary &&
+          dialog.contains(document.activeElement)
+        )
+          return;
         (event.shiftKey ? stops.at(-1) : stops[0]).focus();
       } else return;
       event.preventDefault();

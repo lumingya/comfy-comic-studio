@@ -5,12 +5,16 @@
   const mobile = window.matchMedia?.("(max-width:680px)");
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   const defaultPaged = ["flip", "folio", "cinema"].includes(layout);
+  const zine =
+    layout === "editorial" && !!body.querySelector(".zine[data-cc-book]");
   const modes = ["template", "single", "double"];
   let mode = "template";
   let current = 0;
   let reportTimer;
   let idleTimer;
   let scrollFrame;
+  let navigationAnchor;
+  let readingDirection = "ltr";
   let swipe;
   let lastSwipe = -Infinity;
   let lightbox;
@@ -40,7 +44,8 @@
     return mode !== "template" || defaultPaged;
   }
   function perPage() {
-    if (mode === "single" || (mode === "template" && layout === "cinema")) return 1;
+    if (mode === "single" || (mode === "template" && layout === "cinema"))
+      return 1;
     if (mode === "double") return 2;
     return mobile?.matches ? 1 : 2;
   }
@@ -68,12 +73,45 @@
   const directory = button("目录", () => toggleTray(tray.hidden));
   directory.setAttribute("aria-expanded", "false");
   directory.setAttribute("aria-controls", "mio-reader-directory");
-  const view = button("版式", () => setMode(modes[(modes.indexOf(mode) + 1) % modes.length]));
+  const view = button("版式", () =>
+    setMode(modes[(modes.indexOf(mode) + 1) % modes.length]),
+  );
+  let directionControl;
+  if (zine) {
+    directionControl = element("select", "mio-reading-direction");
+    directionControl.setAttribute("aria-label", "独立志阅读方向");
+    for (const [value, label] of [
+      ["webtoon", "条漫"],
+      ["ltr", "左翻"],
+      ["rtl", "右翻"],
+    ]) {
+      const option = element("option", "", label);
+      option.value = value;
+      directionControl.append(option);
+    }
+    directionControl.addEventListener("change", () => {
+      const value = directionControl.value;
+      if (value !== "webtoon") readingDirection = value;
+      setMode(
+        value === "webtoon"
+          ? "template"
+          : mode === "template"
+            ? mobile?.matches
+              ? "single"
+              : "double"
+            : mode,
+      );
+    });
+  }
   const immerse = button("无字", () => {
-    immerse.setAttribute("aria-pressed", String(body.toggleAttribute("data-mio-immersive")));
+    immerse.setAttribute(
+      "aria-pressed",
+      String(body.toggleAttribute("data-mio-immersive")),
+    );
   });
   immerse.setAttribute("aria-pressed", "false");
   controls.append(previous, counter, next, directory, view, immerse);
+  if (directionControl) controls.append(directionControl);
   if (typeof document.documentElement.requestFullscreen === "function") {
     controls.append(button("全屏", toggleFullscreen));
   }
@@ -93,17 +131,29 @@
     const entry = frames[current].entry;
     const columns = perPage();
     const first = current - ((current - entry.start) % columns);
-    return { first, end: Math.min(entry.start + entry.count, first + columns), entry };
+    return {
+      first,
+      end: Math.min(entry.start + entry.count, first + columns),
+      entry,
+    };
   }
   function updateChrome() {
     const { panel, entry } = frames[current];
     counter.value = current + 1 + " / " + frames.length;
     progress.value = current + 1;
-    previous.disabled = isPaged() ? current < perPage() && entry === books[0] : current === 0;
-    next.disabled = isPaged() ? spread().end === frames.length : current === frames.length - 1;
+    previous.disabled = isPaged()
+      ? current < perPage() && entry === books[0]
+      : current === 0;
+    next.disabled = isPaged()
+      ? spread().end === frames.length
+      : current === frames.length - 1;
     thumbnails.querySelector("[aria-current]")?.removeAttribute("aria-current");
     thumbnails.children[current]?.setAttribute("aria-current", "true");
-    const colors = [...panel.querySelectorAll(".palette i, .cc-palette i, [data-cc-palette] i")]
+    const colors = [
+      ...panel.querySelectorAll(
+        ".palette i, .cc-palette i, [data-cc-palette] i",
+      ),
+    ]
       .slice(0, 3)
       .map((swatch) => swatch.style.backgroundColor)
       .filter((color) => color);
@@ -116,16 +166,26 @@
       glowLayers[glow].removeAttribute("data-visible");
       glow = 1 - glow;
       if (palette) {
-        glowLayers[glow].style.background = "linear-gradient(135deg," + palette + ")";
+        glowLayers[glow].style.background =
+          "linear-gradient(135deg," + palette + ")";
         glowLayers[glow].setAttribute("data-visible", "");
       }
     }
   }
-  function show(animate) {
+  function isRightToLeft() {
+    return zine && isPaged() && readingDirection === "rtl";
+  }
+  function show(animate, direction = 1) {
     const paged = isPaged();
     const columns = perPage();
     const { entry, first, end } = spread();
     body.toggleAttribute("data-mio-paged", paged);
+    if (zine) {
+      body.dataset.mioDirection = paged ? readingDirection : "webtoon";
+      directionControl.value = paged ? readingDirection : "webtoon";
+      previous.textContent = isRightToLeft() ? "›" : "‹";
+      next.textContent = isRightToLeft() ? "‹" : "›";
+    }
     body.style.setProperty("--mio-columns", String(columns));
     for (const book of books) {
       book.book.hidden = paged && book !== entry;
@@ -142,33 +202,45 @@
         opening.hidden = paged && (book !== entry || first !== book.start);
       }
       for (const closing of book.book.querySelectorAll(".edition-end")) {
-        closing.hidden = paged && (book !== entry || end !== book.start + book.count);
+        closing.hidden =
+          paged && (book !== entry || end !== book.start + book.count);
       }
     }
     frames.forEach(({ panel }, index) => {
       panel.hidden = paged && (index < first || index >= end);
-      panel.dataset.mioLeaf = (index - first) % 2 === 0 ? "left" : "right";
+      panel.dataset.mioLeaf =
+        ((index - first) % 2 === 0) !== isRightToLeft() ? "left" : "right";
       panel.removeAttribute("data-mio-enter");
+      panel.removeAttribute("data-mio-turn");
     });
     if (animate && paged && !reducedMotion?.matches) {
-      const leaf = frames[end - 1].panel;
+      const leaf = frames[zine && direction < 0 ? first : end - 1].panel;
       void leaf.offsetWidth;
+      if (zine)
+        leaf.dataset.mioTurn =
+          direction > 0 !== isRightToLeft() ? "left" : "right";
       leaf.setAttribute("data-mio-enter", "");
     }
     updateChrome();
   }
   function go(index, animate = true) {
+    const direction = index < current ? -1 : 1;
     current = clamp(index, frames.length);
     const focused = document.activeElement?.closest("[data-cc-frame]");
-    if (isPaged()) show(animate);
+    if (isPaged()) show(animate, direction);
     else updateChrome();
     if (focused?.hidden) frames[current].image?.focus({ preventScroll: true });
-    const target = isPaged() ? frames[current].entry.pages : frames[current].panel;
+    const target = isPaged()
+      ? frames[current].entry.pages
+      : frames[current].panel;
     // Jump to the art without interpolating over large albums or skipping hidden spreads.
     window.scrollTo({
       top: target.getBoundingClientRect().top + window.scrollY,
       behavior: "instant",
     });
+    // A final/short panel cannot always reach the scroll marker. Retain an explicit
+    // selection at its actual clamped position, until the reader scrolls elsewhere.
+    navigationAnchor = { frame: current, y: window.scrollY };
     wake();
     report();
   }
@@ -180,14 +252,18 @@
       target = direction < 0 ? first - columns : end;
       if (direction < 0 && first === entry.start) {
         const before = frames[first - 1]?.entry;
-        target = before ? before.start + Math.floor((before.count - 1) / columns) * columns : 0;
+        target = before
+          ? before.start + Math.floor((before.count - 1) / columns) * columns
+          : 0;
       }
     }
     if (target >= 0 && target < frames.length && target !== current) go(target);
   }
   function updateMode(value) {
     mode = value;
-    view.textContent = { template: "模板版式", single: "单页", double: "双页" }[mode];
+    view.textContent = { template: "模板版式", single: "单页", double: "双页" }[
+      mode
+    ];
     view.setAttribute("aria-label", "切换版式（" + view.textContent + "）");
   }
   function setMode(value) {
@@ -237,7 +313,10 @@
     controls.removeAttribute("data-idle");
     window.clearTimeout(idleTimer);
     if (tray.hidden && lightbox?.hidden !== false) {
-      idleTimer = window.setTimeout(() => controls.setAttribute("data-idle", ""), 3500);
+      idleTimer = window.setTimeout(
+        () => controls.setAttribute("data-idle", ""),
+        3500,
+      );
     }
   }
   function toggleFullscreen() {
@@ -275,10 +354,14 @@
       scrollFrame = window.requestAnimationFrame(() => {
         scrollFrame = null;
         if (!isPaged()) {
+          const anchored =
+            navigationAnchor?.frame === current &&
+            Math.abs(window.scrollY - navigationAnchor.y) <= 1;
+          if (!anchored) navigationAnchor = null;
           const marker = Math.min(window.innerHeight / 3, 240);
           const { top, bottom } = frames[current].panel.getBoundingClientRect();
           // Adjacent panels on a contact sheet share a row. Keep the selected panel in that row.
-          if (top > marker || bottom <= marker) {
+          if (!anchored && (top > marker || bottom <= marker)) {
             const candidate = frames.findIndex(
               ({ panel }) => panel.getBoundingClientRect().bottom > marker,
             );
@@ -293,16 +376,31 @@
   );
 
   document.addEventListener("keydown", (event) => {
-    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (
+      event.defaultPrevented ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey
+    )
+      return;
     const key = event.key.toLowerCase();
     if (key === "escape" && !tray.hidden) toggleTray(false);
-    else if (event.target?.closest?.("input,textarea,select,[contenteditable],.cc-lightbox"))
+    else if (
+      event.target?.closest?.(
+        "input,textarea,select,[contenteditable],.cc-lightbox",
+      )
+    )
       return;
     else if (key === "g") toggleTray(tray.hidden);
     else if (key === "f") toggleFullscreen();
-    else if (key === "arrowleft" && tray.hidden) turn(-1);
-    else if (key === "arrowright" && tray.hidden) turn(1);
-    else if (key === " " && tray.hidden && !event.target?.closest?.("button,a,[role=button]")) {
+    else if (key === "arrowleft" && tray.hidden) turn(isRightToLeft() ? 1 : -1);
+    else if (key === "arrowright" && tray.hidden)
+      turn(isRightToLeft() ? -1 : 1);
+    else if (
+      key === " " &&
+      tray.hidden &&
+      !event.target?.closest?.("button,a,[role=button]")
+    ) {
       turn(event.shiftKey ? -1 : 1);
     } else if (key === "home" && tray.hidden) go(0);
     else if (key === "end" && tray.hidden) go(frames.length - 1);
@@ -314,9 +412,14 @@
     (event) => {
       wake();
       const touch = event.touches[0];
-      const interactive = event.target?.closest?.(".mio-controls,.mio-tray,button,a,input");
+      const interactive = event.target?.closest?.(
+        ".mio-controls,.mio-tray,button,a,input",
+      );
       swipe =
-        touch && event.touches.length === 1 && !interactive && !lightbox?.zoomed?.()
+        touch &&
+        event.touches.length === 1 &&
+        !interactive &&
+        !lightbox?.zoomed?.()
           ? { x: touch.clientX, y: touch.clientY }
           : null;
     },
@@ -333,7 +436,7 @@
       const dy = touch.clientY - start.y;
       if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
       lastSwipe = performance.now();
-      const direction = dx < 0 ? 1 : -1;
+      const direction = (dx < 0 ? 1 : -1) * (isRightToLeft() ? -1 : 1);
       if (lightbox && !lightbox.hidden) lightbox.move(direction);
       else turn(direction);
     },
@@ -349,7 +452,10 @@
   document.addEventListener(
     "click",
     (event) => {
-      if (performance.now() - lastSwipe < 250 && event.target?.closest?.("[data-cc-frame]")) {
+      if (
+        performance.now() - lastSwipe < 250 &&
+        event.target?.closest?.("[data-cc-frame]")
+      ) {
         event.preventDefault();
         event.stopPropagation();
       }
@@ -366,7 +472,9 @@
           {
             type: "mio-reader-state",
             y: window.scrollY,
-            spread: isPaged() ? Math.floor((current - frames[current].entry.start) / perPage()) : 0,
+            spread: isPaged()
+              ? Math.floor((current - frames[current].entry.start) / perPage())
+              : 0,
             frame: current,
             mode,
           },
@@ -384,13 +492,17 @@
       else turn(data.direction);
     } else if (data.type === "mio-reader-restore") {
       if (modes.includes(data.mode)) updateMode(data.mode);
-      if (Number.isSafeInteger(data.frame)) current = clamp(data.frame, frames.length);
+      if (Number.isSafeInteger(data.frame))
+        current = clamp(data.frame, frames.length);
       else if (isPaged() && Number.isSafeInteger(data.spread)) {
         current = clamp(data.spread * perPage(), books[0].count);
       }
       show(false);
       const y = Number(data.y);
-      window.scrollTo({ top: Number.isFinite(y) ? Math.max(0, y) : 0, behavior: "instant" });
+      window.scrollTo({
+        top: Number.isFinite(y) ? Math.max(0, y) : 0,
+        behavior: "instant",
+      });
     }
   });
 })();

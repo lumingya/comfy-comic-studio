@@ -5,9 +5,12 @@
   background: #111318ed;
   -webkit-backdrop-filter: blur(22px) saturate(115%);
   backdrop-filter: blur(22px) saturate(115%);
-  font: 12px/1.5 system-ui, sans-serif;
+  font:
+    12px/1.5 system-ui,
+    sans-serif;
 }
 .mio-controls button,
+.mio-controls select,
 .mio-tray button,
 .cc-lightbox button {
   min-height: 36px;
@@ -18,7 +21,9 @@
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
 }
 .mio-controls button:hover:not(:disabled),
 .mio-tray button:hover,
@@ -39,6 +44,14 @@
   outline: 2px solid #c4a47c;
   outline-offset: 2px;
 }
+.mio-controls select {
+  max-width: 100%;
+  background-color: #111318;
+}
+.mio-controls select:focus-visible {
+  outline: 2px solid #c4a47c;
+  outline-offset: 2px;
+}
 .mio-controls,
 .mio-tray {
   position: fixed;
@@ -50,7 +63,9 @@
   box-sizing: border-box;
   border: 1px solid #c4a47c26;
   border-radius: 12px;
-  box-shadow: 0 12px 40px #0005, inset 0 1px 0 #ffffff08;
+  box-shadow:
+    0 12px 40px #0005,
+    inset 0 1px 0 #ffffff08;
   padding: 7px 10px;
 }
 .mio-controls {
@@ -133,6 +148,50 @@ body[data-mio-paged] [data-cc-pages] {
 body[data-mio-paged] [data-cc-frame] {
   min-width: 0;
 }
+body[data-mio-paged][data-mio-direction] .zine [data-cc-frame]:nth-child(n) {
+  grid-column: auto;
+  width: auto;
+  margin: 0;
+  transform: none;
+  direction: ltr;
+}
+body[data-mio-paged][data-mio-direction="rtl"] [data-cc-pages] {
+  direction: rtl;
+}
+html:has(body[data-mio-direction]) {
+  overscroll-behavior-x: contain;
+}
+body[data-mio-paged][data-mio-direction] [data-cc-pages] {
+  touch-action: pan-y pinch-zoom;
+}
+body[data-mio-direction] [data-mio-enter][data-mio-turn="left"] {
+  animation-name: mio-zine-left;
+  transform-origin: left;
+}
+body[data-mio-direction] [data-mio-enter][data-mio-turn="right"] {
+  animation-name: mio-zine-right;
+  transform-origin: right;
+}
+@keyframes mio-zine-left {
+  from {
+    opacity: 0.45;
+    transform: rotateY(-8deg) translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes mio-zine-right {
+  from {
+    opacity: 0.45;
+    transform: rotateY(8deg) translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 [data-mio-pair] [data-mio-leaf="left"] {
   box-shadow: inset -18px 0 26px -26px #3c2f26;
 }
@@ -153,7 +212,8 @@ body[data-mio-paged] [data-cc-frame] {
     transform: none;
   }
 }
-[data-mio-immersive] :is([data-cc-caption], [data-cc-prompt], figcaption, [data-mio-label]) {
+[data-mio-immersive]
+  :is([data-cc-caption], [data-cc-prompt], figcaption, [data-mio-label]) {
   display: none !important;
 }
 .mio-ambient {
@@ -243,7 +303,13 @@ body[data-mio-paged] [data-cc-frame] {
   [data-cc-book][hidden],
   [data-cc-frame][hidden],
   [data-cc-book]
-    [hidden]:is(.edition-cover, .edition-opening, .edition-chapter, .edition-end, .cc-cover) {
+    [hidden]:is(
+      .edition-cover,
+      .edition-opening,
+      .edition-chapter,
+      .edition-end,
+      .cc-cover
+    ) {
     display: block !important;
   }
 }
