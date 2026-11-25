@@ -72,6 +72,15 @@
                 8788.</strong
               >
             </p>
+            <h2 id="first-workspace">Follow the four-step introduction</h2>
+            <p>
+              A new workspace offers four Quick start cards: connect an image
+              service, try one image, read the sample, then write your own first
+              scene. Each card shows its status and next action. Skip it when
+              needed and reopen it from Help → Quick start. Reading the sample
+              does not verify your configured service; test images and normal
+              generation still require an explicit action.
+            </p>
             <h2 id="section-1">Start Mio</h2>
             <p>
               A release needs Python 3.11+. Run the root
@@ -135,6 +144,95 @@
               You can read existing images, edit templates and assemble offline;
               generation needs a working ComfyUI or cloud service.
             </p>
+            <h2 id="optional-workspaces">
+              Enable an optional professional workspace
+            </h2>
+            <p>
+              Six official workspaces are independent sandbox extensions and
+              start disabled. Choose one under Extensions → Installed; import
+              its folder or ZIP if it is not listed. Inspect its origin,
+              permissions and content digest before explicitly enabling it. Open
+              it from a specific episode's Extensions menu. Installing, enabling
+              or opening a panel does not submit generation or review jobs.
+            </p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Workspace</th>
+                    <th>First steps</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Panel Retouch</td>
+                    <td>
+                      Load candidates and a render profile. Draw a mask, set
+                      outpainting or enter an edit instruction, then submit.
+                      Compare the result and explicitly confirm adoption.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>QA Review</td>
+                    <td>
+                      Select candidates or the whole episode and explicitly run
+                      a visual-model review. Locate issues and filter results
+                      before adopting individually or confirming a batch. Scores
+                      do not change adoption automatically.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Finalize Studio</td>
+                    <td>
+                      Load adopted drafts, choose a profile with valid final
+                      stages, select frames and submit. Check adoption first: a
+                      final replaces its source only if that draft remains
+                      adopted. Compare results or restore the original draft.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Variant Workshop</td>
+                    <td>
+                      Preview combinations and counts before creating versions
+                      and explicitly generating candidates. Filter, compare and
+                      adopt images for the chosen version before export.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Script Assistant</td>
+                    <td>
+                      Explicitly generate a proposal, select its operations and
+                      apply them. Applying creates a work checkpoint first.
+                      Review pacing suggestions separately; stale proposals need
+                      a fresh check.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Motion Studio</td>
+                    <td>
+                      Load adopted images, choose camera moves, duration and cut
+                      / fade / slide transitions, then save. Preview playback
+                      and available browser voices before exporting offline
+                      HTML.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Rendering and model review need the appropriate image, text or
+              vision service configured beforehand. Disable an extension to
+              remove its entry and reject further panel requests; existing work
+              remains. Submitted jobs may continue, so stop them explicitly
+              before disabling. Changed package contents require another digest
+              review and enable action.
+            </p>
+            <p>
+              For extension trouble, start Mio with the environment variable
+              <code>MIO_SAFE_MODE=1</code>. Safe mode skips every extension and
+              rejects manual enabling. Remove the variable and restart after
+              troubleshooting, then enable only the extensions you trust.
+            </p>
           </section>
         </article>
         <nav class="chapter-nav" aria-label="Previous and next chapter">
@@ -148,6 +246,13 @@
         </footer>
       </main>
       <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">On this page</div>
+        <nav>
+          <a class="sub" href="#first-workspace">Four first steps</a>
+          <a class="sub" href="#section-1">Start Mio</a>
+          <a class="sub" href="#optional-workspaces">Optional workspaces</a>
+        </nav>
+        <hr />
         <div class="toc-label">THE HANDBOOK</div>
         <nav>
           <a href="/manual/docs/en/start.html" aria-current="page"

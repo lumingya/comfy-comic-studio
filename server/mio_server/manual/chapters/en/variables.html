@@ -90,6 +90,16 @@
               settings into a new album. Editing workshop templates afterwards
               does not update existing albums. Presets hold text variables.
             </p>
+            <h2 id="variable-completion">Complete variables while typing</h2>
+            <p>
+              Type <code>{</code> in a prompt or dialogue field to open variable
+              suggestions. Keep typing to filter, use Up / Down to choose, then
+              Enter, Tab or a click to insert <code>{name}</code>. Escape closes
+              suggestions without changing the text. Sources and value previews
+              help you spot repeated names; assembly order still decides the
+              final value. IME composition keeps its own Enter key until the
+              composed text is confirmed.
+            </p>
             <p>
               The final assembly step previews each panel's positive and
               negative prompts and reader dialogue using the server's compiler.
@@ -123,6 +133,34 @@
               LoRA overrides affect this generation only and leave workflow
               defaults untouched.
             </p>
+            <h2 id="local-story-split">
+              Split plain text or Markdown into scenes
+            </h2>
+            <p>
+              Open an episode's Script tab and choose Split text into panels
+              above the scene list. Paste plain text or Markdown. Blank
+              paragraphs, Markdown headings and Chinese “第 X 幕” headings start
+              new scenes. Review titles, descriptions and dialogue, then choose
+              Import N panels. The first 24 scenes expand in the preview; the
+              total still includes every scene. One import accepts up to 512
+              scenes.
+            </p>
+            <pre><code># The bookshop after rain
+The owner leaves a letter by the window.
+"Someone will come tomorrow."
+
+# Footsteps at the door
+A traveler stops beneath the light.
+"Am I too late?"</code></pre>
+            <p>
+              This example creates two scenes. Quoted lines become dialogue; a
+              speaker name matching an existing episode character links the line
+              to that character. The Chinese labels “旁白：”, “心声：” and
+              “拟声：” identify narration, thoughts and sound effects. Other
+              text becomes the image description. Splitting uses local browser
+              rules without an AI call or image generation. Check the imported
+              scenes before saving and explicitly starting generation.
+            </p>
           </section>
         </article>
         <nav class="chapter-nav" aria-label="Previous and next chapter">
@@ -138,6 +176,12 @@
         </footer>
       </main>
       <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">On this page</div>
+        <nav>
+          <a class="sub" href="#variable-completion">Variable completion</a>
+          <a class="sub" href="#local-story-split">Split from text</a>
+        </nav>
+        <hr />
         <div class="toc-label">THE HANDBOOK</div>
         <nav>
           <a href="/manual/docs/en/start.html">01 · Start here</a>

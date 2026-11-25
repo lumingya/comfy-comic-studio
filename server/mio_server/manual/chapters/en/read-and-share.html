@@ -67,14 +67,22 @@
         <article class="document" id="document">
           <p>
             On the album grid, start a drag on empty space to select several
-            albums. Drag a cover to reorder, or click it to read. Escape clears
-            the selection and leaves multi-select. In the reader, Escape hides
-            the open filmstrip before it closes the reader.
+            albums. Move a cover more than 6px to lift it; a click still opens
+            it. Dragging a selected album moves the selected group with a count
+            on its cover ghost. In manual order, drop before or after another
+            cover to reorder, or on a collection tab to file the group. Undo is
+            available after the change. Escape cancels a drag, or clears the
+            selection outside a drag. Touch and keyboard users can select albums
+            and use Move to collection. Collection tabs support Left / Right and
+            Home / End. In the reader, Escape hides the open filmstrip before it
+            closes the reader.
           </p>
           <section id="read-and-share">
             <p class="chapter-kicker">CHAPTER 06 / THE MIO HANDBOOK</p>
             <h1>Read, letter & export</h1>
-            <h2 id="showcase-templates">Three collectible offline editions</h2>
+            <h2 id="showcase-templates">
+              Five flagship editions and two basic layouts
+            </h2>
             <ul>
               <li>
                 <strong>Monograph (default):</strong> Warm cotton paper,
@@ -88,9 +96,19 @@
                 <strong>Folio:</strong> Cotton-paper spreads on a linen desk, a
                 shaded book spine and a single-page layout on phones.
               </li>
+              <li>
+                <strong>Zine:</strong> Paper textures and handwritten-style
+                numbering, with continuous-strip and left/right page modes. Each
+                scene retains the complete image.
+              </li>
+              <li>
+                <strong>Contact Sheet:</strong> A whole-book film grid for
+                checking pacing or printing notes. Open any frame in the
+                lightbox, inspect adjacent frames, then return to the overview.
+              </li>
             </ul>
             <p>
-              All three editions show the complete exported frame without adding
+              All five editions show the complete exported frame without adding
               a crop. They change offline presentation only; they do not edit
               the album or generate images. Fit and Seamless remain available as
               basic reading layouts.
@@ -116,7 +134,20 @@
               Animated wallpaper to save power. Video holds its paused frame;
               animated images show their first frame. By default Mio pauses the
               wallpaper when you leave the window, open the reader or enter the
-              comic canvas. The system’s reduced-motion preference also pauses it.
+              comic canvas. Pause animated wallpaper when idle defaults to 30
+              seconds; choose Off, 1 minute or 3 minutes if preferred. Pointer
+              movement, clicks, keys, scrolling or touch resume it while other
+              pause conditions still apply. The system’s reduced-motion
+              preference also pauses it.
+            </p>
+            <h2 id="template-controls">Preview and tune the opening pages</h2>
+            <p>
+              Open Customize layout under Export → HTML. In Design, adjust the
+              subtitle, chapter-opening switch, cover crop and horizontal or
+              vertical focal point. The preview updates as you edit; expand it
+              for a closer look before saving and exporting. Saving a built-in
+              creates your own copy. These controls change presentation, not
+              artwork, and are only available in templates that support them.
             </p>
             <p>
               Open an album from the <a href="/gallery">gallery</a>. The reader
@@ -246,15 +277,54 @@
               Auto starts with lossless cleaning and may compress large inline
               HTML. Lossless clean removes metadata such as prompts, workflows
               or EXIF from supported original images without rerendering them.
-              Light publish encodes WebP up to 2560px on the long side.
-              Archive preserves original bytes only when not compositing
-              lettering; it may retain private workflow metadata. Hiding prompts
-              is a display option, not complete privacy scrubbing.
+              Light publish encodes WebP up to 2560px on the long side. Archive
+              preserves original bytes only when not compositing lettering; it
+              may retain private workflow metadata. Hiding prompts is a display
+              option, not complete privacy scrubbing.
             </p>
             <p>
               For example, keep Auto for a normal HTML album and use Light
               publish if it needs to be smaller for sharing. Keep Lossless
               archive for a local copy where retaining image metadata matters.
+            </p>
+            <h2 id="html-roundtrip">
+              Reimport HTML and choose what to disclose
+            </h2>
+            <p>
+              Single and batch HTML exports offer Include reimport data
+              (contains full prompts and hidden captions). It starts unchecked
+              every time you open an export dialog and is excluded from normal
+              previews. Enable it explicitly only when needed: anyone with the
+              file can extract its full captions, including hidden dialogue, and
+              compiled positive prompts. This choice does not turn on prompt
+              display in the reader.
+            </p>
+            <ol class="steps">
+              <li>
+                Choose Import HTML album in the
+                <a href="/gallery">gallery</a> header, then choose an
+                <code>.html</code> or <code>.htm</code> file no larger than 1
+                GiB.
+              </li>
+              <li>
+                Confirm Import album. The importer reads embedded data and
+                images without running scripts or loading external links. Each
+                book becomes a new unfiled album; existing works stay intact.
+              </li>
+              <li>
+                Check the book, reading-page and image counts and any warnings,
+                then choose Open first album. Older HTML without source data can
+                restore only its visible exported content; omitted prompts and
+                hidden captions cannot be recovered.
+              </li>
+            </ol>
+            <p>
+              Reimport restores the exported reading projection and images,
+              rather than the full original project. Composited lettering,
+              framing and canvas bands remain reading images, not editable
+              layers. Candidate history, seeds, workflows and unexported assets
+              are not restored from HTML. Keep an editable <code>.mio.zip</code>
+              source file for the full project.
             </p>
           </section>
         </article>
@@ -271,6 +341,15 @@
         </footer>
       </main>
       <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">On this page</div>
+        <nav>
+          <a class="sub" href="#showcase-templates">Seven layouts</a>
+          <a class="sub" href="#offline-reader">Offline controls</a>
+          <a class="sub" href="#template-controls">Opening-page controls</a>
+          <a class="sub" href="#section-1">Image processing</a>
+          <a class="sub" href="#html-roundtrip">HTML reimport and privacy</a>
+        </nav>
+        <hr />
         <div class="toc-label">THE HANDBOOK</div>
         <nav>
           <a href="/manual/docs/en/start.html">01 · Start here</a>
