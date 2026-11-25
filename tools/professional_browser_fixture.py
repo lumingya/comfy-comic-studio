@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import io
+import json
 import sys
 import zipfile
 from pathlib import Path
@@ -15,9 +16,9 @@ PACKAGES = {
     "panel-retouch": ("retouch", "单格精修"),
     "finalize-studio": ("finalize", "成品精修"),
     "qa-review": ("review", "候选评审"),
-    "script-review": ("review", "剧本审阅"),
+    "script-assistant": ("assistant", "剧本助手"),
     "variant-workshop": ("variants", "变体工坊"),
-    "motion-studio": ("motion", "动态漫"),
+    "motion-studio": ("motion", "Motion comics · 动态漫"),
 }
 
 
@@ -26,7 +27,8 @@ def packages(folder: Path) -> dict[str, Path]:
     for identifier in PACKAGES:
         path = folder / f"{identifier}.zip"
         with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
-            for item in sorted((ROOT / "examples/extensions" / identifier).iterdir()):
+            source = ROOT / "extensions" / identifier
+            for item in sorted(source.rglob("*")):
                 if item.is_file() and item.suffix in {
                     ".json",
                     ".py",
@@ -35,7 +37,8 @@ def packages(folder: Path) -> dict[str, Path]:
                     ".html",
                     ".md",
                 }:
-                    archive.write(item, identifier + "/" + item.name)
+                    if "__pycache__" not in item.parts:
+                        archive.write(item, identifier + "/" + item.relative_to(source).as_posix())
         files[identifier] = path
     return files
 
@@ -49,12 +52,55 @@ def serve(port: int, data: Path) -> None:
     from mio_server.api import create_app
     from mio_server.comfy.client import OutputImage, RunResult
     from mio_server.context import AppContext
+    from mio_server.extensions import manager as extension_manager
     from mio_server.models import AssetRef, Series, Style, Take
     from mio_server.pipeline.story import from_story
     from mio_server.render_models import ComfyInstance, RenderStage
     from tests.api_harness import FakeComfy, FakeLLM
     from tests.story_fixture import make_story
     from tests.test_render_qa import FakeVLM
+
+    # Install exactly the six reviewed archives. Do not hash unrelated development
+    # dependencies (notably ai-assist/page/node_modules) as bundled package contents.
+    extension_manager.BUILTIN_ROOT = data / "empty-bundled-extensions"
+
+    # A two-frame, neutral local GIF exercises the actual dynamic-theme rendering path.
+    theme = data / "themes" / "fixture-dynamic"
+    theme.mkdir(parents=True)
+    (theme / "assets").mkdir()
+    (theme / "mio-theme.json").write_text(
+        json.dumps(
+            {
+                "id": "fixture-dynamic",
+                "name": "Neutral fixture",
+                "version": "1.0.0",
+                "author": "Fixture",
+                "description": "Synthetic neutral local wallpaper",
+                "theme_file": "theme.json",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (theme / "theme.json").write_text(
+        json.dumps(
+            {
+                "id": "fixture-dynamic",
+                "name": "Neutral fixture",
+                "mode": "dark",
+                "background": {"kind": "image", "file": "assets/neutral.gif", "opacity": 0.3},
+            }
+        ),
+        encoding="utf-8",
+    )
+    with Image.new("RGB", (48, 48), "#35454a") as first:
+        with Image.new("RGB", (48, 48), "#455253") as second:
+            first.save(
+                theme / "assets" / "neutral.gif",
+                save_all=True,
+                append_images=[second],
+                duration=500,
+                loop=0,
+            )
 
     calls = {"comfy": 0, "vision": 0, "text": 0}
 
@@ -90,6 +136,8 @@ def serve(port: int, data: Path) -> None:
             return super().vision_json(*args, **kwargs)
 
     def revise(story):
+        if not story["panels"]:
+            return story
         story["panels"][0]["description"] = "A calm blue window after the rain."
         story["panels"][1]["dialogue"][0]["text"] = "The rain has stopped."
         story["panels"][2]["description"] = "This locked suggestion is never applied."
@@ -105,6 +153,7 @@ def serve(port: int, data: Path) -> None:
         comfy_client_factory=LocalComfy,
     )
     try:
+        ctx.legacy_root = data / "empty-legacy"
         ctx.updater.startup_check = lambda _feed: None
         ctx.store.put_doc(ComfyInstance(id="fixture-local", base_url="http://fake", capacity=2))
         ctx.refresh_instances()
@@ -152,7 +201,7 @@ def serve(port: int, data: Path) -> None:
         original_series, original_episode = copy.deepcopy(series), copy.deepcopy(episode)
         app = create_app(ctx, serve_web=True)
 
-        def reset():
+        def reset(empty: bool = False):
             assert not ctx.engine.list(active_only=True), "Finish fixture jobs before reset"
 
             def reset_series(item):
@@ -163,10 +212,13 @@ def serve(port: int, data: Path) -> None:
                 item.panels = copy.deepcopy(original_episode.panels)
                 item.takes = copy.deepcopy(original_episode.takes)
                 item.strip = original_episode.strip.model_copy(deep=True)
+                if empty:
+                    item.panels = []
+                    item.takes = []
 
             ctx.store.update_series(SERIES, reset_series)
             ctx.store.update_episode(EPISODE, reset_episode)
-            return {"series_id": SERIES, "episode_id": EPISODE}
+            return {"series_id": SERIES, "episode_id": EPISODE, "empty": empty}
 
         def stats():
             ep = ctx.store.get_episode(EPISODE)
