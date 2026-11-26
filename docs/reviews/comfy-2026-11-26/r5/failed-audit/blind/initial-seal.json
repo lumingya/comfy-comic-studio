@@ -1,0 +1,83 @@
+{
+  "schema": "r5-blind-independent-initial-v1",
+  "utc": "2026-11-26T07:19:48.685749+00:00",
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "verdict": "REQUEST CHANGES",
+  "severity_counts": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 2,
+    "Low": 0
+  },
+  "scope": {
+    "selected": 12,
+    "api": 10,
+    "ui_only": 2,
+    "product_batch_count": 1,
+    "product_lease_released": true,
+    "peer_reports_read": false,
+    "old_oracles_read": false,
+    "repository_writes": false
+  },
+  "source": {
+    "server": {
+      "file_count": 405,
+      "sha256": "7a8dec42eb98849d6eff92dfeb84dd9b329136ee7e16a754b367bb7dda60da17"
+    },
+    "runtime": {
+      "file_count": 217,
+      "sha256": "5a5ee950ae0c972791ae17fab92978579adec7d6d419133e6eaf9eb9e649377d"
+    }
+  },
+  "files": {
+    "report.md": "449ca851c80f77d2700dd895c58e55403641322a35ef1a321e117d80396183c3",
+    "results.json": "1374c1228a71126f821a45317e50c5b5bc9b29496f1fc0ae7d28d1e20cd201cd",
+    "assessment.json": "ced9a7fcda0bb7007d973ad15b64d96cac80dc96b14024dc2b4be8e1d1fe1a29",
+    "pre-product-seal.json": "f741d5aa73c63925e10ebe8745c839851f0fc16d8c3df8291a56e3c218d57444",
+    "pre-product-supplement-seal.json": "fa6388e6b9a7c9db7b33364172df843981958a2d9da47b790ddc26970b4dc5c1",
+    "pre-product-supplement.json": "20e9c94aff57af1f8fa5b32c51ca401aad0bf24f8536ab7c9636f5de5096eab3",
+    "selected-manifest.json": "1e4c8d320c931086c1f9f7269bd57e8f51d62e5545599bc7ba46c83f83d80bea",
+    "oracle.private.json": "56f3765f8bc758e367eda76a35f63e1c5545169fcb658b39e2c99ce4ac7bdc5d",
+    "oracle-public.json": "90e9e8386bea34658ef4470e231ed649475c9ea95d605f7a2801ae86686c2106",
+    "probe-resource-before-import.json": "ed6c060afa145fd8157df85c95db74ea8a13626079b7c1f8bce4f65c69ac5cdd",
+    "product-run-complete.json": "dbd453ecf131de7e4f376749a90e6e4df73c7cdfecfd9a1f37c1a20f632bd4d3",
+    "collect.py": "9d79b880174651019100d583c8ca40801f5548419eb8eb2522c094657274cffd",
+    "supplement.py": "f4f2f22a98e3ec21bb7557d1556109ba0d6aa5ab8ff454a1c94755450140bc7f",
+    "probe.py": "3611574135691a390cbfa47e679f1df0db1c4500a7709d27efa01d4ecdd0211f",
+    "assess.py": "a3c96f3bd3722528807ee9b94d2df561f4f29e7cc48e853bb48c1929f3c7818f",
+    "finalize.py": "cd005e13d9f8139f3361e95514e48d6c7075c80f158c6d8ca993b944f1362a67",
+    "candidates/C01.json": "22c1c7c25dc09f3e600c0d64822fe638b8447ed2e64319473e791dffb2e5db29",
+    "candidates/C02.json": "55f3d8dcd60bf90c552bac64f99a072d1dfeaa6f744fa6491931ed752ecfeb3e",
+    "candidates/C03.json": "f2b4a1fd16f434f7d4ff50ad53b3cafd13091ae377e5438202f97088aee836b1",
+    "candidates/C04.json": "b76d1cd7916144c0df0cce459edf8dda18b59891e4927710f1779f0a2c788646",
+    "candidates/C05.json": "cead3fa8bc56c54e5701fa997d77fd64756ce8690de063c4160c1d8255fc59ad",
+    "candidates/C08.json": "d8361c675246514af83e6368f2368bf9612b10e1e496830fd50805dee44b3728",
+    "candidates/C09.json": "7692e8e2ea6dfb10207a58b43aaf5e80c6f1e64d1ef0e690437f8ca0b527ce1c",
+    "candidates/C10.json": "ed42731e5aba02519c75e01edab0e4d951eac8eaedc8bde8eb75d361ef700993",
+    "candidates/C11.json": "b08a655ee67f9dfcc767400454545e5e8f2feb52092de6dd7b67fe985c2c9190",
+    "candidates/C13.json": "792ef1361b15be363136e508043cd0d75b3d532a937736d8fdc73054ffbc7c82",
+    "candidates/C16.json": "61a903dadeee1f648e52cc2551a1fd2b29e81bc5fc8e7436092e9a136b01c7ff",
+    "candidates/asset-reference-sha256:870f6677ce6bb782a8a8c5e8b7083bed6f9517f03ad72dcbd687f7ff8e8e64bc": "bffac37bdb77606530923cc392273ef2d681542eecede2466da7233818fc6bb4",
+    "product-private/C01.json": "53b6e9ab554e81dd71c0bc96c53a45d40c3c2a5f904fa41daa3314566c4287f5",
+    "product-private/C02.json": "a256227218abdeda141eb0e792261f9eed0308eae8fba536a86981fb0a66ace4",
+    "product-private/C03.json": "fbb35e246f411b23092a7306b394e9030eddd792c111a01d5b17a07ca04b2f67",
+    "product-private/C04.json": "50e21e6c9a35fb6ab36ad7c3582e3843c09cdd21d4825b6438539dcbfa86e2d8",
+    "product-private/C05.json": "ab20b640288afe3e46a1a504aaad05696d0e152bcd8f347ff76a97548124d3eb",
+    "product-private/C08.json": "12eb20d951c3eb893755269a34de2012e1a48644fb4ccc90c156bd041b360fa4",
+    "product-private/C09.json": "6a6d28648143325d0270ab2e071ece4fd7adc2b6604a5999eb0147733d372b79",
+    "product-private/C10.json": "bf9c5de4a6ad27e9baf68aae5dfdca073d062d766f73e7d37f4fbe88e1261cfb",
+    "product-private/C11.json": "a3d2cbbf3a6f68bed96eb7797ee12bdc5019a80afe9f7aeb73c12092e0ebfe13",
+    "product-private/C13.json": "957246b875822c60ab6c2dd7ad77127d26085aaf6a649b1e351021254d379f40",
+    "product-private/C16.json": "be823f8b33f4bfb87634bb08aad17cd9ef99ecebfada19186d26a27dc3538850",
+    "product-private/C17.json": "9c7879fe8495332f153aa7f956c1f73bac77e6fc8bee335e897808c3a7062028"
+  },
+  "limitations": [
+    "Real named adapter coverage is one model-only item. This set does not prove adjacent real chain or stack item preservation.",
+    "Some frozen sampler and scheduler requests equal source values. Exact resulting state is counted separately from demonstrated writes; they do not prove mutation coverage.",
+    "All selected API graphs contain 6 to 18 nodes. Giant, nested and 30-plus adapter topologies are outside this independent fresh set.",
+    "One real PNG editor-metadata case is included; no WebP or real API-metadata image container is in this set.",
+    "Route functions used a private in-memory store and empty registry; no HTTP persistence, live provider catalog, custom validation, plugin execution, image generation, GPU, paid service or full test suite was invoked.",
+    "Historical missing originals retain only source and raw-prefix comparison boundaries."
+  ]
+}

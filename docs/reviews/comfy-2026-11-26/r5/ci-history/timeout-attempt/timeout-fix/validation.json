@@ -1,0 +1,150 @@
+{
+  "schema": "mio.timeout-classification.targeted-validation.publication.v1",
+  "publication_state": "RESULTS_RECORDED_REVIEW_REQUIRED",
+  "controller_supplied_context": {
+    "attribution": "parent/controller task message; extra detail not independently inferred from compact JSON; no logs opened",
+    "repair_head": "6e302081e650210202b232990ab05bbd6961e149",
+    "pushed": true,
+    "changed_files": [
+      "examples/extensions/standard-image-channels/transport.py",
+      "server/tests/test_cloud_timeout_classification.py"
+    ],
+    "repair_purpose": "HTTP budget timeout classification",
+    "initial_format_failure_reason": "Default 88-column format configuration mistakenly used; server configuration is 100 columns",
+    "initial_tests_executed": false,
+    "resume_configuration": "server configuration, line length 100",
+    "test_methods": 3,
+    "mock_subscenarios": 50,
+    "unittest_reported_seconds": 0.018,
+    "mio_module_aggregate": {
+      "module_count": 217,
+      "sha256": "5a5ee950ae0c972791ae17fab92978579adec7d6d419133e6eaf9eb9e649377d",
+      "unchanged": true,
+      "recomputed_by_publication_task": false
+    },
+    "historical_workflow_replay_head": "ed45509456b14006161d829666c466789e6a9e37",
+    "historical_workflow_replay_not_relabelled_as_repair_head": true
+  },
+  "source_evidence": [
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-validation/result.json",
+      "original_sha256": "9a35b6bec39c5e66543727957dfa0e956d84b231c07a3d412c9aa361441f360d"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-validation/resume-result.json",
+      "original_sha256": "f96e99a5e74799e4adfeafa3f595e936b4fd7613a2d770975b54ceb00e741f3e"
+    }
+  ],
+  "initial_result": {
+    "local_full_suite": false,
+    "network_transport": "MockTransport only; native construction forbidden",
+    "serial": true,
+    "source_before": {
+      "examples/extensions/standard-image-channels/transport.py": "b3d3eb17e004f8bb6083fc23d6ba540c2943a559169ace8e06e82247c9752d49",
+      "server/tests/test_cloud_timeout_classification.py": "1984ce2ac1891fbe6268f2c01261593f987dff027a725e384864cc82c68dae66"
+    },
+    "runs": [
+      {
+        "name": "lint",
+        "start_utc": "2026-11-26T05:52:24.461667+00:00",
+        "duration_seconds": 0.07,
+        "exit_code": 0
+      },
+      {
+        "name": "format-check",
+        "start_utc": "2026-11-26T05:52:24.533436+00:00",
+        "duration_seconds": 0.037,
+        "exit_code": 1
+      }
+    ],
+    "source_after": {
+      "examples/extensions/standard-image-channels/transport.py": "b3d3eb17e004f8bb6083fc23d6ba540c2943a559169ace8e06e82247c9752d49",
+      "server/tests/test_cloud_timeout_classification.py": "1984ce2ac1891fbe6268f2c01261593f987dff027a725e384864cc82c68dae66"
+    },
+    "source_unchanged": true,
+    "guards": [
+      {
+        "pid": 35588,
+        "selected_affinity": "0x1",
+        "actual_affinity": "0x1",
+        "priority_class": 16384,
+        "verified_before_mio_import": true
+      }
+    ]
+  },
+  "resume_result": {
+    "initial_result_preserved": true,
+    "lint_already_passed_not_repeated": true,
+    "local_full_suite": false,
+    "serial": true,
+    "source_before": {
+      "examples/extensions/standard-image-channels/transport.py": "b3d3eb17e004f8bb6083fc23d6ba540c2943a559169ace8e06e82247c9752d49",
+      "server/tests/test_cloud_timeout_classification.py": "1984ce2ac1891fbe6268f2c01261593f987dff027a725e384864cc82c68dae66"
+    },
+    "runs": [
+      {
+        "name": "format-check-configured",
+        "start_utc": "2026-11-26T05:53:07.382996+00:00",
+        "duration_seconds": 0.045,
+        "exit_code": 0
+      },
+      {
+        "name": "offline-unit",
+        "start_utc": "2026-11-26T05:53:07.431892+00:00",
+        "duration_seconds": 0.462,
+        "exit_code": 0
+      },
+      {
+        "name": "diff-check",
+        "start_utc": "2026-11-26T05:53:07.895176+00:00",
+        "duration_seconds": 0.06,
+        "exit_code": 0
+      }
+    ],
+    "source_after": {
+      "examples/extensions/standard-image-channels/transport.py": "b3d3eb17e004f8bb6083fc23d6ba540c2943a559169ace8e06e82247c9752d49",
+      "server/tests/test_cloud_timeout_classification.py": "1984ce2ac1891fbe6268f2c01261593f987dff027a725e384864cc82c68dae66"
+    },
+    "source_unchanged": true,
+    "guards": [
+      {
+        "pid": 14708,
+        "selected_affinity": "0x1",
+        "actual_affinity": "0x1",
+        "priority_class": 16384,
+        "verified_before_mio_import": true
+      },
+      {
+        "pid": 35588,
+        "selected_affinity": "0x1",
+        "actual_affinity": "0x1",
+        "priority_class": 16384,
+        "verified_before_mio_import": true
+      },
+      {
+        "pid": 47332,
+        "selected_affinity": "0x1",
+        "actual_affinity": "0x1",
+        "priority_class": 16384,
+        "verified_before_mio_import": true
+      }
+    ]
+  },
+  "interpretation": {
+    "initial_lint_passed": true,
+    "initial_format_failed_and_preserved": true,
+    "initial_tests_not_executed": true,
+    "configuration_failure_reason_attribution": "controller task context",
+    "resumed_format_offline_unit_diff_check_exit_zero": true,
+    "lint_not_repeated": true,
+    "outer_offline_unit_seconds": 0.462,
+    "unittest_0_018s_and_outer_0_462s_have_distinct_scope": true,
+    "full_suite": false,
+    "real_network_or_model_replay_not_proven": true,
+    "new_remote_CI_result_included": false,
+    "new_five_role_approval": false,
+    "product_executed_by_publication_task": false
+  }
+}

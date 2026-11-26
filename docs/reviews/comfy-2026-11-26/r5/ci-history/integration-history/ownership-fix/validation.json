@@ -1,0 +1,196 @@
+{
+  "schema": "mio.timeout-ownership.targeted-validation.publication.v1",
+  "publication_state": "RESULTS_RECORDED_REVIEW_REQUIRED",
+  "patch_reference": {
+    "kind": "worktree_patch_on_6e",
+    "base_head": "6e302081e650210202b232990ab05bbd6961e149",
+    "committed_new_head": null,
+    "snapshot_scope": "uncommitted two-file patch described in controller handoff; later commit identity must be separate"
+  },
+  "controller_supplied_context": {
+    "attribution": "parent/controller task message; no product, Git, new CI report or independent review report read by publication task",
+    "patch_identity": "worktree_patch_on_6e",
+    "base_head": "6e302081e650210202b232990ab05bbd6961e149",
+    "committed_new_head": null,
+    "subsequent_new_head_must_be_recorded_separately": true,
+    "CI_snapshot_on_6e": {
+      "terminal_report_included": false,
+      "affected_Linux_jobs": 2,
+      "error_case": "custom GET early ReadTimeout no longer receives finite retries",
+      "failure_case": "custom ConnectTimeout sent=True differs from expected False",
+      "previous_broad_TimeoutException_assumption_invalidated": true,
+      "Windows_terminal_observation": "PENDING with separate CI observer"
+    },
+    "patch_intent": "Narrow budget timeout classification to native guard ownership; retain prior custom transport rules",
+    "static_review_context": {
+      "no_blocking_issue_reported_by_controller": true,
+      "is_R5_review": false,
+      "is_new_five_role_approval": false
+    },
+    "initial_lint_issue_code": "I001",
+    "initial_lint_configuration_reason": "Explicit --config changed server first-party import discovery context; CI discovers server configuration per file",
+    "initial_tests_executed": false,
+    "resumed_lint_configuration": "CI-style per-file server configuration autodiscovery",
+    "resumed_format_line_length": 100,
+    "prior_6e_local_3_methods_50_subscenarios_not_upgraded_to_full_gate": true,
+    "pending": {
+      "new_CI_terminal": "PENDING",
+      "new_five_role_review": "PENDING",
+      "cleanup": "PENDING"
+    },
+    "native_thread_socket_and_real_TLS_still_require_remote_evidence": true
+  },
+  "source_evidence": [
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-ownership-validation/result.json",
+      "original_sha256": "99be20b29101133a3b9893bf5afeaea69e51fb3d835f6d45badae282116406ee"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-ownership-validation/resume-result.json",
+      "original_sha256": "07e006fa9325550c3e6131c62a0aa45214fc00ab1ad3899331377aad71ecf1ba"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-ownership-validation/offline-unit.log",
+      "original_sha256": "61e170787842799f8d195de7ca4d61a5992be80c92f5a8ae07b9b12704ee1e32"
+    }
+  ],
+  "initial_result": {
+    "local_full_suite": false,
+    "network": false,
+    "native_io": "factories mocked, threadless FakeDeadline",
+    "serial": true,
+    "new_test_methods": 4,
+    "new_deterministic_subscenarios": 100,
+    "old_regression_methods": 2,
+    "selected_tests": [
+      "tests.test_cloud_timeout_classification",
+      "tests.test_cloud_channel_packages.ChannelPackageTests.test_post_fault_matrix_never_repeats_or_echoes_credentials",
+      "tests.test_cloud_channel_packages.ChannelPackageTests.test_poll_get_faults_retry_with_a_finite_budget_and_one_post"
+    ],
+    "source_before": {
+      "examples/extensions/standard-image-channels/transport.py": "6ea6c8ee92319e4160b2952a3f06e44f999abb7ce700872d04c65d0da8c22ebd",
+      "server/tests/test_cloud_timeout_classification.py": "85070b64185f33c52f6d7f05e6a4309a22186b42c56d69619055ab77458addf9"
+    },
+    "runs": [
+      {
+        "name": "lint",
+        "start_utc": "2026-11-26T06:17:40.599787+00:00",
+        "duration_seconds": 0.041,
+        "exit_code": 1
+      }
+    ],
+    "source_after": {
+      "examples/extensions/standard-image-channels/transport.py": "6ea6c8ee92319e4160b2952a3f06e44f999abb7ce700872d04c65d0da8c22ebd",
+      "server/tests/test_cloud_timeout_classification.py": "85070b64185f33c52f6d7f05e6a4309a22186b42c56d69619055ab77458addf9"
+    },
+    "source_unchanged": true,
+    "guards": [
+      {
+        "pid": 42052,
+        "selected_affinity": "0x1",
+        "actual_affinity": "0x1",
+        "priority_class": 16384,
+        "verified_before_mio_import": true
+      }
+    ]
+  },
+  "resume_result": {
+    "initial_result_preserved": true,
+    "initial_lint_failure": "Explicit --config changed first-party import discovery for the server test; actual CI discovers server configuration per file. No source edit made.",
+    "local_full_suite": false,
+    "network": false,
+    "serial": true,
+    "new_test_methods": 4,
+    "new_subscenarios": 100,
+    "old_methods": 2,
+    "source_before": {
+      "examples/extensions/standard-image-channels/transport.py": "6ea6c8ee92319e4160b2952a3f06e44f999abb7ce700872d04c65d0da8c22ebd",
+      "server/tests/test_cloud_timeout_classification.py": "85070b64185f33c52f6d7f05e6a4309a22186b42c56d69619055ab77458addf9"
+    },
+    "runs": [
+      {
+        "name": "lint-server-autodiscovery",
+        "start_utc": "2026-11-26T06:18:22.397661+00:00",
+        "duration_seconds": 0.04,
+        "exit_code": 0
+      },
+      {
+        "name": "format-check",
+        "start_utc": "2026-11-26T06:18:22.439946+00:00",
+        "duration_seconds": 0.042,
+        "exit_code": 0
+      },
+      {
+        "name": "offline-unit",
+        "start_utc": "2026-11-26T06:18:22.484055+00:00",
+        "duration_seconds": 2.14,
+        "exit_code": 0
+      },
+      {
+        "name": "diff-check",
+        "start_utc": "2026-11-26T06:18:24.625737+00:00",
+        "duration_seconds": 0.06,
+        "exit_code": 0
+      }
+    ],
+    "source_after": {
+      "examples/extensions/standard-image-channels/transport.py": "6ea6c8ee92319e4160b2952a3f06e44f999abb7ce700872d04c65d0da8c22ebd",
+      "server/tests/test_cloud_timeout_classification.py": "85070b64185f33c52f6d7f05e6a4309a22186b42c56d69619055ab77458addf9"
+    },
+    "source_unchanged": true,
+    "guards": [
+      {
+        "pid": 37212,
+        "selected_affinity": "0x1",
+        "actual_affinity": "0x1",
+        "priority_class": 16384,
+        "verified_before_mio_import": true
+      },
+      {
+        "pid": 42052,
+        "selected_affinity": "0x1",
+        "actual_affinity": "0x1",
+        "priority_class": 16384,
+        "verified_before_mio_import": true
+      },
+      {
+        "pid": 45536,
+        "selected_affinity": "0x1",
+        "actual_affinity": "0x1",
+        "priority_class": 16384,
+        "verified_before_mio_import": true
+      }
+    ]
+  },
+  "offline_unit_summary": {
+    "source": "r5-timeout-ownership-validation/offline-unit.log",
+    "summary_lines": [
+      "----------------------------------------------------------------------",
+      "Ran 6 tests in 0.061s",
+      "OK"
+    ],
+    "test_methods": 6,
+    "unittest_duration_seconds": 0.061,
+    "result": "OK",
+    "full_log_copied": false,
+    "new_methods": 4,
+    "new_deterministic_subscenarios": 100,
+    "old_regression_methods": 2,
+    "outer_offline_unit_duration_seconds": 2.14
+  },
+  "derived_checks": {
+    "initial_failure_preserved": true,
+    "initial_tests_not_run_after_lint_failure": true,
+    "resumed_lint_format_unit_diff_exit_zero": true,
+    "all_source_before_after_hashes_match_given_two_files": true,
+    "unique_original_guard_process_count": 3,
+    "all_original_guards_affinity_0x1_priority_16384_before_Mio_import": true,
+    "local_full_suite": false,
+    "MockTransport_factories_and_threadless_FakeDeadline_only": true,
+    "real_TLS_native_guard_thread_socket_not_tested_locally": true,
+    "no_CI_terminal_new_five_role_or_cleanup_completion_claim": true
+  }
+}

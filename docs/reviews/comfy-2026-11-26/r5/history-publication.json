@@ -1,0 +1,364 @@
+{
+  "schema": "mio.history-publication.v1",
+  "scope": "Historical R4 repair and failed R5 audit evidence; this archive is not a final acceptance.",
+  "plan_sha256": "bcf18b64e9d320badf00bcbbdaf1daacbb02d9b20f46a59b2603def495be2d9a",
+  "file_count": 71,
+  "relative_links_verified": 69,
+  "files": [
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/report.md",
+      "sha256": "8d6504e97c79f42fa59499289eff9b910fa76d9c6e14c3d2dbdcc223dacf99c9",
+      "git_blob_sha1": "0a09f656382b74a5266d9b6fce4a5ef79d7f4ec9"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json",
+      "sha256": "efba4d0ce2765db38377027b2ac135804c6cdbc93a4226c595c24753a53dfa1b",
+      "git_blob_sha1": "b33237ccb988733ceb680b408e6d979b6e9013bc"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/effective-provenance.json",
+      "sha256": "c0fc5d54a37d9ca994b835f06ad245b7657a3b6b0a6347e09998db6b40814748",
+      "git_blob_sha1": "77b27906b97ca7d4f67ad3e2947fab0a9f39b3f5"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/performance/performance.json",
+      "sha256": "4313838ca6d783a44c45af58f0679e4f42d88a1be38cd29dd87d965c37b79481",
+      "git_blob_sha1": "f187dfe5c2f16e4b92984e3cebd9b8ad265063f8"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/integration-ci-failed/report.md",
+      "sha256": "410f1e7282b7b237197be4ecc606d22609824fb1ad1145ee3306a591033721c4",
+      "git_blob_sha1": "01b64c6249fef02fee24740028133aed098bce99"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/integration-ci-failed/ci-verified.json",
+      "sha256": "f0db07274273c79c24b2438d0f06a57ac9f1cf5f6836de1c3b407b28747c7866",
+      "git_blob_sha1": "c1bd9052565e98a652138f3f9b5b58049b211996"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/integration-ci-failed/merge-type-fix.json",
+      "sha256": "b70b9511c79f6973fdea5459042f172d4ce20a87e8999e79ca38bada26b01cef",
+      "git_blob_sha1": "ed9b37e98defcf7b59a2c710b5dcc0795ef9b301"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/index.md",
+      "sha256": "56cdc8862a0fe4f02a0de827d740435ead1f5fdfcd659b963b85cbd5368ca906",
+      "git_blob_sha1": "42ed82eb4c8867bbf94f518bd87e17e7a27cc871"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/manifest.json",
+      "sha256": "7f0bcdbcd70f0b27308913665fc9c24347195f132b445dda6741d30aca86fd46",
+      "git_blob_sha1": "ee4135b3083ee4bcbbee7fc276c8664cfc51c4ba"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/ci-before-fix/report.md",
+      "sha256": "082bc2bcb45d749b150f87a1391b5cdc2a148ffabf7001bcb385fd52e0968d57",
+      "git_blob_sha1": "65e8060354d60b9ab129915bd7216dd8668a7462"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/ci-before-fix/ci-verified.json",
+      "sha256": "0aab644d03f9cf411b05b07ed4911bb9d53be752c623e85c90276f862fd6ba45",
+      "git_blob_sha1": "cd2aa8189e57c3cf91e62ece2203163b4aca7d94"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/timeout-fix/validation.json",
+      "sha256": "cb20ab9d1efbf4c2c851ebbe395e820d407ef12240ea3f3014c155adc9f0b79c",
+      "git_blob_sha1": "48d3b90ab143b5e75b49bd224c9c670ffd06ab00"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/timeout-fix/report.md",
+      "sha256": "2d07834eb791da9bf6b9fe8a9f8c85dba3ef5c6e8c3d8276dbe5eae6e70d0ba4",
+      "git_blob_sha1": "96a19a529c7ac7ed3552d60a89d93ecb0f34bd2e"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/index.md",
+      "sha256": "7d3df677cd28f7a0df6ba9aa7350d19d92b9d149805edc70a7b4453139e21db4",
+      "git_blob_sha1": "c05f35b45b00c922e6b90d6fd7434d50ac33fedc"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/manifest.json",
+      "sha256": "d2c8e793fc65295c4669e791160047134bfa96bf677d138366ab768c516f1c1c",
+      "git_blob_sha1": "6b504304c5f1f13300bc26a6059062cde7a37b74"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/report.md",
+      "sha256": "0270b297b9ac8fdf77a9479e588aa640087c903d9db0b6433229b7fd8873f19e",
+      "git_blob_sha1": "3cebe4bf8803bc523de79d773112266e1fe589b3"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/validation.json",
+      "sha256": "a30e2e2022d0319edd18ec121a9bb0f3247bf179144f46e2fb854c2453bcfcb9",
+      "git_blob_sha1": "5bae54f2366dc28318d89689b66fa278fc77928d"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/manifest.json",
+      "sha256": "e76d7ca6db0a16b7d50a379cfa627f93d9f9f021e9ad22c50c323cd1351c25c8",
+      "git_blob_sha1": "c1d5eb4fc9d7e78ce1de8e72cb76cf131bb51220"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/budget-regression/report.md",
+      "sha256": "611715cf03a5f637264a8a68e207f7ed33d0ac12a12dee23faf56ec62d738759",
+      "git_blob_sha1": "f0980c41eefddef60d0a6fc8d661722978cd4df7"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/budget-regression/ci-verified.json",
+      "sha256": "3b46d08c86be937cb7f7ec466dd38a88e1a4ab43ae759e85b881a7683e6fe237",
+      "git_blob_sha1": "5e46c999dc319e947879fb6e536cca3002871432"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/report.md",
+      "sha256": "0270b297b9ac8fdf77a9479e588aa640087c903d9db0b6433229b7fd8873f19e",
+      "git_blob_sha1": "3cebe4bf8803bc523de79d773112266e1fe589b3"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/validation.json",
+      "sha256": "a30e2e2022d0319edd18ec121a9bb0f3247bf179144f46e2fb854c2453bcfcb9",
+      "git_blob_sha1": "5bae54f2366dc28318d89689b66fa278fc77928d"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/manifest.json",
+      "sha256": "e76d7ca6db0a16b7d50a379cfa627f93d9f9f021e9ad22c50c323cd1351c25c8",
+      "git_blob_sha1": "c1d5eb4fc9d7e78ce1de8e72cb76cf131bb51220"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/candidate-source.json",
+      "sha256": "e035eacd5013272e38aaf5bfadb108cf7ed935e56392209ded8788935bcc0543",
+      "git_blob_sha1": "0e07b2e340dde71a6db173306b3e30a348783183"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/index.md",
+      "sha256": "c310f14b77335f37369404fca62d6b4ebff39b1727dc078da09a7f7996e160ac",
+      "git_blob_sha1": "895a7d6880400a7fdf611228fdb90ed926695def"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/manifest.json",
+      "sha256": "4a945dbad10049efa9ad3894154acf5f614d55bc04262be1010643efe4b99ce7",
+      "git_blob_sha1": "f9c50653bdda3ccbf00cb4a2e9f1a1b58fd2b4ea"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/civitai-source-limitations/report.md",
+      "sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "git_blob_sha1": "0437032b9774b157b945e975a1b7c7bba4bb4ada"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/civitai-source-limitations/results.json",
+      "sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "git_blob_sha1": "80fde6f1da73281539480ce6d24a3ace0e373520"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/civitai-source-limitations/provenance-safe.json",
+      "sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "git_blob_sha1": "ef1baf58174125c9457701cfd9557a7e87578e40"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/r4-reference-attribution/report.md",
+      "sha256": "bf15624f368f513fd47507d67f53bd44f8e91557fbef7f7a12668a5dd9db962c",
+      "git_blob_sha1": "8ce987da8184cb4512e7d8d34db67ba7c4310a0e"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/r4-reference-attribution/results.json",
+      "sha256": "fad648d7294317999f4696b5c3e44206d4f3daca66ac657a98be582558901c5f",
+      "git_blob_sha1": "3074680360892ae462aff48a35240d335d11570f"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/r4-reference-attribution/provenance-safe.json",
+      "sha256": "26c8198dc816c85c93bff42e749699a8effcdf346195cecb1ab7096f83d1ccf5",
+      "git_blob_sha1": "ba9d6edff0a0821a0bd33b6006c0a20807e14edf"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/coverage/coverage-map.md",
+      "sha256": "0d17834fe30fcf3a7b3d71a1a8b9836f92a8506a08597506250c8c5596231a52",
+      "git_blob_sha1": "ae1f810b2d34a23b51b110d02616bc0adf090db9"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/coverage/coverage-map.json",
+      "sha256": "3d0cb1f918f7d8dd9905e1261f7f07a903c3a5635ceac3be22e815beaa969d22",
+      "git_blob_sha1": "3229ef7907baba6847ee6e142943288786dd7448"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/index.md",
+      "sha256": "824637f8140555ae9ca5b6bfaad875f0ceecd035d397b308dc8d8f37b7073d51",
+      "git_blob_sha1": "25612e292ba4f29c329b6690f429cf154bec9536"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/supplements/manifest.json",
+      "sha256": "c06dbb3ab46a1a967929e8a018462e5d8a0fe63b423a4d90e9ce15cc7d9fda3b",
+      "git_blob_sha1": "75917697d8e2c1ff9c194a0fc5d9e76c3f4c7605"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/ci/report.md",
+      "sha256": "cbce27550be2883e53d38c915f9e125d1ea89abbfe48beb0013fc91fe0af472f",
+      "git_blob_sha1": "d4824a3f5a877692a8b15dbc8ad34a6a0b8c5085"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/ci/ci-verified.json",
+      "sha256": "4540544b5ff6f8f1be08e3acc378d8857c7cac745c1814f16cf0ad7266d12eb7",
+      "git_blob_sha1": "bc9ec32097f0a55c3cf0f588227e923dbf8312cf"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/running-server-r5.json",
+      "sha256": "9a3c844a8fa260d44847e5891884b5d5e285268fef10a203ceead66fe87ffe58",
+      "git_blob_sha1": "06319447c8c669ab998c06dc27600b9da4bcb70a"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/artifact-fa63083-provenance.json",
+      "sha256": "2f7875a95e2ddc253811077b97cf8abd77584bb0a873bc23ac7ef85758ecc4d2",
+      "git_blob_sha1": "114621cb7c6b17533435f1682704218c162d125a"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/connection-headless.json",
+      "sha256": "1fdce0d3514acbc32322feb27a2c080f86071e450c40ec93f79d98819268cdc8",
+      "git_blob_sha1": "126d2d114cdbc9af4b467b74f4607cb5a4d55900"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/index.md",
+      "sha256": "f224d50f50a6f07145df0dfb3efee798755b90752c2765cf9524045f65daed6c",
+      "git_blob_sha1": "c4e92b7c2dc9052c368891be8384cc41f7421dcf"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/manifest.json",
+      "sha256": "e9ad8ccce65e70da7330819b79dcf83027fce2d6fb56f1811d722421aa4930c6",
+      "git_blob_sha1": "eda6cfb3e29650954a653cf11d5d96891d89ec4a"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/generality/report.md",
+      "sha256": "7dcd31b952ca10cc7076738a7f2cc4715e57a68b6ba799a3c3aa41e1c4fcc2de",
+      "git_blob_sha1": "8928c850f2a0efe165b13caa0bbc729fb96f9bc5"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/generality/initial-seal.json",
+      "sha256": "6435756ecc06998699db23ff8efc3f634ba58e6a2397478b85047394d0683ba1",
+      "git_blob_sha1": "02aebd15d8ae05d5e0e411c0418c165b8cb594f9"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/generality/cross.md",
+      "sha256": "0bf54e22fbbc2a03d742ee8bad41f72c09cb2d317789d453fee92d38d9e07189",
+      "git_blob_sha1": "c9319a628f0594f45b9570a16ade4bb0d4299af3"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/generality/final.json",
+      "sha256": "7bd39a11b69a27c2de0ecc202bb9dd267b429faf1202811833a4982d0c2697b3",
+      "git_blob_sha1": "60787aa89c3ff2cb20916a656b20faf466f714e0"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/report.md",
+      "sha256": "cd8ad8735ce6715bc1bb2179017d3f605b2ba6a857fd7f9fc1f698c5196c8056",
+      "git_blob_sha1": "6b9ffc9b58457cd374db91cd2801a45114f52a2e"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/initial-seal.json",
+      "sha256": "95f078ad52440ea44749f4c6e6d7165161a14bdca936409cdbcb255ae8576392",
+      "git_blob_sha1": "d3ebb90eff9fb61df253254fcde024a1825e8fca"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/cross.md",
+      "sha256": "adcf16f554fae7fbc6c7a312532aad16d9b569638904a15ee3c8751c50ec5d3f",
+      "git_blob_sha1": "db57de61de62933311ef75507a1cc34da553deeb"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/final.md",
+      "sha256": "b8a75af15bdd245470984529ff8a3f1dd5e4d1e359823958c95d8cd2d730988a",
+      "git_blob_sha1": "b8c804aa4c493093875ef25bf5302eefa2a229c4"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/cross-seal.json",
+      "sha256": "0706c715abcbc1450ab91fe388c6c7ffa73837bf2a65c75fc81d5dfe620e783c",
+      "git_blob_sha1": "14ad43c4c31a34cb06146c60c3e969d1f0f3d338"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/report.md",
+      "sha256": "03bc4cb1c2dcc4da952879648b22ec53e546ec0a77e1f90886755c17a39dad93",
+      "git_blob_sha1": "ee81e7685132533d4b063f9f34d701860e039f54"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/initial-seal.json",
+      "sha256": "6aa1defb456ad54b1078f9cdb5aa6737ac4aa7ce1b50268076c47af0067472e9",
+      "git_blob_sha1": "62683f9ce78695e6631d3368b9c1161954a277ba"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/cross-report.md",
+      "sha256": "b7a6ab9e67fbd62f7d1c10b49a78738cbc1207cb14636f9c2bd02d2b8a4a936b",
+      "git_blob_sha1": "e07792490677f8fe4b18404a625bae600eba0c30"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/final.md",
+      "sha256": "f85a36cc645ba94f3a0d2c92bfc97478955a6d2646a1d030bdf4234ceb5a95ad",
+      "git_blob_sha1": "1cf345a81084c5a6a138c3a91f878105a64f9b83"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/cross-final-seal.json",
+      "sha256": "7ea3241bbe87428b96994f00455f738bea0dc6760ce511610fc7c39f93de4bf5",
+      "git_blob_sha1": "6915fdfd5c21b9323d74f35590895b33b3594f40"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/report.md",
+      "sha256": "d56d840a14868ab99b4640cd0bb3ec030fde9d5e18ffad09c9483655e8d79966",
+      "git_blob_sha1": "0feca04e53336c15c988db1cfc8972d2b100e33a"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/initial-seal.json",
+      "sha256": "d2f54ec7199dcd3694752d206bfabff59fbdbbe4dc092ca32192d61d885ef77f",
+      "git_blob_sha1": "40d210566747bc3288907d8ac310c6ab42976a02"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/cross.md",
+      "sha256": "42b6d790d47583972f3f3b0c7f327345f96215a827c92e15b633659cbeb96016",
+      "git_blob_sha1": "1ceb9fb121136d2b86ce745b5a3bc6d10dca03fc"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/final.md",
+      "sha256": "88fdbf34c8b5dd16619eda11b861ba469515cd7776bff784d0b17d2e1d1bd48d",
+      "git_blob_sha1": "17dbfc2fcbb91c007650f6333765db3663e5018e"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/cross-seal.json",
+      "sha256": "76a288d659452412e6a2cd6d606f17a9bc35a0aa8892596c8bf8912b9e048fbd",
+      "git_blob_sha1": "9de24a386bd063a38379a285ce22a780a304eead"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/report.md",
+      "sha256": "92a90b4fb6cc844455edc00892c30385b8992d0fa516c675c1c230200f74e05b",
+      "git_blob_sha1": "991d2dc77439d9f0f77bdde220e798e20aeca3c5"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/initial-seal.json",
+      "sha256": "b2ffc0ff41f84fdda494241f6dcfec1db1a394504fb309116c42034fe3877b55",
+      "git_blob_sha1": "0b2028f13c1ba2c0afe0afa47c035d179a68e9de"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-report.md",
+      "sha256": "5b5ed2391493d9375e6973d1a5b5f13eb4f6c0137564e98b9b3c5bbd4f8b67ea",
+      "git_blob_sha1": "2f4113ba66f15962ad8982491b5bc98945c3463f"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/final.md",
+      "sha256": "e0e123f405e015531a6f960ea4405e2500bbd1fd223da4de27f7aa56a6e65ce0",
+      "git_blob_sha1": "b9404c570aae9520499548934006e1eb478c6b2a"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-seal.json",
+      "sha256": "e6254b149f3961c6e92ff63c27df694e0f6e65bdc8411ff2321be0c067e27cd1",
+      "git_blob_sha1": "d99a11b5e724753767dfc7a30c3805cd7b0b2ec9"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-process-supplement.json",
+      "sha256": "ce549cb2b57e8260a16e1e9da931d2e517da399caea2ee73e7e9c3d60d0632e9",
+      "git_blob_sha1": "db7c74d553622078f809e19c17a9f21ee6a6bcf3"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-process-supplement-seal.json",
+      "sha256": "3b8cdf75899c652353bf94af82d4df7d32a745fb43da62a7ebfca095b0d42604",
+      "git_blob_sha1": "e5a21b2f9f2f6f94e4e9bf589de70eba94972be9"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/index.md",
+      "sha256": "98e46f7e5ffdf0013cb64ab0615e2bbea4fea8edc89120a60961e23f9cb41ee3",
+      "git_blob_sha1": "62f40d9b491e565bcbe948a360d997097d6dacdd"
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r5/failed-audit/manifest.json",
+      "sha256": "5712a81583ecc4e88186e5fef1be4ca3ce838b6df50371468f4940f279a157c1",
+      "git_blob_sha1": "40ecb09beff2aedc2a943590685476c159c6acbf"
+    }
+  ]
+}

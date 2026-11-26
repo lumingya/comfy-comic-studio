@@ -1,0 +1,47 @@
+{
+  "artifacts": {
+    "cross-check-attempt1.private.py": {
+      "bytes": 10713,
+      "sha256": "be971641a289c45be36ecab4f1c749570f148d902121664fb3017502441c2a16"
+    },
+    "cross-results.json": {
+      "bytes": 35844,
+      "sha256": "5633402342a56e2f7ae23e38c0134c5eb0237aaae38d7b24bd4f7bd85a6d89b9"
+    },
+    "cross-run-01.json": {
+      "bytes": 377,
+      "sha256": "3723db2e76fafaa2bdee3a432e140fe7db08308e7bea5bd34cf155ad0ca5c075"
+    },
+    "cross.md": {
+      "bytes": 6685,
+      "sha256": "e3fff45ad626bae3514b8ee18e2c6999e659db9f2f3fcbcba8f07dfc86e48adb"
+    },
+    "cross_check.py": {
+      "bytes": 10775,
+      "sha256": "7614a4dc03bc6fe62574655ea143d0c9968e9b790454bd3461678bc5e5b6c11b"
+    },
+    "final.md": {
+      "bytes": 1161,
+      "sha256": "7b3e168da381bbe10de8e323ffec48a690235214e72054ac3409f751ac6a376e"
+    },
+    "seal_cross.py": {
+      "bytes": 9937,
+      "sha256": "5b2a9c0934b9bd1eec069c77265dcd0af43127c43302e96590de759d0c92ce30"
+    }
+  },
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "browser_calls": 0,
+  "confirmed_medium_ids": [
+    "R5-BLIND-M1",
+    "R5-BLIND-M2"
+  ],
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "http_calls": 0,
+  "new_test_runs": 0,
+  "own_initial_artifacts_unchanged": true,
+  "own_initial_seal_sha256": "5d021c2a5270f63ce1244ea08432e9c49032515a37da13375d41525713910519",
+  "privacy_report_sealed_sha_verified": "83a229c75473a51e3a6053dc7a457eeb1b08a82b55d289aebc2268453ddfe15d",
+  "product_calls": 0,
+  "sealed_utc": "2026-11-26T07:32:47.223414+00:00",
+  "verdict": "REQUEST CHANGES"
+}

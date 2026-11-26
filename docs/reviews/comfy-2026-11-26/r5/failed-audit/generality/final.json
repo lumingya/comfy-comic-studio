@@ -1,0 +1,85 @@
+{
+  "schema": "mio.audit.generality.final.v1",
+  "sealed_utc": "2026-11-26T07:38:48.133805+00:00",
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "verdict": "REQUEST CHANGES",
+  "initial_files_unchanged": true,
+  "initial_seal_sha256": "89aef13a2d4d9ec08ead1dbd99dd3a1dccc2f7c275af4924fcd024736f3b12bb",
+  "independently_accepted_product_findings": [
+    {
+      "id": "R5-BLIND-M1",
+      "severity": "Medium",
+      "root_cause": "empty_and_paired_text_manual_discovery"
+    },
+    {
+      "id": "R5-BLIND-M2",
+      "severity": "Medium",
+      "root_cause": "indirect_image_manual_role_discovery"
+    }
+  ],
+  "additional_generality_product_findings": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "round_deduplicated_observations": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 2,
+    "Low": 3
+  },
+  "round_low_scope": [
+    "web_number_representation",
+    "web_single_bounded_action_timing",
+    "privacy_one_identifier_three_documents"
+  ],
+  "own_process_events": {
+    "terminal_events": 2,
+    "initial_fixture_diff_events": 1,
+    "cross_nested_request_events": 1,
+    "cross_request_blocks": 3,
+    "cross_request_entries": 34,
+    "credentials_observed": false,
+    "unknown_or_truncated_content_proven_free_of_sensitive_data": false,
+    "further_private_reads_stopped": true
+  },
+  "scope": {
+    "initial_artifacts_verified": 16,
+    "public_blind_projection_sha256": "7d12aeb45cc1e9fdbc963e6d912ec5c42c4b399ff81f58d553bc1f90ac282554",
+    "compile_declared_passed": 27,
+    "compile_declared_total": 27,
+    "compile_typed_changes": 173,
+    "web_original_passed": 112,
+    "web_original_total": 136,
+    "web_strict_failures_retained": 24,
+    "web_exports_offline_checked": 12,
+    "head_and_clean_status_read_back": true
+  },
+  "not_performed": [
+    "application_import",
+    "product_probe",
+    "http",
+    "tests",
+    "ci_rerun",
+    "browser",
+    "build",
+    "gpu",
+    "repository_write",
+    "commit",
+    "push"
+  ],
+  "retained_limits": [
+    "No fresh candidate private-138 full compile; historical missing-frontend-state failure remains.",
+    "Zero tags in the historical private result do not replace independent 29-tag/mapping regression.",
+    "Explicit compile/write checks do not cover manual candidate discovery.",
+    "Public blind projection lineage is hash-anchored; private-to-public transformation was not independently reproduced after the stop.",
+    "Cleanup, repairs, final push and new gates remain controller delivery work."
+  ],
+  "sealed_files_sha256": {
+    "cross.md": "0bf54e22fbbc2a03d742ee8bad41f72c09cb2d317789d453fee92d38d9e07189",
+    "cross-evidence.json": "d43a5644eec4da57026962e72ef4efbac565c5610cc41d6950db88937da6409f",
+    "cross_verify.py": "f4e14cb7bd5b460bf9bfce59681050f7f59983f689b03f0d9c6fe0688f94cd45"
+  }
+}

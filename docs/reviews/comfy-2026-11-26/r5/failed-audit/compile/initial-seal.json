@@ -1,0 +1,78 @@
+{
+  "artifacts": {
+    "audit.py": {
+      "sha256": "f6597d52ae6cbcfd2d7de0fad19ed35ce3b64e8d35409669bfdc1f5ab55b94e8",
+      "size": 25817,
+      "visibility": "private"
+    },
+    "oracle-seal.json": {
+      "sha256": "ec8732370b7e3dc9c402d320f8829b33960e7adf90b1f8b051f5b33af3ea14d0",
+      "size": 850,
+      "visibility": "public"
+    },
+    "oracle.private.json": {
+      "sha256": "b249a1649cf64170a6ff221e40da43c44ceee44a58e2f3351d0dc959363e2882",
+      "size": 483359,
+      "visibility": "private"
+    },
+    "public-projection-check.json": {
+      "sha256": "3088cc16562b39752cbce9a2efd8ca5677b4541c7437a843c4dd7876a4de64fc",
+      "size": 279,
+      "visibility": "public"
+    },
+    "publish.py": {
+      "sha256": "9bf4a7c7a6f52a36fa8cc8432c70d4f01054f58e46ac430762f464d1d684153c",
+      "size": 9096,
+      "visibility": "private"
+    },
+    "report.md": {
+      "sha256": "1216b5e675b3ab4d3cdb11aa995b53165ffcfe23eb927db33c764a782d79151d",
+      "size": 8036,
+      "visibility": "public"
+    },
+    "results.json": {
+      "sha256": "75fb189a5e3df39de968f944935eb83c3de91f78ab8f66fc686c9d39f132c9b4",
+      "size": 94734,
+      "visibility": "public"
+    },
+    "run-identity.json": {
+      "sha256": "0f2374dc8db1c599f390af82c3637d567b25b6ac4320349a4b7f751099f7b5cb",
+      "size": 597,
+      "visibility": "public"
+    },
+    "run.private.json": {
+      "sha256": "320ea2755ab78e307d08f60df9fae1482b063312b3c28a59846bd9f28d3e5250",
+      "size": 422487,
+      "visibility": "private"
+    },
+    "source-freeze.private.json": {
+      "sha256": "1847f5986343967addd3274a7bdfe533110e1db661ba5af35e43cb4b3163e2ab",
+      "size": 46083,
+      "visibility": "private"
+    }
+  },
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "case_count": 27,
+  "cross_review": "pending; separate artifacts only",
+  "failed": 0,
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "passed": 27,
+  "scope": "Independent synthetic compile correctness; no product calls after lease release",
+  "sealed_utc": "2026-11-26T07:11:23.326065+00:00",
+  "severity_counts": {
+    "Blocker": 0,
+    "High": 0,
+    "Low": 0,
+    "Medium": 0
+  },
+  "untested": [
+    "real model execution",
+    "web",
+    "new public workflow blind corpus",
+    "HTTP persistence and cache",
+    "third party adapter execution",
+    "parameter panel submission"
+  ],
+  "verdict": "INITIAL_COMPILE_CHECKS_PASS",
+  "worktree_clean": true
+}

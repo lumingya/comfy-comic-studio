@@ -1,0 +1,80 @@
+{
+  "schema": "r4-reference-attribution-provenance-v1",
+  "started_utc": "2026-11-26T06:42:47.362260+00:00",
+  "finished_utc": "2026-11-26T06:42:47.371496+00:00",
+  "guard": {
+    "pid": 49976,
+    "affinity_read_back": "0x1",
+    "priority_class_read_back": 16384
+  },
+  "input_sources": [
+    {
+      "source_id": "E01",
+      "name": "probe.py",
+      "before_sha256": "6cb5be7b2c3ef8f3cf625ab4710228f1dc165ee16b62df5e589bf897b6907b6b",
+      "after_sha256": "6cb5be7b2c3ef8f3cf625ab4710228f1dc165ee16b62df5e589bf897b6907b6b",
+      "bytes_unchanged": true
+    },
+    {
+      "source_id": "E02",
+      "name": "pre-engine-oracle-private.json",
+      "before_sha256": "f8a436e5c8ab19d4da8cf01cce12b7a032d2c0d9d08d7073f293e69f1215b0bf",
+      "after_sha256": "f8a436e5c8ab19d4da8cf01cce12b7a032d2c0d9d08d7073f293e69f1215b0bf",
+      "bytes_unchanged": true
+    },
+    {
+      "source_id": "E03",
+      "name": "probe.py",
+      "before_sha256": "375acd8d313e5102e2bcbe6613dc972bbc6dcfd7d3578794e82d9c2026d3dbc8",
+      "after_sha256": "375acd8d313e5102e2bcbe6613dc972bbc6dcfd7d3578794e82d9c2026d3dbc8",
+      "bytes_unchanged": true
+    },
+    {
+      "source_id": "E04",
+      "name": "probe-results-private.json",
+      "before_sha256": "d303a81837ca25afca31afe18fa083d2bc5866d0b4f52f41d9e1abbdfd0cc173",
+      "after_sha256": "d303a81837ca25afca31afe18fa083d2bc5866d0b4f52f41d9e1abbdfd0cc173",
+      "bytes_unchanged": true
+    },
+    {
+      "source_id": "E05",
+      "name": "results.json",
+      "before_sha256": "b589e125a364ec909db51acc1c7a0459d0d6e91e919eac4e6665165c69f0d8bf",
+      "after_sha256": "b589e125a364ec909db51acc1c7a0459d0d6e91e919eac4e6665165c69f0d8bf",
+      "bytes_unchanged": true
+    },
+    {
+      "source_id": "S01",
+      "name": "compile.py",
+      "before_sha256": "2141ec096e59d5fda89bde5e1dfc4d7e123d70012301dbe39def736b007fe3f5",
+      "after_sha256": "2141ec096e59d5fda89bde5e1dfc4d7e123d70012301dbe39def736b007fe3f5",
+      "bytes_unchanged": true
+    },
+    {
+      "source_id": "S02",
+      "name": "bindings.py",
+      "before_sha256": "a5a660e779ca3eca7d59fa44d8796ea5dc92e6a62f526d5d8bfbcbda2a48263c",
+      "after_sha256": "a5a660e779ca3eca7d59fa44d8796ea5dc92e6a62f526d5d8bfbcbda2a48263c",
+      "bytes_unchanged": true
+    },
+    {
+      "source_id": "S03",
+      "name": "render_models.py",
+      "before_sha256": "6ece8cee59d8e333874f684a31185a11a1843e831ba5ee51afdde4eb3dd43149",
+      "after_sha256": "6ece8cee59d8e333874f684a31185a11a1843e831ba5ee51afdde4eb3dd43149",
+      "bytes_unchanged": true
+    }
+  ],
+  "all_read_source_bytes_unchanged": true,
+  "evidence_sha256": "fad648d7294317999f4696b5c3e44206d4f3daca66ac657a98be582558901c5f",
+  "historical_oracle_hash_matches_read_original": true,
+  "script_sha256": "23e178fd3d5f129f3d72084f187dc173e5805fdc25fdf84696b8be5c34e59f56",
+  "product_imports": 0,
+  "product_calls": 0,
+  "http_calls": 0,
+  "test_runs": 0,
+  "subprocesses": 0,
+  "source_writes": 0,
+  "old_oracle_or_evidence_writes": 0,
+  "recursive_forbidden_key_and_private_path_check": "passed"
+}

@@ -1,0 +1,48 @@
+{
+  "backend_head": "ed45509456b14006161d829666c466789e6a9e37",
+  "backend_pid": 14708,
+  "affinity": "0x1",
+  "priority_class": 16384,
+  "catalog_empty_at_app_creation": true,
+  "same_owned_synthetic_library_as_r4_web": true,
+  "segments": [
+    {
+      "segment": "cold_catalog",
+      "http_status": 200,
+      "elapsed_ms": 2516.515,
+      "response_bytes": 13756,
+      "response_sha256": "e640ef2a59cb5d9692d862b1033b4731478db6c9ba3cd552c116e0b599f7b6af",
+      "row_count": 49
+    },
+    {
+      "segment": "warm_catalog",
+      "http_status": 200,
+      "elapsed_ms": 126.084,
+      "response_bytes": 13756,
+      "response_sha256": "e640ef2a59cb5d9692d862b1033b4731478db6c9ba3cd552c116e0b599f7b6af",
+      "row_count": 49
+    },
+    {
+      "segment": "import_one_distinct_200_node_graph",
+      "http_status": 201,
+      "elapsed_ms": 445.527,
+      "response_bytes": 85258,
+      "response_sha256": "0f71067a34acac3e339e282e81b13564987cb52ac04f635d4db3aee802b6673d",
+      "row_count": null
+    },
+    {
+      "segment": "refresh_after_one_distinct_import",
+      "http_status": 200,
+      "elapsed_ms": 639.258,
+      "response_bytes": 14042,
+      "response_sha256": "34c8873e334d6211c8455395b1ca2f33ec7c791b824304881ed0baa3b6ccfb9d",
+      "row_count": 50
+    }
+  ],
+  "stress_or_profile_loops": false,
+  "fresh_process_cold_read": true,
+  "temporary_import_removed": true,
+  "original_49_summaries_restored": true,
+  "measured_request_count": 4,
+  "extra_requests": "one detail read, one cleanup DELETE, one cleanup verification GET"
+}

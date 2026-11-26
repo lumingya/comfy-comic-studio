@@ -1,0 +1,63 @@
+{
+  "utc": "2026-11-26T07:31:26.614584+00:00",
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "guard": {
+    "pid": 40064,
+    "affinity": 1,
+    "priority_class": 16384
+  },
+  "verdict": "REQUEST CHANGES",
+  "basis": [
+    "R5-BLIND-M1 candidate report omission with preserved generic manual selection",
+    "R5-BLIND-M2 downstream image role guidance omitted through preprocessing"
+  ],
+  "initial_manifest_preserved": true,
+  "initial_seal_sha256": "3862e6e66130137f9a073fdfef8089ca44c492d7d206e4073bb0f23a09b454a7",
+  "initial_web_severity_counts_unchanged": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 2
+  },
+  "initial_raw_assertions_unchanged": {
+    "total": 136,
+    "passed": 112,
+    "strict_hash_failed_preserved": 24
+  },
+  "product_calls_during_cross": 0,
+  "browser_calls_during_cross": 0,
+  "tests_during_cross": 0,
+  "manifest": [
+    {
+      "file": "cross.md",
+      "sha256": "42b6d790d47583972f3f3b0c7f327345f96215a827c92e15b633659cbeb96016",
+      "bytes": 6586
+    },
+    {
+      "file": "final.md",
+      "sha256": "88fdbf34c8b5dd16619eda11b861ba469515cd7776bff784d0b17d2e1d1bd48d",
+      "bytes": 1679
+    },
+    {
+      "file": "cross-evidence.json",
+      "sha256": "7055a574ad2eff1d0704c0019ffff01aa346b86e521276afa520e5fe7119f44a",
+      "bytes": 47580
+    },
+    {
+      "file": "cross-analysis-recovery.json",
+      "sha256": "57cc7c9d346ac720a2dc6aaa322ad96f642c7a00b97fc9ec1bf40f581ad4bbfa",
+      "bytes": 324
+    },
+    {
+      "file": "cross_check.py",
+      "sha256": "4e9bffe321cbf9e5ad0d30fab7b66dee1c8d16e91e1f869bb848db554c67ab3b",
+      "bytes": 4759
+    },
+    {
+      "file": "seal_cross.py",
+      "sha256": "c71235db944958384f43d1d4b2324f4c89a9af94904e6dc9ca881408d19d8b8d",
+      "bytes": 1745
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "sealed_at": "2026-11-26T07:36:17.245783+00:00",
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "cross_seal_sha256": "c50b2944e1b2872ba708d950e45a964eacc4da9cbb22505365fd6716fe049c3a",
+  "candidate_verdict": "REQUEST CHANGES",
+  "scope": "Additive count-only process disclosure; initial and cross sealed files are unchanged",
+  "files": [
+    {
+      "name_sha256": "9ce96d3942515786fe1a7a7a33b076146e7aa5787fcdf115db99609164cd083d",
+      "sha256": "e383b0a06773fa6858eacdcea9b93f783be36cec30fda06ba03bc09cdc7b71ce",
+      "bytes": 966
+    }
+  ],
+  "immutable": true
+}

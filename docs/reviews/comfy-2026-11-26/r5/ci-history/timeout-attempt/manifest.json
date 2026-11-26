@@ -1,0 +1,166 @@
+{
+  "schema": "mio.r5-timeout.safe-publication-draft.v1",
+  "prepared_date": "2026-11-26",
+  "publication_state": "RESULTS_RECORDED_REVIEW_REQUIRED",
+  "role": "pure safe publication preparation; not a new five-role reviewer",
+  "repair_head_controller_supplied": "6e302081e650210202b232990ab05bbd6961e149",
+  "ci_before_fix_head": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+  "ci_before_fix_conclusion": "REQUEST CHANGES",
+  "ci_before_fix_summary": {
+    "run_count": 2,
+    "successful_runs": 1,
+    "job_count": 6,
+    "successful_jobs": 5,
+    "step_count": 70,
+    "successful_steps": 68,
+    "all_agents_ten_command_rows_covered_each_run": false,
+    "all_declared_command_classes_covered_each_run": true
+  },
+  "source_allowlist": [
+    "r5-timeout-validation/result.json",
+    "r5-timeout-validation/resume-result.json",
+    "r5-wave3-ci/report.md",
+    "r5-wave3-ci/ci-verified.json"
+  ],
+  "source_files": [
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-validation/result.json",
+      "original_sha256": "9a35b6bec39c5e66543727957dfa0e956d84b231c07a3d412c9aa361441f360d",
+      "original_git_blob_sha1_calculated": "af881a7f7bbf022b130af44192afb2d267677ef4",
+      "destination": "timeout-fix/validation.json",
+      "published_sha256": "cb20ab9d1efbf4c2c851ebbe395e820d407ef12240ea3f3014c155adc9f0b79c",
+      "published_git_blob_sha1_calculated": "48d3b90ab143b5e75b49bd224c9c670ffd06ab00",
+      "publication_mode": "initial_result",
+      "original_byte_identical": false,
+      "changes": "Complete parsed JSON values preserved in aggregate under initial_result; controller context separately attributed; formatting rebuilt as UTF-8 no BOM/LF/single EOF"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-validation/resume-result.json",
+      "original_sha256": "f96e99a5e74799e4adfeafa3f595e936b4fd7613a2d770975b54ceb00e741f3e",
+      "original_git_blob_sha1_calculated": "55f1d65cae1e291a19f8d9fbdb652c467401644d",
+      "destination": "timeout-fix/validation.json",
+      "published_sha256": "cb20ab9d1efbf4c2c851ebbe395e820d407ef12240ea3f3014c155adc9f0b79c",
+      "published_git_blob_sha1_calculated": "48d3b90ab143b5e75b49bd224c9c670ffd06ab00",
+      "publication_mode": "resume_result",
+      "original_byte_identical": false,
+      "changes": "Complete parsed JSON values preserved in aggregate under resume_result; controller context separately attributed; formatting rebuilt as UTF-8 no BOM/LF/single EOF"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-wave3-ci/report.md",
+      "original_sha256": "082bc2bcb45d749b150f87a1391b5cdc2a148ffabf7001bcb385fd52e0968d57",
+      "original_git_blob_sha1_calculated": "65e8060354d60b9ab129915bd7216dd8668a7462",
+      "destination": "ci-before-fix/report.md",
+      "published_sha256": "082bc2bcb45d749b150f87a1391b5cdc2a148ffabf7001bcb385fd52e0968d57",
+      "published_git_blob_sha1_calculated": "65e8060354d60b9ab129915bd7216dd8668a7462",
+      "publication_mode": "mechanical copy",
+      "original_byte_identical": true,
+      "changes": "none; already LF with one terminal LF"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-wave3-ci/ci-verified.json",
+      "original_sha256": "7865cc0ea19bfdbdf217c035d712927fa8f88b99820b15f31de1a62766b186c8",
+      "original_git_blob_sha1_calculated": "0fd4c941f430e01ff627f6752ba11ebe7cdf5b4c",
+      "destination": "ci-before-fix/ci-verified.json",
+      "published_sha256": "0aab644d03f9cf411b05b07ed4911bb9d53be752c623e85c90276f862fd6ba45",
+      "published_git_blob_sha1_calculated": "cd2aa8189e57c3cf91e62ece2203163b4aca7d94",
+      "publication_mode": "mechanical copy",
+      "original_byte_identical": false,
+      "changes": "mechanical LF/EOF normalization; original CRLF count 2514"
+    }
+  ],
+  "published_files": [
+    {
+      "destination": "ci-before-fix/report.md",
+      "sha256": "082bc2bcb45d749b150f87a1391b5cdc2a148ffabf7001bcb385fd52e0968d57",
+      "git_blob_sha1_calculated": "65e8060354d60b9ab129915bd7216dd8668a7462",
+      "bytes": 13574
+    },
+    {
+      "destination": "ci-before-fix/ci-verified.json",
+      "sha256": "0aab644d03f9cf411b05b07ed4911bb9d53be752c623e85c90276f862fd6ba45",
+      "git_blob_sha1_calculated": "cd2aa8189e57c3cf91e62ece2203163b4aca7d94",
+      "bytes": 90339
+    },
+    {
+      "destination": "timeout-fix/validation.json",
+      "sha256": "cb20ab9d1efbf4c2c851ebbe395e820d407ef12240ea3f3014c155adc9f0b79c",
+      "git_blob_sha1_calculated": "48d3b90ab143b5e75b49bd224c9c670ffd06ab00",
+      "bytes": 5586
+    },
+    {
+      "destination": "timeout-fix/report.md",
+      "sha256": "2d07834eb791da9bf6b9fe8a9f8c85dba3ef5c6e8c3d8276dbe5eae6e70d0ba4",
+      "git_blob_sha1_calculated": "96a19a529c7ac7ed3552d60a89d93ecb0f34bd2e",
+      "bytes": 3144
+    },
+    {
+      "destination": "index.md",
+      "sha256": "7d3df677cd28f7a0df6ba9aa7350d19d92b9d149805edc70a7b4453139e21db4",
+      "git_blob_sha1_calculated": "c05f35b45b00c922e6b90d6fd7434d50ac33fedc",
+      "bytes": 2798
+    }
+  ],
+  "self_manifest_hash_recorded_in_handoff": true,
+  "expected_publication_allowlist": [
+    "ci-before-fix/report.md",
+    "ci-before-fix/ci-verified.json",
+    "timeout-fix/validation.json",
+    "timeout-fix/report.md",
+    "index.md",
+    "manifest.json"
+  ],
+  "normalization": {
+    "encoding": "UTF-8 without BOM",
+    "line_endings": "LF",
+    "terminal_newline": "exactly one LF",
+    "CI_copies": "mechanical formatting only; original conclusion unchanged",
+    "validation": "complete parsed source values; controller-provided explanations labelled separately",
+    "original_sources_modified": false,
+    "git_blob_scope": "Calculated Git object OIDs for exact original/published bytes; not repository or staged-index observations"
+  },
+  "evidence_boundaries": {
+    "initial_format_failure_preserved": true,
+    "configuration_reason_and_3_methods_50_subscenarios_0_018_seconds_attributed_to_controller": true,
+    "resume_outer_offline_unit_seconds": 0.462,
+    "mio_217_module_aggregate": {
+      "module_count": 217,
+      "sha256": "5a5ee950ae0c972791ae17fab92978579adec7d6d419133e6eaf9eb9e649377d",
+      "unchanged": true,
+      "recomputed_by_publication_task": false
+    },
+    "historical_ed_workflow_replay_not_relabelled": true,
+    "full_gate_or_new_five_role_approval_not_claimed": true,
+    "remote_CI_terminal_result_for_new_head_included": false,
+    "old_r4_publication_ready_not_read_or_modified": true
+  },
+  "publication_checks": {
+    "result": "NO_FINDINGS_WITHIN_PUBLICATION_SCOPE",
+    "source_file_count": 4,
+    "published_file_count": 6,
+    "all_source_hashes_preserved": true,
+    "validation_parsed_values_preserved": true,
+    "all_published_UTF8_without_BOM_LF_single_EOF": true,
+    "recursive_forbidden_dictionary_keys": [
+      "class_type",
+      "inputs",
+      "links",
+      "widgets_values",
+      "extra_pnginfo"
+    ],
+    "forbidden_dictionary_key_count": 0,
+    "private_path_account_prompt_model_or_credential_candidates": 0,
+    "neutral_CI_failure_text_lines_reviewed": 6,
+    "markdown_relative_link_count": 6,
+    "relative_layout_links_valid": true,
+    "raw_scripts_logs_or_product_source_read": false,
+    "repo_files_or_Git_modified": false,
+    "CI_Git_network_browser_queries": 0,
+    "product_calls": 0,
+    "Python_processes_started": 0,
+    "Git_staged_blob_comparison": "not performed; external drafts only"
+  }
+}

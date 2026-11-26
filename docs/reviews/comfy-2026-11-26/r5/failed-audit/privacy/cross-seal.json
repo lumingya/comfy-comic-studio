@@ -1,0 +1,78 @@
+{
+  "sealed_at": "2026-11-26T07:35:58.734297+00:00",
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "phase": "R5 cross and frozen-candidate final signature",
+  "candidate_verdict": "REQUEST CHANGES",
+  "open_medium_count": 2,
+  "initial_seal_sha256": "1c38012030107269cbc92d1cb636b6f0450a45ce653ce58dfbbb0bb0fa24e2bc",
+  "initial_manifest_unchanged": true,
+  "initial_report_sha256": "83a229c75473a51e3a6053dc7a457eeb1b08a82b55d289aebc2268453ddfe15d",
+  "public_projection_check_flags": 0,
+  "no_new_product_or_network_execution": true,
+  "final_delivery_cleanup_commit_push": "NOT YET EVIDENCED",
+  "files": [
+    {
+      "name_sha256": "49b3b4c15e46084cb4ace5015429aca1e7eac6df2c1911faad7969e2533e8d22",
+      "sha256": "716615aa040575aff0ad4b61a0dfcbce101771c26fc25cc8b0355ebbfd8acbcd",
+      "bytes": 1565,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "8853f9c276cf253970d9e1115629401a269fdc6e8b697840943a66cd1752b3dc",
+      "sha256": "5b829bd1b437bf2665eb95151f04ea71b9bed8a2b31cc425447bc1d0e3594e71",
+      "bytes": 3816,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "3f8cb44645f7b499bd10f448f80c404849aa4c42b381d7df81578e7ea868f47f",
+      "sha256": "cda9e481d526c485854ca32f38b1a3d90200b34474b9345a07e2fbeed258fd39",
+      "bytes": 424,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "ef635f28c7908daaea4bcfb1cfd0e8aef49136a835c84557733e4e1c1c85c56e",
+      "sha256": "df46e753883ed54fd148412d71cdb32dc74d2e1bcfcc1aa462a1d9265d26ce61",
+      "bytes": 8539,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "dc35b647f7aa05e0d6018740774a7162bcfe4523cbaf2266be41caeb4a643a55",
+      "sha256": "35cb1181e84acffb82d3c0ad350273ecb84049b097ff6b05680809e109f0e364",
+      "bytes": 1209,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "f2daa7e97354cef23a0b6eaa19251e47901f25e2b3c244aef23f9b63df1965e4",
+      "sha256": "cd80cecda5ed8239a1defb7ff93d169c5e2b53c2998a30687b7fdb2d44a6d033",
+      "bytes": 606,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "77ff1c8d4e276b856b50c98746c49045851a7d93186bf20e11e5d92a6bc27793",
+      "sha256": "6c97c9a948e25c3a3d08cc046c8aaf7c680ea6708e8fffba8e5b54b3b4666f96",
+      "bytes": 10572,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "80a10da39617c1eea30fc2bb566d01c5cc962151715c36e033a2eee7ff7331b4",
+      "sha256": "17cff41c979b80755720594fc15a48fe817c422523eb46c08f58508aad815f12",
+      "bytes": 8561,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "bb12e6d44e31cde8d14ac0e10125362a80f2560e9f9ec482c6c5f30fca91c52f",
+      "sha256": "95250736b7f1788b9555e2ab37037124367561864976ac4b5098261735054bbb",
+      "bytes": 1032,
+      "publication": "explicit safe projection; no raw or private directories"
+    },
+    {
+      "name_sha256": "abbefb84ed08c7999009ad02b168198dee72b997842fe48515a05fb50bac2c6b",
+      "sha256": "4851af930360ee3927a30eaff0377cde1e39733d72afe3630bfa42fe7e7a3fd5",
+      "bytes": 1915,
+      "publication": "explicit safe projection; no raw or private directories"
+    }
+  ],
+  "immutable_cross_files": true,
+  "later_supplement_policy": "New receipt files only; never rewrite this seal or any manifest member"
+}

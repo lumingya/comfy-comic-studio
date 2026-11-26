@@ -1,0 +1,63 @@
+{
+  "schema": "civitai-public-metadata-provenance-v1",
+  "started_utc": "2026-11-26T06:30:21.533890+00:00",
+  "finished_utc": "2026-11-26T06:30:43.755969+00:00",
+  "resource_guard": {
+    "pid": 50156,
+    "affinity_read_back": "0x1",
+    "priority_class_read_back": 16384
+  },
+  "source_manifest": {
+    "name": "manifest-original-90.json",
+    "before_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+    "after_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+    "bytes_unchanged": true
+  },
+  "script_sha256": "816e660db7dd90f828591b429481e5a70361d262a026c2f9e1a817060f904c37",
+  "results_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+  "official_documentation_entry": "https://developer.civitai.com/docs/api/rest",
+  "method": {
+    "http_method": "GET",
+    "endpoint_family": "public REST model-resource metadata",
+    "max_attempts_per_unique_source": 1,
+    "sequential_processes": 1,
+    "response_byte_cap": 2097152,
+    "socket_timeout_seconds": 12,
+    "redirects_followed": 0,
+    "retries": 0,
+    "authorization_headers": 0,
+    "cookies": 0,
+    "browser_or_profile_access": 0,
+    "environment_proxy_use": false,
+    "raw_metadata_persisted": false,
+    "raw_metadata_emitted": false,
+    "product_imports": 0,
+    "product_calls": 0,
+    "test_runs": 0,
+    "subprocesses": 0,
+    "images_or_models_downloaded": 0,
+    "graph_downloads": 0
+  },
+  "file_identity_rule": "Same already-read response only: explicit Workflow(s) type and explicit JSON media; all saved version/file IDs must match if present, otherwise one JSON file must uniquely match the old 12hex raw prefix; export hash/IDs/counts only, never filename or download URL",
+  "privacy": {
+    "recursive_forbidden_key_check": "passed",
+    "public_urls_numeric_only": true,
+    "numeric_counter_allowlist": [
+      "thumbsUpCount",
+      "thumbsDownCount",
+      "favoriteCount",
+      "ratingCount",
+      "rating",
+      "downloadCount",
+      "commentCount",
+      "generationCount",
+      "collectedCount",
+      "heartCount",
+      "likeCount",
+      "laughCount",
+      "cryCount",
+      "dislikeCount"
+    ],
+    "original_prompt_or_asset_names_exported": false
+  }
+}
