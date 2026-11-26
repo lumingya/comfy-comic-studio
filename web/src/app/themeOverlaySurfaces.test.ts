@@ -17,6 +17,7 @@ const surfaces = [
   ['Radix modal', '<div class="dialog lg"></div>', '.dialog'],
   ['Radix drawer', '<aside class="drawer"></aside>', '.drawer'],
   ['command palette', '<dialog class="command-dialog" open></dialog>', '.command-dialog'],
+  ['prompt completion', '<div id="prompt-completion" role="listbox"></div>', '#prompt-completion'],
   ['assembly modal', '<dialog id="modal" open></dialog>', '#modal'],
   ['help dialog', '<dialog id="guide-dialog" open></dialog>', '#guide-dialog'],
   ['template customization', '<dialog class="template-dialog" open></dialog>', '.template-dialog'],

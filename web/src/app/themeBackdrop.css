@@ -28,6 +28,7 @@
     .dialog,
     .drawer,
     .command-dialog,
+    #prompt-completion,
     dialog#modal,
     dialog#guide-dialog,
     dialog.template-dialog,
