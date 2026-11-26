@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type ComponentProps,
   type KeyboardEvent,
   type ReactNode,
   type Ref,
@@ -181,12 +182,12 @@ export function Modal(props: {
   id?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCloseAutoFocus?: ComponentProps<typeof Dialog.Content>['onCloseAutoFocus'];
   title: ReactNode;
   description?: ReactNode;
   size?: 'md' | 'lg';
   children: ReactNode;
   footer?: ReactNode;
-  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const { t } = useTranslation();
   // Inside an open modal <dialog> (the reader, …) a portal to <body> would sit behind it.
