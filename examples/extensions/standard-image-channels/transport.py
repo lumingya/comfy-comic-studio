@@ -281,7 +281,13 @@ class Transfer:
                     )
                 chunks.append(chunk)
             return status, response.headers, b"".join(chunks)
-        except (httpx.ConnectError, httpx.ConnectTimeout):
+        except httpx.TimeoutException:
+            self.check()
+            raise error(
+                "Image request deadline exceeded; submitted work was not repeated",
+                sent=self.sent,
+            ) from None
+        except httpx.ConnectError:
             self.check()
             if method == "GET":
                 return 503, httpx.Headers(), b""
