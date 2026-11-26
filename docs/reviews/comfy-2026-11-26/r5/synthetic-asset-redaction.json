@@ -10,24 +10,36 @@
       "source_commit": "fa6308384826fad7629b2c727d70230cc7951d05",
       "historical_git_blob": "b3efa907befc43eb657780e7645b4c6d21e265cd",
       "source_sha256": "4e5a1cb4d7c4510afdc1afc29205b671754c8f04cc1ecf2607580fb149046368",
-      "published_sha256": "1f6d45db419f9090802edbce39869fca0c7909ddf36ade9c545304c3875bdc57",
-      "replacement_count": 1
+      "published_sha256": "27d72371a2b78e42487920bc71d0fdb4746e80bf1d2136861f226eb579ffee2f",
+      "replacement_count": 1,
+      "worktree_after_sha256": "1f6d45db419f9090802edbce39869fca0c7909ddf36ade9c545304c3875bdc57",
+      "source_blob_sha256": "c938a1186a01a239bb6f4f93ca79f8c538dc3bc640357ed2d338ebd8b48ef5a0"
     },
     {
       "path": "docs/reviews/comfy-2026-11-25/r2/web-after.md",
       "source_commit": "fa6308384826fad7629b2c727d70230cc7951d05",
       "historical_git_blob": "6e3403d0e81ebddcf478f5867b5ba0013a996637",
       "source_sha256": "b29f435de28fcd09071d8f20a8ecf740ecdb0b1659502ecde9c98ecf8a822be3",
-      "published_sha256": "ab6384da0f8ea1524a8739104d9c123354e09f49612a4114331fdacce62795d3",
-      "replacement_count": 1
+      "published_sha256": "816759496d895abfb340ad5ffd92ca954c8b1ed91b1253d2e0bec3f84f6f2887",
+      "replacement_count": 1,
+      "worktree_after_sha256": "ab6384da0f8ea1524a8739104d9c123354e09f49612a4114331fdacce62795d3",
+      "source_blob_sha256": "5c2c864f3b14627bc2d5755fd4b9f4f3582e19126a838342598f61663047e56a"
     },
     {
       "path": "docs/reviews/comfy-2026-11-26/r3/web.md",
       "source_commit": "fa6308384826fad7629b2c727d70230cc7951d05",
       "historical_git_blob": "f5fe2ea8a05cd81c56c8f2ee812cf5aabd029de6",
       "source_sha256": "d77e74b285f281f43bd60c17da493a9bc7e616afe980f119667e81ac4f6f879d",
-      "published_sha256": "69ccea3eee55e4e7f93965309472592c03a98d8d3d2ea165a3ab0d19678a7286",
-      "replacement_count": 1
+      "published_sha256": "81aa8dd088330d738a459297059d6ea7a08903a885d066e56423cd9eb0f37d3c",
+      "replacement_count": 1,
+      "worktree_after_sha256": "69ccea3eee55e4e7f93965309472592c03a98d8d3d2ea165a3ab0d19678a7286",
+      "source_blob_sha256": "f14313e1c4c959af5b54c37d150c1f203c5b2e28714b1207fa9aee32a9f4beae"
     }
-  ]
+  ],
+  "sha256_scopes": {
+    "source_sha256": "Original worktree bytes before redaction, preserving CRLF where present.",
+    "worktree_after_sha256": "Verified worktree bytes after redaction, before Git newline normalization.",
+    "source_blob_sha256": "Historical Git blob content bytes at source_commit.",
+    "published_sha256": "Actual redacted Git blob content bytes; Git normalizes line endings to LF."
+  }
 }
