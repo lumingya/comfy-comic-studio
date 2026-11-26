@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type ComponentProps,
   type KeyboardEvent,
   type ReactNode,
   type SelectHTMLAttributes,
@@ -180,6 +181,7 @@ export function Modal(props: {
   id?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCloseAutoFocus?: ComponentProps<typeof Dialog.Content>['onCloseAutoFocus'];
   title: ReactNode;
   description?: ReactNode;
   size?: 'md' | 'lg';
@@ -193,7 +195,11 @@ export function Modal(props: {
     <Dialog.Root open={props.open} onOpenChange={props.onOpenChange}>
       <Dialog.Portal container={host}>
         <Dialog.Overlay className="overlay" />
-        <Dialog.Content id={props.id} className={`dialog ${props.size === 'lg' ? 'lg' : ''}`}>
+        <Dialog.Content
+          id={props.id}
+          className={`dialog ${props.size === 'lg' ? 'lg' : ''}`}
+          onCloseAutoFocus={props.onCloseAutoFocus}
+        >
           <Dialog.Close asChild>
             <button className="btn ghost icon sm dialog-close" aria-label={t('common.close')}>
               <X size={16} />

@@ -265,6 +265,51 @@ test("shows API failures without blanking the panel, and rejects invalid duratio
   h.dom.window.close();
 });
 
+test("dismisses reread confirmation with Keep or Escape and preserves the unsaved shot", async () => {
+  const h = makeHarness();
+  try {
+    const { window } = h;
+    const load = window.document.getElementById("load");
+    load.click();
+    await settle();
+    const move = window.document.getElementById("move");
+    move.value = "pan_left";
+    move.dispatchEvent(new window.Event("change", { bubbles: true }));
+    const callCount = h.calls.length;
+
+    for (const action of ["keep", "Escape"]) {
+      load.focus();
+      load.click();
+      const confirmation = window.document.getElementById("discard-confirm");
+      const discard = window.document.getElementById("discard");
+      assert.equal(confirmation.hidden, false);
+      assert.equal(window.document.activeElement, discard);
+      if (action === "keep") window.document.getElementById("keep").click();
+      else {
+        const escape = new window.KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        });
+        discard.dispatchEvent(escape);
+        assert.equal(escape.defaultPrevented, true);
+      }
+      assert.equal(confirmation.hidden, true);
+      assert.equal(window.document.activeElement, load);
+      assert.equal(move.value, "pan_left");
+      assert.equal(window.document.getElementById("save").disabled, false);
+      assert.equal(h.calls.length, callCount, "dismissal sends no requests");
+    }
+
+    window.document.getElementById("save").click();
+    await settle();
+    const patch = h.calls.find((call) => call.id === "patch-panel");
+    assert.equal(patch.body.changes.motion.move, "pan_left");
+  } finally {
+    h.dom.window.close();
+  }
+});
+
 test("first scrub after editing keeps the selected percentage and pauses at that time", async () => {
   const h = makeHarness();
   try {

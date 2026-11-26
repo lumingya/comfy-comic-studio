@@ -556,9 +556,16 @@
 
   $("load").addEventListener("click", () => void load());
   $("discard").addEventListener("click", () => void load(true));
-  $("keep").addEventListener("click", () => {
+  function keepDrafts() {
     $("discard-confirm").hidden = true;
     $("load").focus();
+  }
+  $("keep").addEventListener("click", keepDrafts);
+  $("discard-confirm").addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    keepDrafts();
   });
   $("move").addEventListener("change", edit);
   $("hold").addEventListener("input", edit);

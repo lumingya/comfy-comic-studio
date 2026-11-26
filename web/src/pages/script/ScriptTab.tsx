@@ -70,6 +70,7 @@ export default function ScriptTab() {
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[] | null>(null);
   const [storyImportOpen, setStoryImportOpen] = useState(false);
+  const storyImportTrigger = useRef<HTMLButtonElement>(null);
   const [transfer, setTransfer] = useState<{ episode: Episode; ids: string[] } | null>(null);
   const openTransfer = async (list: string[]) => {
     try {
@@ -508,6 +509,7 @@ export default function ScriptTab() {
             className="btn icon sm"
             title={t('ws.story.textImport.open')}
             aria-label={t('ws.story.textImport.open')}
+            ref={storyImportTrigger}
             onClick={() => setStoryImportOpen(true)}
           >
             <FileText size={14} />
@@ -633,6 +635,7 @@ export default function ScriptTab() {
         open={storyImportOpen}
         busy={importPanels.isPending}
         characters={series.bible.characters}
+        returnFocusRef={storyImportTrigger}
         onOpenChange={setStoryImportOpen}
         onImport={(list) => void onImportStory(list)}
       />

@@ -366,7 +366,7 @@
     const list = $("pacing-ops");
     const checked = new Set(selectedIds(list));
     list.replaceChildren();
-    for (const suggestion of pacingPreview.suggestions || []) {
+    for (const [index, suggestion] of (pacingPreview.suggestions || []).entries()) {
       const panel = episode.panels?.find((item) => item.id === suggestion.panel_id);
       const wrapper = element("div", undefined, list, "pacing-item");
       const check = element("input", undefined, wrapper);
@@ -375,7 +375,9 @@
       check.checked = checked.has(suggestion.panel_id);
       check.addEventListener("change", update);
       const content = element("div", undefined, wrapper);
-      element("strong", t("pacingPanel", { n: (panel?.order ?? suggestion.order) + 1, title: panel?.description || suggestion.panel_id }), content);
+      const title = element("strong", t("pacingPanel", { n: (panel?.order ?? suggestion.order) + 1, title: panel?.description || suggestion.panel_id }), content);
+      title.id = `pacing-title-${index}`;
+      check.setAttribute("aria-labelledby", title.id);
       if (suggestion.reasons?.length) element("p", `${t("reason")}: ${suggestion.reasons.join(" · ")}`, content, "subtle");
       const changes = element("div", undefined, content, "pacing-changes");
       for (const [field, after] of Object.entries(suggestion.changes || {})) {

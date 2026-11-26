@@ -1,5 +1,5 @@
 import { FileText, MessageSquareText, Sparkles } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Character } from '../../api/types';
 import { Modal, TextArea } from '../../components/ui';
@@ -13,6 +13,7 @@ export function StoryImportDialog(props: {
   open: boolean;
   busy: boolean;
   characters: Character[];
+  returnFocusRef?: RefObject<HTMLElement | null>;
   onOpenChange: (open: boolean) => void;
   onImport: (panels: Record<string, unknown>[]) => void;
 }) {
@@ -32,6 +33,12 @@ export function StoryImportDialog(props: {
     <Modal
       open={props.open}
       onOpenChange={props.onOpenChange}
+      onCloseAutoFocus={(event) => {
+        const trigger = props.returnFocusRef?.current;
+        if (!trigger?.isConnected) return;
+        event.preventDefault();
+        trigger.focus({ preventScroll: true });
+      }}
       title={t('ws.story.textImport.title')}
       description={t('ws.story.textImport.hint')}
       size="lg"

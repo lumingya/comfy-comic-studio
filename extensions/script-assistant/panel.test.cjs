@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { JSDOM } = require("../../web/node_modules/jsdom");
+const { getByRole } = require("../../web/node_modules/@testing-library/dom");
 
 const root = __dirname;
 const flush = async () => {
@@ -276,7 +277,16 @@ async function staleProposalIsNotCheckpointedOrApplied() {
 
 async function pacingReviewUsesRevisionAndSubset() {
   const panel = await createPanel(async (request) => {
-    if (request.request_id === "episode") return { data: episode() };
+    if (request.request_id === "episode")
+      return {
+        data: {
+          ...episode(),
+          panels: [
+            ...episode().panels,
+            { id: "panel-b", order: 1, description: "Closing", width_mode: "full" },
+          ],
+        },
+      };
     if (request.request_id === "pacing-suggest")
       return {
         data: {
@@ -287,6 +297,12 @@ async function pacingReviewUsesRevisionAndSubset() {
               order: 0,
               changes: { width_mode: "inset", gap_after: 48 },
               reasons: ["Beat after dialogue"],
+            },
+            {
+              panel_id: "panel-b",
+              order: 1,
+              changes: { gap_after: 64 },
+              reasons: ["Let the closing breathe"],
             },
           ],
         },
@@ -301,9 +317,24 @@ async function pacingReviewUsesRevisionAndSubset() {
       panel.$("pacing-ops").querySelectorAll("input:checked").length,
       0,
     );
-    const box = panel.$("pacing-ops").querySelector("input");
+    const box = getByRole(panel.$("pacing-ops"), "checkbox", {
+      name: "Scene 1 · Opening",
+    });
+    assert.equal(
+      getByRole(panel.$("pacing-ops"), "checkbox", { name: "Scene 2 · Closing" }).checked,
+      false,
+    );
     box.checked = true;
     box.dispatchEvent(new panel.window.Event("change"));
+    panel.send({ type: "mio:panel:appearance", appearance: { locale: "zh-CN" } });
+    assert.equal(
+      getByRole(panel.$("pacing-ops"), "checkbox", { name: "第 1 幕 · Opening" }).checked,
+      true,
+    );
+    assert.equal(
+      getByRole(panel.$("pacing-ops"), "checkbox", { name: "第 2 幕 · Closing" }).checked,
+      false,
+    );
     await panel.click("apply-pacing");
     const apply = panel.calls.find(
       (call) => call.request_id === "pacing-apply",
