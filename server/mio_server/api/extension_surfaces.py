@@ -328,10 +328,11 @@ def extension_file(ctx: Ctx, ext_id: str, path: str) -> Response:
     if not target.is_file() or target.suffix.lower() not in PANEL_TYPES:
         raise NotFound(f"文件不存在：{path}")
     mime = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
-    # Panels run in a sandboxed iframe without same-origin; this CSP keeps them from loading
-    # anything remote even if opened directly.
+    # Keep panel documents opaque even when opened outside the host's sandboxed iframe.
+    # Resource restrictions and the reviewed message bridge apply in either browsing context.
     csp = (
-        "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; frame-src 'none'; "
+        "sandbox allow-scripts; default-src 'self' data: blob:; "
+        "script-src 'self' 'unsafe-inline'; frame-src 'none'; "
         "style-src 'self' 'unsafe-inline'; connect-src 'none'; form-action 'none'; "
         "frame-ancestors 'self'"
     )

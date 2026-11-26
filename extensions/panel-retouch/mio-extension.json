@@ -20,7 +20,7 @@
           { "id": "edit", "method": "POST", "path": "/episodes/{episode_id}/edit", "scope": "render" },
           { "id": "jobs", "method": "GET", "path": "/jobs", "scope": "read" },
           { "id": "job", "method": "GET", "path": "/jobs/{job_id}", "scope": "read" },
-          { "id": "cancel", "method": "POST", "path": "/jobs/{job_id}/cancel", "scope": "render" },
+          { "id": "cancel", "method": "POST", "path": "/jobs/{job_id}/cancel", "scope": "write" },
           { "id": "adopt", "method": "POST", "path": "/episodes/{episode_id}/takes/{take_id}/adopt", "scope": "write" },
           { "id": "upload-mask", "method": "POST", "path": "/assets", "scope": "write", "input": "image" }
         ]

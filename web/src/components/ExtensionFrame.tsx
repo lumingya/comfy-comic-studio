@@ -146,6 +146,7 @@ export function ExtensionFrame(props: {
         className="ext-frame"
         title={props.panel.title}
         sandbox="allow-scripts"
+        allow="fullscreen"
         referrerPolicy="no-referrer"
         src={`${props.panel.url}${query ? `?${query}` : ''}#mio-session=${session}`}
         onLoad={() => {

@@ -18,7 +18,7 @@ for (const [id, method, path, scope, response] of [
   ["adopt", "POST", "/episodes/{episode_id}/takes/{take_id}/adopt", "write"],
   ["jobs", "GET", "/jobs", "read"],
   ["job", "GET", "/jobs/{job_id}", "read"],
-  ["cancel", "POST", "/jobs/{job_id}/cancel", "render"],
+  ["cancel", "POST", "/jobs/{job_id}/cancel", "write"],
 ]) {
   assert.deepEqual(requests.get(id), {
     id,

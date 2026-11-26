@@ -26,6 +26,15 @@ afterEach(() => {
 });
 
 describe('sandbox panel appearance context', () => {
+  it('delegates only fullscreen while preserving the opaque-origin sandbox', () => {
+    const view = renderWithProviders(<ExtensionFrame panel={panel} />);
+    const iframe = view.getByTitle('Appearance probe') as HTMLIFrameElement;
+
+    expect(iframe.getAttribute('sandbox')).toBe('allow-scripts');
+    expect(iframe.getAttribute('allow')).toBe('fullscreen');
+    expect(iframe.getAttribute('referrerpolicy')).toBe('no-referrer');
+  });
+
   it('sends current tokens on init and live appearance updates without changing API context', async () => {
     const root = document.documentElement;
     root.dataset.theme = 'dark';
