@@ -54,7 +54,7 @@ PNG、WebP 现在都显示 **“图片（ComfyUI API 元数据）”**，不再�
 
 ### WUX-R2-03 · Low：省略的默认 LoRA 名称没有完整名称提示 — 已修复
 
-默认 LoRA 名称 span 现在有完整 `title`。四组合各检查全部 32 个名称，`textContent == title`，末项均为 `NeutralStudy_032_LandscapeStyle.safetensors`。搜索末项后进行实际悬停，DOM 中 title 保持完整。行内仍采用省略显示，完整名称通过原生 title 和已有完整无障碍标签提供。
+默认 LoRA 名称 span 现在有完整 `title`。四组合各检查全部 32 个名称，`textContent == title`，末项均为 `<neutral-lora-asset>`。搜索末项后进行实际悬停，DOM 中 title 保持完整。行内仍采用省略显示，完整名称通过原生 title 和已有完整无障碍标签提供。
 
 结构化证据：`validated-run/evidence.json` 中 `loraTitles`、`loraLastTitle`，以及 `steady-screenshots/evidence.json`。截图：`steady-screenshots/*-lora-title.png`。浏览器内容区截图不包含操作系统绘制的原生 title 气泡，因此**这里的完整名称结论依据真实 DOM title 与全部 32 项逐一比对，不把截图称为已捕获原生提示气泡**。
 

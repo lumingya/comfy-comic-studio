@@ -1,0 +1,33 @@
+{
+  "schema": "mio.synthetic-asset-redaction.v1",
+  "purpose": "只对三份历史审查文档各一处中性测试资产名作机械脱敏；历史 Git blob 与测量记录保留，不改审查结论。",
+  "original_token_sha256": "65157057980324a03a4474023a5bbe481cf1649cab4936e5ec754df9865f30bd",
+  "original_token_length": 43,
+  "replacement": "<neutral-lora-asset>",
+  "files": [
+    {
+      "path": "docs/reviews/comfy-2026-11-25/r2/web.md",
+      "source_commit": "fa6308384826fad7629b2c727d70230cc7951d05",
+      "historical_git_blob": "b3efa907befc43eb657780e7645b4c6d21e265cd",
+      "source_sha256": "4e5a1cb4d7c4510afdc1afc29205b671754c8f04cc1ecf2607580fb149046368",
+      "published_sha256": "1f6d45db419f9090802edbce39869fca0c7909ddf36ade9c545304c3875bdc57",
+      "replacement_count": 1
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-25/r2/web-after.md",
+      "source_commit": "fa6308384826fad7629b2c727d70230cc7951d05",
+      "historical_git_blob": "6e3403d0e81ebddcf478f5867b5ba0013a996637",
+      "source_sha256": "b29f435de28fcd09071d8f20a8ecf740ecdb0b1659502ecde9c98ecf8a822be3",
+      "published_sha256": "ab6384da0f8ea1524a8739104d9c123354e09f49612a4114331fdacce62795d3",
+      "replacement_count": 1
+    },
+    {
+      "path": "docs/reviews/comfy-2026-11-26/r3/web.md",
+      "source_commit": "fa6308384826fad7629b2c727d70230cc7951d05",
+      "historical_git_blob": "f5fe2ea8a05cd81c56c8f2ee812cf5aabd029de6",
+      "source_sha256": "d77e74b285f281f43bd60c17da493a9bc7e616afe980f119667e81ac4f6f879d",
+      "published_sha256": "69ccea3eee55e4e7f93965309472592c03a98d8d3d2ea165a3ab0d19678a7286",
+      "replacement_count": 1
+    }
+  ]
+}

@@ -27,7 +27,7 @@
 ### Low · WUX-R2-03：默认 LoRA 控件将完整文件名省略，当前行没有悬停完整名称
 
 - `web/src/pages/settings/lora-toggle-list.css` 的 `.lora-toggle-switch span` 使用单行省略；`LoraToggleList.tsx` 的对应 span 没有 `title`。
-- 四组合的默认值行均把 `NeutralStudy_032_LandscapeStyle.safetensors` 截为省略文本。搜索与无障碍标签保留完整名称，“识别到的 LoRA”展开列表也能完整换行，因此本次不是操作阻断。
+- 四组合的默认值行均把 `<neutral-lora-asset>` 截为省略文本。搜索与无障碍标签保留完整名称，“识别到的 LoRA”展开列表也能完整换行，因此本次不是操作阻断。
 - 建议：默认值行也提供完整名称的可视核对方式，避免文件名相同前缀、不同后缀时难以确认。
 - 证据：四张 `*-default-lora-scrolled.png`，`default-scroll.json`；这组截图已实际滚动到控件，排除了固定保存栏短暂遮挡造成的误判。
 
