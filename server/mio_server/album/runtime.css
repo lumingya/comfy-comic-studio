@@ -148,6 +148,11 @@ body[data-mio-paged] [data-cc-pages] {
 body[data-mio-paged] [data-cc-frame] {
   min-width: 0;
 }
+/* Let contact-print turns breathe into the book's gutters without widening the page.
+   The outer book retains enough gutter for each card's existing focus outline. */
+body[data-layout="contact"][data-mio-paged] .contact-book {
+  overflow-x: clip;
+}
 body[data-mio-paged][data-mio-direction] .zine [data-cc-frame]:nth-child(n) {
   grid-column: auto;
   width: auto;
