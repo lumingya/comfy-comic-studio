@@ -1,0 +1,611 @@
+{
+  "schema": "mio.r6-generality-cross-inputs.v1",
+  "authorization_sha256": "c57861556e6e7214ca75902cea363c4c9620edbd3ae3d0c4ae830de7fc8561d6",
+  "inputs": [
+    {
+      "role": "blind",
+      "path": "report.md",
+      "sha256": "5e1c575aa22fc3d6dcd19d5efffc4f33810ddc64e3447a2b1ca8ccc31ecc21c6",
+      "bytes": 13139
+    },
+    {
+      "role": "blind",
+      "path": "initial-seal.json",
+      "sha256": "7022dd2f9cde943cff93b6e2fdc23592d588ebd8adabcfb24151286325b29f6b",
+      "bytes": 5970
+    },
+    {
+      "role": "blind",
+      "path": "attribution.json",
+      "sha256": "148d1ea8e58118480bd078de6037adb79980b20629a3527a9ca55da9de32f15b",
+      "bytes": 4398
+    },
+    {
+      "role": "blind",
+      "path": "attribution-facts.json",
+      "sha256": "471990c620431eb6acb5b765fe4d28b5762cf8f6c19dbff821ed59e4671c319c",
+      "bytes": 12936
+    },
+    {
+      "role": "blind",
+      "path": "assessment.json",
+      "sha256": "174cdaeec33d2cd620f8e533f446f64f067858e582a297048da89236a1f82815",
+      "bytes": 30266
+    },
+    {
+      "role": "blind",
+      "path": "candidate-role-oracle.json",
+      "sha256": "1e2272d0362d62e11f67c3083ac065fb2deacb9bae574dfb1bfce02220523b51",
+      "bytes": 2127
+    },
+    {
+      "role": "blind",
+      "path": "applicability.json",
+      "sha256": "2e92cd2628bb5392017556b8a965f1827a8ed8808c95b9b7e39a104b67861afc",
+      "bytes": 14521
+    },
+    {
+      "role": "compile",
+      "path": "report.md",
+      "sha256": "b5ea489e8e0aff3e3939fffb220b7ab1274e56fddaaeb422cae95ff74de74ca6",
+      "bytes": 15418
+    },
+    {
+      "role": "compile",
+      "path": "initial-seal.json",
+      "sha256": "5b31bad4b875696b4dca0bd439f04db9a23032a3120d817de0e847e416ee6b85",
+      "bytes": 10384
+    },
+    {
+      "role": "compile",
+      "path": "consolidated-results.json",
+      "sha256": "2a2fc0573086eb9ecb633c3f9af3e4322f723368db96347a3c59d85554b145c9",
+      "bytes": 25267
+    },
+    {
+      "role": "compile",
+      "path": "historical-four-safe.json",
+      "sha256": "ddf3d76d84412541227d81317650008d697384509b7d03dcc4d36fdca92470eb",
+      "bytes": 1603
+    },
+    {
+      "role": "compile",
+      "path": "initial-input-attribution.json",
+      "sha256": "3eafce3646c7b1e24b1689ede9753c537f733067dd1b5008a1163d069b8ad962",
+      "bytes": 693
+    },
+    {
+      "role": "compile",
+      "path": "old-four-structure.json",
+      "sha256": "ca89606b2c6f69578a2a2194375ce67356bbd2bfb50f977fe2533b78d2136726",
+      "bytes": 20735
+    },
+    {
+      "role": "compile",
+      "path": "official-source-identity.json",
+      "sha256": "972dd672039d783a423b47472ddefa892d53b4e3b40220732eadd245b879537a",
+      "bytes": 600
+    },
+    {
+      "role": "web",
+      "path": "report.md",
+      "sha256": "cc4c156e13710d56214965dfba46842ec8bd883a947374c8bfdbe15ad36d161e",
+      "bytes": 15727
+    },
+    {
+      "role": "web",
+      "path": "initial-seal.json",
+      "sha256": "b7b9b3524ea8ed8d8e7d69138a6ea285e1ff8888857cbbeca7e4a12d3b0fc5e4",
+      "bytes": 4781
+    },
+    {
+      "role": "web",
+      "path": "results.json",
+      "sha256": "3b5ff36f4a69d761ad7c0c2f3a7d83a7fac0717b25d14427794394cf36852841",
+      "bytes": 9811
+    },
+    {
+      "role": "web",
+      "path": "roundtrip-summary.json",
+      "sha256": "618e02b6a790d1029ebe05b3255afca8fc76aa9d2884b807e19bbd7fae59e48a",
+      "bytes": 4346
+    },
+    {
+      "role": "web",
+      "path": "candidate-result.json",
+      "sha256": "9d64d21744c718c723f70b7b18fdbb01b9c6f682f9b5a3a3772992f40bff49a9",
+      "bytes": 1730
+    },
+    {
+      "role": "web",
+      "path": "focus-result.json",
+      "sha256": "9d98eb19389ec1b97bd4812e2edb120e8bc3cf21f06f4e03806a792909e16938",
+      "bytes": 1136
+    },
+    {
+      "role": "web",
+      "path": "final-integrity.json",
+      "sha256": "904e40e294a833ce9336939ec17c45de1ca64f761f2a1815aecdcdbcd3eab1e7",
+      "bytes": 1091
+    },
+    {
+      "role": "privacy",
+      "path": "report.md",
+      "sha256": "628d71af896e5dcebb3988b57c64b2170e13802d8d201ea890753697c80102cb",
+      "bytes": 9440
+    },
+    {
+      "role": "privacy",
+      "path": "initial-seal.json",
+      "sha256": "1e88ad4f8a8fa7026b0f791625bad81ebcf4cb7d5e71ae31c0a7b100b91fa629",
+      "bytes": 2764
+    },
+    {
+      "role": "privacy",
+      "path": "machinechecks.json",
+      "sha256": "ddcd74dc06bb8198b6a96f2727b96a4bcb43cd16c58bdb463a99417f4e7fe133",
+      "bytes": 2367
+    },
+    {
+      "role": "privacy",
+      "path": "ci/report.json",
+      "sha256": "4d49cbd29dff7d4ba2f98bb8e4ca8f3d3399fcbc7b124ec28c512c4802d0801a",
+      "bytes": 45594
+    },
+    {
+      "role": "privacy",
+      "path": "workspace-metadata-followup.json",
+      "sha256": "24d8735e3f1b26ee7fa9d81913f7d29590dfd2f65d4c281c268689ef70f8320e",
+      "bytes": 2164
+    },
+    {
+      "role": "root",
+      "path": "root-process-events.json",
+      "sha256": "e4767cffe8b836d492c4ea51f38cf7b11b05ea9fa3863a0a9c6bd5b7902d7e37",
+      "bytes": 1386
+    },
+    {
+      "role": "root",
+      "path": "root-post-initial-process-events.json",
+      "sha256": "4680c26017c9e09dc4912da251a6add2ef87e7964e53f14e40371480bcb56a68",
+      "bytes": 1196
+    },
+    {
+      "role": "root",
+      "path": "root-post-initial-process-events-v2.json",
+      "sha256": "f7b984583000984ac44ac5cbcf6071391324d5fc8f178cac2d6848d97b6f29c7",
+      "bytes": 947
+    },
+    {
+      "role": "root",
+      "path": "root-post-initial-process-events-v3.json",
+      "sha256": "f71007eba77bd421cc3665447afaa9a728ffc0812155b269811253aca032c705",
+      "bytes": 883
+    }
+  ],
+  "schema_projection": [
+    {
+      "role": "blind",
+      "path": "initial-seal.json",
+      "root_type": "dict",
+      "root_length": 24,
+      "known_fields": {
+        "artifacts": {
+          "type": "list",
+          "length": 29
+        },
+        "base": {
+          "type": "str",
+          "length": 40
+        },
+        "head": {
+          "type": "str",
+          "length": 40
+        },
+        "schema": {
+          "type": "str",
+          "length": 24
+        },
+        "utc": {
+          "type": "str",
+          "length": 32
+        },
+        "verdict": {
+          "type": "str",
+          "length": 13
+        }
+      }
+    },
+    {
+      "role": "blind",
+      "path": "attribution.json",
+      "root_type": "dict",
+      "root_length": 15,
+      "known_fields": {
+        "counts": {
+          "type": "dict",
+          "length": 13
+        },
+        "schema": {
+          "type": "str",
+          "length": 23
+        },
+        "verdict": {
+          "type": "str",
+          "length": 13
+        }
+      }
+    },
+    {
+      "role": "blind",
+      "path": "attribution-facts.json",
+      "root_type": "dict",
+      "root_length": 5,
+      "known_fields": {
+        "counts": {
+          "type": "dict",
+          "length": 13
+        }
+      }
+    },
+    {
+      "role": "blind",
+      "path": "assessment.json",
+      "root_type": "dict",
+      "root_length": 7,
+      "known_fields": {
+        "candidate_guidance": {
+          "type": "list",
+          "length": 9
+        }
+      }
+    },
+    {
+      "role": "blind",
+      "path": "candidate-role-oracle.json",
+      "root_type": "list",
+      "root_length": 9
+    },
+    {
+      "role": "blind",
+      "path": "applicability.json",
+      "root_type": "list",
+      "root_length": 90
+    },
+    {
+      "role": "compile",
+      "path": "initial-seal.json",
+      "root_type": "dict",
+      "root_length": 30,
+      "known_fields": {
+        "base": {
+          "type": "str",
+          "length": 40
+        },
+        "findings": {
+          "type": "dict",
+          "length": 4
+        },
+        "head": {
+          "type": "str",
+          "length": 40
+        },
+        "main": {
+          "type": "dict",
+          "length": 13
+        },
+        "manual29": {
+          "type": "dict",
+          "length": 13
+        },
+        "schema": {
+          "type": "str",
+          "length": 30
+        },
+        "supplement": {
+          "type": "dict",
+          "length": 7
+        },
+        "utc": {
+          "type": "str",
+          "length": 32
+        },
+        "verdict": {
+          "type": "str",
+          "length": 13
+        }
+      }
+    },
+    {
+      "role": "compile",
+      "path": "consolidated-results.json",
+      "root_type": "dict",
+      "root_length": 19,
+      "known_fields": {
+        "base": {
+          "type": "str",
+          "length": 40
+        },
+        "findings": {
+          "type": "dict",
+          "length": 4
+        },
+        "head": {
+          "type": "str",
+          "length": 40
+        },
+        "main": {
+          "type": "dict",
+          "length": 13
+        },
+        "manual29": {
+          "type": "dict",
+          "length": 14
+        },
+        "schema": {
+          "type": "str",
+          "length": 30
+        },
+        "source": {
+          "type": "dict",
+          "length": 4
+        },
+        "supplement": {
+          "type": "dict",
+          "length": 7
+        },
+        "utc": {
+          "type": "str",
+          "length": 32
+        },
+        "verdict": {
+          "type": "str",
+          "length": 13
+        }
+      }
+    },
+    {
+      "role": "compile",
+      "path": "historical-four-safe.json",
+      "root_type": "dict",
+      "root_length": 6,
+      "known_fields": {
+        "old_four": {
+          "type": "list",
+          "length": 4
+        },
+        "schema": {
+          "type": "str",
+          "length": 30
+        }
+      }
+    },
+    {
+      "role": "compile",
+      "path": "initial-input-attribution.json",
+      "root_type": "dict",
+      "root_length": 11,
+      "known_fields": {
+        "schema": {
+          "type": "str",
+          "length": 35
+        }
+      }
+    },
+    {
+      "role": "compile",
+      "path": "old-four-structure.json",
+      "root_type": "dict",
+      "root_length": 7,
+      "known_fields": {}
+    },
+    {
+      "role": "compile",
+      "path": "official-source-identity.json",
+      "root_type": "dict",
+      "root_length": 4,
+      "known_fields": {}
+    },
+    {
+      "role": "web",
+      "path": "initial-seal.json",
+      "root_type": "dict",
+      "root_length": 31,
+      "known_fields": {
+        "base": {
+          "type": "str",
+          "length": 40
+        },
+        "findings": {
+          "type": "dict",
+          "length": 5
+        },
+        "head": {
+          "type": "str",
+          "length": 40
+        },
+        "schema": {
+          "type": "str",
+          "length": 26
+        },
+        "utc": {
+          "type": "str",
+          "length": 32
+        },
+        "verdict": {
+          "type": "str",
+          "length": 13
+        }
+      }
+    },
+    {
+      "role": "web",
+      "path": "results.json",
+      "root_type": "dict",
+      "root_length": 21,
+      "known_fields": {
+        "base": {
+          "type": "str",
+          "length": 40
+        },
+        "head": {
+          "type": "str",
+          "length": 40
+        },
+        "identity": {
+          "type": "dict",
+          "length": 17
+        },
+        "schema": {
+          "type": "str",
+          "length": 21
+        },
+        "utc": {
+          "type": "str",
+          "length": 32
+        },
+        "verdict": {
+          "type": "str",
+          "length": 13
+        }
+      }
+    },
+    {
+      "role": "web",
+      "path": "roundtrip-summary.json",
+      "root_type": "dict",
+      "root_length": 5,
+      "known_fields": {
+        "exports": {
+          "type": "list",
+          "length": 12
+        }
+      }
+    },
+    {
+      "role": "web",
+      "path": "candidate-result.json",
+      "root_type": "dict",
+      "root_length": 28,
+      "known_fields": {
+        "head": {
+          "type": "str",
+          "length": 40
+        },
+        "pass": {
+          "type": "bool",
+          "length": null,
+          "value": true
+        },
+        "schema": {
+          "type": "str",
+          "length": 34
+        }
+      }
+    },
+    {
+      "role": "web",
+      "path": "focus-result.json",
+      "root_type": "dict",
+      "root_length": 29,
+      "known_fields": {
+        "head": {
+          "type": "str",
+          "length": 40
+        },
+        "pass": {
+          "type": "bool",
+          "length": null,
+          "value": true
+        },
+        "schema": {
+          "type": "str",
+          "length": 25
+        }
+      }
+    },
+    {
+      "role": "web",
+      "path": "final-integrity.json",
+      "root_type": "dict",
+      "root_length": 16,
+      "known_fields": {
+        "base": {
+          "type": "str",
+          "length": 40
+        },
+        "head": {
+          "type": "str",
+          "length": 40
+        },
+        "utc": {
+          "type": "str",
+          "length": 32
+        }
+      }
+    },
+    {
+      "role": "privacy",
+      "path": "initial-seal.json",
+      "root_type": "dict",
+      "root_length": 14,
+      "known_fields": {
+        "base": {
+          "type": "str",
+          "length": 40
+        },
+        "candidate": {
+          "type": "str",
+          "length": 40
+        },
+        "schema": {
+          "type": "str",
+          "length": 26
+        },
+        "utc": {
+          "type": "str",
+          "length": 32
+        }
+      }
+    },
+    {
+      "role": "privacy",
+      "path": "machinechecks.json",
+      "root_type": "dict",
+      "root_length": 58,
+      "known_fields": {
+        "base": {
+          "type": "str",
+          "length": 40
+        },
+        "schema": {
+          "type": "str",
+          "length": 35
+        }
+      }
+    },
+    {
+      "role": "privacy",
+      "path": "ci/report.json",
+      "root_type": "dict",
+      "root_length": 27,
+      "known_fields": {
+        "artifacts": {
+          "type": "list",
+          "length": 2
+        },
+        "counts": {
+          "type": "dict",
+          "length": 9
+        }
+      }
+    },
+    {
+      "role": "privacy",
+      "path": "workspace-metadata-followup.json",
+      "root_type": "dict",
+      "root_length": 16,
+      "known_fields": {}
+    }
+  ]
+}

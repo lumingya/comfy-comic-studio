@@ -1,0 +1,37 @@
+{
+  "download_candidate_count": 62,
+  "source_only_candidate_count": 54,
+  "dispositions": {
+    "seen_identity_match": 15,
+    "selected": 13,
+    "coverage_not_selected": 19,
+    "no_graph": 8,
+    "failed_acquisition": 2,
+    "modality_excluded": 5
+  },
+  "selected_api_count": 6,
+  "selected_ui_count": 7,
+  "all_selected_available_layers_fresh": true,
+  "selected_raw_distinct": true,
+  "selected_all_graph_topology_distinct": false,
+  "api_node_counts": [
+    14,
+    15,
+    32,
+    36,
+    14,
+    20
+  ],
+  "ui_node_counts": [
+    16,
+    31,
+    15,
+    68,
+    21,
+    49,
+    29
+  ],
+  "sampling_limit": "One broad mesh token is a conservative source-screening flag; it may name a static preprocessor, so excluded means untested, not certified 3D.",
+  "selected_inter_sample_topology_collisions": [],
+  "selected_inter_sample_distinct": true
+}

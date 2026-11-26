@@ -1,0 +1,1353 @@
+{
+  "schema": "civitai-static-recovery-plan-v1",
+  "state": "READ_ONLY_PLAN_NOT_EXECUTED_WAITING_FOR_ROOT_GO",
+  "started_utc": "2026-11-26T08:10:41.618487+00:00",
+  "guard": {
+    "pid": 45504,
+    "affinity_readback": "0x1",
+    "priority_class_readback": 16384
+  },
+  "source_evidence": [
+    {
+      "label": "original_manifest",
+      "before_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+      "after_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+      "unchanged": true
+    },
+    {
+      "label": "r6_safe_metadata_results",
+      "before_sha256": "79ef8f1f36fa85672308de516dfa2d626160a130d4d7b320376a4a485955367a",
+      "after_sha256": "79ef8f1f36fa85672308de516dfa2d626160a130d4d7b320376a4a485955367a",
+      "unchanged": true
+    }
+  ],
+  "scope": {
+    "fixed_manifest_rows": 35,
+    "fixed_unique_sources": 34,
+    "network_requests_this_phase": 0,
+    "Mio_imports": 0,
+    "product_requests": 0,
+    "tests": 0,
+    "raw_graph_files_read": 0,
+    "directory_enumerations": 0,
+    "literal_path_stat_only": true,
+    "old_outputs_or_source_modified": false,
+    "current75_R1_R2_R3_R4_truth_and_denominators_replaced": false
+  },
+  "inventory": {
+    "present_registered_json_file_rows": 10,
+    "unique_present_registered_files": 10,
+    "rows_without_registered_file": 25,
+    "unique_missing_sources": 24,
+    "present_rows_with_recorded_full_raw_and_canonical_hash": 10,
+    "present_rows_original_short_hash_matches_recorded_canonical": 10,
+    "present_rows_original_short_hash_matches_recorded_raw": 0,
+    "missing_rows_with_full_recorded_raw_or_canonical_hash": 0,
+    "current_raw_byte_identity_reverified": false,
+    "missing_source_with_prior_403": [
+      1466666
+    ],
+    "present_source_with_prior_403": [
+      21100
+    ]
+  },
+  "metadata_file_declarations": {
+    "all_31_enumerated_sources": {
+      "source_count": 31,
+      "file_entry_count": 169,
+      "extension_entry_counts": {
+        "json": 4,
+        "zip": 165
+      },
+      "file_type_entry_counts": {
+        "Archive": 165,
+        "Config": 4
+      },
+      "sources_declaring_json": 3,
+      "sources_declaring_zip": 31,
+      "sources_declaring_png": 0,
+      "sources_declaring_webp": 0
+    },
+    "originally_missing_unique_sources_only": {
+      "source_count": 23,
+      "file_entry_count": 137,
+      "extension_entry_counts": {
+        "json": 3,
+        "zip": 134
+      },
+      "file_type_entry_counts": {
+        "Archive": 134,
+        "Config": 3
+      },
+      "sources_declaring_json": 2,
+      "sources_declaring_zip": 23,
+      "sources_declaring_png": 0,
+      "sources_declaring_webp": 0
+    },
+    "prior_1215102_file_counts": null,
+    "prior_1215102_not_refetched": true,
+    "declaration_does_not_prove_downloadable_or_graph_valid": true,
+    "json_declared_sources": [
+      {
+        "source_resource_id": 1621455,
+        "registered_file_already_present": true,
+        "file_extension_counts": {
+          "json": 1,
+          "zip": 5
+        },
+        "file_type_counts": {
+          "Archive": 5,
+          "Config": 1
+        }
+      },
+      {
+        "source_resource_id": 2503119,
+        "registered_file_already_present": false,
+        "file_extension_counts": {
+          "json": 2,
+          "zip": 2
+        },
+        "file_type_counts": {
+          "Archive": 2,
+          "Config": 2
+        }
+      },
+      {
+        "source_resource_id": 2539304,
+        "registered_file_already_present": false,
+        "file_extension_counts": {
+          "json": 1,
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1,
+          "Config": 1
+        }
+      }
+    ]
+  },
+  "rows": [
+    {
+      "manifest_row_index": 40,
+      "sample_identity_sha256": "9d6a5aa2bc7cb78909b64081ca78df0ade915cf213d65e7799914718e7502da9",
+      "source_resource_id": 1215102,
+      "public_source_url": "https://civitai.com/models/1215102",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 66672
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 66672
+        }
+      ],
+      "original_short_hash": "025e67b8bbb1",
+      "recorded_raw_sha256": "cf28e4f4beb6015e07167b37d39012c811ce9d7e91830f141b0ce58fce82f4e8",
+      "recorded_canonical_sha256": "025e67b8bbb13cf9d7b5f46a016acbd9b65183218174d2ca76c947b134124a26",
+      "recorded_recovered_sha256": "cf28e4f4beb6015e07167b37d39012c811ce9d7e91830f141b0ce58fce82f4e8",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "prior_success_reference_without_file_counts",
+      "http_status": null,
+      "file_extension_counts": null,
+      "file_type_counts": null,
+      "file_entry_count": null,
+      "json_file_declared": null,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 41,
+      "sample_identity_sha256": "d3a2892dbea6ae7c1b71cae393dc5e858e72a38460c8db34c3e5b314be30b16d",
+      "source_resource_id": 128556,
+      "public_source_url": "https://civitai.com/models/128556",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "6e2108f5c5c8",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 18
+      },
+      "file_type_counts": {
+        "Archive": 18
+      },
+      "file_entry_count": 18,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 42,
+      "sample_identity_sha256": "86184e89b9f601f41480c10ed5434e7241c983c2f0797f31731b0b5ed3bb7414",
+      "source_resource_id": 1403746,
+      "public_source_url": "https://civitai.com/models/1403746",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 106932
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 106932
+        }
+      ],
+      "original_short_hash": "2dfebf2eb6a3",
+      "recorded_raw_sha256": "114b9a659addeb2cc94d6c9fe8b35bc569dc88654b72b6b57d70bd99df9689a8",
+      "recorded_canonical_sha256": "2dfebf2eb6a3e150ddaa67b61fe9f19109271eae1f4e8b0fd65ed159091fc49c",
+      "recorded_recovered_sha256": "114b9a659addeb2cc94d6c9fe8b35bc569dc88654b72b6b57d70bd99df9689a8",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 9
+      },
+      "file_type_counts": {
+        "Archive": 9
+      },
+      "file_entry_count": 9,
+      "json_file_declared": false,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 43,
+      "sample_identity_sha256": "029f43bdd8b2ab08465ebd584cc5026f96ccbb99cbdd7a126d0e90069e419a35",
+      "source_resource_id": 143018,
+      "public_source_url": "https://civitai.com/models/143018",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 5260
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 5260
+        }
+      ],
+      "original_short_hash": "09f9c05d72a0",
+      "recorded_raw_sha256": "e82c3b564e29188941d7ecea10d0d168a69e7e15d3417f5da819ec9135944310",
+      "recorded_canonical_sha256": "09f9c05d72a06900044e3be2d07cf80223f7c8e48f930d88fcc13a40b090596c",
+      "recorded_recovered_sha256": "e82c3b564e29188941d7ecea10d0d168a69e7e15d3417f5da819ec9135944310",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1
+      },
+      "file_entry_count": 1,
+      "json_file_declared": false,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 44,
+      "sample_identity_sha256": "614b71377b6c1258f30d2745aa71a67f3f076560feca39c89b598f774ca0f338",
+      "source_resource_id": 1459738,
+      "public_source_url": "https://civitai.com/models/1459738",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "331a9f215b60",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 2
+      },
+      "file_type_counts": {
+        "Archive": 2
+      },
+      "file_entry_count": 2,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 45,
+      "sample_identity_sha256": "721d3e3a006138812f63cff849c41687e3eddbe0a440bd8565030ec9e2dcb825",
+      "source_resource_id": 1466666,
+      "public_source_url": "https://civitai.com/models/1466666",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "39b3a6d5c462",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "http_non_200",
+      "http_status": 403,
+      "file_extension_counts": null,
+      "file_type_counts": null,
+      "file_entry_count": null,
+      "json_file_declared": null,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 46,
+      "sample_identity_sha256": "fff133175a0a32a5c2010bc63fba5d543ca738dd00e79f951be61d79a7ac03e9",
+      "source_resource_id": 1513601,
+      "public_source_url": "https://civitai.com/models/1513601",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "0ad35f95a135",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 11
+      },
+      "file_type_counts": {
+        "Archive": 11
+      },
+      "file_entry_count": 11,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 47,
+      "sample_identity_sha256": "363d3bbeb8b6474db97a6b4303a4c09464994a79182dabd2d5e0d0a8bd98efd5",
+      "source_resource_id": 1598938,
+      "public_source_url": "https://civitai.com/models/1598938",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "25c9bf22bd07",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 5
+      },
+      "file_type_counts": {
+        "Archive": 5
+      },
+      "file_entry_count": 5,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 48,
+      "sample_identity_sha256": "2c6e9ccbe9ec8d9878897e52ba51d576a73baf3f0252fcb4268824b21c51daf3",
+      "source_resource_id": 160207,
+      "public_source_url": "https://civitai.com/models/160207",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 28987
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 28987
+        }
+      ],
+      "original_short_hash": "aa860292c191",
+      "recorded_raw_sha256": "89d7d1bfae5d3cfcd549ba4e897d6bd5041466e485245f6a8e72c0d78bb9b3c9",
+      "recorded_canonical_sha256": "aa860292c191e11a5bf902bf4b07bbe3d8bda09092f1fa9515fb05b536e829f1",
+      "recorded_recovered_sha256": "89d7d1bfae5d3cfcd549ba4e897d6bd5041466e485245f6a8e72c0d78bb9b3c9",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1
+      },
+      "file_entry_count": 1,
+      "json_file_declared": false,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 49,
+      "sample_identity_sha256": "51f48c5c02ecd5ffdf58dccc7dc009dd324f99d43e2543633910e9195e6b27d5",
+      "source_resource_id": 1621455,
+      "public_source_url": "https://civitai.com/models/1621455",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 171051
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 171051
+        }
+      ],
+      "original_short_hash": "ce60a509afeb",
+      "recorded_raw_sha256": "47d76fb317da0825343bd42363c32719a9471f1d78c8916ef4e148b42731fe11",
+      "recorded_canonical_sha256": "ce60a509afeb6cd701390d37782755d9e9971057d9a0092bea114e94e41488c8",
+      "recorded_recovered_sha256": "47d76fb317da0825343bd42363c32719a9471f1d78c8916ef4e148b42731fe11",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "json": 1,
+        "zip": 5
+      },
+      "file_type_counts": {
+        "Archive": 5,
+        "Config": 1
+      },
+      "file_entry_count": 6,
+      "json_file_declared": true,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 50,
+      "sample_identity_sha256": "06fe1fc9c9606ebdf6d88519cf66884be988eb3475f29fcfc816bb3dd3965ccf",
+      "source_resource_id": 1720275,
+      "public_source_url": "https://civitai.com/models/1720275",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "56c9b350ef52",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1
+      },
+      "file_entry_count": 1,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 51,
+      "sample_identity_sha256": "394cf87c4f2e537db948f3311244e3b0cf73df4cb6bf0615cd27b13574b6321e",
+      "source_resource_id": 1722123,
+      "public_source_url": "https://civitai.com/models/1722123",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "1e6a5ac8a1fc",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 2
+      },
+      "file_type_counts": {
+        "Archive": 2
+      },
+      "file_entry_count": 2,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 52,
+      "sample_identity_sha256": "9d72c9eea8711dc6d71cb78b54ae9f35567a09424b2b3c3a9bc7c807df2c46bf",
+      "source_resource_id": 1804319,
+      "public_source_url": "https://civitai.com/models/1804319",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "e6dde8192e94",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 5
+      },
+      "file_type_counts": {
+        "Archive": 5
+      },
+      "file_entry_count": 5,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 53,
+      "sample_identity_sha256": "bc09a5fd1cbbfb6b0b4887eb7c9ff6854079a9418b1e271f5549178570d0e6a2",
+      "source_resource_id": 1910487,
+      "public_source_url": "https://civitai.com/models/1910487",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "ceda3d28a8ae",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1
+      },
+      "file_entry_count": 1,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 54,
+      "sample_identity_sha256": "112d8092ade29afb4b9626b968375d6502f0f4b5106e0b1ca2991fba16dc562e",
+      "source_resource_id": 2060113,
+      "public_source_url": "https://civitai.com/models/2060113",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "98eb3bd130bc",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 2
+      },
+      "file_type_counts": {
+        "Archive": 2
+      },
+      "file_entry_count": 2,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 55,
+      "sample_identity_sha256": "716a1d7c2185b0f02448bd0167dd42587c73ce531ddd453a1a46108bdeb6776d",
+      "source_resource_id": 21100,
+      "public_source_url": "https://civitai.com/models/21100",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 400333
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 400333
+        }
+      ],
+      "original_short_hash": "65e50604d2e7",
+      "recorded_raw_sha256": "6337f6f6246a47473a44dc6fb1f0af02d09f8f5965d822d5d9206343bb081631",
+      "recorded_canonical_sha256": "65e50604d2e78fefc2c521ece24f1063ccf3fd08f4ffe84c72def38c4e12700e",
+      "recorded_recovered_sha256": "6337f6f6246a47473a44dc6fb1f0af02d09f8f5965d822d5d9206343bb081631",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "http_non_200",
+      "http_status": 403,
+      "file_extension_counts": null,
+      "file_type_counts": null,
+      "file_entry_count": null,
+      "json_file_declared": null,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 56,
+      "sample_identity_sha256": "54e8644135ec50688ce65436b34839ff55bd01542a990fc6c4bda92cd9a7fb74",
+      "source_resource_id": 2203669,
+      "public_source_url": "https://civitai.com/models/2203669",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "300a8294a4c6",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1
+      },
+      "file_entry_count": 1,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 57,
+      "sample_identity_sha256": "ffd63ec562278f18f45f141f61c95d6cc67a6412c02aa09d86ba8e99bd781ea5",
+      "source_resource_id": 2503119,
+      "public_source_url": "https://civitai.com/models/2503119",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "07e1c24ec261",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "json": 2,
+        "zip": 2
+      },
+      "file_type_counts": {
+        "Archive": 2,
+        "Config": 2
+      },
+      "file_entry_count": 4,
+      "json_file_declared": true,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 58,
+      "sample_identity_sha256": "c40378182ae5538b5a548f61195f33c35cd580492ff8b7a13f356b3167fcd2cf",
+      "source_resource_id": 2539304,
+      "public_source_url": "https://civitai.com/models/2539304",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "97602bb4c7b1",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "json": 1,
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1,
+        "Config": 1
+      },
+      "file_entry_count": 2,
+      "json_file_declared": true,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 59,
+      "sample_identity_sha256": "cb416fc24e9b974b29c8fa3d6a68f661cc7b3f52f087fa22d4bef408bcb82666",
+      "source_resource_id": 304986,
+      "public_source_url": "https://civitai.com/models/304986",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "c71b819a5a4b",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1
+      },
+      "file_entry_count": 1,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 60,
+      "sample_identity_sha256": "0d4411adb49c66d4dd5a1d50722fc0f01bea734dc88f4342076285c5b34386b5",
+      "source_resource_id": 333060,
+      "public_source_url": "https://civitai.com/models/333060",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "b4eec9dc0bd7",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1
+      },
+      "file_entry_count": 1,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 61,
+      "sample_identity_sha256": "ec27551295c6d927283de8002ffc2f093cc84ed847a64bde1fc59e4fe0ed9f04",
+      "source_resource_id": 364115,
+      "public_source_url": "https://civitai.com/models/364115",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 28575
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 28575
+        }
+      ],
+      "original_short_hash": "afce1fee75c5",
+      "recorded_raw_sha256": "273a4bb912fc581d51efe1d44fc33e60947eced29b02c4175e67e69ed6795ecf",
+      "recorded_canonical_sha256": "afce1fee75c550b9a63bd0024bf2482ae156bd230a1b28decc4ad400d55281cd",
+      "recorded_recovered_sha256": "273a4bb912fc581d51efe1d44fc33e60947eced29b02c4175e67e69ed6795ecf",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 2
+      },
+      "file_type_counts": {
+        "Archive": 2
+      },
+      "file_entry_count": 2,
+      "json_file_declared": false,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 62,
+      "sample_identity_sha256": "05c55782a9a22e1ea2d7f42e1821ed846b797ba03796d4be841eb8ddc98aff24",
+      "source_resource_id": 617060,
+      "public_source_url": "https://civitai.com/models/617060",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 12374
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 12374
+        }
+      ],
+      "original_short_hash": "1c84cde77e05",
+      "recorded_raw_sha256": "929d798dc4d0f5a9323e562a634470219e33b2d31779b46ca59b665764a090d9",
+      "recorded_canonical_sha256": "1c84cde77e05e6ac70430ba09b306125406963f92dfa2fefb3e9ebbe85ab00f9",
+      "recorded_recovered_sha256": "929d798dc4d0f5a9323e562a634470219e33b2d31779b46ca59b665764a090d9",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 2
+      },
+      "file_type_counts": {
+        "Archive": 2
+      },
+      "file_entry_count": 2,
+      "json_file_declared": false,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 63,
+      "sample_identity_sha256": "12c197962f1128e7c84610236d0b2339ed8c53d3d5b7fe7d44749d1d15b65108",
+      "source_resource_id": 617451,
+      "public_source_url": "https://civitai.com/models/617451",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "afe2274c2bfa",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 4
+      },
+      "file_type_counts": {
+        "Archive": 4
+      },
+      "file_entry_count": 4,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 64,
+      "sample_identity_sha256": "a6d49ec32ccf7df2ebe8ddb5642b56be7306806398650157cfb61fc57f6f3133",
+      "source_resource_id": 618578,
+      "public_source_url": "https://civitai.com/models/618578",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "bb51739e9441",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 20
+      },
+      "file_type_counts": {
+        "Archive": 20
+      },
+      "file_entry_count": 20,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 65,
+      "sample_identity_sha256": "2dda514cab23ae0daffd6f7cc319cc2822ca99b630580bd575cecd28c80f04a2",
+      "source_resource_id": 664292,
+      "public_source_url": "https://civitai.com/models/664292",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 463437
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 463437
+        }
+      ],
+      "original_short_hash": "0dbb4cc5bb74",
+      "recorded_raw_sha256": "18c785f8f9c8844644ecf782c5b28a8b10d449b304821380248005faf80d9724",
+      "recorded_canonical_sha256": "0dbb4cc5bb748f5e069dee0c8b52c49f3b60ea15c79db96f980d9926b1b88949",
+      "recorded_recovered_sha256": "18c785f8f9c8844644ecf782c5b28a8b10d449b304821380248005faf80d9724",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 10
+      },
+      "file_type_counts": {
+        "Archive": 10
+      },
+      "file_entry_count": 10,
+      "json_file_declared": false,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 66,
+      "sample_identity_sha256": "fd2be5c5fc65ba1f30cef11612fefd19dc7aff24b9ca7dabf4630025173ff069",
+      "source_resource_id": 688735,
+      "public_source_url": "https://civitai.com/models/688735",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "7a8566a3be4f",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 4
+      },
+      "file_type_counts": {
+        "Archive": 4
+      },
+      "file_entry_count": 4,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 67,
+      "sample_identity_sha256": "6aa87bb64d5388d910d4a8f239ef522751ca9b60190655b4fc8775dfe384d780",
+      "source_resource_id": 698637,
+      "public_source_url": "https://civitai.com/models/698637",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "7a637308810f",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 4
+      },
+      "file_type_counts": {
+        "Archive": 4
+      },
+      "file_entry_count": 4,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 68,
+      "sample_identity_sha256": "216a0f0591dad04b4e04a84b0c9b48f1c4b11e91c96f98e16e62f6c9e1838c15",
+      "source_resource_id": 709352,
+      "public_source_url": "https://civitai.com/models/709352",
+      "saved_container": "json",
+      "registered_file_presence": "present",
+      "literal_path_stat_checks": [
+        {
+          "manifest_field": "path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 23925
+        },
+        {
+          "manifest_field": "relative_path",
+          "scope": "known_root_literal_only",
+          "file_exists": true,
+          "extension": "json",
+          "stat_size_bytes": 23925
+        }
+      ],
+      "original_short_hash": "a90e824ced72",
+      "recorded_raw_sha256": "f1fd5b214943f337870c6b4f8670daec39190ee3c9c6609a43681ed35245dbfe",
+      "recorded_canonical_sha256": "a90e824ced72835bb9536e9e01f3bc5c9c64b82e4b92afe09e5c9b029687f576",
+      "recorded_recovered_sha256": "f1fd5b214943f337870c6b4f8670daec39190ee3c9c6609a43681ed35245dbfe",
+      "recorded_original_hash_matches_flag": true,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": true,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 1
+      },
+      "file_type_counts": {
+        "Archive": 1
+      },
+      "file_entry_count": 1,
+      "json_file_declared": false,
+      "original_version_id_recorded": true,
+      "original_file_id_recorded": true
+    },
+    {
+      "manifest_row_index": 69,
+      "sample_identity_sha256": "435d60d52f247225ef8819b24a4ffcb408ba095e5b674d5e02fa03200f4f7246",
+      "source_resource_id": 830300,
+      "public_source_url": "https://civitai.com/models/830300",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "064440ab88bd",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 20
+      },
+      "file_type_counts": {
+        "Archive": 20
+      },
+      "file_entry_count": 20,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 70,
+      "sample_identity_sha256": "3d985d07a47dec62702e53823eb4865b03d2024bcf0981b03255538ebc9b3835",
+      "source_resource_id": 830300,
+      "public_source_url": "https://civitai.com/models/830300",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "c0e0da1fc486",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 20
+      },
+      "file_type_counts": {
+        "Archive": 20
+      },
+      "file_entry_count": 20,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 71,
+      "sample_identity_sha256": "cd5da137e89b6baf8f9571cbb6db8e9946c6c21197bed1fd08434205d0cfa530",
+      "source_resource_id": 871897,
+      "public_source_url": "https://civitai.com/models/871897",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "c2bb71dbdc77",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 5
+      },
+      "file_type_counts": {
+        "Archive": 5
+      },
+      "file_entry_count": 5,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 72,
+      "sample_identity_sha256": "8b64e14c1ae905bcb8eae17070025e18e8c9b3cf6a242df66d6dcaddcd19dde9",
+      "source_resource_id": 892447,
+      "public_source_url": "https://civitai.com/models/892447",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "1f05f473353d",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 2
+      },
+      "file_type_counts": {
+        "Archive": 2
+      },
+      "file_entry_count": 2,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 73,
+      "sample_identity_sha256": "721e7925a1df48627a7ba71f86c55ad2cd6570a48d65f5dfbdaf5871c0a54c18",
+      "source_resource_id": 912123,
+      "public_source_url": "https://civitai.com/models/912123",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "3b0e52c8fc9b",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 6
+      },
+      "file_type_counts": {
+        "Archive": 6
+      },
+      "file_entry_count": 6,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    },
+    {
+      "manifest_row_index": 74,
+      "sample_identity_sha256": "208a26ca82ffc2810b1417bf235c351b66dcaa0347258d22b45e1f5d6413eedd",
+      "source_resource_id": 933018,
+      "public_source_url": "https://civitai.com/models/933018",
+      "saved_container": "json",
+      "registered_file_presence": "no_recorded_path",
+      "literal_path_stat_checks": [],
+      "original_short_hash": "85a6484314dd",
+      "recorded_raw_sha256": null,
+      "recorded_canonical_sha256": null,
+      "recorded_recovered_sha256": null,
+      "recorded_original_hash_matches_flag": null,
+      "original_prefix_matches_recorded_raw": false,
+      "original_prefix_matches_recorded_canonical": false,
+      "raw_file_read_or_hash_recomputed_this_phase": false,
+      "metadata_status": "metadata_recorded",
+      "http_status": 200,
+      "file_extension_counts": {
+        "zip": 16
+      },
+      "file_type_counts": {
+        "Archive": 16
+      },
+      "file_entry_count": 16,
+      "json_file_declared": false,
+      "original_version_id_recorded": false,
+      "original_file_id_recorded": false
+    }
+  ],
+  "proposed_first_batch": {
+    "status": "NOT_AUTHORIZED_OR_EXECUTED",
+    "fixed_source_order": [
+      2503119,
+      2539304
+    ],
+    "selection_rule": "Originally missing rows with current Workflows resource and JSON Config declarations; exclude already-present 1621455, archive-only sources and all prior 403 sources. Two sources only; no fallback reselection.",
+    "maximum_sources": 2,
+    "maximum_metadata_get_per_source": 1,
+    "maximum_static_file_get_per_source": 1,
+    "maximum_total_gets": 4,
+    "serial_only": true,
+    "retries": 0,
+    "metadata_cap_decoded_bytes": 524288,
+    "chunk_max_bytes": 16384,
+    "metadata_source_timeout_seconds": 32,
+    "static_file_source_timeout_seconds": 35,
+    "eligible_file_rule": "New single metadata response must match fixed numeric resource ID and Workflows type; file extension JSON and type Config, with positive numeric version/file IDs. No original IDs are recorded for these two missing rows. Choose minimum numeric (version ID, file ID) tuple among eligible entries before any file GET; no second candidate if failure or non-graph.",
+    "file_url_rule": "Use only selected metadata entry public HTTPS exact download URL in memory; never output it. No cookies, credentials, token, challenge, login or automatic redirect. Redirect/non-200/non-JSON-like content closes that source without a replacement GET.",
+    "file_format_allowed_this_first_batch": [
+      "json"
+    ],
+    "file_decode_cap_bytes": 2097152,
+    "json_acceptance": "Bound stream before append. Require UTF-8 with optional BOM, first non-whitespace byte object/array marker, then full bounded JSON parse and structural static ComfyUI API/frontend graph validation without imports/execution. Config-only JSON is not accepted as a graph.",
+    "storage_if_later_authorized": "New isolated private supplemental directory only, generated neutral IDs; no overwrite of historical graph/truth/current75, no prompt/model names in public projection. Keep new delivered-file raw SHA and canonical algorithm SHA separately.",
+    "identity_limit": "Missing rows have only 12-hex canonical identity prefixes and no full raw SHA or original file/version IDs. A new same-source valid graph is an independent supplement. Do not call it original raw-byte recovery or replace missing counts/oracles without a separately justified identity proof.",
+    "success_public_projection": [
+      "fixed_source_id",
+      "selected_public_numeric_file_and_version_ids",
+      "HTTP_status",
+      "byte_count",
+      "magic_and_parse_result",
+      "raw_sha256",
+      "canonical_sha256_and_algorithm",
+      "static_graph_node_count",
+      "identity_level"
+    ],
+    "root_go_required_before_network": true
+  },
+  "future_format_guards_not_authorized_this_batch": {
+    "json": {
+      "max_bytes": 2097152,
+      "magic": "UTF-8 optional BOM then object/array start; full bounded parse required"
+    },
+    "png": {
+      "max_bytes": 8388608,
+      "magic": "89504e470d0a1a0a",
+      "guard": "Bound chunks and dimensions; inspect only workflow metadata, never render image; cap metadata decompression at 2MiB."
+    },
+    "webp": {
+      "max_bytes": 8388608,
+      "magic": "RIFF length and WEBP container signatures",
+      "guard": "Validate declared RIFF length and chunk bounds; inspect only workflow metadata, no pixel decode; decoded metadata max2MiB."
+    },
+    "zip": {
+      "max_bytes": 8388608,
+      "magic": "PK local or empty central-directory signatures",
+      "guard": "Central-directory validation only before member read; reject encrypted/symlink/path traversal/absolute entries, model or executable members. No extraction to disk or model loading; at most one JSON member read, <=2MiB and declared total<=16MiB, compression ratio<=100 and <=64 entries."
+    },
+    "unknown_binary_or_model_weight": "Reject immediately; no attempt to infer a workflow from model binaries."
+  },
+  "finished_utc": "2026-11-26T08:10:41.632502+00:00",
+  "literal_path_stats_unchanged_during_plan": true
+}

@@ -1,0 +1,188 @@
+{
+  "schema": "r6-blind-initial-seal-v1",
+  "utc": "2026-11-26T10:11:28.116561+00:00",
+  "verdict": "VERIFIED PASS",
+  "role": "blind",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "runtime_count": 218,
+  "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+  "all_server_count": 407,
+  "all_server_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32",
+  "source_identity_pre_post_equal": true,
+  "guard": {
+    "utc": "2026-11-26T10:01:53.402744+00:00",
+    "pid": 29296,
+    "affinity": 1,
+    "priority": 16384,
+    "before_mio_import": true,
+    "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487"
+  },
+  "lease": "r6-blind-001",
+  "lease_released": true,
+  "explicit_product_calls": 184,
+  "compile_requests": 133,
+  "selected_samples": 13,
+  "selected_api": 6,
+  "selected_ui": 7,
+  "independent_before_seal": true,
+  "raw_false_preserved": {
+    "full_contract": 16,
+    "typed": 14,
+    "candidate_pairs": 2
+  },
+  "severity_totals": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 2
+  },
+  "artifacts": [
+    {
+      "file": "report.md",
+      "bytes": 13139,
+      "sha256": "5e1c575aa22fc3d6dcd19d5efffc4f33810ddc64e3447a2b1ca8ccc31ecc21c6"
+    },
+    {
+      "file": "attribution.json",
+      "bytes": 4398,
+      "sha256": "148d1ea8e58118480bd078de6037adb79980b20629a3527a9ca55da9de32f15b"
+    },
+    {
+      "file": "attribution-facts.json",
+      "bytes": 12936,
+      "sha256": "471990c620431eb6acb5b765fe4d28b5762cf8f6c19dbff821ed59e4671c319c"
+    },
+    {
+      "file": "assessment.json",
+      "bytes": 30266,
+      "sha256": "174cdaeec33d2cd620f8e533f446f64f067858e582a297048da89236a1f82815"
+    },
+    {
+      "file": "results.json",
+      "bytes": 206011,
+      "sha256": "5ad7e545a6d822fea03e75e1f80e872b665bc5cd75d33c749844422764589bd3"
+    },
+    {
+      "file": "results.private.json",
+      "bytes": 6018578,
+      "sha256": "d2e81dc46830f568ed18253b3d6a3ab2e6e5aea2758624afce0fab02556260d2"
+    },
+    {
+      "file": "selected-manifest.json",
+      "bytes": 31673,
+      "sha256": "02f5f3463945d8cd5d43fa2ba226a423164f26e1c941f92dc6adbc85dce8c7f3"
+    },
+    {
+      "file": "candidates-final.json",
+      "bytes": 140803,
+      "sha256": "e47ec79e4bd2ff9af84c3ffc5afb61f0e7c18ac73dbb99602c68ff102c8ac218"
+    },
+    {
+      "file": "all-candidates.json",
+      "bytes": 136867,
+      "sha256": "f0f6ea991127b62c1afe093757ac6cb0a80394a30689e1792ca5d5c5b0501ace"
+    },
+    {
+      "file": "source-only-candidates.json",
+      "bytes": 28629,
+      "sha256": "9de15e3d6d86d792e498081a07c619a4694369d32fa6aa66e8076abfe6d4c3d7"
+    },
+    {
+      "file": "graphs.private.json",
+      "bytes": 455293,
+      "sha256": "e7d21b2690f5a8db82b986566f93980f956bf6d954fd8dde93f69bd6a6b54c5e"
+    },
+    {
+      "file": "oracle.private.json",
+      "bytes": 1066138,
+      "sha256": "4822e9f60b4ce71511902a74f7150a97000fd79986c76a230ba7d0860cf54318"
+    },
+    {
+      "file": "endpoint-oracle.json",
+      "bytes": 3970,
+      "sha256": "2e958cce616de9d54cb252a536df14f1903f465e3f80912b7e1694dbd6df578a"
+    },
+    {
+      "file": "candidate-role-oracle.json",
+      "bytes": 2127,
+      "sha256": "1e2272d0362d62e11f67c3083ac065fb2deacb9bae574dfb1bfce02220523b51"
+    },
+    {
+      "file": "applicability.json",
+      "bytes": 14521,
+      "sha256": "2e92cd2628bb5392017556b8a965f1827a8ed8808c95b9b7e39a104b67861afc"
+    },
+    {
+      "file": "source-identity.json",
+      "bytes": 341,
+      "sha256": "a3f2ca7ebd2d13864ae92fe83f5c5d0078ced7424b8f11de02395a6dcc2053ea"
+    },
+    {
+      "file": "pre-run-freeze.json",
+      "bytes": 2027,
+      "sha256": "8a845f25d8ca58db244cb834c9d522d45e4b0790c61ee00f6cfef794239d684e"
+    },
+    {
+      "file": "run-authorization-request.json",
+      "bytes": 2438,
+      "sha256": "96fbaa64b7b566c0d6f179705dee25c63ce11dbdeb0edeb04d6f0a5443087110"
+    },
+    {
+      "file": "product-lease.json",
+      "bytes": 535,
+      "sha256": "914a2e15ff7428de2b37dd99703dfcffe1ab064d5e3c908092b3ac7a27a9eaee"
+    },
+    {
+      "file": "execution-started.json",
+      "bytes": 227,
+      "sha256": "f31e46255aca2cc8480d07fd9b9cee9de306b7b5bb8ba6fa00f417a4d1b869c6"
+    },
+    {
+      "file": "lease-released.json",
+      "bytes": 801,
+      "sha256": "c3c7520f65675054e0255363b8a61de3b6fd0a00b048b101590844e73caf0e3e"
+    },
+    {
+      "file": "execute.py",
+      "bytes": 8997,
+      "sha256": "ea42d75167c9402c27447645cdc26156b15b7accd0a92bec95d4954715e3ebc6"
+    },
+    {
+      "file": "freeze.py",
+      "bytes": 12818,
+      "sha256": "68ad1e25dd531f2de33f3308c8c1bc95519f91ce53618b16fb5c1102aa155aee"
+    },
+    {
+      "file": "candidate_freeze.py",
+      "bytes": 1655,
+      "sha256": "8b93b96e6ebbb53c834dff123a66e0f3f6c550dabf531d29333c301294086b67"
+    },
+    {
+      "file": "prepare.py",
+      "bytes": 21445,
+      "sha256": "8afaf477ac1f47fc052ca7438d0790b8cb869d3a3ab242b5555dde943ba983fe"
+    },
+    {
+      "file": "process-events.json",
+      "bytes": 3442,
+      "sha256": "e4cc72e5aad02e744906a76c7f2accee0882c77071bff79775ea237aca6e6a48"
+    },
+    {
+      "file": "preparation-summary.json",
+      "bytes": 893,
+      "sha256": "13e7a2461fbaa2ae377d3ae02b6d242ae3e516e147550fc048c36aa75d02febf"
+    },
+    {
+      "file": "search-source-index.json",
+      "bytes": 5811,
+      "sha256": "694b241f5a64584ba3f5d2b5e1b4a7f2268000cc390170d68fa994fc95b3a2bc"
+    },
+    {
+      "file": "structural-review.json",
+      "bytes": 57372,
+      "sha256": "ce41f4b82c583da615fa6e8f08c6fcbe0fa7dbf8efc557a04c93f9243a54deb0"
+    }
+  ],
+  "publication": "known-schema safe projections; private raw/oracle/results are only external role evidence"
+}

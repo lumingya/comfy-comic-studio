@@ -1,0 +1,24 @@
+{
+  "schema": "mio.r6.web.candidate-freeze.v1",
+  "utc": "2026-11-26T10:15:32.845022+00:00",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "source_freeze_sha256": "59c8e82d29670b417884431b1163563ea9829684de90a08e1fe7f56975a6ed28",
+  "fixture_sha256": "e871004f541b8dfd733625391a4266c7d5412808b0a7f337564dad6f191367f8",
+  "probe_sha256": "87df3ca319b671005b7552fdca5527af4b525d4931721139ec0a400ec5dff83c",
+  "launcher_sha256": "80c516bf9e5d6f9c2c1e8b2f06f6394e2c24c3495e737089f97be250a5a580f5",
+  "saved_own_identity_sha256": "9295c7a90202a22d8b50dc69dba01292c7cbc1b7c6ff0dafef2487a870c4a38a",
+  "oracle": "Only original desktop-light prompt candidate exhibition gap: expand original frozen PNG before any mappings; prompt and negative for 20/21 plus six independent image roles; retain orphan60 missing original two rows. No graph/config mutation, import-save or matrix replay.",
+  "readonly_POST": "/api/workflows/inspect-file exactly once",
+  "persistent_mutation": 0,
+  "preview_ordinal": 17,
+  "original_preview_denominator": 16,
+  "actions_expected": 6,
+  "limits": {
+    "actions": 10,
+    "screenshots": 1,
+    "file_preview": 1,
+    "api_requests": 15,
+    "all_own_origin_requests": 50,
+    "minutes": 3
+  }
+}

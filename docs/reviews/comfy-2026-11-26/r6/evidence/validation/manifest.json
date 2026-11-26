@@ -1,0 +1,300 @@
+{
+  "schema": "mio.r6-local-validation.safe-publication.v1",
+  "prepared_date": "2026-11-26",
+  "publication_state": "RESULTS_RECORDED_REVIEW_REQUIRED_AWAIT_R6_DELIVERY_PUBLICATION",
+  "publication_role": "Pure safe evidence preparation; not full CI, product replay, fresh reviewer signature, commit or push.",
+  "candidate_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "tested_worktree_parent": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+  "source_allowlist": [
+    "validation.json",
+    "frozen-source.json",
+    "format-recovery.json",
+    "committed-source.json",
+    "formatted/validation.json",
+    "formatted/frozen-source.json"
+  ],
+  "source_files": [
+    {
+      "source_root_label": "external-temp-evidence/repairs/r6-candidate-validation",
+      "source": "validation.json",
+      "original_sha256": "6558d55d387f81658ebef4dacaf23b37a60fc28186f477684354684f95a17fe8",
+      "original_git_blob_sha1_calculated": "1b5ad35b3b4d5ff10612b95f7da5ca8dc9be94bb",
+      "destination": "validation.json",
+      "published_sha256": "6558d55d387f81658ebef4dacaf23b37a60fc28186f477684354684f95a17fe8",
+      "published_git_blob_sha1_calculated": "1b5ad35b3b4d5ff10612b95f7da5ca8dc9be94bb",
+      "original_byte_identical": true,
+      "projection": {
+        "mode": "safe complete JSON copy with LF/single EOF normalization only",
+        "retains_first_failure_or_exact_local_validation_or_commit_record": true
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs/r6-candidate-validation",
+      "source": "frozen-source.json",
+      "original_sha256": "061f5bf2c4827e7f66637d30aee8c3b16480e44163bdeb9ce1cff10d6903c875",
+      "original_git_blob_sha1_calculated": "20acd33f4a5ab2716f257f20dafd9b4cbb2ee116",
+      "destination": "frozen-source.json",
+      "published_sha256": "f43c3764ee4b160ccdcd8ea80dfd143bb7d3864c8b3644b6f9df7fd2df3cb178",
+      "published_git_blob_sha1_calculated": "4a41e6d89ad0cd45523c5283b7af33c8a5a20958",
+      "original_byte_identical": false,
+      "projection": {
+        "mode": "aggregate identity projection",
+        "original_runtime_file_hash_entries_omitted": 218,
+        "original_all_server_file_hash_entries_omitted": 407,
+        "retained_changed_file_hash_rows": 3,
+        "retains_original_state_guard_aggregate_and_source_SHA": true,
+        "no_original_path_values_exported": true
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs/r6-candidate-validation",
+      "source": "format-recovery.json",
+      "original_sha256": "8db4f3003bc399595bb1dbe61fa85e8af10b0908eb780ad0057ede56a5f95ff7",
+      "original_git_blob_sha1_calculated": "a4d2fc7b571f6650ca1f0f753bbd3c038b12a62d",
+      "destination": "format-recovery.json",
+      "published_sha256": "8db4f3003bc399595bb1dbe61fa85e8af10b0908eb780ad0057ede56a5f95ff7",
+      "published_git_blob_sha1_calculated": "a4d2fc7b571f6650ca1f0f753bbd3c038b12a62d",
+      "original_byte_identical": true,
+      "projection": {
+        "mode": "safe complete JSON copy with LF/single EOF normalization only",
+        "retains_first_failure_or_exact_local_validation_or_commit_record": true
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs/r6-candidate-validation",
+      "source": "committed-source.json",
+      "original_sha256": "3c79c149727f131a8546e94afd05b55c89d529f2e925072d714094a707a18a98",
+      "original_git_blob_sha1_calculated": "0e2d20629ea709bea19526ca2e7e56bf885935bd",
+      "destination": "committed-source.json",
+      "published_sha256": "3c79c149727f131a8546e94afd05b55c89d529f2e925072d714094a707a18a98",
+      "published_git_blob_sha1_calculated": "0e2d20629ea709bea19526ca2e7e56bf885935bd",
+      "original_byte_identical": true,
+      "projection": {
+        "mode": "safe complete JSON copy with LF/single EOF normalization only",
+        "retains_first_failure_or_exact_local_validation_or_commit_record": true
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs/r6-candidate-validation",
+      "source": "formatted/validation.json",
+      "original_sha256": "27206513eb99169931c79c096eeaa0c7c9778f5e313e7d8c8d08659238f505db",
+      "original_git_blob_sha1_calculated": "5a5c0086c9d2fe0f6afc38a95e2f820f0e277e46",
+      "destination": "formatted/validation.json",
+      "published_sha256": "27206513eb99169931c79c096eeaa0c7c9778f5e313e7d8c8d08659238f505db",
+      "published_git_blob_sha1_calculated": "5a5c0086c9d2fe0f6afc38a95e2f820f0e277e46",
+      "original_byte_identical": true,
+      "projection": {
+        "mode": "safe complete JSON copy with LF/single EOF normalization only",
+        "retains_first_failure_or_exact_local_validation_or_commit_record": true
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs/r6-candidate-validation",
+      "source": "formatted/frozen-source.json",
+      "original_sha256": "f3e2f259d55a4ee5952e75dadedfc9591b4965551750e664924cbcbe42686dd5",
+      "original_git_blob_sha1_calculated": "ef2c9dbd77fd2050d8a0c53e1233afe58b7dda7b",
+      "destination": "formatted/frozen-source.json",
+      "published_sha256": "d87330e56d004fc57eaca68fa9e78198fa10da7b2204db38a456d531432d0b9c",
+      "published_git_blob_sha1_calculated": "7cb6cbedeb7cf9d8a7ec59a8397484cc97a12e47",
+      "original_byte_identical": false,
+      "projection": {
+        "mode": "aggregate identity projection",
+        "original_runtime_file_hash_entries_omitted": 218,
+        "original_all_server_file_hash_entries_omitted": 407,
+        "retained_changed_file_hash_rows": 3,
+        "retains_original_state_guard_aggregate_and_source_SHA": true,
+        "no_original_path_values_exported": true
+      }
+    }
+  ],
+  "additional_exact_code_byte_allowlist": [
+    {
+      "git_show_object": "fe914065c7aafb0672bfe10274361f83179ce7f1:server/mio_server/comfy/inspection.py",
+      "corresponding_worktree_relative_path": "server/mio_server/comfy/inspection.py"
+    },
+    {
+      "git_show_object": "fe914065c7aafb0672bfe10274361f83179ce7f1:server/mio_server/comfy/inspection_candidates.py",
+      "corresponding_worktree_relative_path": "server/mio_server/comfy/inspection_candidates.py"
+    },
+    {
+      "git_show_object": "fe914065c7aafb0672bfe10274361f83179ce7f1:server/tests/test_workflow_inspection_candidates.py",
+      "corresponding_worktree_relative_path": "server/tests/test_workflow_inspection_candidates.py"
+    }
+  ],
+  "published_files": [
+    {
+      "destination": "validation.json",
+      "sha256": "6558d55d387f81658ebef4dacaf23b37a60fc28186f477684354684f95a17fe8",
+      "git_blob_sha1_calculated": "1b5ad35b3b4d5ff10612b95f7da5ca8dc9be94bb",
+      "bytes": 1479
+    },
+    {
+      "destination": "frozen-source.json",
+      "sha256": "f43c3764ee4b160ccdcd8ea80dfd143bb7d3864c8b3644b6f9df7fd2df3cb178",
+      "git_blob_sha1_calculated": "4a41e6d89ad0cd45523c5283b7af33c8a5a20958",
+      "bytes": 2011
+    },
+    {
+      "destination": "format-recovery.json",
+      "sha256": "8db4f3003bc399595bb1dbe61fa85e8af10b0908eb780ad0057ede56a5f95ff7",
+      "git_blob_sha1_calculated": "a4d2fc7b571f6650ca1f0f753bbd3c038b12a62d",
+      "bytes": 694
+    },
+    {
+      "destination": "committed-source.json",
+      "sha256": "3c79c149727f131a8546e94afd05b55c89d529f2e925072d714094a707a18a98",
+      "git_blob_sha1_calculated": "0e2d20629ea709bea19526ca2e7e56bf885935bd",
+      "bytes": 749
+    },
+    {
+      "destination": "formatted/validation.json",
+      "sha256": "27206513eb99169931c79c096eeaa0c7c9778f5e313e7d8c8d08659238f505db",
+      "git_blob_sha1_calculated": "5a5c0086c9d2fe0f6afc38a95e2f820f0e277e46",
+      "bytes": 5681
+    },
+    {
+      "destination": "formatted/frozen-source.json",
+      "sha256": "d87330e56d004fc57eaca68fa9e78198fa10da7b2204db38a456d531432d0b9c",
+      "git_blob_sha1_calculated": "7cb6cbedeb7cf9d8a7ec59a8397484cc97a12e47",
+      "bytes": 2011
+    },
+    {
+      "destination": "source-byte-identity.json",
+      "sha256": "8217ebfb7878232511f2c08012c255f8574a6c62b8417f3e30db554f2d237e77",
+      "git_blob_sha1_calculated": "e8e5f544cf15035e500a04b660f20c67a9f66acf",
+      "bytes": 3988
+    },
+    {
+      "destination": "index.md",
+      "sha256": "629e2d052b6002753bbafeabc42a1fb6ee5b91dc1770c77eac8ec5655da680e7",
+      "git_blob_sha1_calculated": "67fb0a415239529df2646fd5b2f24180252e151d",
+      "bytes": 5701
+    }
+  ],
+  "expected_publication_allowlist": [
+    "validation.json",
+    "frozen-source.json",
+    "format-recovery.json",
+    "committed-source.json",
+    "formatted/validation.json",
+    "formatted/frozen-source.json",
+    "source-byte-identity.json",
+    "index.md",
+    "manifest.json"
+  ],
+  "self_manifest_hash_recorded_in_handoff": true,
+  "evidence_timeline": {
+    "first_attempt": {
+      "head": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+      "check_exit_codes": [
+        0,
+        1
+      ],
+      "unit_tests_executed": false,
+      "successful": false,
+      "outer_elapsed_seconds": 0.5173803000361659
+    },
+    "format_recovery": {
+      "files": [
+        {
+          "path": "server/mio_server/comfy/inspection_candidates.py",
+          "before_sha256": "2d94090da7c0445108de6af456735af80640ffe5c392dee7a49b028973d68503",
+          "after_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+          "ast_unchanged": true
+        },
+        {
+          "path": "server/tests/test_workflow_inspection_candidates.py",
+          "before_sha256": "5f9f1ffe21bdf24242a2764d98d721ec0f706185e81a9e42d2c65a80b69e3aee",
+          "after_sha256": "1cd613abbae1be087b4464e189bc4c86851d31227db5038ce4690789450f40fd",
+          "ast_unchanged": true
+        }
+      ],
+      "affinity_mask": 1,
+      "priority_class": 16384,
+      "AST_unchanged_is_original_producer_record_not_reexecuted": true
+    },
+    "formatted_local_validation": {
+      "head": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+      "check_exit_codes": [
+        0,
+        0
+      ],
+      "unit_methods": 30,
+      "unique_loaded_methods": 30,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "unit_elapsed_seconds": 0.07075790001545101,
+      "outer_elapsed_seconds": 2.2118770999950357,
+      "source_hashes_unchanged": true,
+      "not_a_full_suite_or_CI": true
+    },
+    "later_commit_record": {
+      "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "tested_worktree_parent": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+      "tested_source_hashes_match": true,
+      "first_format_failure_preserved": true,
+      "runtime_count": 218,
+      "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+      "all_server_count": 407,
+      "all_server_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32",
+      "new_helper_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+      "source_status_from_record": [],
+      "no_fresh_test_execution_at_commit_claimed": true
+    }
+  },
+  "three_file_identity": {
+    "artifact": "source-byte-identity.json",
+    "sha256": "8217ebfb7878232511f2c08012c255f8574a6c62b8417f3e30db554f2d237e77",
+    "raw_byte_identical_files": 3,
+    "LF_newline_equivalent_files": 3,
+    "AST_equivalent_files": 3,
+    "worktree_source_SHA_matches_formatted_freeze": true,
+    "remaining_404_source_files_not_read": true,
+    "whole_checkout_or_CI_checkout_identity_not_claimed": true,
+    "AST_process_guard": {
+      "affinity_mask": 1,
+      "priority_class": 16384,
+      "verified_before_ast_parse": true,
+      "Mio_imports": 0
+    },
+    "AST_only_not_application_execution": true
+  },
+  "projection_summary": {
+    "frozen_source_files_reduced": 2,
+    "full_file_hash_map_entries_omitted": 1250,
+    "retained_three_file_hash_rows_across_two_freezes": 6,
+    "original_paths_or_name_mapping_exported": false,
+    "original_source_JSONs_unchanged": true,
+    "encoding": "UTF-8 no BOM; LF; exactly one terminal newline"
+  },
+  "publication_checks": {
+    "result": "SAFE_PUBLICATION_PREPARATION_CHECKS_PASSED",
+    "source_JSON_files_verified": 6,
+    "published_files": 9,
+    "source_SHA256_preserved_before_after": true,
+    "byte_identical_original_JSON_copies": 4,
+    "recursive_forbidden_dictionary_keys_found": 0,
+    "private_path_secret_account_asset_model_markers_found": 0,
+    "relative_markdown_links_verified": 8,
+    "relative_links_valid": true,
+    "git_blob_scope": "SHA1 computed from exact byte buffers; only three authorized git show reads were used.",
+    "git_show_reads": 3,
+    "current_worktree_source_files_read": 3,
+    "other_server_source_reads": 0,
+    "private_log_reads": 0,
+    "other_review_reads": 0,
+    "application_imports": 0,
+    "product_calls": 0,
+    "test_runs": 0,
+    "builds": 0,
+    "browser_calls": 0,
+    "network_calls": 0,
+    "CI_queries": 0,
+    "Git_status_log_diff_queries": 0,
+    "repository_writes": 0,
+    "old_ready_writes": 0,
+    "history_plan_modified": false,
+    "ready_for_repository_publication_now": false
+  }
+}

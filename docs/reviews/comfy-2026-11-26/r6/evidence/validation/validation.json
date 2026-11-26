@@ -1,0 +1,49 @@
+{
+  "schema": "mio.r6-targeted-validation.v1",
+  "started_utc": "2026-11-26T07:58:58.814133+00:00",
+  "head": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+  "cpu_guard": {
+    "pid": 43796,
+    "affinity_mask": 1,
+    "priority_class": 16384,
+    "readback_utc": "2026-11-26T07:58:58.601569+00:00",
+    "verified_before_product_import": true
+  },
+  "source_freeze": "frozen-source.json",
+  "checks": [
+    {
+      "name": "ruff_check",
+      "arguments_after_python": [
+        "-B",
+        "-m",
+        "ruff",
+        "check",
+        "server/mio_server/comfy/inspection.py",
+        "server/mio_server/comfy/inspection_candidates.py",
+        "server/tests/test_workflow_inspection_candidates.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.09241929999552667
+    },
+    {
+      "name": "ruff_format_check",
+      "arguments_after_python": [
+        "-B",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "server/mio_server/comfy/inspection.py",
+        "server/mio_server/comfy/inspection_candidates.py",
+        "server/tests/test_workflow_inspection_candidates.py"
+      ],
+      "exit_code": 1,
+      "elapsed_seconds": 0.08993170002941042
+    }
+  ],
+  "scope": "Only three changed files and the listed related unit test classes; no full suite, browser, GPU, or model execution.",
+  "unit_tests_executed": false,
+  "successful": false,
+  "finished_utc": "2026-11-26T07:58:58.996517+00:00",
+  "elapsed_seconds": 0.5173803000361659
+}

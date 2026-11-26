@@ -1,0 +1,49 @@
+{
+  "schema": "mio.r6-candidate-source.safe-projection.v1",
+  "source_schema": "mio.r6-candidate-source.v1",
+  "original_source_json_sha256": "f3e2f259d55a4ee5952e75dadedfc9591b4965551750e664924cbcbe42686dd5",
+  "head": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+  "state": "worktree_patch_not_yet_committed",
+  "dirty_status": [
+    " M server/mio_server/comfy/inspection.py",
+    "?? server/mio_server/comfy/inspection_candidates.py",
+    "?? server/tests/test_workflow_inspection_candidates.py"
+  ],
+  "cpu_guard": {
+    "pid": 40332,
+    "affinity_mask": 1,
+    "priority_class": 16384,
+    "readback_utc": "2026-11-26T08:00:11.172005+00:00",
+    "verified_before_product_import": true
+  },
+  "runtime": {
+    "count": 218,
+    "aggregate_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+    "original_file_hash_entries": 218,
+    "file_hash_map_omitted": true
+  },
+  "all_server": {
+    "count": 407,
+    "aggregate_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32",
+    "original_file_hash_entries": 407,
+    "file_hash_map_omitted": true
+  },
+  "retained_changed_files": [
+    {
+      "path": "server/mio_server/comfy/inspection.py",
+      "all_server_sha256": "6e59f08ed677d22ba5af30be21eca61bcbb6ca182e391f182fda7432fb8727bb",
+      "runtime_sha256": "6e59f08ed677d22ba5af30be21eca61bcbb6ca182e391f182fda7432fb8727bb"
+    },
+    {
+      "path": "server/mio_server/comfy/inspection_candidates.py",
+      "all_server_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+      "runtime_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae"
+    },
+    {
+      "path": "server/tests/test_workflow_inspection_candidates.py",
+      "all_server_sha256": "1cd613abbae1be087b4464e189bc4c86851d31227db5038ce4690789450f40fd",
+      "runtime_sha256": null
+    }
+  ],
+  "projection_scope": "Only declared aggregate identities and the three allowed changed file hashes retained; no remaining server files opened."
+}

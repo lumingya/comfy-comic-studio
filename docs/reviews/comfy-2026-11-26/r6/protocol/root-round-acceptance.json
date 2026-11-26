@@ -1,0 +1,84 @@
+{
+  "schema": "mio.r6.root-round-acceptance.v1",
+  "utc": "2026-11-26T10:55:46.278224+00:00",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "whole_fresh_five_cross_review_verdict": "VERIFIED PASS",
+  "roles": {
+    "generality": {
+      "verdict": "VERIFIED PASS",
+      "initial_seal_sha256": "9d671ba5a30e5c0bed79e43fd56648812970c207de55f922ef74e2f074212ee1",
+      "initial_sealed_artifacts_reverified": 8,
+      "final_seal": "final-seal.json",
+      "final_seal_sha256": "dd92bd9aa732fb8cb4401a36c8f952124ea35d2070636062ae2b12cd4c2cb4ab",
+      "final_report_sha256": "5791ecfe0cae0dde736c1ee8b20f160a47880682e47197c8fc96af7e57d80a2f",
+      "final_sealed_payloads_verified": 11,
+      "confirmed_medium_or_higher": 0
+    },
+    "compile": {
+      "verdict": "VERIFIED PASS",
+      "initial_seal_sha256": "5b31bad4b875696b4dca0bd439f04db9a23032a3120d817de0e847e416ee6b85",
+      "initial_sealed_artifacts_reverified": 35,
+      "final_seal": "final-seal.json",
+      "final_seal_sha256": "6f65e0f0fda5c6c643d167d5c2f382e1953369d034bb3c9eca404ebc36e0e2f3",
+      "final_report_sha256": "4affaf9caee38fb3119f610e4af53535c5ecf9df9fdc3bfad467fc295daa7c98",
+      "final_sealed_payloads_verified": 13,
+      "confirmed_medium_or_higher": 0
+    },
+    "blind": {
+      "verdict": "VERIFIED PASS",
+      "initial_seal_sha256": "7022dd2f9cde943cff93b6e2fdc23592d588ebd8adabcfb24151286325b29f6b",
+      "initial_sealed_artifacts_reverified": 29,
+      "final_seal": "final-seal.json",
+      "final_seal_sha256": "6152e371e46c08054790c67270426e82d0ab9c0d46c2ac61f8e10bc2df56adc8",
+      "final_report_sha256": "ff8127d07f080ae734851759d8760d5e3759900da0d7230329e62df76e8fc13d",
+      "final_sealed_payloads_verified": 14,
+      "confirmed_medium_or_higher": 0
+    },
+    "web": {
+      "verdict": "VERIFIED PASS",
+      "initial_seal_sha256": "b7b9b3524ea8ed8d8e7d69138a6ea285e1ff8888857cbbeca7e4a12d3b0fc5e4",
+      "initial_sealed_artifacts_reverified": 112,
+      "final_seal": "final-seal.json",
+      "final_seal_sha256": "68e46dfea5e6c84a591e7be36fa067435a8c7ceb828fcf44589180138563ed31",
+      "final_report_sha256": "68855adbca6f4dcb7ca009b9317ef4cf07af4112301babac94c4de7fd2abc754",
+      "final_sealed_payloads_verified": 12,
+      "confirmed_medium_or_higher": 0
+    },
+    "privacy": {
+      "verdict": "VERIFIED PASS",
+      "initial_seal_sha256": "1e88ad4f8a8fa7026b0f791625bad81ebcf4cb7d5e71ae31c0a7b100b91fa629",
+      "initial_sealed_artifacts_reverified": 12,
+      "final_seal": "cross-seal.json",
+      "final_seal_sha256": "47b3171e8affd07c6ad54497cbe110b6ad5b196a46a9feff4db08551ee104881",
+      "final_report_sha256": "384ca450a5248b90d680a515bc33a598a63564d1190b33d43e9d4842119ac934",
+      "final_sealed_payloads_verified": 7,
+      "confirmed_medium_or_higher": 0
+    }
+  },
+  "initial_artifacts_reverified": 196,
+  "final_payloads_verified": 57,
+  "unique_retained_low_ids": [
+    "BL-L1",
+    "BL-L2",
+    "W-01"
+  ],
+  "process_clean_pass": false,
+  "runtime": {
+    "files": 218,
+    "sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487"
+  },
+  "server": {
+    "files": 407,
+    "sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32"
+  },
+  "source_worktree_clean_at_round_close": true,
+  "product_calls_in_this_file_only_verification": 0,
+  "whole_objective_complete": false,
+  "root_pending": [
+    "requirement-by-requirement final acceptance and corrected Chinese documentation",
+    "safe publication with actual Git blob verification",
+    "owned cache and process cleanup with protected-workspace comparison",
+    "specific-file commit, push, clean status and final delivery CI"
+  ]
+}

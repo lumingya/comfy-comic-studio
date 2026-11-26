@@ -1,0 +1,134 @@
+{
+  "source_to_browser_wire": {
+    "document_responses": 28,
+    "numeric_equal": 28,
+    "strict_typed_equal": 0,
+    "raw_canonical_hash_equal": 0,
+    "exports": 12,
+    "exports_numeric_equal": 12,
+    "exports_strict_typed_equal": 0,
+    "exports_raw_canonical_hash_equal": 0,
+    "delta_kinds": {
+      "float->int": 2024
+    },
+    "all_deltas_float_to_int_numeric_equal": true,
+    "original_false_preserved": true
+  },
+  "post_wire_save_to_detail": {
+    "documents": 12,
+    "strict_graph_exact": 12,
+    "detail_200_unique_documents": 12,
+    "wire_method_recorded": false,
+    "GET_client_source": "web/src/api/system.ts:97-108"
+  },
+  "mapping": {
+    "large_manual_exact": 4,
+    "candidate_manual_exact": 4,
+    "large_documents": 4,
+    "candidate_documents": 4
+  },
+  "lora": [
+    {
+      "expected_node_pointer": "/26/inputs/lora_name",
+      "exact_keyed_override": true,
+      "unrelated_config_exact": true,
+      "group_count": 1,
+      "lora_override_count": 1
+    },
+    {
+      "expected_node_pointer": "/26/inputs/lora_name",
+      "exact_keyed_override": true,
+      "unrelated_config_exact": true,
+      "group_count": 1,
+      "lora_override_count": 1
+    },
+    {
+      "expected_node_pointer": "/26/inputs/lora_name",
+      "exact_keyed_override": true,
+      "unrelated_config_exact": true,
+      "group_count": 1,
+      "lora_override_count": 1
+    },
+    {
+      "expected_node_pointer": "/26/inputs/lora_name",
+      "exact_keyed_override": true,
+      "unrelated_config_exact": true,
+      "group_count": 1,
+      "lora_override_count": 1
+    }
+  ],
+  "exports": [
+    {
+      "kind": "lora32",
+      "file_sha256": "862ed8b77900e2a331882a16bb4f39dcb763ef610f2bb73247bdd49d292ae4ef",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": null
+    },
+    {
+      "kind": "candidate",
+      "file_sha256": "4a73bc20159ba3c6c37b8b47092293858cd0c9d551bceeb901cecfe500482a92",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": true
+    },
+    {
+      "kind": "api200",
+      "file_sha256": "f8654c40720440befaf397b6246e6fcd17677cdabed0efbf97cfc54feb31ffd1",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": true
+    },
+    {
+      "kind": "lora32",
+      "file_sha256": "862ed8b77900e2a331882a16bb4f39dcb763ef610f2bb73247bdd49d292ae4ef",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": null
+    },
+    {
+      "kind": "api200",
+      "file_sha256": "f8654c40720440befaf397b6246e6fcd17677cdabed0efbf97cfc54feb31ffd1",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": true
+    },
+    {
+      "kind": "lora32",
+      "file_sha256": "862ed8b77900e2a331882a16bb4f39dcb763ef610f2bb73247bdd49d292ae4ef",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": null
+    },
+    {
+      "kind": "candidate",
+      "file_sha256": "4a73bc20159ba3c6c37b8b47092293858cd0c9d551bceeb901cecfe500482a92",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": true
+    },
+    {
+      "kind": "api200",
+      "file_sha256": "f8654c40720440befaf397b6246e6fcd17677cdabed0efbf97cfc54feb31ffd1",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": true
+    },
+    {
+      "kind": "candidate",
+      "file_sha256": "4a73bc20159ba3c6c37b8b47092293858cd0c9d551bceeb901cecfe500482a92",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": true
+    },
+    {
+      "kind": "candidate",
+      "file_sha256": "4a73bc20159ba3c6c37b8b47092293858cd0c9d551bceeb901cecfe500482a92",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": true
+    },
+    {
+      "kind": "lora32",
+      "file_sha256": "862ed8b77900e2a331882a16bb4f39dcb763ef610f2bb73247bdd49d292ae4ef",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": null
+    },
+    {
+      "kind": "api200",
+      "file_sha256": "f8654c40720440befaf397b6246e6fcd17677cdabed0efbf97cfc54feb31ffd1",
+      "matches_saved_document_config_and_graph": true,
+      "manual_mapping_exact": true
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "mio.r6.web.focus-probe.v1",
+  "lease": "r6-web-focus-002",
+  "started": "2026-11-26T10:06:12.878Z",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "navigation_count": 1,
+  "source_input_sha256": "fdd085dd47c1e3cfa7b0b783d43d3005f463aeb9afe9166b23923fc7cf98b1f8",
+  "previous_false_preserved": true,
+  "theme": {
+    "width": 1440,
+    "height": 900,
+    "dark": false
+  },
+  "catalog_matches": 4,
+  "own_saved_document_confirmed": true,
+  "before_backend_node_id": 24,
+  "expected_trigger_backend_node_id": 24,
+  "after_backend_node_id": 28,
+  "expected_remove_backend_node_id": 28,
+  "distinct_identity": true,
+  "focus": {
+    "isExpectedRemove": true,
+    "enabled": true,
+    "visible": true,
+    "viewportFits": true
+  },
+  "pass": true,
+  "screenshot_sha256": "6fc7c371a9aff7e01e3230d2bc353333a22b74a52f6a3b1de0d081abc0654b85",
+  "screenshots": 1,
+  "own_context_disposed": true,
+  "finished": "2026-11-26T10:06:15.196Z",
+  "actions": 9,
+  "all_own_origin_requests": 47,
+  "api_requests": 13,
+  "foreign_requests": 0,
+  "mutation_requests": 0,
+  "breach": false,
+  "browser_closed": false,
+  "pid": 4888
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "mio.workflow.delivery.process-events.v1",
+  "process_clean_pass": false,
+  "events": [
+    {
+      "event": "bounded_read_output_truncated",
+      "operation": "Root read-only report/ledger projection exceeded the returned output allowance.",
+      "mutation": false,
+      "scope_certification": "Output truncation does not prove zero disclosure; the requested inputs were authored safe report/ledger files."
+    },
+    {
+      "event": "metadata_key_projection_exceeded_intended_boundary",
+      "operation": "Root enumerated nested data_raw_hashes keys while identifying a baseline schema. Returned keys included tracked example-data asset filenames. A subsequent attempt treated the baseline workspace label as a path and raised FileNotFoundError, repeating one such filename in the traceback. Both operations stopped before any write.",
+      "graph_or_prompt_values_printed": false,
+      "credential_values_printed": false,
+      "user_profile_or_cookie_access": false,
+      "correction": "Resolved the two workspaces from explicit authorized roots. Remaining protection checks use known fields in memory and emit labels, counts, booleans and hashes. This record does not repeat filenames."
+    }
+  ]
+}

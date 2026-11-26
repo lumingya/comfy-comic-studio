@@ -1,0 +1,75 @@
+{
+  "schema": "mio.r6.web.candidate-supplement.v1",
+  "lease": "r6-web-candidate-003",
+  "started": "2026-11-26T10:17:25.006Z",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "navigation_count": 1,
+  "source_input_sha256": "e871004f541b8dfd733625391a4266c7d5412808b0a7f337564dad6f191367f8",
+  "previous_false_preserved": true,
+  "theme": {
+    "width": 1440,
+    "height": 900,
+    "dark": false
+  },
+  "candidate_rows": [
+    {
+      "kind": "prompt",
+      "pointer": "/20/inputs/value"
+    },
+    {
+      "kind": "negative",
+      "pointer": "/20/inputs/value"
+    },
+    {
+      "kind": "prompt",
+      "pointer": "/21/inputs/value"
+    },
+    {
+      "kind": "negative",
+      "pointer": "/21/inputs/value"
+    },
+    {
+      "kind": "init",
+      "pointer": "/30/inputs/image"
+    },
+    {
+      "kind": "ref",
+      "pointer": "/30/inputs/image"
+    },
+    {
+      "kind": "control",
+      "pointer": "/40/inputs/image"
+    },
+    {
+      "kind": "ref",
+      "pointer": "/40/inputs/image"
+    },
+    {
+      "kind": "mask",
+      "pointer": "/50/inputs/image"
+    },
+    {
+      "kind": "ref",
+      "pointer": "/50/inputs/image"
+    }
+  ],
+  "prompt_rows": 2,
+  "negative_rows": 2,
+  "expected_surviving_rows": 10,
+  "original_orphan_expectations_preserved": 2,
+  "pass": true,
+  "screenshots": 1,
+  "screenshot_sha256": "31e900429afa8ddff4c367af6457f7724c1198b83df4b1a6f459f33ac43d4577",
+  "closed_dialog": true,
+  "own_context_disposed": true,
+  "finished": "2026-11-26T10:17:26.822Z",
+  "actions": 6,
+  "all_own_origin_requests": 47,
+  "api_requests": 13,
+  "foreign_requests": 0,
+  "mutation_requests": 0,
+  "readonly_inspect_post_requests": 1,
+  "breach": false,
+  "browser_closed": false,
+  "pid": 36348
+}

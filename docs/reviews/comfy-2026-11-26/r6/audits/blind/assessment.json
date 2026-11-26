@@ -1,0 +1,1000 @@
+{
+  "groups": {
+    "absent": {
+      "total": 6,
+      "success": 6,
+      "typed_exact": 6,
+      "target_exact": 6,
+      "delta_exact": 6,
+      "warnings_exact": 6,
+      "change_bearing": 0,
+      "expected_rejections_observed": 0
+    },
+    "absent-image": {
+      "total": 2,
+      "success": 0,
+      "typed_exact": 0,
+      "target_exact": 0,
+      "delta_exact": 0,
+      "warnings_exact": 0,
+      "change_bearing": 0,
+      "expected_rejections_observed": 2
+    },
+    "automatic": {
+      "total": 32,
+      "success": 32,
+      "typed_exact": 19,
+      "target_exact": 19,
+      "delta_exact": 19,
+      "warnings_exact": 19,
+      "change_bearing": 19,
+      "expected_rejections_observed": 0
+    },
+    "baseline": {
+      "total": 6,
+      "success": 6,
+      "typed_exact": 6,
+      "target_exact": 0,
+      "delta_exact": 6,
+      "warnings_exact": 6,
+      "change_bearing": 0,
+      "expected_rejections_observed": 0
+    },
+    "conservative": {
+      "total": 3,
+      "success": 3,
+      "typed_exact": 2,
+      "target_exact": 2,
+      "delta_exact": 2,
+      "warnings_exact": 2,
+      "change_bearing": 1,
+      "expected_rejections_observed": 0
+    },
+    "lora-disabled": {
+      "total": 1,
+      "success": 1,
+      "typed_exact": 1,
+      "target_exact": 0,
+      "delta_exact": 1,
+      "warnings_exact": 0,
+      "change_bearing": 1,
+      "expected_rejections_observed": 0
+    },
+    "lora-negative": {
+      "total": 1,
+      "success": 1,
+      "typed_exact": 1,
+      "target_exact": 0,
+      "delta_exact": 1,
+      "warnings_exact": 0,
+      "change_bearing": 1,
+      "expected_rejections_observed": 0
+    },
+    "manual": {
+      "total": 76,
+      "success": 76,
+      "typed_exact": 76,
+      "target_exact": 76,
+      "delta_exact": 76,
+      "warnings_exact": 76,
+      "change_bearing": 76,
+      "expected_rejections_observed": 0
+    },
+    "reject-mapping": {
+      "total": 6,
+      "success": 0,
+      "typed_exact": 0,
+      "target_exact": 0,
+      "delta_exact": 0,
+      "warnings_exact": 0,
+      "change_bearing": 0,
+      "expected_rejections_observed": 6
+    }
+  },
+  "endpoints": [
+    {
+      "sample": "own-04",
+      "representation": "api",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": true,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "own-06",
+      "representation": "api",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": true,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "own-07",
+      "representation": "api",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": true,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "own-17",
+      "representation": "api",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": true,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "api002",
+      "representation": "api",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": true,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "final-01",
+      "representation": "api",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": true,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "com-01",
+      "representation": "ui",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": null,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "com-02",
+      "representation": "ui",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": null,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "com-06",
+      "representation": "ui",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": null,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "com-08",
+      "representation": "ui",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": null,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "own-02",
+      "representation": "ui",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": null,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "own-12",
+      "representation": "ui",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": null,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    },
+    {
+      "sample": "last-03",
+      "representation": "ui",
+      "decode_exact": true,
+      "format_exact": true,
+      "importability_exact": true,
+      "import_outcome_exact": true,
+      "lora_group_count_exact": null,
+      "source_unchanged": true,
+      "raw_unchanged": true
+    }
+  ],
+  "candidate_guidance": [
+    {
+      "sample": "own-04",
+      "pointer": "/1/inputs/image",
+      "expected_roles": [
+        "init",
+        "mask",
+        "ref"
+      ],
+      "actual_roles": [
+        "ref"
+      ],
+      "missing_roles": [
+        "init",
+        "mask"
+      ]
+    },
+    {
+      "sample": "own-17",
+      "pointer": "/1/inputs/image",
+      "expected_roles": [
+        "mask",
+        "ref"
+      ],
+      "actual_roles": [
+        "mask",
+        "ref"
+      ],
+      "missing_roles": []
+    },
+    {
+      "sample": "own-17",
+      "pointer": "/15/inputs/image",
+      "expected_roles": [
+        "mask",
+        "ref"
+      ],
+      "actual_roles": [
+        "mask",
+        "ref"
+      ],
+      "missing_roles": []
+    },
+    {
+      "sample": "own-17",
+      "pointer": "/23/inputs/image",
+      "expected_roles": [
+        "mask",
+        "ref"
+      ],
+      "actual_roles": [
+        "mask",
+        "ref"
+      ],
+      "missing_roles": []
+    },
+    {
+      "sample": "own-17",
+      "pointer": "/35/inputs/image",
+      "expected_roles": [
+        "mask",
+        "ref"
+      ],
+      "actual_roles": [
+        "mask",
+        "ref"
+      ],
+      "missing_roles": []
+    },
+    {
+      "sample": "api002",
+      "pointer": "/34/inputs/image",
+      "expected_roles": [
+        "ref"
+      ],
+      "actual_roles": [
+        "ref"
+      ],
+      "missing_roles": []
+    },
+    {
+      "sample": "api002",
+      "pointer": "/38/inputs/image",
+      "expected_roles": [
+        "ref"
+      ],
+      "actual_roles": [
+        "ref"
+      ],
+      "missing_roles": []
+    },
+    {
+      "sample": "final-01",
+      "pointer": "/7/inputs/image",
+      "expected_roles": [
+        "init",
+        "ref"
+      ],
+      "actual_roles": [
+        "init",
+        "ref"
+      ],
+      "missing_roles": []
+    },
+    {
+      "sample": "final-01",
+      "pointer": "/17/inputs/image",
+      "expected_roles": [
+        "control",
+        "ref"
+      ],
+      "actual_roles": [
+        "control",
+        "ref"
+      ],
+      "missing_roles": []
+    }
+  ],
+  "mismatch_count": 16,
+  "mismatches": [
+    {
+      "id": "own-04-automatic-003",
+      "sample": "own-04",
+      "kind": "automatic",
+      "role": "prompt",
+      "expected_targets": [
+        "/5/inputs/text"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "7859855840614b9e6f81b0f18843cebd2b9496ae072138cac6110901bcc3b69e",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/5/inputs/text",
+          "before_type": "str",
+          "after_type": "str",
+          "before_hash": "4193623f879e3dbefaa9c67068df8be6a3f20aa59db8510b93d0c6c08b234c64",
+          "after_hash": "c7a859598a32e006fd6c88b6ca93321e5d400954431bce92e772cfb52fa6bbbe"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "5c32db4c31c8085b28cde88850c54686572a6f90039203338916cad38f230856"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.003187
+    },
+    {
+      "id": "own-04-automatic-005",
+      "sample": "own-04",
+      "kind": "automatic",
+      "role": "negative",
+      "expected_targets": [
+        "/6/inputs/text"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "7859855840614b9e6f81b0f18843cebd2b9496ae072138cac6110901bcc3b69e",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/6/inputs/text",
+          "before_type": "str",
+          "after_type": "str",
+          "before_hash": "1e86860edb87d14bba91210bd15a6a6adcac919b6b8ae560d24463c6091aa9fd",
+          "after_hash": "93fea312804dda5181195b2554cb4b42b51d16eca62d93a426de9b243181643e"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "a0465be8e2dc5ccbc3ff19f4c4357e4476271b3ccbba06bb3608e16f5ee9b825"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.003356
+    },
+    {
+      "id": "own-06-automatic-022",
+      "sample": "own-06",
+      "kind": "automatic",
+      "role": "prompt",
+      "expected_targets": [
+        "/5/inputs/text"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "c96f8b63f883d6be36146c280253e199bdd1eeec686802598e88158f0655503f",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/5/inputs/text",
+          "before_type": "str",
+          "after_type": "str",
+          "before_hash": "68ee362d3979d226b86cd90501e2fe8453f0cfb948aa517589c4262cf922ba0e",
+          "after_hash": "c7a859598a32e006fd6c88b6ca93321e5d400954431bce92e772cfb52fa6bbbe"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "5c32db4c31c8085b28cde88850c54686572a6f90039203338916cad38f230856"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.003091
+    },
+    {
+      "id": "own-06-automatic-024",
+      "sample": "own-06",
+      "kind": "automatic",
+      "role": "negative",
+      "expected_targets": [
+        "/6/inputs/text"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "c96f8b63f883d6be36146c280253e199bdd1eeec686802598e88158f0655503f",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/6/inputs/text",
+          "before_type": "str",
+          "after_type": "str",
+          "before_hash": "6c64152f80781d3b002b3a5b93106a6568b2bead6e82aee3af2852a3136d0a08",
+          "after_hash": "93fea312804dda5181195b2554cb4b42b51d16eca62d93a426de9b243181643e"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "a0465be8e2dc5ccbc3ff19f4c4357e4476271b3ccbba06bb3608e16f5ee9b825"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.003386
+    },
+    {
+      "id": "own-06-automatic-027",
+      "sample": "own-06",
+      "kind": "automatic",
+      "role": "width",
+      "expected_targets": [
+        "/29/inputs/width"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "c96f8b63f883d6be36146c280253e199bdd1eeec686802598e88158f0655503f",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/29/inputs/width",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "709bdceca87de43f6c270c55ab9560622234d982fce87d6658a9306e0ed7ccbd",
+          "after_hash": "9e8f5e2f099c8023e960649b85c79b0b68cbae0aec354e70ad9f7dd121e28675"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "374d80a1d12d5173c1d58fdf17513ac83a8c5c5011cab7d9554be163784bfc21"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.003504
+    },
+    {
+      "id": "own-06-automatic-029",
+      "sample": "own-06",
+      "kind": "automatic",
+      "role": "height",
+      "expected_targets": [
+        "/29/inputs/height"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "c96f8b63f883d6be36146c280253e199bdd1eeec686802598e88158f0655503f",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/29/inputs/height",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "fb07b235f1ded16f65d90d70e6631f274f786c05dd502477d692f533753b70b6",
+          "after_hash": "cc625ac9e46dcbb4f4c55d264c997eea4205f05c1482b84cd50d4f3ecf47a367"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "6ceffc1d9ba4c96f37b9e7a5dd7e5d10f72630a7177f0af27deb1945e3eb50e9"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.00294
+    },
+    {
+      "id": "own-06-automatic-031",
+      "sample": "own-06",
+      "kind": "automatic",
+      "role": "batch",
+      "expected_targets": [
+        "/29/inputs/batch_size"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "c96f8b63f883d6be36146c280253e199bdd1eeec686802598e88158f0655503f",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/29/inputs/batch_size",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "bfc9d43edb174ee19b59380e31ae1089d7866137ae115f40926e31d10b27def4",
+          "after_hash": "63f9a351da0fb44256450f35b71bd2565c403150f2db319b3f95d33fbced0567"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "f3cf26f322a6d58b38b03467cfbb0321c5e6b7d97cec9cdb098595f60d8c532a"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.003039
+    },
+    {
+      "id": "own-17-conservative-058",
+      "sample": "own-17",
+      "kind": "conservative",
+      "role": "prompt",
+      "expected_targets": [],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "f2e2ebac652a14e7c0d44e0cf937c0f0a9ae9f02f53029302c0be75e8dd75c28",
+      "actual_targets": [
+        "/64:61/inputs/text"
+      ],
+      "exact_targets": false,
+      "all_delta": [
+        {
+          "pointer": "/64:61/inputs/text",
+          "before_type": "str",
+          "after_type": "str",
+          "before_hash": "a74b1e4e407d73314f8a9046cb061ac7a562022117203d658565cbc329e6b874",
+          "after_hash": "c7a859598a32e006fd6c88b6ca93321e5d400954431bce92e772cfb52fa6bbbe"
+        }
+      ],
+      "expected_delta": [],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 0,
+      "warning_sha256": [],
+      "change_bearing": true,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.007321
+    },
+    {
+      "id": "own-17-automatic-063",
+      "sample": "own-17",
+      "kind": "automatic",
+      "role": "width",
+      "expected_targets": [
+        "/14/inputs/width"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "65542d5f9bf06b45ef07b9ab4334c7aa0df5bd525af7e48fc26190747a02ce88",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/14/inputs/width",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "17f23af06ff11bf8fed18f7113e304588fc230112f110515d15fddc429ee2c29",
+          "after_hash": "9e8f5e2f099c8023e960649b85c79b0b68cbae0aec354e70ad9f7dd121e28675"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "374d80a1d12d5173c1d58fdf17513ac83a8c5c5011cab7d9554be163784bfc21"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.007428
+    },
+    {
+      "id": "own-17-automatic-065",
+      "sample": "own-17",
+      "kind": "automatic",
+      "role": "height",
+      "expected_targets": [
+        "/14/inputs/height"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "65542d5f9bf06b45ef07b9ab4334c7aa0df5bd525af7e48fc26190747a02ce88",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/14/inputs/height",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "ca531630a5a55a9950173610833cbd7b15ec7b024503546c4fe76044af135d98",
+          "after_hash": "cc625ac9e46dcbb4f4c55d264c997eea4205f05c1482b84cd50d4f3ecf47a367"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "6ceffc1d9ba4c96f37b9e7a5dd7e5d10f72630a7177f0af27deb1945e3eb50e9"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.007862
+    },
+    {
+      "id": "own-17-automatic-067",
+      "sample": "own-17",
+      "kind": "automatic",
+      "role": "batch",
+      "expected_targets": [
+        "/14/inputs/batch_size"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "65542d5f9bf06b45ef07b9ab4334c7aa0df5bd525af7e48fc26190747a02ce88",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/14/inputs/batch_size",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "bfc9d43edb174ee19b59380e31ae1089d7866137ae115f40926e31d10b27def4",
+          "after_hash": "63f9a351da0fb44256450f35b71bd2565c403150f2db319b3f95d33fbced0567"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "f3cf26f322a6d58b38b03467cfbb0321c5e6b7d97cec9cdb098595f60d8c532a"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.006145
+    },
+    {
+      "id": "own-17-automatic-073",
+      "sample": "own-17",
+      "kind": "automatic",
+      "role": "denoise",
+      "expected_targets": [
+        "/2/inputs/denoise"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "65542d5f9bf06b45ef07b9ab4334c7aa0df5bd525af7e48fc26190747a02ce88",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/2/inputs/denoise",
+          "before_type": "float",
+          "after_type": "float",
+          "before_hash": "f9c31d096b2cd61442e24387d4d2bc0d7863802cc7d6e77ba946fd17658d6d1c",
+          "after_hash": "35cd34d4650e11893a1ef51be127ef4b2417358a0f075f7a0d06352086be47c0"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "feaa3e900ccd679e25df85d6cfd34c0c6d41f855174c82d06066938d48f6ed9e"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.006817
+    },
+    {
+      "id": "final-01-automatic-113",
+      "sample": "final-01",
+      "kind": "automatic",
+      "role": "width",
+      "expected_targets": [
+        "/8/inputs/width"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "182c54b2163472a373ab79f301b1579b17805875652a4321803e6aef3a11bb0c",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/8/inputs/width",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "fb07b235f1ded16f65d90d70e6631f274f786c05dd502477d692f533753b70b6",
+          "after_hash": "9e8f5e2f099c8023e960649b85c79b0b68cbae0aec354e70ad9f7dd121e28675"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "374d80a1d12d5173c1d58fdf17513ac83a8c5c5011cab7d9554be163784bfc21"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.00445
+    },
+    {
+      "id": "final-01-automatic-115",
+      "sample": "final-01",
+      "kind": "automatic",
+      "role": "height",
+      "expected_targets": [
+        "/8/inputs/height"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": false,
+      "actual_typed_sha256": "182c54b2163472a373ab79f301b1579b17805875652a4321803e6aef3a11bb0c",
+      "actual_targets": [],
+      "exact_targets": false,
+      "all_delta": [],
+      "expected_delta": [
+        {
+          "pointer": "/8/inputs/height",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "fb07b235f1ded16f65d90d70e6631f274f786c05dd502477d692f533753b70b6",
+          "after_hash": "cc625ac9e46dcbb4f4c55d264c997eea4205f05c1482b84cd50d4f3ecf47a367"
+        }
+      ],
+      "delta_exact": false,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "6ceffc1d9ba4c96f37b9e7a5dd7e5d10f72630a7177f0af27deb1945e3eb50e9"
+      ],
+      "change_bearing": false,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.004944
+    },
+    {
+      "id": "final-01-lora-negative",
+      "sample": "final-01",
+      "kind": "lora-negative",
+      "role": "lora",
+      "expected_targets": [
+        "/2/inputs/strength_model"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": true,
+      "actual_typed_sha256": "3db85fa8ac9a1f49e4aa2bf7b5b365505cfefa5c3ec1965a4f18b5a07deb1942",
+      "actual_targets": [],
+      "exact_targets": null,
+      "all_delta": [
+        {
+          "pointer": "/2/inputs/strength_model",
+          "before_type": "int",
+          "after_type": "float",
+          "before_hash": "bfc9d43edb174ee19b59380e31ae1089d7866137ae115f40926e31d10b27def4",
+          "after_hash": "d6ef021d225774f70b85975badf5adfb02503073f9ab01d3cff61593504c1ba9"
+        }
+      ],
+      "expected_delta": [
+        {
+          "pointer": "/2/inputs/strength_model",
+          "before_type": "int",
+          "after_type": "float",
+          "before_hash": "bfc9d43edb174ee19b59380e31ae1089d7866137ae115f40926e31d10b27def4",
+          "after_hash": "d6ef021d225774f70b85975badf5adfb02503073f9ab01d3cff61593504c1ba9"
+        }
+      ],
+      "delta_exact": true,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "33328e55fab0b5286d0d6940fd3a811f483c6de1764f14c65623091d3d0b1b47"
+      ],
+      "change_bearing": true,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.006394
+    },
+    {
+      "id": "final-01-lora-disabled",
+      "sample": "final-01",
+      "kind": "lora-disabled",
+      "role": "lora",
+      "expected_targets": [
+        "/2/inputs/strength_model"
+      ],
+      "expected_error": false,
+      "success": true,
+      "typed_exact": true,
+      "actual_typed_sha256": "30854f6b48eb8474fd44923ddda9f37e0e62b5e8ac46f3ae3830f3eb16a9bff4",
+      "actual_targets": [],
+      "exact_targets": null,
+      "all_delta": [
+        {
+          "pointer": "/2/inputs/strength_model",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "bfc9d43edb174ee19b59380e31ae1089d7866137ae115f40926e31d10b27def4",
+          "after_hash": "c6044c4308a6da74ede83cc24471d42863ae5f806f5aeb14eb5c8f7840c34c42"
+        }
+      ],
+      "expected_delta": [
+        {
+          "pointer": "/2/inputs/strength_model",
+          "before_type": "int",
+          "after_type": "int",
+          "before_hash": "bfc9d43edb174ee19b59380e31ae1089d7866137ae115f40926e31d10b27def4",
+          "after_hash": "c6044c4308a6da74ede83cc24471d42863ae5f806f5aeb14eb5c8f7840c34c42"
+        }
+      ],
+      "delta_exact": true,
+      "closure_exact": true,
+      "outputs_exact": true,
+      "warnings_exact": false,
+      "warning_count": 1,
+      "warning_sha256": [
+        "33328e55fab0b5286d0d6940fd3a811f483c6de1764f14c65623091d3d0b1b47"
+      ],
+      "change_bearing": true,
+      "request_document_unchanged": true,
+      "expected_rejection_observed": true,
+      "original_document_unchanged": true,
+      "original_graph_unchanged": true,
+      "elapsed_seconds": 0.006237
+    }
+  ],
+  "source_graphs_unchanged": true,
+  "raw_files_unchanged": true
+}

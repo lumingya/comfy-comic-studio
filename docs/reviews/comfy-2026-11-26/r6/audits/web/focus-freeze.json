@@ -1,0 +1,39 @@
+{
+  "schema": "mio.r6.web.focus-freeze.v1",
+  "utc": "2026-11-26T10:03:55.147809+00:00",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "input_sha256": "00c4e8ade305fc97ce242b86091067d8bc592ac74503740b1701c268105d0087",
+  "saved_own_document_count": 4,
+  "neutral_source_sha256": "fdd085dd47c1e3cfa7b0b783d43d3005f463aeb9afe9166b23923fc7cf98b1f8",
+  "probe_sha256": "98dd8f2763a5908f64548798ef45df294a9b81e9b5178c4263294075d53bab52",
+  "oracle": {
+    "viewport": [
+      1440,
+      900
+    ],
+    "scheme": "light",
+    "selected_doc_name": "api200",
+    "prompt_target": "/3/inputs/text",
+    "before": "unique prompt target combobox DOM backend node identity",
+    "after": "unique remove-target sibling DOM backend node identity",
+    "distinct_backend_nodes": true,
+    "enabled_visible": true,
+    "no_navigation_after_entry": true,
+    "no_import_save_mutation": true,
+    "old_false_unchanged": true
+  },
+  "limits": {
+    "actions": 15,
+    "screenshots": 1,
+    "api_requests": 20,
+    "all_own_origin_requests": 60,
+    "minutes": 3
+  },
+  "action_plan": [
+    "viewport and real light scheme; one navigation to exact origin",
+    "catalog search for own frozen neutral name; choose first of exact four, require own saved document GET identity",
+    "click unique prompt combobox then Escape; require focus restored to exact trigger backendNodeId",
+    "Tab once; require exact distinct sibling remove-target backendNodeId, enabled and visible",
+    "one screenshot personally view; close only own context and own CDP connection"
+  ]
+}

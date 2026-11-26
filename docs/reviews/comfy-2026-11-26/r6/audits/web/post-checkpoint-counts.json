@@ -1,0 +1,15 @@
+{
+  "schema": "mio.r6.web.post-checkpoint-counter.v1",
+  "started": "2026-11-26T09:53:03.412Z",
+  "updated": "2026-11-26T09:58:06.850Z",
+  "total_own_origin_requests": 21,
+  "api_requests": 21,
+  "foreign_requests": 0,
+  "total_cap": 60,
+  "api_cap": 25,
+  "over_cap": false,
+  "stopped": true,
+  "pid": 48508,
+  "prior_api_responses": 145,
+  "prior_all_network_count_proven": false
+}

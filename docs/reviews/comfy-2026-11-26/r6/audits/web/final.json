@@ -1,0 +1,33 @@
+{
+  "schema": "mio.r6.web.final.v1",
+  "utc": "2026-11-26T10:45:36.150265+00:00",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "verdict": "VERIFIED PASS",
+  "scope": "independent_web_role_after_authorized_same_round_cross",
+  "findings": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 3
+  },
+  "in_scope_medium_or_higher_unclosed": 0,
+  "cross_authorization_sha256": "c57861556e6e7214ca75902cea363c4c9620edbd3ae3d0c4ae830de7fc8561d6",
+  "peer_report_sha256": {
+    "generality": "d49bc1a837c3ce75b480038b8b3065ca6fce795519abdd835e16ab75df936dcc",
+    "compile": "b5ea489e8e0aff3e3939fffb220b7ab1274e56fddaaeb422cae95ff74de74ca6",
+    "blind": "5e1c575aa22fc3d6dcd19d5efffc4f33810ddc64e3447a2b1ca8ccc31ecc21c6",
+    "privacy": "628d71af896e5dcebb3988b57c64b2170e13802d8d201ea890753697c80102cb"
+  },
+  "own_initial_seal_sha256": "b7b9b3524ea8ed8d8e7d69138a6ea285e1ff8888857cbbeca7e4a12d3b0fc5e4",
+  "own_initial_112_unchanged": true,
+  "cross_review_sha256": "40603b8fbb07bbac55c6821bb2724f0c7b2b4450874656c65695bb04c7dcc3c3",
+  "cross_review_results_sha256": "8e40a6d19f83e1d7425fce93d40694ef2c57e9579598bea95cc377897be46c4f",
+  "source_647_unchanged": true,
+  "original_false_records_preserved": true,
+  "backend_typed_contract_relaxed": false,
+  "historical_full_network_total_proven": false,
+  "all_process_output_clean_claimed": false,
+  "root_final_delivery_signed": false,
+  "new_product_browser_network_test_build_calls": 0
+}

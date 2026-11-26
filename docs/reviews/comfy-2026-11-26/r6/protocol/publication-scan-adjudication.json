@@ -1,0 +1,40 @@
+{
+  "schema": "mio.r6.publication-scan-adjudication.v1",
+  "original_scan": {
+    "selected_files": 154,
+    "blocked_files": 4,
+    "forbidden_key_occurrences": 6,
+    "publication_written": false,
+    "original_false_preserved": true
+  },
+  "adjudication": "The original lexical ban also matched known audit-input identity indexes and Markdown-link check records. These six exact metadata pointers are not ComfyUI graph nodes, input fields, or edge arrays. Their immutable source hashes, container types and counts are fixed below; the recursive graph-key ban remains in force everywhere else.",
+  "exceptions": {
+    "audits/r6/generality/static-inventory.json": {
+      "sha256": "38bcf8f2fe6430756d323858fcbad311589afcf681e2c8e138b4181fcb76e167",
+      "pointers": {"/inputs": {"type": "dict", "length": 7}},
+      "meaning": "Seven authorized audit-input identity records"
+    },
+    "audits/r6/generality/initial-seal.json": {
+      "sha256": "9d671ba5a30e5c0bed79e43fd56648812970c207de55f922ef74e2f074212ee1",
+      "pointers": {"/inputs": {"type": "dict", "length": 7}},
+      "meaning": "Same seven audit-input identities in the immutable seal"
+    },
+    "audits/r6/generality/cross-review-inputs.json": {
+      "sha256": "0033643519fa4ae04f2e065f497413fa3bc45fb1b32f9bba31ebf2219e1b7aad",
+      "pointers": {"/inputs": {"type": "list", "length": 30}},
+      "meaning": "Thirty authorized cross-review file identities"
+    },
+    "audits/r6/privacy/publication-machinechecks.json": {
+      "sha256": "e45ec0ea0a0e55b13c93082c38ca991fc926990fdf224bcc3abacbd460e460cf",
+      "pointers": {
+        "/packages/0/links": {"type": "list", "length": 8},
+        "/packages/1/links": {"type": "list", "length": 32},
+        "/packages/2/links": {"type": "list", "length": 6}
+      },
+      "meaning": "Forty-six checked relative Markdown links in three prepared publication packages"
+    }
+  },
+  "source_or_audit_artifacts_changed": false,
+  "real_graph_structure_allowed": false,
+  "product_calls": 0
+}

@@ -1,0 +1,297 @@
+{
+  "schema": "mio.r6.web.results.v1",
+  "utc": "2026-11-26T10:22:19.900407+00:00",
+  "verdict": "VERIFIED PASS",
+  "role": "independent Web UX",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "scope": "Full base..fe Web interfaces and UX, independent source reading plus finite installed headless Chrome four-grid interactions. No backend/full-task aggregate verdict.",
+  "independence": {
+    "fresh_role": true,
+    "implementation_participant": false,
+    "other_r6_role_artifacts_read_before_seal": false,
+    "cross_authorized": false
+  },
+  "product_findings": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 1,
+    "low_ids": [
+      "W-01 JSON integer-valued float representation boundary; raw original false retained"
+    ]
+  },
+  "identity": {
+    "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+    "source_files_exact": true,
+    "runtime_files": 218,
+    "web_source_files": 429,
+    "artifact_id": 15098114848,
+    "artifact_run": 45779838148,
+    "artifact_zip_sha256": "d6a13e6d7c10125e2c96e62253bf90309bede137e41847fbb68e630bcee7d1dd",
+    "artifact_files": 81,
+    "artifact_files_exact": true,
+    "fixture_count": 6,
+    "fixture_files_exact": true,
+    "chrome_pid": 46124,
+    "preview_pid": 48744,
+    "headless": true,
+    "exact_origin": "http://127.0.0.1:8797",
+    "own_contexts_only": true,
+    "global_browser_closed": false
+  },
+  "grids": [
+    {
+      "id": "desktop-light",
+      "viewport": [
+        1440,
+        900
+      ],
+      "scheme": "light",
+      "main_actions": 60,
+      "main_screenshots_personally_viewed": 8,
+      "initial_Tab_evidence": false,
+      "initial_prompt_candidate_expansion_evidence": false,
+      "Tab_supplement_pass": true,
+      "candidate_supplement_pass": true
+    },
+    {
+      "id": "desktop-dark",
+      "viewport": [
+        1440,
+        900
+      ],
+      "scheme": "dark",
+      "main_actions": 58,
+      "main_screenshots_personally_viewed": 6,
+      "Tab_Enter_Escape_exercised": true,
+      "candidate_roles_expanded_before_mapping": true
+    },
+    {
+      "id": "mobile-light",
+      "viewport": [
+        390,
+        844
+      ],
+      "scheme": "light",
+      "main_actions": 58,
+      "main_screenshots_personally_viewed": 7,
+      "Tab_Enter_Escape_exercised": true,
+      "candidate_roles_expanded_before_mapping": true
+    },
+    {
+      "id": "mobile-dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "scheme": "dark",
+      "main_actions": 58,
+      "main_screenshots_personally_viewed": 7,
+      "Tab_Enter_Escape_exercised": true,
+      "candidate_roles_expanded_before_mapping": true
+    }
+  ],
+  "denominators": {
+    "original_file_previews": 16,
+    "original_API_previews": 12,
+    "original_UI_only_previews": 4,
+    "extra_candidate_readonly_preview": 1,
+    "total_previews_with_separate_supplement": 17,
+    "saved_API_documents": 12,
+    "additional_LoRA_PATCH_saves": 4,
+    "UI_only_cancels": 4,
+    "exports": 12,
+    "main_UI_actions": 234,
+    "coarse_tab_supplement_actions": 3,
+    "focus_002_actions": 9,
+    "candidate_003_actions": 6,
+    "actual_UI_actions_total": 252,
+    "main_screenshots_personally_viewed": 28,
+    "focus_supplement_screenshots_personally_viewed": 1,
+    "candidate_supplement_screenshots_personally_viewed": 1,
+    "total_screenshots_personally_viewed": 30
+  },
+  "wire_comparison": {
+    "document_responses": 28,
+    "numeric_equal": 28,
+    "strict_typed_equal": 0,
+    "raw_canonical_hash_equal": 0,
+    "exports": 12,
+    "exports_numeric_equal": 12,
+    "exports_strict_typed_equal": 0,
+    "exports_raw_canonical_hash_equal": 0,
+    "delta_kinds": {
+      "float->int": 2024
+    },
+    "all_deltas_float_to_int_numeric_equal": true,
+    "original_false_preserved": true
+  },
+  "post_wire": {
+    "save_to_detail": {
+      "documents": 12,
+      "strict_graph_exact": 12,
+      "detail_200_unique_documents": 12,
+      "wire_method_recorded": false,
+      "GET_client_source": "web/src/api/system.ts:97-108"
+    },
+    "exports_strict_graph_config_exact": 12,
+    "exports_total": 12,
+    "large_manual_mapping_exact": 4,
+    "large_manual_mapping_total": 4,
+    "candidate_manual_mapping_exact": 4,
+    "candidate_manual_mapping_total": 4,
+    "lora_keyed_override_exact": 4,
+    "lora_total": 4,
+    "lora_unrelated_config_exact": 4
+  },
+  "original_candidate_oracle": {
+    "expected_rows_per_input": 12,
+    "surviving_actual_rows_per_input": 10,
+    "original_exact": false,
+    "missing_expected": [
+      {
+        "kind": "prompt",
+        "pointer": "/60/inputs/text"
+      },
+      {
+        "kind": "negative",
+        "pointer": "/60/inputs/text"
+      }
+    ],
+    "source_reason": "inspection computes candidates after selected compiled output closure; orphan60 excluded",
+    "original_oracle_edited": false,
+    "original_full_role_expansion_grids": 3,
+    "full_role_expansion_grids_after_separate_supplement": 4,
+    "supplement_selected_closure_exact": true
+  },
+  "focus_evidence": {
+    "original_first_grid_Tab_missing": true,
+    "coarse_supplement_original_false": false,
+    "exact_supplement": {
+      "schema": "mio.r6.web.focus-probe.v1",
+      "lease": "r6-web-focus-002",
+      "started": "2026-11-26T10:06:12.878Z",
+      "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "navigation_count": 1,
+      "source_input_sha256": "fdd085dd47c1e3cfa7b0b783d43d3005f463aeb9afe9166b23923fc7cf98b1f8",
+      "previous_false_preserved": true,
+      "theme": {
+        "width": 1440,
+        "height": 900,
+        "dark": false
+      },
+      "catalog_matches": 4,
+      "own_saved_document_confirmed": true,
+      "before_backend_node_id": 24,
+      "expected_trigger_backend_node_id": 24,
+      "after_backend_node_id": 28,
+      "expected_remove_backend_node_id": 28,
+      "distinct_identity": true,
+      "focus": {
+        "isExpectedRemove": true,
+        "enabled": true,
+        "visible": true,
+        "viewportFits": true
+      },
+      "pass": true,
+      "screenshot_sha256": "6fc7c371a9aff7e01e3230d2bc353333a22b74a52f6a3b1de0d081abc0654b85",
+      "screenshots": 1,
+      "own_context_disposed": true,
+      "finished": "2026-11-26T10:06:15.196Z",
+      "actions": 9,
+      "all_own_origin_requests": 47,
+      "api_requests": 13,
+      "foreign_requests": 0,
+      "mutation_requests": 0,
+      "breach": false,
+      "browser_closed": false,
+      "pid": 4888
+    },
+    "history_rewritten": false
+  },
+  "network": {
+    "initial_harness_metric": "API responses only, not all network",
+    "initial_checkpoint_API_responses": 145,
+    "initial_all_network_count_proven": false,
+    "all_main_API_responses": 166,
+    "available_JSON_bodies": 152,
+    "body_unavailable": 14,
+    "body_unavailable_statuses": {
+      "200": 14
+    },
+    "claim_full_session_requests_le_180": false,
+    "post_checkpoint_counter": {
+      "schema": "mio.r6.web.post-checkpoint-counter.v1",
+      "started": "2026-11-26T09:53:03.412Z",
+      "updated": "2026-11-26T09:58:06.850Z",
+      "total_own_origin_requests": 21,
+      "api_requests": 21,
+      "foreign_requests": 0,
+      "total_cap": 60,
+      "api_cap": 25,
+      "over_cap": false,
+      "stopped": true,
+      "pid": 48508,
+      "prior_api_responses": 145,
+      "prior_all_network_count_proven": false
+    },
+    "focus_supplement_counts": {
+      "all_own_origin_requests": 47,
+      "api_requests": 13,
+      "foreign_requests": 0,
+      "mutation_requests": 0
+    },
+    "candidate_supplement_counts": {
+      "all_own_origin_requests": 47,
+      "api_requests": 13,
+      "foreign_requests": 0,
+      "mutation_requests": 0,
+      "readonly_inspect_post_requests": 1
+    },
+    "response_and_request_denominators_not_summed": true
+  },
+  "finite_timing_observations": {
+    "mobile_dark_api200_preview_ms_approx": 559,
+    "mobile_dark_open_search_single_target_ms_approx": 374,
+    "source": "session-observed inclusive CDP ordinary-operation timing, not a benchmark",
+    "stress_iterations": 0
+  },
+  "cleanup": {
+    "main": {
+      "utc": "2026-11-26T09:58:07.991Z",
+      "own_context_disposed": true,
+      "browser_closed": false,
+      "actions": 234,
+      "shots": 28,
+      "requests": 166
+    },
+    "focus_own_context_disposed": true,
+    "candidate_own_context_disposed": true,
+    "post_counter_detached": true,
+    "all_leases_released": true,
+    "preview_owned_by_root_not_stopped": true,
+    "audit_documents_not_deleted": true
+  },
+  "not_tested": [
+    "online Comfy dependency diagnose requiring object_info/instance",
+    "GPU generation/model or user LoRA assets",
+    "UI graphs over 200 nodes",
+    "real multi-output/multi-stage interaction",
+    "backend full typed compile",
+    "private historical138 workflow",
+    "existing browser contexts/profile/cookies",
+    "local full suites/build/TLS/E2E framework"
+  ],
+  "evidence_issues_preserved": [
+    "pre-product concurrency-limit stream disconnection",
+    "first-grid async inspection disabled-control race and original two selector failures",
+    "candidate summary exact text mismatch from secondary hint",
+    "first-grid initial prompt candidate exhibition missing, later separate bounded recovery",
+    "coarse Tab false, later exact DOM identity supplement",
+    "historical all-network total unknown",
+    "14 unavailable response bodies",
+    "original strict/hash source roundtrip failures",
+    "orphan60 expected candidate rows missing"
+  ]
+}

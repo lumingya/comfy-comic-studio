@@ -1,0 +1,55 @@
+{
+  "schema": "fixed-two-civitai-static-execution-v1",
+  "sealed_utc": "2026-11-26T08:26:13.490379+00:00",
+  "parent_action_plan_sha256": "a9dba5c76af313d428d75b3780af6d94035e4a86e308cd397f609b62e3a83edc",
+  "fixed_source_order": [
+    2503119,
+    2539304
+  ],
+  "file_selection": "Config type, JSON extension, positive integer version/file IDs; minimum numeric version/file tuple; no alternate candidate",
+  "get_limits": {
+    "metadata": 2,
+    "file_initial": 2,
+    "file_redirect": 2,
+    "total": 6,
+    "retries": 0
+  },
+  "redirect_policy": {
+    "maximum_actual_server_location_follow_per_file": 1,
+    "HTTPS_only": true,
+    "host_families": [
+      "civitai.com",
+      "cloudflarestorage.com",
+      "amazonaws.com"
+    ],
+    "no_userinfo_private_address_abnormal_port_or_interactive_path": true,
+    "location_query_headers_and_signed_urls_only_in_memory": true,
+    "automatic_redirects_blocked": true
+  },
+  "caps": {
+    "chunk_decoded_bytes": 16384,
+    "metadata_decoded_bytes": 524288,
+    "file_decoded_bytes": 2097152,
+    "metadata_attempt_seconds": 32,
+    "file_attempt_seconds": 35,
+    "source_total_seconds": 125
+  },
+  "only_static_json_first_batch": true,
+  "valid_graph_cache_only": true,
+  "pure_functions_source_sha256": "74b0f79370cb03bb434a6c58fe3e6e6697db02aa0d74ef57ac3cce5240739ae3",
+  "pure_functions_extracted_not_module_main": [
+    "canonical_bytes",
+    "digest",
+    "raw_digest",
+    "graph_payloads",
+    "topology"
+  ],
+  "canonical_algorithm": "json-sorted-utf8-finite-v1",
+  "topology_algorithm": "directed-port-wl32-v1",
+  "legacy_12hex_prefix_match_without_original_serialization_algorithm": null,
+  "supplement_only_no_current75_or_historical_truth_replacement": true,
+  "Mio_imports": 0,
+  "product_requests": 0,
+  "tests": 0,
+  "model_or_asset_execution": 0
+}

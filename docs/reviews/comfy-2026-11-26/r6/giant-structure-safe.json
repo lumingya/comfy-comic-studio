@@ -1,0 +1,395 @@
+{
+  "schema": "mio.giant-current75-ui-structure-safe.v1",
+  "state": "PURE_STRUCTURE_ONLY_NOT_PRODUCT_OR_COMPILE_VERIFICATION",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "fixed_cohort_size": 75,
+  "registry_selection": "existing current75 UI registry members with saved node_count>=120",
+  "selected_record_count": 1,
+  "maximum_authorized_originals": 4,
+  "decoded_original_count": 1,
+  "parser_source_sha256": "74b0f79370cb03bb434a6c58fe3e6e6697db02aa0d74ef57ac3cce5240739ae3",
+  "parser_execution": "AST extracted only file_type,bounded_inflate,png_payloads,graph_payloads; no main or script top-level execution",
+  "graphs": [
+    {
+      "cohort": "current75",
+      "sequence": 49,
+      "source_registry_ref": "current75:0dbb4cc5bb74",
+      "raw_sha256": "18c785f8f9c8844644ecf782c5b28a8b10d449b304821380248005faf80d9724",
+      "recorded_raw_sha256_matched": true,
+      "registry_identity_sha256": "18c785f8f9c8844644ecf782c5b28a8b10d449b304821380248005faf80d9724",
+      "raw_bytes": 463437,
+      "container_kind": "json",
+      "representation": "ui",
+      "node_count": 262,
+      "recorded_node_count": 262,
+      "edge_record_count": 512,
+      "valid_edge_count": 512,
+      "unresolved_or_invalid_edge_count": 0,
+      "mode_counts": {
+        "4": 20,
+        "0": 242
+      },
+      "neutral_category_counts": {
+        "other": 230,
+        "selector_or_switch": 7,
+        "scale_or_resize": 5,
+        "image_source": 2,
+        "saved_image_output": 2,
+        "preview_or_interactive_output": 1,
+        "sampling": 7,
+        "detail_or_repair": 5,
+        "latent_operation": 3
+      },
+      "neutral_category_node_ids": {
+        "selector_or_switch": [
+          "3079",
+          "3080",
+          "3677",
+          "3678",
+          "3679",
+          "4106",
+          "4190"
+        ],
+        "scale_or_resize": [
+          "3311",
+          "3776",
+          "3777",
+          "3935",
+          "4110"
+        ],
+        "image_source": [
+          "1968",
+          "3307"
+        ],
+        "saved_image_output": [
+          "3173",
+          "3449"
+        ],
+        "preview_or_interactive_output": [
+          "3779"
+        ],
+        "sampling": [
+          "3531",
+          "3897",
+          "3899",
+          "3903",
+          "3904",
+          "3910",
+          "3912"
+        ],
+        "detail_or_repair": [
+          "1111",
+          "3450",
+          "3543",
+          "3959",
+          "4184"
+        ],
+        "latent_operation": [
+          "14",
+          "3202",
+          "3263"
+        ]
+      },
+      "sampling_reachability_pair_count": 21,
+      "sampling_reachability_pairs_first24": [
+        {
+          "from_node": "3531",
+          "to_node": "3897"
+        },
+        {
+          "from_node": "3531",
+          "to_node": "3899"
+        },
+        {
+          "from_node": "3531",
+          "to_node": "3903"
+        },
+        {
+          "from_node": "3531",
+          "to_node": "3904"
+        },
+        {
+          "from_node": "3897",
+          "to_node": "3903"
+        },
+        {
+          "from_node": "3897",
+          "to_node": "3904"
+        },
+        {
+          "from_node": "3899",
+          "to_node": "3897"
+        },
+        {
+          "from_node": "3899",
+          "to_node": "3903"
+        },
+        {
+          "from_node": "3899",
+          "to_node": "3904"
+        },
+        {
+          "from_node": "3904",
+          "to_node": "3903"
+        },
+        {
+          "from_node": "3910",
+          "to_node": "3531"
+        },
+        {
+          "from_node": "3910",
+          "to_node": "3897"
+        },
+        {
+          "from_node": "3910",
+          "to_node": "3899"
+        },
+        {
+          "from_node": "3910",
+          "to_node": "3903"
+        },
+        {
+          "from_node": "3910",
+          "to_node": "3904"
+        },
+        {
+          "from_node": "3910",
+          "to_node": "3912"
+        },
+        {
+          "from_node": "3912",
+          "to_node": "3531"
+        },
+        {
+          "from_node": "3912",
+          "to_node": "3897"
+        },
+        {
+          "from_node": "3912",
+          "to_node": "3899"
+        },
+        {
+          "from_node": "3912",
+          "to_node": "3903"
+        },
+        {
+          "from_node": "3912",
+          "to_node": "3904"
+        }
+      ],
+      "switch_touching_edge_count": 28,
+      "switch_touching_edges_first24": [
+        {
+          "from_node": "3081",
+          "from_port": 2,
+          "to_node": "3079",
+          "to_port": 1
+        },
+        {
+          "from_node": "14",
+          "from_port": 1,
+          "to_node": "3079",
+          "to_port": 0
+        },
+        {
+          "from_node": "14",
+          "from_port": 2,
+          "to_node": "3080",
+          "to_port": 0
+        },
+        {
+          "from_node": "14",
+          "from_port": 2,
+          "to_node": "3079",
+          "to_port": 2
+        },
+        {
+          "from_node": "14",
+          "from_port": 1,
+          "to_node": "3080",
+          "to_port": 2
+        },
+        {
+          "from_node": "3081",
+          "from_port": 2,
+          "to_node": "3080",
+          "to_port": 1
+        },
+        {
+          "from_node": "3079",
+          "from_port": 0,
+          "to_node": "3082",
+          "to_port": 0
+        },
+        {
+          "from_node": "3080",
+          "from_port": 0,
+          "to_node": "3083",
+          "to_port": 0
+        },
+        {
+          "from_node": "3677",
+          "from_port": 0,
+          "to_node": "3459",
+          "to_port": 0
+        },
+        {
+          "from_node": "3678",
+          "from_port": 0,
+          "to_node": "3548",
+          "to_port": 0
+        },
+        {
+          "from_node": "3679",
+          "from_port": 0,
+          "to_node": "3425",
+          "to_port": 0
+        },
+        {
+          "from_node": "3681",
+          "from_port": 0,
+          "to_node": "3679",
+          "to_port": 1
+        },
+        {
+          "from_node": "4068",
+          "from_port": 0,
+          "to_node": "3679",
+          "to_port": 0
+        },
+        {
+          "from_node": "3680",
+          "from_port": 0,
+          "to_node": "3679",
+          "to_port": 2
+        },
+        {
+          "from_node": "4082",
+          "from_port": 0,
+          "to_node": "3677",
+          "to_port": 0
+        },
+        {
+          "from_node": "3680",
+          "from_port": 0,
+          "to_node": "3677",
+          "to_port": 2
+        },
+        {
+          "from_node": "4091",
+          "from_port": 0,
+          "to_node": "3678",
+          "to_port": 0
+        },
+        {
+          "from_node": "3680",
+          "from_port": 0,
+          "to_node": "3678",
+          "to_port": 1
+        },
+        {
+          "from_node": "3548",
+          "from_port": 0,
+          "to_node": "4106",
+          "to_port": 0
+        },
+        {
+          "from_node": "3680",
+          "from_port": 0,
+          "to_node": "4106",
+          "to_port": 2
+        },
+        {
+          "from_node": "4106",
+          "from_port": 0,
+          "to_node": "4107",
+          "to_port": 0
+        },
+        {
+          "from_node": "3681",
+          "from_port": 0,
+          "to_node": "3677",
+          "to_port": 1
+        },
+        {
+          "from_node": "3681",
+          "from_port": 0,
+          "to_node": "4106",
+          "to_port": 1
+        },
+        {
+          "from_node": "3263",
+          "from_port": 0,
+          "to_node": "4190",
+          "to_port": 0
+        }
+      ],
+      "switches": [
+        {
+          "node_id": "3079",
+          "upstream_sampling_count": 0,
+          "downstream_sampling_count": 0,
+          "incoming_edge_count": 3,
+          "outgoing_edge_count": 1
+        },
+        {
+          "node_id": "3080",
+          "upstream_sampling_count": 0,
+          "downstream_sampling_count": 0,
+          "incoming_edge_count": 3,
+          "outgoing_edge_count": 1
+        },
+        {
+          "node_id": "3677",
+          "upstream_sampling_count": 7,
+          "downstream_sampling_count": 0,
+          "incoming_edge_count": 3,
+          "outgoing_edge_count": 1
+        },
+        {
+          "node_id": "3678",
+          "upstream_sampling_count": 7,
+          "downstream_sampling_count": 0,
+          "incoming_edge_count": 2,
+          "outgoing_edge_count": 1
+        },
+        {
+          "node_id": "3679",
+          "upstream_sampling_count": 7,
+          "downstream_sampling_count": 0,
+          "incoming_edge_count": 3,
+          "outgoing_edge_count": 1
+        },
+        {
+          "node_id": "4106",
+          "upstream_sampling_count": 7,
+          "downstream_sampling_count": 0,
+          "incoming_edge_count": 3,
+          "outgoing_edge_count": 1
+        },
+        {
+          "node_id": "4190",
+          "upstream_sampling_count": 0,
+          "downstream_sampling_count": 4,
+          "incoming_edge_count": 3,
+          "outgoing_edge_count": 2
+        }
+      ],
+      "multiple_saved_outputs": true,
+      "multiple_sampling_nodes": true,
+      "multistage_topological_path_observed": true,
+      "switch_structure_observed": true,
+      "static_active_selector_proven": false,
+      "static_active_selector_limit": "UI widget literal ownership not inferred; author values not inspected",
+      "functional_intent_limit": "Categories and directed reachability are structural only; no node execution contract or authored purpose is inferred",
+      "public_source_url_in_authorized_identity_records": false
+    }
+  ],
+  "boundaries": [
+    "No Mio import/test/network/browser/product call",
+    "No prompts, widget contents, asset filenames, original graph, private paths or credentials emitted",
+    "Source raw SHA checked before decode; original bytes not changed",
+    "Structure does not establish UI-to-API conversion, active switch value, complete compile or all path intentions",
+    "Does not add samples, replace current75, restore original missing25 or rewrite prior oracle/results"
+  ]
+}

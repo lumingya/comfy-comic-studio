@@ -1,0 +1,56 @@
+{
+  "schema": "mio.r6.web.tab-supplement.v1",
+  "utc": "2026-11-26T09:57:48.935Z",
+  "navigation": false,
+  "same_own_page": true,
+  "history_rewritten": false,
+  "initial_grid_tab_evidence": false,
+  "supplement_actions": 3,
+  "keyboard_actions": 1,
+  "before": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "dark": true,
+    "focus": {
+      "tag": "BUTTON",
+      "role": null,
+      "aria": null,
+      "disabled": false,
+      "visible": true
+    },
+    "dialogs": 0
+  },
+  "prepared": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dark": false,
+    "focus": {
+      "tag": "BUTTON",
+      "role": null,
+      "aria": null,
+      "disabled": false,
+      "visible": true
+    },
+    "dialogs": 0
+  },
+  "after": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dark": false,
+    "focus": {
+      "tag": "BUTTON",
+      "role": null,
+      "aria": null,
+      "disabled": false,
+      "visible": true
+    },
+    "dialogs": 0
+  },
+  "pass": false
+}

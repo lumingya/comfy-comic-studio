@@ -1,0 +1,113 @@
+{
+  "schema": "mio.r6-generality-initial-seal.v1",
+  "role": "generality",
+  "reviewer": "/root/r6_generality_fresh",
+  "independent_fresh_context": true,
+  "first_recorded_identity_utc": "2026-11-26T09:12:46.451746+00:00",
+  "sealed_utc": "2026-11-26T09:30:34.155005+00:00",
+  "task_base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "status": "INITIAL_REVIEW_COMPLETE_NO_CONFIRMED_FINDINGS",
+  "findings": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "scope": {
+    "changed_paths_enumerated": 224,
+    "runtime_changed_files_read": 20,
+    "full_task_scope_not_only_latest_helper": true
+  },
+  "source_final": {
+    "working_tree_clean": true,
+    "runtime_count": 218,
+    "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+    "all_server_count": 407,
+    "all_server_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32"
+  },
+  "inputs": {
+    "original-task": "9539a19f9ad94c3a8e98bbb22e3365b58ce5e8c667973a8b2954fa623a8c5f8c",
+    "AGENTS.md": "f654c20d02acc42bfed0c4f646fded595ef9c41d7125a0c607855344b5ed956c",
+    "README.md": "a67df2e6818182face3922824ada84542e31e162983ee20401f2967e5d0e7954",
+    "docs/ROADMAP.md": "3d5174f520dc26f184a45406bc5cfa2852a3c0d65e02e7b880e7188ba0c063e6",
+    "brief-common.md": "c095091d0fffc89e9a689b7ecb32760a74f2710d66835d25ed730b4dc47714da",
+    "role-acceptance.md": "e58528285495a5008a18a9bb8d51ab4b3e931e1b672bfa01d2fc54facd04c563",
+    "root-authorization.json": "00b9e61b4cb50cee222cfaf0beeaecf3dc19e3351ed3552e583747f9b8ea14d9"
+  },
+  "artifacts": {
+    "report.md": {
+      "sha256": "d49bc1a837c3ce75b480038b8b3065ca6fce795519abdd835e16ab75df936dcc",
+      "bytes": 11391,
+      "utf8_without_bom": true
+    },
+    "bounded-questions.json": {
+      "sha256": "4c9ae2b89b656947c46cc083ec8703631dbc4ab6fe375022969a8aa3702adbeb",
+      "bytes": 4650,
+      "utf8_without_bom": true
+    },
+    "static-inventory.json": {
+      "sha256": "38bcf8f2fe6430756d323858fcbad311589afcf681e2c8e138b4181fcb76e167",
+      "bytes": 6085,
+      "utf8_without_bom": true
+    },
+    "runtime-manifest.json": {
+      "sha256": "8e1108afa9b69c09504fa69b38803bf16ea06df7044f63573cc6d352e7bbf7ef",
+      "bytes": 24376,
+      "utf8_without_bom": true
+    },
+    "static-checks.json": {
+      "sha256": "beac6adb9a814ba2477986bdc2a6b6abd1c9909630012cb2085d6d5657bbca2b",
+      "bytes": 6470,
+      "utf8_without_bom": true
+    },
+    "static_inventory.py": {
+      "sha256": "c1224aaae454ed9d96be5979b7c1a6df26348d0f7df7be5699ecc7d3dc7da2c7",
+      "bytes": 2709,
+      "utf8_without_bom": true
+    },
+    "static_checks.py": {
+      "sha256": "bf18f0745ab5e9b012f5887ad8e46626c8d33ca37493182dab867ad801a22570",
+      "bytes": 3463,
+      "utf8_without_bom": true
+    },
+    "seal_initial.py": {
+      "sha256": "5acd8def4ef11d8f8409fc5a0dd910dcc073cd60c6dc76d0999d3a56464c2e1c",
+      "bytes": 4311,
+      "utf8_without_bom": true
+    }
+  },
+  "execution": {
+    "product_imports": 0,
+    "product_executions": 0,
+    "product_lease": null,
+    "product_guard_required_and_exercised": false,
+    "guard_reason": "No Mio import or product process was started.",
+    "local_suite_build_e2e_gpu_network_browser_calls": 0,
+    "source_writes": 0,
+    "user_data_writes": 0,
+    "git_commits_pushes": 0
+  },
+  "private138": {
+    "new_source_reads": 0,
+    "new_product_executions": 0,
+    "fresh_complete_compile_proven": false,
+    "historical_lora_items": 43,
+    "historical_explicit_tags": 0,
+    "historical_config_mappings": 0,
+    "missing_frontend_state_boundary_retained": true,
+    "historical29_tag_mapping_kept_separate": true
+  },
+  "other_r6_role_outputs_read_before_seal": false,
+  "cross_audit_authorized": false,
+  "unmeasured": [
+    "fresh strict typed graph deltas",
+    "fresh private138 complete compile",
+    "fresh public blind samples",
+    "actual Chrome interaction",
+    "independent remote CI command verification",
+    "final cleanup publication commit push"
+  ],
+  "initial_files_immutable_after_seal": true,
+  "final_verdict_pending_cross": true
+}

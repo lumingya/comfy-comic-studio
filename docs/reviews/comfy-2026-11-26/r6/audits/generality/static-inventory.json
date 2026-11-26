@@ -1,0 +1,166 @@
+{
+  "schema": "mio.r6-generality-static-inventory.v1",
+  "utc": "2026-11-26T09:12:46.451746+00:00",
+  "task_base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "actual_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "working_tree_clean": true,
+  "runtime_count": 218,
+  "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+  "all_server_count": 407,
+  "all_server_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32",
+  "changed_files": 224,
+  "runtime_changed": [
+    {
+      "path": "server/mio_server/api/library.py",
+      "sha256": "075a48b0774575f6ef0dc98a2e94fecf790617be23710b6f0756657a6144e571",
+      "lines": 470,
+      "functions": 31,
+      "max_function_lines": 37
+    },
+    {
+      "path": "server/mio_server/comfy/binding_dimensions.py",
+      "sha256": "b2313017cea27fd1c6cafb2943d50bbb006ca49c22e8a01c6965d8fb99bc385c",
+      "lines": 193,
+      "functions": 7,
+      "max_function_lines": 49
+    },
+    {
+      "path": "server/mio_server/comfy/binding_inference.py",
+      "sha256": "3231f44648a7f755323e5f1d7f9ea0ed9da14e7e43096b2d5a487dd656cbc278",
+      "lines": 411,
+      "functions": 14,
+      "max_function_lines": 79
+    },
+    {
+      "path": "server/mio_server/comfy/binding_scope.py",
+      "sha256": "92d9e2891854d2e90892c47e69b7027e9d27f95a98871c9898793f494676446a",
+      "lines": 142,
+      "functions": 7,
+      "max_function_lines": 15
+    },
+    {
+      "path": "server/mio_server/comfy/binding_stage_scope.py",
+      "sha256": "696bd0ec10d2b86eecdeab8d4173fc0f591840746f3eb4e9fc4d5df7c3f9ffb0",
+      "lines": 81,
+      "functions": 1,
+      "max_function_lines": 64
+    },
+    {
+      "path": "server/mio_server/comfy/bindings.py",
+      "sha256": "a5a660e779ca3eca7d59fa44d8796ea5dc92e6a62f526d5d8bfbcbda2a48263c",
+      "lines": 507,
+      "functions": 24,
+      "max_function_lines": 36
+    },
+    {
+      "path": "server/mio_server/comfy/builtin_slot_adapters.py",
+      "sha256": "6e811319baf68ca36946594f07fd46e399c889f527af09d0c14bc1d7cfc0adb8",
+      "lines": 151,
+      "functions": 17,
+      "max_function_lines": 23
+    },
+    {
+      "path": "server/mio_server/comfy/compile.py",
+      "sha256": "2141ec096e59d5fda89bde5e1dfc4d7e123d70012301dbe39def736b007fe3f5",
+      "lines": 422,
+      "functions": 14,
+      "max_function_lines": 98
+    },
+    {
+      "path": "server/mio_server/comfy/inspection.py",
+      "sha256": "6e59f08ed677d22ba5af30be21eca61bcbb6ca182e391f182fda7432fb8727bb",
+      "lines": 244,
+      "functions": 2,
+      "max_function_lines": 126
+    },
+    {
+      "path": "server/mio_server/comfy/inspection_candidates.py",
+      "sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+      "lines": 335,
+      "functions": 20,
+      "max_function_lines": 66
+    },
+    {
+      "path": "server/mio_server/comfy/workflow_graph.py",
+      "sha256": "9d2ec7475710e822f8959b906821d908c52723214b9d32b3e03ba9856523462d",
+      "lines": 259,
+      "functions": 16,
+      "max_function_lines": 49
+    },
+    {
+      "path": "server/mio_server/comfy/workflow_import.py",
+      "sha256": "288a9039951c1a6dd3ec1859eef5c9d857e15ae70876722a7ca912607242e6c7",
+      "lines": 292,
+      "functions": 12,
+      "max_function_lines": 54
+    },
+    {
+      "path": "server/mio_server/comfy/workflow_slot_graph.py",
+      "sha256": "d3c62a6e13d38e195b79461a17a2b682a79ab2239cb0699dd9ceb87d0a42fb36",
+      "lines": 125,
+      "functions": 8,
+      "max_function_lines": 32
+    },
+    {
+      "path": "server/mio_server/comfy/workflow_slot_plan.py",
+      "sha256": "56feb2401a04ddee9980ee2d4b7f58d7f94fcb522226ba8b3b909156fe8b4814",
+      "lines": 189,
+      "functions": 7,
+      "max_function_lines": 55
+    },
+    {
+      "path": "server/mio_server/comfy/workflow_slot_plan_groups.py",
+      "sha256": "03fda66ac2801f4c23b838f9b8f438877b45a2a52b31c9673c28e80d82474c56",
+      "lines": 149,
+      "functions": 1,
+      "max_function_lines": 140
+    },
+    {
+      "path": "server/mio_server/comfy/workflow_slot_shapes.py",
+      "sha256": "5a30ec4ca94c8e31c89e5972b5872354787601b5ef8bf7254d1f14991afa24c4",
+      "lines": 241,
+      "functions": 9,
+      "max_function_lines": 65
+    },
+    {
+      "path": "server/mio_server/comfy/workflow_slot_values.py",
+      "sha256": "dcce61d3f96bdd0f49ca16b92e03383b040adfd1781dbf0837388605a670af65",
+      "lines": 147,
+      "functions": 11,
+      "max_function_lines": 39
+    },
+    {
+      "path": "server/mio_server/comfy/workflow_slot_writers.py",
+      "sha256": "df6fe05a78a4710682308c5f113899446544967b6df4b19700996064646d92e4",
+      "lines": 353,
+      "functions": 11,
+      "max_function_lines": 96
+    },
+    {
+      "path": "server/mio_server/context.py",
+      "sha256": "d6f013edc925083047324110966559d1e31ab7f3a33d451a62df5bdb0f9a5343",
+      "lines": 382,
+      "functions": 11,
+      "max_function_lines": 110
+    },
+    {
+      "path": "server/mio_server/workflow_catalog.py",
+      "sha256": "00b25ecd0295fa0a52062ffd3e49b7116eb2511c26a3af9318aac6541d03398b",
+      "lines": 171,
+      "functions": 7,
+      "max_function_lines": 57
+    }
+  ],
+  "inputs": {
+    "original-task": "9539a19f9ad94c3a8e98bbb22e3365b58ce5e8c667973a8b2954fa623a8c5f8c",
+    "AGENTS.md": "f654c20d02acc42bfed0c4f646fded595ef9c41d7125a0c607855344b5ed956c",
+    "README.md": "a67df2e6818182face3922824ada84542e31e162983ee20401f2967e5d0e7954",
+    "docs/ROADMAP.md": "3d5174f520dc26f184a45406bc5cfa2852a3c0d65e02e7b880e7188ba0c063e6",
+    "brief-common.md": "c095091d0fffc89e9a689b7ecb32760a74f2710d66835d25ed730b4dc47714da",
+    "role-acceptance.md": "e58528285495a5008a18a9bb8d51ab4b3e931e1b672bfa01d2fc54facd04c563",
+    "root-authorization.json": "00b9e61b4cb50cee222cfaf0beeaecf3dc19e3351ed3552e583747f9b8ea14d9"
+  },
+  "product_import_count": 0,
+  "product_execution_count": 0
+}

@@ -1,0 +1,583 @@
+{
+  "manual29_cases": [
+    {
+      "case_pointer": "manual-01",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-02",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-03",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-04",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-05",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-06",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-07",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-08",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-09",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-10",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-11",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-12",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-13",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 2,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": false,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 1,
+      "extra_after_type_counts": {
+        "missing": 1
+      },
+      "extra_before_type_counts": {
+        "dict": 1
+      },
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-14",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 2,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": false,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 1,
+      "extra_after_type_counts": {
+        "missing": 1
+      },
+      "extra_before_type_counts": {
+        "dict": 1
+      },
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-15",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-22",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 3,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": false,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 2,
+      "extra_after_type_counts": {
+        "missing": 2
+      },
+      "extra_before_type_counts": {
+        "dict": 2
+      },
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-23",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 3,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": false,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 2,
+      "extra_after_type_counts": {
+        "missing": 2
+      },
+      "extra_before_type_counts": {
+        "dict": 2
+      },
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-24",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-25",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-26",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-27",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-28",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-29",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-16-explicit-mode-owner",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-17-explicit-mode-owner",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-18-explicit-mode-owner",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-19-explicit-mode-owner",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-20-explicit-mode-owner",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    },
+    {
+      "case_pointer": "manual-21-explicit-mode-owner",
+      "passed": true,
+      "binding_delta_count": 1,
+      "full_delta_count": 1,
+      "actual_target_count": 1,
+      "expected_target_count": 1,
+      "exact_target_pointers": true,
+      "same_binding_and_full_delta": true,
+      "binding_delta_contained_in_full_delta": true,
+      "extra_full_delta_count": 0,
+      "extra_after_type_counts": {},
+      "extra_before_type_counts": {},
+      "extra_are_root_node_removals": true
+    }
+  ],
+  "all29_single_typed_bound_field_fact": true,
+  "full_delta_count_histogram": {
+    "1": 25,
+    "2": 2,
+    "3": 2
+  },
+  "extra_full_delta_count": 6,
+  "temporary_audit_interpretation_requiring_full_delta_always_one_was_too_strict": true,
+  "historical_four": {
+    "count": 4,
+    "all_old_false_preserved": true,
+    "old_explicit_operations": 0,
+    "old230_strict_typed_measured": false
+  },
+  "candidate_accounting": {
+    "candidate_count": 62,
+    "unique_candidate_ids": 62,
+    "selected_count": 13,
+    "unique_selected_ids": 13,
+    "excluded_count": 49,
+    "selected_ids_equal_candidate_selected": true,
+    "all_candidates_have_disposition": true,
+    "exclusion_disposition_type_counts": {
+      "seen_identity_match": 15,
+      "coverage_not_selected": 19,
+      "no_graph": 8,
+      "failed_acquisition": 2,
+      "modality_excluded": 5
+    },
+    "selected_identity_schema": {
+      "fingerprint": "dict",
+      "source": "dict",
+      "hits": "dict",
+      "fresh_available_layers": "bool"
+    },
+    "candidate_identity_schema": {
+      "fingerprint": "dict",
+      "source": "dict",
+      "hits": "dict",
+      "fresh_available_layers": "bool"
+    },
+    "all13_fresh_available_layers": true,
+    "all13_have_zero_seen_identity_hits": true
+  },
+  "blind": {
+    "mismatch_count": 16,
+    "typed_false": 14,
+    "typed_true_warning_false": 2,
+    "mismatch_kind_type_counts": {
+      "automatic": 13,
+      "conservative": 1,
+      "lora-negative": 1,
+      "lora-disabled": 1
+    },
+    "candidate_rows_with_false_roles": 1,
+    "candidate_role_pair_false_count": 2,
+    "attribute_typed_false_agrees": true,
+    "attribute_warning_false_agrees": true,
+    "findings": [
+      {
+        "id_pointer": "BL-L1",
+        "severity_type": "Low",
+        "category_type": "conservative-automatic-coverage",
+        "request_count": 13,
+        "not_reclassified_as_strict_pass": true,
+        "actual_role_types": [],
+        "frozen_missing_role_types": [],
+        "source_pointers": [
+          "server/mio_server/comfy/binding_scope.py:101",
+          "server/mio_server/comfy/binding_inference.py:247",
+          "server/mio_server/comfy/binding_inference.py:329",
+          "server/mio_server/comfy/binding_dimensions.py:103",
+          "server/mio_server/comfy/compile.py:343"
+        ]
+      },
+      {
+        "id_pointer": "BL-L2",
+        "severity_type": "Low",
+        "category_type": "image-role-guidance-coverage",
+        "request_count": 0,
+        "not_reclassified_as_strict_pass": null,
+        "actual_role_types": [
+          "ref"
+        ],
+        "frozen_missing_role_types": [
+          "init",
+          "mask"
+        ],
+        "source_pointers": [
+          "server/mio_server/comfy/inspection_candidates.py:261",
+          "server/mio_server/comfy/inspection_candidates.py:286",
+          "server/mio_server/comfy/inspection_candidates.py:321"
+        ]
+      }
+    ],
+    "frozen_assertions_unchanged": true
+  },
+  "web": {
+    "original_previews": 16,
+    "extra_preview": 1,
+    "total_previews": 17,
+    "preview_arithmetic_exact": true,
+    "actions": 252,
+    "action_arithmetic_exact": true,
+    "personal_views": 30,
+    "view_arithmetic_exact": true,
+    "wire_typed_exact": 0,
+    "wire_hash_exact": 0,
+    "wire_original_false_preserved": true,
+    "post_wire_exact_documents": 12,
+    "post_wire_exact_exports": 12,
+    "original_candidate_exact": false,
+    "original_candidate_oracle_edited": false,
+    "initial_all_network_count_proven": false,
+    "claim_full_session_requests_le_180": false,
+    "response_and_request_denominators_not_summed": true,
+    "low_id_pointers": [
+      "sha256-2b8e992569102ff086146f267d0060234a73c5d7b6d881afbb0f1d010c7ef6c0"
+    ],
+    "low_report_line_pointers": [],
+    "low_line_has_image_role_marker": false,
+    "low_line_source_pointers": []
+  },
+  "generality": {
+    "new_whitelist_negative_line_count": 2,
+    "report_sha256": "d49bc1a837c3ce75b480038b8b3065ca6fce795519abdd835e16ab75df936dcc",
+    "bounded_questions": 7
+  }
+}

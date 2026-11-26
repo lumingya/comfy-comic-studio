@@ -1,0 +1,169 @@
+{
+  "schema": "mio.r6-generality-static-checks.v1",
+  "utc": "2026-11-26T09:25:53.002123+00:00",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "ast_only": true,
+  "product_imports": 0,
+  "module_count": 218,
+  "eager_module_level_import_sccs": [],
+  "eager_import_check_limit": "top-level import statements; excludes dynamic and function-local imports",
+  "changed_test_metrics": [
+    {
+      "path": "server/tests/test_cloud_timeout_classification.py",
+      "sha256": "85070b64185f33c52f6d7f05e6a4309a22186b42c56d69619055ab77458addf9",
+      "test_methods": 4,
+      "assert_calls": 34
+    },
+    {
+      "path": "server/tests/test_inspection_slot_controls.py",
+      "sha256": "a8aa7b12a8ccbf60e0e78cc6b34bf23c0e980d91470bbd93ef376f39a776ab79",
+      "test_methods": 3,
+      "assert_calls": 11
+    },
+    {
+      "path": "server/tests/test_workflow_canvas_scope.py",
+      "sha256": "2f0da59e7e2dee621889f7fcd0f19456b33b9b7e60394eda661ea3d2ede24cb7",
+      "test_methods": 12,
+      "assert_calls": 20
+    },
+    {
+      "path": "server/tests/test_workflow_catalog.py",
+      "sha256": "4d60cf79c6cd07bdb60b7b79be192b1b6ee83b2b02fce626fdf4f8fa9fc5ce22",
+      "test_methods": 13,
+      "assert_calls": 67
+    },
+    {
+      "path": "server/tests/test_workflow_conditioning_stage_scope.py",
+      "sha256": "43b99e117a1bd34dcf4733d4ee08deb69479b08209da8939f2b87299c37f6758",
+      "test_methods": 22,
+      "assert_calls": 33
+    },
+    {
+      "path": "server/tests/test_workflow_dimension_controls.py",
+      "sha256": "9d832bfa4844fc506ec23d293486cb5c9fd832dd6cd3bca58967fef566348198",
+      "test_methods": 4,
+      "assert_calls": 8
+    },
+    {
+      "path": "server/tests/test_workflow_effective_bindings.py",
+      "sha256": "7135d9b6496368ebf61dde767460f2c1b544b587e836b66677fcd88e199907cf",
+      "test_methods": 14,
+      "assert_calls": 48
+    },
+    {
+      "path": "server/tests/test_workflow_graph_routes.py",
+      "sha256": "1f7e4cb8fa64849d9fce6f609d275f1c7efbcb525026eac46bdf9c65241d02eb",
+      "test_methods": 14,
+      "assert_calls": 52
+    },
+    {
+      "path": "server/tests/test_workflow_import_media.py",
+      "sha256": "a249e7841be71bc8b542394ecffe2da6cb16ea92fe39572df6799cf344b099b3",
+      "test_methods": 20,
+      "assert_calls": 57
+    },
+    {
+      "path": "server/tests/test_workflow_inspection.py",
+      "sha256": "b4db1ee3d363775265358564fe4b987ea4fa72247e654057b8a2a13c9d8ab6da",
+      "test_methods": 13,
+      "assert_calls": 57
+    },
+    {
+      "path": "server/tests/test_workflow_inspection_candidates.py",
+      "sha256": "1cd613abbae1be087b4464e189bc4c86851d31227db5038ce4690789450f40fd",
+      "test_methods": 8,
+      "assert_calls": 45
+    },
+    {
+      "path": "server/tests/test_workflow_lora_lossless.py",
+      "sha256": "9732508af2374af769cb3c871526035e9ea50717ecf6eaa037cd60dd647cac12",
+      "test_methods": 7,
+      "assert_calls": 22
+    },
+    {
+      "path": "server/tests/test_workflow_lora_numeric_strings.py",
+      "sha256": "5e47cc6bacb48ce85969a41c0687fabeeb5724f1f6147ed9bcf1fc9e2964ebcd",
+      "test_methods": 15,
+      "assert_calls": 34
+    },
+    {
+      "path": "server/tests/test_workflow_lora_r3_lossless.py",
+      "sha256": "7102475627c7bc98247f77189b772e4800237442f3fecc9683a66e20123f2701",
+      "test_methods": 11,
+      "assert_calls": 23
+    },
+    {
+      "path": "server/tests/test_workflow_lora_structures.py",
+      "sha256": "31e951360634778e3883a9f9945ae0f3c61f2fa4703cb162c4ab6a786abed847",
+      "test_methods": 10,
+      "assert_calls": 30
+    },
+    {
+      "path": "server/tests/test_workflow_requested_binding_warnings.py",
+      "sha256": "0e28302f21dfab034a849d83a31eed5e90973e7714158ab4f35edce7c849e232",
+      "test_methods": 4,
+      "assert_calls": 8
+    },
+    {
+      "path": "server/tests/test_workflow_scope_ports.py",
+      "sha256": "06d2aaafd621de44f0b500ae84c41b65980e22ad74aa1f96f313b68c88e4f143",
+      "test_methods": 14,
+      "assert_calls": 46
+    },
+    {
+      "path": "server/tests/test_workflow_semantic_bindings.py",
+      "sha256": "ac8600189d7f3cd34ba3a724b4770fc8bbdd579b7b2715c58b6b37348ecf1a3a",
+      "test_methods": 34,
+      "assert_calls": 147
+    },
+    {
+      "path": "server/tests/test_workflow_stack_modes.py",
+      "sha256": "ecd1a839f1b4380ad3a0feb1d2b92aceb09021475a856b717c05797723b4f08a",
+      "test_methods": 9,
+      "assert_calls": 26
+    },
+    {
+      "path": "server/tests/test_workflow_wild_contracts.py",
+      "sha256": "c7932ce41700848ec809921f58d2b5ffa67ead9fdbd2d5e1d84980a2cea5fb78",
+      "test_methods": 7,
+      "assert_calls": 51
+    }
+  ],
+  "changed_source_paths": [
+    "clients/astrbot_mio/mio_client.py",
+    "clients/python/mio_client.py",
+    "examples/extensions/standard-image-channels/transport.py",
+    "server/mio_server/api/library.py",
+    "server/mio_server/comfy/binding_dimensions.py",
+    "server/mio_server/comfy/binding_inference.py",
+    "server/mio_server/comfy/binding_scope.py",
+    "server/mio_server/comfy/binding_stage_scope.py",
+    "server/mio_server/comfy/bindings.py",
+    "server/mio_server/comfy/builtin_slot_adapters.py",
+    "server/mio_server/comfy/compile.py",
+    "server/mio_server/comfy/inspection.py",
+    "server/mio_server/comfy/inspection_candidates.py",
+    "server/mio_server/comfy/workflow_graph.py",
+    "server/mio_server/comfy/workflow_import.py",
+    "server/mio_server/comfy/workflow_slot_graph.py",
+    "server/mio_server/comfy/workflow_slot_plan.py",
+    "server/mio_server/comfy/workflow_slot_plan_groups.py",
+    "server/mio_server/comfy/workflow_slot_shapes.py",
+    "server/mio_server/comfy/workflow_slot_values.py",
+    "server/mio_server/comfy/workflow_slot_writers.py",
+    "server/mio_server/context.py",
+    "server/mio_server/workflow_catalog.py",
+    "web/src/api/system.ts",
+    "web/src/api/types.ts",
+    "web/src/components/ui.tsx",
+    "web/src/i18n/configuration.ts",
+    "web/src/pages/settings/LoraToggleList.tsx",
+    "web/src/pages/settings/WorkflowInspection.css",
+    "web/src/pages/settings/WorkflowInspection.tsx",
+    "web/src/pages/settings/WorkflowLoraSummary.tsx",
+    "web/src/pages/settings/WorkflowMappings.tsx",
+    "web/src/pages/settings/WorkflowsSection.tsx",
+    "web/src/styles/overlays.css",
+    "web/src/styles/ui.css"
+  ]
+}

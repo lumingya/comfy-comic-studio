@@ -1,0 +1,250 @@
+{
+  "schema": "mio.r6.web.visual-review.v1",
+  "subject_screenshots": 28,
+  "focus_supplement_screenshots": 1,
+  "candidate_supplement_screenshots": 1,
+  "actual_personal_views": 30,
+  "screenshot_existence_not_used_as_verdict": true,
+  "shots": [
+    {
+      "file": "dl-api-top.png",
+      "sha256": "bcaa38385a629030c161b732b7d77ca6d65768648b09b1aa6961305240e3d9f8",
+      "bytes": 78485,
+      "personally_viewed": true,
+      "note": "API preview, recognized bindings and unchecked dependency notice readable at desktop light.",
+      "supplement": false
+    },
+    {
+      "file": "dl-long-selector.png",
+      "sha256": "a3c247299a391d128cf5e6769fafc0fe3adcbaacca3d6bbd34f8d85c90943b1a",
+      "bytes": 77893,
+      "personally_viewed": true,
+      "note": "Harness race artifact: popover not open and page text selected. Kept as failed attempt, superseded only for visual coverage by actual selector shot.",
+      "supplement": false
+    },
+    {
+      "file": "dl-long-selector-actual.png",
+      "sha256": "a9064c40ddef7f50a84f5b7e6bab3d8afbe8cb2a8426bccd5c8976253e593aa3",
+      "bytes": 91734,
+      "personally_viewed": true,
+      "note": "Actual image-field selector; very long neutral title wraps within popover, no horizontal escape.",
+      "supplement": false
+    },
+    {
+      "file": "dl-ui-guide.png",
+      "sha256": "10b2e3343f223f6ac4099229bc02ea96018d3db680457bcf74b4b42ab1074a59",
+      "bytes": 102920,
+      "personally_viewed": true,
+      "note": "UI-only human three-step API export instructions, 200 nodes/199 links and disabled save. Page selection highlight from earlier harness race retained.",
+      "supplement": false
+    },
+    {
+      "file": "dl-candidates.png",
+      "sha256": "ea6cdc46d147737257737f06cd9d2da56c755cc5db7ca3262f49bd948c0ac042",
+      "bytes": 92880,
+      "personally_viewed": true,
+      "note": "Candidate summary not expanded because exact-text helper missed a secondary hint; does not prove prompt candidate rows visible.",
+      "supplement": false
+    },
+    {
+      "file": "dl-candidates-expanded.png",
+      "sha256": "991753d3bda272a2a92af7672cd8ec76765b4ac7add2b917854e3b1e68aa5f7c",
+      "bytes": 80231,
+      "personally_viewed": true,
+      "note": "Expanded after prompt was already mapped: negative rows 20/21 and six image-purpose rows visible. Does not prove original prompt candidate rows in this grid.",
+      "supplement": false
+    },
+    {
+      "file": "dl-candidate-mapping.png",
+      "sha256": "e1bee5128e783565ddb673acab06c13ebca5d1880edcedca315e1102c32da64b",
+      "bytes": 76184,
+      "personally_viewed": true,
+      "note": "Manual init/control/mask mappings visible and retained.",
+      "supplement": false
+    },
+    {
+      "file": "dl-lora-edited.png",
+      "sha256": "442a9337c5a2bf509442e5142851a2a592c217f0c817836027d6b65443f921eb",
+      "bytes": 64795,
+      "personally_viewed": true,
+      "note": "Filtered 17th neutral LoRA disabled; model -0.75 and clip 0.125 readable within width.",
+      "supplement": false
+    },
+    {
+      "file": "dd-api-top.png",
+      "sha256": "4b17ac196db80d3b8e535fa278dedcf09a159febdfe302f1d85fece15b899aea",
+      "bytes": 76307,
+      "personally_viewed": true,
+      "note": "Dark API preview, summary and static dependency boundary readable.",
+      "supplement": false
+    },
+    {
+      "file": "dd-long-selector.png",
+      "sha256": "ec54d5641d10f4ef9fcd55aa8668cd7600fbeb4bf23fc6d81c8639de0506523d",
+      "bytes": 88492,
+      "personally_viewed": true,
+      "note": "Long neutral image title wraps inside dark popover.",
+      "supplement": false
+    },
+    {
+      "file": "dd-ui-guide.png",
+      "sha256": "32030fa81adc7717eef9904e3caf13194d0d65513292ee8a0e2a26f044a8ebd7",
+      "bytes": 98761,
+      "personally_viewed": true,
+      "note": "Dark UI-only three-step guide with save disabled and vertical scrolling.",
+      "supplement": false
+    },
+    {
+      "file": "dd-candidates.png",
+      "sha256": "f23642be3e5ffd18383d55353ebaa3a2dc835dc4915b15f9a4b8e5a334671cc7",
+      "bytes": 84389,
+      "personally_viewed": true,
+      "note": "Expanded before manual mapping, four text-role rows for empty/upstream 20/21 visible in dark desktop.",
+      "supplement": false
+    },
+    {
+      "file": "dd-candidates-bottom.png",
+      "sha256": "e11f23124f0b18b80445d6ce5efc36865196cc7b1a1fa7238023e3f305e8a831",
+      "bytes": 69792,
+      "personally_viewed": true,
+      "note": "All six independent init/ref/control/mask source-purpose rows visible in dark desktop.",
+      "supplement": false
+    },
+    {
+      "file": "dd-lora-edited.png",
+      "sha256": "f59e2c7452492beb5cfb181faf46a6348c9a1ad589abda3ccead4f91afcdf91a",
+      "bytes": 63771,
+      "personally_viewed": true,
+      "note": "Dark filtered 17th neutral LoRA off, model -0.75/clip 0.125; no clipping.",
+      "supplement": false
+    },
+    {
+      "file": "ml-api-top.png",
+      "sha256": "5b1fe9fea164588a427385e646c9637cbf073bce67922ca0d7f101be2725161f",
+      "bytes": 33403,
+      "personally_viewed": true,
+      "note": "Mobile light preview fits 390x844 modal and summary stacks clearly.",
+      "supplement": false
+    },
+    {
+      "file": "ml-long-selector.png",
+      "sha256": "99b7e3b22afea6bdd3927dea8b9661f38ed0bbc8ec6b381e764882043c3383de",
+      "bytes": 36839,
+      "personally_viewed": true,
+      "note": "Mobile long title wraps; popover stays inside viewport.",
+      "supplement": false
+    },
+    {
+      "file": "ml-ui-guide.png",
+      "sha256": "2adfa0a438baf14804be823d520b025a3539e43826222a2f13a67841ee746966",
+      "bytes": 47006,
+      "personally_viewed": true,
+      "note": "Mobile UI-only guide readable with vertical scrolling; save disabled.",
+      "supplement": false
+    },
+    {
+      "file": "ml-candidates-top.png",
+      "sha256": "019e695b02bac0db6131320916d56879c26a993ddecf3cb6e01a9a20cb50d3bb",
+      "bytes": 36396,
+      "personally_viewed": true,
+      "note": "Expanded mobile-light candidates before manual mapping, warning and text-role region readable.",
+      "supplement": false
+    },
+    {
+      "file": "ml-candidates-middle.png",
+      "sha256": "ba507bb10ee4868a317d7942075301a67912769dca87ea61419e31afcfc4abf1",
+      "bytes": 30496,
+      "personally_viewed": true,
+      "note": "Both prompt/negative rows for 20/21 and independent image-purpose rows readable while scrolling.",
+      "supplement": false
+    },
+    {
+      "file": "ml-candidates-bottom.png",
+      "sha256": "3a5186361f2dcec99dafd877a1ae9774ca388f696fd3c8a67ee4dbbdb8930d40",
+      "bytes": 31213,
+      "personally_viewed": true,
+      "note": "All six image-purpose rows remain readable without horizontal overflow.",
+      "supplement": false
+    },
+    {
+      "file": "ml-lora-edited.png",
+      "sha256": "c459e46822c34d72cb69073622209e75cf86f0007de690648579d1639d27a481",
+      "bytes": 39141,
+      "personally_viewed": true,
+      "note": "Mobile-light LoRA toggle and model/clip controls stack and remain accessible.",
+      "supplement": false
+    },
+    {
+      "file": "md-api-top.png",
+      "sha256": "e765a334e7d228bc731860b763c111afa47f87a55766bcb918acfde3802404d8",
+      "bytes": 31605,
+      "personally_viewed": true,
+      "note": "Mobile dark preview fits 390x844; real dark theme.",
+      "supplement": false
+    },
+    {
+      "file": "md-long-selector.png",
+      "sha256": "5e7c320f8e7d6663a87b302a41b8e69c1007ec83888ef8bb08a090428d35cb3f",
+      "bytes": 34279,
+      "personally_viewed": true,
+      "note": "Dark mobile long-title option wraps and remains selectable.",
+      "supplement": false
+    },
+    {
+      "file": "md-ui-guide.png",
+      "sha256": "52700fb8f7682b00a2fac61fb7bf7548915914fa75a7e001d7929d5079bfc78f",
+      "bytes": 44742,
+      "personally_viewed": true,
+      "note": "Dark mobile UI-only instructions and disabled save readable.",
+      "supplement": false
+    },
+    {
+      "file": "md-candidates-top.png",
+      "sha256": "c8d3a6f1f2085a278f98eb7e3b2ccbda8df712280d396f09aa2e78db874caa9d",
+      "bytes": 34383,
+      "personally_viewed": true,
+      "note": "Expanded before mapping, dark mobile text role region readable.",
+      "supplement": false
+    },
+    {
+      "file": "md-candidates-middle.png",
+      "sha256": "e7710305402f391e604c2687fbc49f8b421050354808b951e716134c9f0340a0",
+      "bytes": 29802,
+      "personally_viewed": true,
+      "note": "Prompt/negative 20/21 and image-purpose rows readable on dark mobile.",
+      "supplement": false
+    },
+    {
+      "file": "md-candidates-bottom.png",
+      "sha256": "6e0c6e2ff4a5e0ff8cbf605bd8f1f20ba81275464c7f9aec9b491faa2efd5ee2",
+      "bytes": 30110,
+      "personally_viewed": true,
+      "note": "Dark mobile independent init/control/mask/ref rows visible.",
+      "supplement": false
+    },
+    {
+      "file": "md-lora-edited.png",
+      "sha256": "2868ed6546ad4990944c2d81998643dca50722d7c8a54cf0a3a1120e4eb82aef",
+      "bytes": 38389,
+      "personally_viewed": true,
+      "note": "Dark mobile filtered LoRA off and -0.75/0.125 controls readable.",
+      "supplement": false
+    },
+    {
+      "file": "focus-002.png",
+      "sha256": "6fc7c371a9aff7e01e3230d2bc353333a22b74a52f6a3b1de0d081abc0654b85",
+      "bytes": 85603,
+      "personally_viewed": true,
+      "note": "Desktop light saved own document; visible focus ring on exact remove-target sibling after Tab, confirmed by distinct backendNodeId 24 to 28.",
+      "supplement": true
+    },
+    {
+      "file": "candidate-003.png",
+      "sha256": "31e900429afa8ddff4c367af6457f7724c1198b83df4b1a6f459f33ac43d4577",
+      "bytes": 69964,
+      "personally_viewed": true,
+      "note": "Desktop light only original frozen PNG readonly preview: all four prompt/negative 20/21 rows plus six independent image-role rows personally visible in one viewport; no mapping edit or save. Original orphan60 missing expectation retained.",
+      "supplement": true
+    }
+  ]
+}

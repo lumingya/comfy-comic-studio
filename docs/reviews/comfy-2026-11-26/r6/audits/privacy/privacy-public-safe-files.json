@@ -1,0 +1,44 @@
+{
+  "schema": "r6-privacy-own-final-public-safe-exact-list-v1",
+  "role": "privacy",
+  "prepared_only": true,
+  "source_scripts_or_private_files_allowed": false,
+  "file_count": 7,
+  "files": [
+    {
+      "pointer": "audits/r6/privacy/cross.md",
+      "sha256": "e36e02620b1af125b33b2288d48e2a2a1df3b8c16bf094a063dc960136d696b2",
+      "bytes": 11705
+    },
+    {
+      "pointer": "audits/r6/privacy/cross-machinechecks.json",
+      "sha256": "671a2afc50e11678895e84d5cc7b99b8b8a04e8366d1b459c1c6ec2e439b6f21",
+      "bytes": 18991
+    },
+    {
+      "pointer": "audits/r6/privacy/publication-machinechecks.json",
+      "sha256": "e45ec0ea0a0e55b13c93082c38ca991fc926990fdf224bcc3abacbd460e460cf",
+      "bytes": 45417
+    },
+    {
+      "pointer": "audits/r6/privacy/public-safe-files.json",
+      "sha256": "b8d8a423d71b8af0507b43abe1fc90da89b1b8b19518e6d98b3b865112a50689",
+      "bytes": 13850
+    },
+    {
+      "pointer": "audits/r6/privacy/final.md",
+      "sha256": "384ca450a5248b90d680a515bc33a598a63564d1190b33d43e9d4842119ac934",
+      "bytes": 3865
+    },
+    {
+      "pointer": "audits/r6/privacy/final.json",
+      "sha256": "ce4e4e76c9c2531c25b3816afbf57f51d6dc52152552eda428ca2aa272f249d1",
+      "bytes": 2197
+    },
+    {
+      "pointer": "audits/r6/privacy/cross-seal.json",
+      "sha256": "47b3171e8affd07c6ad54497cbe110b6ad5b196a46a9feff4db08551ee104881",
+      "bytes": 1674
+    }
+  ]
+}

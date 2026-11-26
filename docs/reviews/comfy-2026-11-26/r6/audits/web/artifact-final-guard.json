@@ -1,0 +1,13 @@
+{
+  "utc": "2026-11-26T10:09:27.617155+00:00",
+  "artifact_id": 15098114848,
+  "run_id": 45779838148,
+  "source_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "asset_count": 81,
+  "all_assets_exact": true,
+  "zip_sha256": "d6a13e6d7c10125e2c96e62253bf90309bede137e41847fbb68e630bcee7d1dd",
+  "zip_exact": true,
+  "index_sha256": "76e359396b1a4a06ff72e21bef3d48c81c82d75ea1115a09755d546aa8373a3a",
+  "index_exact": true,
+  "product_calls": 0
+}

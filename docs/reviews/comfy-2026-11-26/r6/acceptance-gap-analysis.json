@@ -1,0 +1,1608 @@
+{
+  "schema": "mio.requirement-acceptance-gap-analysis.v1",
+  "state": "DOCUMENTARY_ANALYSIS_NOT_FINAL_ACCEPTANCE",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "scope": {
+    "requirement_count": 17,
+    "requirement_ids": [
+      "S03",
+      "S04",
+      "T01",
+      "T02",
+      "T03",
+      "T04",
+      "T05",
+      "T06",
+      "T07",
+      "T08",
+      "T09",
+      "T10",
+      "W01",
+      "W03",
+      "I06",
+      "M01",
+      "C07"
+    ],
+    "input_state": "SPECIFIC_SCOPE_OR_HISTORICAL_LIMIT_UNRESOLVED",
+    "meaning": "把未决原因拆开，不把17项一律视为17个技术失败，也不签署任何一项最终验收。",
+    "execution": "仅既有安全文本/JSON的有限投影、原任务对照、测试源码AST及精确Git对象字节比对；没有执行产品、测试、浏览器、网络或构建。",
+    "same_round_limit": "仅采用已封存首版报告及root给定的cross启动事实；不读取同轮cross/final，不预签整轮结果。",
+    "original_task_line_numbering": "原任务UTF-8文本的1-based行号；输出使用original-task别名，不携带本机原路径。",
+    "taxonomy_note": "十类是狩猎与通用问题覆盖要求。不能把每个例举词都扩成独立新功能或GPU验证；也不能以少数代表自动宣称全部例举生态兼容。"
+  },
+  "preserved_revision9_inputs": {
+    "final-report-draft.md": "ea97dd429223875a64293467a4bf6d7a88e29009f60171c489b42796b079f11e",
+    "requirement-evidence-ledger.json": "61903fdea9109a83d10878c47733ebddab6e3c299f5a4e0c38c8176426187eef",
+    "classification-calculations.json": "cf894692bc1775bdaf4d3924bb7aee9034de0eed425a949f71d453b9c9ad689c"
+  },
+  "sources": {
+    "TASK": {
+      "pointer": "original-task",
+      "sha256": "9539a19f9ad94c3a8e98bbb22e3365b58ce5e8c667973a8b2954fa623a8c5f8c"
+    },
+    "REV9_LEDGER": {
+      "pointer": "requirement-evidence-ledger.json",
+      "sha256": "61903fdea9109a83d10878c47733ebddab6e3c299f5a4e0c38c8176426187eef"
+    },
+    "REV9_CALC": {
+      "pointer": "classification-calculations.json",
+      "sha256": "cf894692bc1775bdaf4d3924bb7aee9034de0eed425a949f71d453b9c9ad689c"
+    },
+    "COVERAGE_ED": {
+      "pointer": "external-temp-evidence/repairs/r5-final-draft/coverage-map.json",
+      "sha256": "bdea244dbdba3527bc0bb6af8c3736a1a87e914ad704d74685122968aa6416ed",
+      "actual_measurement_revision": "ed45509456b14006161d829666c466789e6a9e37",
+      "limit": "原子请求/结构索引；其旧record_family名称含typed，不覆盖后来确认的current75 Python值比较限制。"
+    },
+    "CURRENT75_FE": {
+      "pointer": "external-temp-evidence/repairs/final-current75-replay/summary.json",
+      "sha256": "570f81402b040ca4d43bc6cbfc25abfa9c36610ae869a0ae5810b2db9f0435b4"
+    },
+    "COMPILE_R6": {
+      "pointer": "external-temp-evidence/audits/r6/compile/report.md",
+      "sha256": "b5ea489e8e0aff3e3939fffb220b7ab1274e56fddaaeb422cae95ff74de74ca6",
+      "seal_sha256": "5b31bad4b875696b4dca0bd439f04db9a23032a3120d817de0e847e416ee6b85"
+    },
+    "BLIND_R6": {
+      "pointer": "external-temp-evidence/audits/r6/blind/report.md",
+      "sha256": "5e1c575aa22fc3d6dcd19d5efffc4f33810ddc64e3447a2b1ca8ccc31ecc21c6",
+      "seal_sha256": "7022dd2f9cde943cff93b6e2fdc23592d588ebd8adabcfb24151286325b29f6b"
+    },
+    "GENERALITY_R6": {
+      "pointer": "external-temp-evidence/audits/r6/generality/report.md",
+      "sha256": "d49bc1a837c3ce75b480038b8b3065ca6fce795519abdd835e16ab75df936dcc",
+      "seal_sha256": "9d671ba5a30e5c0bed79e43fd56648812970c207de55f922ef74e2f074212ee1"
+    },
+    "PRIVACY_R6": {
+      "pointer": "external-temp-evidence/audits/r6/privacy/report.md",
+      "sha256": "628d71af896e5dcebb3988b57c64b2170e13802d8d201ea890753697c80102cb",
+      "seal_sha256": "1e88ad4f8a8fa7026b0f791625bad81ebcf4cb7d5e71ae31c0a7b100b91fa629"
+    },
+    "CI_FE": {
+      "pointer": "external-temp-evidence/repairs/r6-candidate-ci/ci-verified.json",
+      "sha256": "6ad3b99652352e7819fa4d513de03e0f6c16f98c41a478baee2bdaa5a9150d11"
+    },
+    "CIVI_META": {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-known-source-metadata/report.md",
+      "sha256": "d27661018aee1212ba8ac08fccd19655e6dd5ac93fd8e5443243e19c8c8b3b65"
+    },
+    "CIVI_STATIC_PRIVACY": {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-static-recovery-redirectfix/provenance-safe.json",
+      "sha256": "41195d0b1810c4ba240779be26b2b3abea60086922e4f84b4108f72e8cf8d44f"
+    },
+    "PREFLIGHT_V2": {
+      "pointer": "external-temp-evidence/audits/r6/preflight/report-v2.md",
+      "sha256": "37934cc793a851623b4e146e71c7d0350116a4e3b8bbbea2f94962414fee73e3"
+    },
+    "PREFLIGHT_V3": {
+      "pointer": "external-temp-evidence/audits/r6/preflight/report-v3.md",
+      "sha256": "f76f9a58c1896d347c7f8b6900ba37b96e7b8188d5ad93f0d4439e4baecdf705"
+    },
+    "REPO_DOC_SNAPSHOT": {
+      "pointer": "docs/COMFY_WORKFLOW_COMPATIBILITY_2026-11-21.md",
+      "sha256": "1544b71825e6d2c7ea40fee8631246ef98d9f777aac8f253a784d0545fe5bc35",
+      "limit": "本次只读快照。第90行仍含已被后续冻结证据纠正的230/230、160/160、70/70表述；不能作当前正确率证据。"
+    }
+  },
+  "shared_contracts": {
+    "static_takeover_allowed": {
+      "task_lines": [
+        28,
+        64
+      ],
+      "quote": "能穿透则自动解析，无法静态确定的明确标出原因与人工接管点",
+      "acceptance_requires": [
+        "实际处理该输入，而不是未尝试便跳过",
+        "明确指出不确定来源/角色或缺失执行协议",
+        "可用的手选写点、API导出步骤或受支持协议入口",
+        "不得误写或把未执行当自动兼容"
+      ],
+      "limit": "这是能力合同，不自动补足未采集生态、历史丢失样本、未测整链或缺失UI候选。"
+    },
+    "ui_only_allowed": {
+      "task_lines": [
+        24,
+        71
+      ],
+      "quote": "如果文件里只有纯 UI 图（无 API `prompt`），给出极其清晰的人话提示与一步步导出 API 格式的图文指引（或尽最大可能解析出结构概览帮助排查）",
+      "limit": "原任务允许结构概览/导出引导路径，不要求猜测未知widget顺序与浏览器生成连线。UI-only不能加入API成功编译分母。"
+    },
+    "static_not_gpu": {
+      "task_line": 29,
+      "quote": "测试重点是静态图解析、UI→API 识别/转换/报错引导、自动探测",
+      "limit": "模型架构名用于结构分类，不要求下载权重或以成图质量证明静态适配。"
+    },
+    "denominators": {
+      "current75": "46API + 29UI = 75；230 = 46×5；160automatic + 29manual_required + 41absent = 230",
+      "old_manual_required": "18prompt + 11negative，原core不配置mapping；27/29→29/29是保守不写的判定正确性，显式手选操作为0。",
+      "r6_actual_manual29": "另有29/29真实单字段手选、实际写入、完整typed编译及源不变；不加回原230。",
+      "cohort_rule": "十类结构成员可重叠；R1/R2/R3/R4/R5/R6请求和结构分母不可相加；API整图静态compile不等于每个角色与每段链路的意图均已验证。"
+    }
+  },
+  "requirements": [
+    {
+      "id": "S03",
+      "task_lines": [
+        12
+      ],
+      "task_quote": "严禁复制、打印、记录或提交任何 Cookie、Authorization Header、浏览器 Profile 文件或账号信息",
+      "classification": [
+        "SAFETY_PROHIBITION",
+        "BOUNDED_NO_COMMITTED_SECRET_EVIDENCE",
+        "PROCESS_EVENTS_RETAINED",
+        "HISTORICAL_UNKNOWN_SCOPE_NOT_CLEARED"
+      ],
+      "evidence": [
+        {
+          "source": "PRIVACY_R6",
+          "location": "lines12-16,44-46",
+          "facts": "224个实际candidate Git blobs、6类敏感模式零匹配；71归档文件与62源行按既定投影核对。该扫描只证明所扫Git范围，不证明浏览器从未访问敏感内容。"
+        },
+        {
+          "source": "CIVI_STATIC_PRIVACY",
+          "location": "/privacy,/limits",
+          "facts": "该有限采集阶段声明未枚举旧tabs/contexts/profile/cookies，未保存响应头/原metadata等。只约束这一阶段。"
+        },
+        {
+          "source": "REV9_LEDGER",
+          "location": "/root_post_initial_process_disclosures_revision9,/requirements[id=S03]",
+          "facts": "R5三次过程事件、未知截断范围、R6职责输出事件及root post-initial过程记录均保留；已知中性隔离标识的输出不等于Cookie/Profile内容访问。"
+        }
+      ],
+      "genuine_remaining": "需要按已存安全过程记录形成有限操作账，区分实际读取了什么API/文件内容、仅枚举名称或操作元数据、哪些输出范围未知；不能用Git零匹配替代浏览器行为审计。",
+      "allowed_boundary": "本项是禁止行为，没有以人工接管豁免隐私的边界。现有未知截断不能据此断言已访问或泄露敏感浏览器内容，也不能签零输出/全程clean。",
+      "historical_limit": "未知截断若无法从已存安全记录判定，应明确未证；禁止为补证再读取Profile、Cookie或原敏感输出。",
+      "minimal_action": "privacy/root在既有过程事件的known-schema投影上逐项标actual_access / metadata_only / unknown，引用现有receipt/hash与停止边界；只清理实际已知应清理项，再给有限结论。",
+      "new_product_defect_demonstrated_by_this_analysis": false,
+      "final_acceptance": "PENDING_CROSS_AND_PROCESS_RECONCILIATION",
+      "task_source_lines": [
+        {
+          "line": 12,
+          "text": "   - 如需利用用户本机浏览器中已登录的 Civitai 会话下载工作流，**严禁复制、打印、记录或提交任何 Cookie、Authorization Header、浏览器 Profile 文件或账号信息**（不要在日志、文档或对话里回显任何令牌或 Cookie）。"
+        }
+      ]
+    },
+    {
+      "id": "S04",
+      "task_lines": [
+        13
+      ],
+      "task_quote": "如果检测不到可连接的浏览器调试接口……先清晰提示用户如何启动或授权，同时绝不干等阻塞——立刻并行从免登录公开高难源……展开第一波狩猎",
+      "classification": [
+        "CONDITIONAL_PROCEDURAL_REQUIREMENT",
+        "PUBLIC_FALLBACK_OBSERVED",
+        "TRIGGER_HISTORY_NOT_ESTABLISHED"
+      ],
+      "evidence": [
+        {
+          "source": "CIVI_META",
+          "location": "lines3-34",
+          "facts": "固定33个剩余公开来源串行读取，31HTTP200、2HTTP403；并非重新按点赞搜索。与前一已采source合计32/34unique、33/35历史行有当前元数据。"
+        },
+        {
+          "source": "REV9_LEDGER",
+          "location": "/civitai_independent_static_supplement_evidence,/fresh_r6_activation_evidence",
+          "facts": "后续已实际建立受限浏览器连接并取得1份UI静态结构；这不是早期不存在CDP时已给启动说明的证明。"
+        }
+      ],
+      "genuine_remaining": "现有安全指针不足以判断最初是否触发了“检测不到CDP”条件及当时是否给出启动/授权说明。",
+      "allowed_boundary": "条件未触发时无需补造一次授权教程或重新请求权限；公开来源推进和后续追加登录态/公开页面采集均为原任务允许路径。",
+      "historical_limit": "后来的可连接事实不能追认早期提示已发送；若无当时receipt只能记录条件历史未证，不能补写历史。",
+      "minimal_action": "只核对现有root启动记录/安全连接receipt：若条件触发且缺提示，将程序性缺口如实列出；若未触发，以receipt关闭本项。无需新增下载或产品改动。",
+      "new_product_defect_demonstrated_by_this_analysis": false,
+      "final_acceptance": "PENDING_CONDITIONAL_HISTORY_RECONCILIATION",
+      "task_source_lines": [
+        {
+          "line": 13,
+          "text": "   - 如果检测不到可连接的浏览器调试接口（如 CDP `127.0.0.1:9222`），先清晰提示用户如何启动或授权，**同时绝不干等阻塞**——立刻并行从免登录公开高难源（Civitai 公开页面/图片元数据、GitHub 热门 ComfyUI 工作流仓库、ComfyUI 官方 Examples、OpenArt 公开工作流、rgthree / Impact-Pack / Easy-Use / Efficiency / Flux / ControlNet 官方示例等）展开第一波狩猎，用户开启浏览器连接后立刻追加 Civitai 登录态高阶工作流！"
+        }
+      ]
+    },
+    {
+      "id": "T01",
+      "task_lines": [
+        17,
+        66,
+        67
+      ],
+      "task_quote": "新一代架构模型工作流……Flux.1……SD3.5……Lumina2 / HiDream / AuraFlow / Kolors / PixArt / Chroma",
+      "classification": [
+        "REPRESENTATIVE_STATIC_CAPABILITY_EVIDENCED",
+        "ECOSYSTEM_SAMPLING_PARTIAL",
+        "NOT_ALL_MODEL_VARIANTS_CERTIFIED"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T01]",
+          "facts": "结构条件成员：current75为15API/8UI；R1为1API，R2为6API，R3为4API/3UI，R4为3API/3UI。集合重叠，不相加。"
+        },
+        {
+          "source": "REV9_CALC",
+          "location": "/model_structural_hints",
+          "facts": "Flux/SD3/SDXL/modern_other是公开架构提示的分组；分类before/after沿用aa06→ed，不移植成fe逐组重算。"
+        },
+        {
+          "source": "GENERALITY_R6",
+          "location": "semantic inference/static routing review",
+          "facts": "实际fe静态源码审阅；现代采样器/guider/noise与多段文本契约有具体永久回归，见本文件test_index。"
+        }
+      ],
+      "genuine_remaining": "需要把已存真实样本的架构提示和已保存请求显式对应；缺少的家族/变体标未采集或未测。不能把modern_other结构标签当全部列名家族的实际证明。",
+      "allowed_boundary": "静态多源/未知计算不能安全确定时，明确manual候选和不写边界可满足通用合同；这不证明没有对应真实样本的生态已兼容。",
+      "historical_limit": "部分原Civitai架构覆盖只能从历史manifest保留，缺失原件不能重算；独立于当前fe代表性机制的证据。",
+      "minimal_action": "优先用现有manifest与保存请求补一张“公开架构提示/实际格式/目标请求/自动或接管/未测”表。只有暴露出已采真实结构无可用接管点时才转实现缺陷；如需弥补狩猎覆盖，另记少量新代表，不要求逐个例举名新开功能或下载权重。",
+      "regression_categories": [
+        "T01"
+      ],
+      "final_acceptance": "PENDING_CROSS_WITH_SCOPE_QUALIFICATION",
+      "task_source_lines": [
+        {
+          "line": 17,
+          "text": "     1. **新一代架构模型工作流**：Flux.1（Dev/Schnell/Kontext/Redux/Fill，含 `CLIPTextEncodeFlux`、`FluxGuidance`、`DualCLIPLoader`、`BasicGuider`、`SamplerCustomAdvanced`）、SD3.5（`TripleCLIPLoader`、`CLIPTextEncodeSD3`）、Lumina2 / HiDream / AuraFlow / Kolors / PixArt / Chroma；"
+        },
+        {
+          "line": 66,
+          "text": "   - 全面兼容 Flux / SD3.5 / Lumina2 / HiDream / Illustrious / NoobAI / SDXL 等非传统采样链（如 `BasicGuider` / `CFGGuider` / `SamplerCustomAdvanced` / `RandomNoise` / `FluxGuidance` / `Dual/TripleCLIPLoader` / 多段字符串拼接与 Regional 分区提示词）；"
+        },
+        {
+          "line": 67,
+          "text": "   - 改进正负提示词、种子（含 `noise_seed` / `seed_num` / rgthree Seed）、分辨率（含 Latent / EmptySD3LatentImage / CR Aspect Ratio 等）的多维度图语义打分推断，显著降低误绑率。"
+        }
+      ]
+    },
+    {
+      "id": "T02",
+      "task_lines": [
+        18
+      ],
+      "task_quote": "多阶段串联（文生图 → Latent/像素放大 → Second Pass KSampler → Adetailer / ImpactPack FaceDetailer / DetailerForEach → 局部精修 → 色彩校正）",
+      "classification": [
+        "MULTISTAGE_ATOMIC_CONTRACT_EVIDENCED",
+        "WHOLE_CHAIN_INTENT_NOT_FULLY_INDEXED"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T02]",
+          "facts": "current75结构成员19API/10UI；阶段/主支/后段保留有具体中性回归，但整链意图oracle分母为null。"
+        },
+        {
+          "source": "COMPILE_R6",
+          "location": "lines19-24,58-64",
+          "facts": "多阶段原四false图在fresh oracle下4自动保守不写、4显式单字段typed编译均精确；保留原四false。新manual29独立29/29。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "scope and limits,lines55-71",
+          "facts": "新真实多阶段/放大/detailer样本提供静态请求证据；自动32请求中的13个保守no-op仍保留原false，不能改成自动全成功。"
+        }
+      ],
+      "genuine_remaining": "尚未有一个统一索引把既有重型真实图的每一阶段角色、预期写点和其实际完整delta连起来；不能仅据节点共现声称整条动画外静态流水线全部自动可控。",
+      "allowed_boundary": "多阶段缺少唯一意图时，明确原因并让用户选阶段/写点是合法接管。全局seed/多最终输出策略与旧mode要求manual的差异应独立解释，不能统称危险错绑。",
+      "historical_limit": "旧R2四个manual-mode false目标集合实际一致，不能改通过；它们与另三个已撤回自动阶段参数请求分开。",
+      "minimal_action": "在已有真实请求中选一张代表多阶段图，建立“阶段→已冻结请求→typed delta/输出闭包→自动或手选”有限索引；缺少哪个阶段就明确哪段未测。仅在发现写错阶段或无法接管的具体证据时补修，不以所有阶段都自动写入作为原任务唯一合格标准。",
+      "regression_categories": [
+        "T02"
+      ],
+      "final_acceptance": "PENDING_CROSS_WITH_STAGE_INTENT_INDEX",
+      "task_source_lines": [
+        {
+          "line": 18,
+          "text": "     2. **重型二次元流水线（Illustrious / NoobAI / Pony / SDXL）**：多阶段串联（文生图 → Latent/像素放大 → Second Pass KSampler → Adetailer / ImpactPack `FaceDetailer` / `DetailerForEach` → 局部精修 → 色彩校正）；"
+        }
+      ]
+    },
+    {
+      "id": "T03",
+      "task_lines": [
+        19,
+        28,
+        64
+      ],
+      "task_quote": "高频魔改生态打包节点……Context……easy pipe 管线透传……增强图遍历内核……常见 Pipe/Context 复合总线（识别输入输出端口流向）",
+      "classification": [
+        "PORT_AWARE_CONTRACT_EVIDENCED",
+        "UNKNOWN_PLUGIN_IDENTITY_NOT_GUESSED",
+        "REAL_ECOSYSTEM_INDEX_PARTIAL"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T03]",
+          "facts": "current75结构成员1API/10UI；R1为3API，R2为2API/1UI，R3为3API/2UI。只是已存结构，不是所有插件总线成功。"
+        },
+        {
+          "source": "GENERALITY_R6",
+          "location": "lines25-35",
+          "facts": "路由只接受native identity、可静态确定selector payload、可信调用方route contract；对象类型本身不提供恒等语义。按端口传播且不猜未知一元变换。"
+        }
+      ],
+      "genuine_remaining": "需把真实打包节点/公开生态的来源格式与已保存的端口目标请求连接；未知总线不能仅因名称或输出类型被当透明identity。",
+      "allowed_boundary": "对未知总线拒绝推断恒等源且说明人工接管/协议入口，符合原任务；不需要为每个插件增加白名单。真实可见输入若连manual候选都漏掉，则仍是真缺口，不能用此边界豁免。",
+      "historical_limit": "十个UI结构成员不补API写入分母；旧采集名单缺项不由一般算法证明替代。",
+      "minimal_action": "复用现有coverage的样本→端口契约→保存请求→三项具体路由回归索引。无对应真实请求的生态标结构-only/未测；先审实际输出/提示是否足够，再决定是否需要少量新的代表性请求。",
+      "regression_categories": [
+        "T03"
+      ],
+      "final_acceptance": "PENDING_CROSS_WITH_PORT_EVIDENCE_INDEX",
+      "task_source_lines": [
+        {
+          "line": 19,
+          "text": "     3. **高频魔改生态打包节点**：`rgthree`（`Power Lora Loader (rgthree)`、`Fast Groups Bypasser/Muter`、`Context`、`Seed (rgthree)`、`Any Switch`）、`Efficiency Nodes`（`Efficient Loader`、`KSampler (Efficient)`、`LoRA Stacker`）、`ComfyUI-Easy-Use`（`easy fullLoader` / `easy pipe` 管线透传 / `easy preSampling`）、`WAS Node Suite`、`Comfyroll (CR)`、`KJNodes`、`Inspire Pack`、`tinyterraNodes (ttN)`、`ComfyUI-Custom-Scripts`；"
+        },
+        {
+          "line": 28,
+          "text": "   - **禁止靠“硬编码几百个插件白名单”打补丁！** 要优先升级**通用图遍历、语义推断、路由穿透、结构化特征匹配、通用槽位抽象与可插拔适配器机制**，真正做到“遇到今天还没见过的新插件也能 90% 自动识别或清晰引导人工映射”。"
+        },
+        {
+          "line": 64,
+          "text": "   - 增强图遍历内核：通用穿透 `Reroute`、多级 `Primitive`、常见 `Pipe/Context` 复合总线（识别输入输出端口流向）、智能跳过 `Muted/Bypassed` 失活分支、识别并优雅处理 `Switch` 活动分支、识别 ComfyUI **Subgraphs / Group Nodes** 与 **Use Everywhere** 隐式连线（能穿透则自动解析，无法静态确定的明确标出原因与人工接管点）。"
+        }
+      ]
+    },
+    {
+      "id": "T04",
+      "task_lines": [
+        20,
+        64
+      ],
+      "task_quote": "识别 ComfyUI Subgraphs / Group Nodes 与 Use Everywhere 隐式连线（能穿透则自动解析，无法静态确定的明确标出原因与人工接管点）",
+      "classification": [
+        "EXPLICIT_ROUTE_CONTRACT_EVIDENCED",
+        "DYNAMIC_FRONTEND_TAKEOVER_ALLOWED",
+        "NESTED_WIRELESS_AUTO_EXECUTION_NOT_PROVED"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T04]",
+          "facts": "current75为16UI结构成员、0API成员；R3有2API/4UI。不能把这些UI图算自动路由可编译。"
+        },
+        {
+          "source": "GENERALITY_R6",
+          "location": "lines25-27,43",
+          "facts": "native身份/静态selector/端口约束已审；UI-only给子图、隐式连线、失活节点提醒并要求API导出，不猜浏览器生成连线。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "lines49,71",
+          "facts": "7份UI实际import拒绝+inspect导出指引；本轮未覆盖无线/原生子图新API执行。"
+        }
+      ],
+      "genuine_remaining": "不能宣称Use Everywhere/原生嵌套图已自动展开。需要对已存该类UI的具体reason/接管步骤作逐项可查索引，确认不是泛泛格式错误或只沉默跳过。",
+      "allowed_boundary": "原文明确允许无法静态确定时原因+人工接管，不要求重新实现浏览器状态协议；静态selector/失活分支的安全不写和UI导出API路径可以验收为不同能力。",
+      "historical_limit": "只有UI结构或外部state缺失时无法事后制造真实API执行证明。",
+      "minimal_action": "先连已有UI-overview/subgraph/wireless提示记录与导出步骤、四项路由回归及实际保存结果；仅对缺reason/接管点的具体输入追加说明/测试。不要把“没有UE自动转换”本身定为违约，也不要把一般UI提示当全部路由算法已实现。",
+      "regression_categories": [
+        "T04"
+      ],
+      "final_acceptance": "PENDING_CROSS_ON_EXPLICIT_TAKEOVER_CONTRACT",
+      "task_source_lines": [
+        {
+          "line": 20,
+          "text": "     4. **无线隐式连线 & 路由/子图地狱**：`Use Everywhere`（`Anything Everywhere` / `Anything Everywhere3` / `ue_graphs`）、`Reroute` 多级转发链、`PrimitiveNode`、条件开关（`Switch` / `ImpactSwitch` / `LazySwitch`）、**ComfyUI 原生 Group Nodes / Subgraphs 嵌套子图**、大量 `Bypassed (mode=4)` 与 `Muted (mode=2)` 失活旁路节点；"
+        },
+        {
+          "line": 64,
+          "text": "   - 增强图遍历内核：通用穿透 `Reroute`、多级 `Primitive`、常见 `Pipe/Context` 复合总线（识别输入输出端口流向）、智能跳过 `Muted/Bypassed` 失活分支、识别并优雅处理 `Switch` 活动分支、识别 ComfyUI **Subgraphs / Group Nodes** 与 **Use Everywhere** 隐式连线（能穿透则自动解析，无法静态确定的明确标出原因与人工接管点）。"
+        }
+      ]
+    },
+    {
+      "id": "T05",
+      "task_lines": [
+        21,
+        69
+      ],
+      "task_quote": "稳定键定位、启用/禁用开关与权重精确写入，确保冻结覆写不破坏原工作流结构",
+      "classification": [
+        "STRUCTURAL_LORA_CODEC_EVIDENCED",
+        "REAL_OPERATION_AND_SYNTHETIC_DENOMINATORS_SEPARATE",
+        "LONG_REAL_STACK_COVERAGE_PARTIAL"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T05],/saved_request_bank",
+          "facts": "current75结构成员2API/6UI；R3真实LoRA26次负权重/禁用原整图检查为26/26，不与current75四次或其他批次相加。"
+        },
+        {
+          "source": "COMPILE_R6",
+          "location": "LoRA contract review and neutral matrix",
+          "facts": "11个中性LoRA场景、最大33项，覆盖chain/flat/nested/重复/负数/model-only/CLIP/开关和邻项保持；属于独立中性编译范围。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "lines49,65,71",
+          "facts": "1个真实active model-only组的2次负值/禁用typed精确，2个warning-only原false保留；不宣称覆盖长链、重复名及所有stack。"
+        }
+      ],
+      "genuine_remaining": "真实10+长链和每种复杂stack的实际操作覆盖不可由中性30项或私有43项枚举替代；需要最终报告清楚区分发现、写入、开关、typed保真四种证据。",
+      "allowed_boundary": "结构形态/稳定键不成立时应明确不可写或接管；已有结构codec的真实覆盖和极端中性测试可共同证明通用机制，不要求每种插件名各一套适配器。",
+      "historical_limit": "私有43项仅枚举/稳定性统计，不是43次真实用户图完整compile。",
+      "minimal_action": "优先将已有R3真实操作与五项具体中性方法按形态连表；若保留“真实10+串链已实测”的表述，必须给实际长链请求证据，否则改为结构/中性已覆盖、真实长链未测。只有需要补齐该狩猎覆盖时才对已有可用长链进行有限独立请求，不扩大到用户LoRA或GPU。",
+      "regression_categories": [
+        "T05"
+      ],
+      "final_acceptance": "PENDING_CROSS_WITH_LORA_SCOPE_SEPARATION",
+      "task_source_lines": [
+        {
+          "line": 21,
+          "text": "     5. **奇葩 LoRA 写法大全**：字典动态键名（Power Lora Loader 的 `lora_1: {on, lora, strength}`）、数组/多槽堆叠（`CR LoRA Stack`、`LoRA Stacker`、`LoraLoaderModelOnly`）、只有 model 权重无 clip 权重、负权重、链式 10+ 颗同名或不同名 LoRA；"
+        },
+        {
+          "line": 69,
+          "text": "   - 升级 `workflow_slot_*`：用通用的结构模式识别取代死板节点名枚举——自动适配单节点 LoRA、串联 LoRA、`LoraLoaderModelOnly`、多槽位平铺（`lora_name_1 / strength_model_1 / switch_1`）、嵌套字典对象（如 Power Lora Loader 的 `{on, lora, strength}`）及多组同名 LoRA 的稳定键定位、启用/禁用开关与权重精确写入，确保冻结覆写不破坏原工作流结构。"
+        }
+      ]
+    },
+    {
+      "id": "T06",
+      "task_lines": [
+        22,
+        66,
+        67
+      ],
+      "task_quote": "复杂字符串与提示词拼装……分区多角色……改进正负提示词……多维度图语义打分推断，显著降低误绑率",
+      "classification": [
+        "AMBIGUOUS_TEXT_TAKEOVER_EVIDENCED",
+        "ACTUAL_MANUAL_WRITES_EVIDENCED",
+        "AUTHOR_INTENT_UNIVERSALITY_NOT_CLAIMED"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T06]",
+          "facts": "current75结构成员8API/6UI；区域拼装/多来源需mapping的具体中性回归已在候选源码。"
+        },
+        {
+          "source": "COMPILE_R6",
+          "location": "lines42-48,58-62",
+          "facts": "29真实文本手选均实际单字段写入并严格typed编译；其中6个wildcard案例按固定公开插件源码独立判断合法输入所有者。不是任意选一个无关字符串凑通过。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "lines55,63",
+          "facts": "文本自动保守no-op和1个global-base oracle限制均保留原false；显式手选精确不被改写成自动全识别。"
+        }
+      ],
+      "genuine_remaining": "不能声称任意区域链或动态wildcard结果都可静态自动重写。需将所选文本term与完整作者区域意图区分；已有具体空白/别名候选问题还须由R6cross判断关闭情况。",
+      "allowed_boundary": "拼接/区域多源无法唯一决定时，人话说明+合法单term手选是原任务认可的接管；不应强行把全部局部文本统一改成同一词。",
+      "historical_limit": "原230的29manual_required只是不配置mapping时安全留空；与新的29真实手选不互换。",
+      "minimal_action": "引用现有29/29typed手选、三项区域/拼接中性方法及新增candidate空文本/配对别名方法；对仍未测动态处理器写清边界，无需为每个区域插件名强造全区域自动覆写功能。",
+      "regression_categories": [
+        "T06",
+        "M1_M2_CANDIDATES"
+      ],
+      "final_acceptance": "PENDING_CROSS_ON_TEXT_CANDIDATE_AND_MANUAL_CONTRACT",
+      "task_source_lines": [
+        {
+          "line": 22,
+          "text": "     6. **复杂字符串与提示词拼装**：`String Concatenate`、`Text Multiline`、`Wildcards`、`ConditioningConcat` / `ConditioningCombine` / `ConditioningAverage`、分区多角色（`Regional Prompter` / `AttentionCouple` / `ConditioningSetMask`）；"
+        },
+        {
+          "line": 66,
+          "text": "   - 全面兼容 Flux / SD3.5 / Lumina2 / HiDream / Illustrious / NoobAI / SDXL 等非传统采样链（如 `BasicGuider` / `CFGGuider` / `SamplerCustomAdvanced` / `RandomNoise` / `FluxGuidance` / `Dual/TripleCLIPLoader` / 多段字符串拼接与 Regional 分区提示词）；"
+        },
+        {
+          "line": 67,
+          "text": "   - 改进正负提示词、种子（含 `noise_seed` / `seed_num` / rgthree Seed）、分辨率（含 Latent / EmptySD3LatentImage / CR Aspect Ratio 等）的多维度图语义打分推断，显著降低误绑率。"
+        }
+      ]
+    },
+    {
+      "id": "T07",
+      "task_lines": [
+        23,
+        72
+      ],
+      "task_quote": "区分角色参考图 vs ControlNet 线稿图 vs 蒙版图……给出清晰的修复建议与推荐槽位",
+      "classification": [
+        "IMAGE_ROLE_AND_EXPLICIT_WRITE_EVIDENCED",
+        "CANDIDATE_LOW_GAP_RETAINED",
+        "REAL_COMPOSITE_ASSET_COVERAGE_PARTIAL"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T07]",
+          "facts": "current75结构成员19API/9UI；五字段230不含ref/init/control/mask，不能替代它们。"
+        },
+        {
+          "source": "COMPILE_R6",
+          "location": "lines52-54",
+          "facts": "主69/70保留一条审计caller传裸字符串而期望asset字典的原错误；单独合法asset补充请求证明5个image-role目标、完整typed图/闭包/5项uploads。不改写成70/70。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "lines59-61",
+          "facts": "候选15/17，直接detailer的init/mask两对原缺失保留；ref仍存在、显式init mapping可精确写。mask oracle忽略输出槽的限制也保留。"
+        },
+        {
+          "source": "GENERALITY_R6",
+          "location": "lines47-49",
+          "facts": "多跳payload候选保留独立来源、排除scalar/control依赖；只作为candidate，不参与自动绑定。"
+        }
+      ],
+      "genuine_remaining": "不能用显式mapping正确消除候选发现缺口；需在cross最终结论保留/处置direct-detailer Low及mask oracle范围。R4合法单键asset自动失败且无Compiled的3例仍不能凭后来combined手选洗为通过。",
+      "allowed_boundary": "多图用途不唯一可以给候选并手选；但真正可证明用途却没有候选/解释属于提示覆盖问题，必须如实登记，不能一概称动态边界。",
+      "historical_limit": "R4原三例warnings/delta仍null；已有combined手工映射不是隔离复测。",
+      "minimal_action": "保留R6两对candidate false和原R4未测字段，在最终问题清单给Low处置与可用手选路径；把已有真实请求和五图中性asset补充分开引用。若cross判达到Medium再修复/新一轮，不能由本分析降级或抹除。",
+      "regression_categories": [
+        "T07",
+        "M1_M2_CANDIDATES"
+      ],
+      "final_acceptance": "PENDING_CROSS_WITH_CANDIDATE_LOW_RETAINED",
+      "task_source_lines": [
+        {
+          "line": 23,
+          "text": "     7. **多参考图与控制图体系**：多个 `LoadImage`（角色参考图 + 构图控制图 + 风格图 + 蒙版图混用）、`IPAdapter` 系列、`ControlNet` 多重堆叠、`InpaintModelConditioning` / `SetLatentNoiseMask`；"
+        },
+        {
+          "line": 72,
+          "text": "   - 改进输出节点与多参考图节点识别（区分最终出图保存节点 vs 中间预览节点，区分角色参考图 vs ControlNet 线稿图 vs 蒙版图），并在诊断报告里给出清晰的修复建议与推荐槽位。"
+        }
+      ]
+    },
+    {
+      "id": "T08",
+      "task_lines": [
+        24,
+        71
+      ],
+      "task_quote": "能自动提取内嵌 prompt（API 格式）直接导入；如果文件里只有纯 UI 图……给出……导出 API 格式……指引（或尽最大可能解析出结构概览帮助排查）",
+      "classification": [
+        "EXPLICIT_ALLOWED_UI_BOUNDARY_EVIDENCED",
+        "API_AND_CONTAINER_ROUTE_EVIDENCED",
+        "NOT_UNIVERSAL_FORMAT_CONVERSION"
+      ],
+      "evidence": [
+        {
+          "source": "CURRENT75_FE",
+          "location": "/handler_and_preservation_checks,/scope",
+          "facts": "固定75为46API/29UI；原文件处理route与decode一致；API46保真、UI29明确引导，非实际HTTP/ComfyUI执行证明。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "lines45-49",
+          "facts": "13/13 decode typed一致、6API实际import保真、7UI实际import预期拒绝且inspect返回ui_format/ui_overview导出引导。"
+        },
+        {
+          "source": "GENERALITY_R6",
+          "location": "line43",
+          "facts": "统一JSON/PNG/WebP入口，对大小/元数据/像素/节点/非有限数有上限；UI不猜未知widget顺序。"
+        }
+      ],
+      "genuine_remaining": "本项现有主要合同已有实际和中性证据。还需final文档区分真实WebP既有证据与R6新盲测未含WebP，不能写每种损坏字段/每一版本均已穷尽。",
+      "allowed_boundary": "纯UI不可编译本身符合原文允许路线；结构概览与清晰导出步骤可验收，400无效JSON式含混拒绝则不可。",
+      "historical_limit": "原25缺失不由新容器样本补写为原件；current75容器分母与R6独立13样本不相加。",
+      "minimal_action": "在最终矩阵将29UI/7UI分别标为实际处理、清晰引导、API执行不适用；引用五个具体格式回归和实际route记录。除非cross指出提示不可用，无需为了通过本项实现UI→API猜测转换。",
+      "regression_categories": [
+        "T08"
+      ],
+      "final_acceptance": "BOUNDARY_CONTRACT_EVIDENCED_PENDING_CROSS",
+      "task_source_lines": [
+        {
+          "line": 24,
+          "text": "     8. **非标准格式输入**：前端 **ComfyUI UI 导出格式（`nodes[]` + `links[]` + `widgets_values`）**、直接从 **PNG / WebP 图片内嵌元数据（`workflow` / `prompt` chunk）** 提取的工作流、含损坏字段/空输入/版本号差异的工作流；"
+        },
+        {
+          "line": 71,
+          "text": "   - 当用户直接拖入 **Civitai PNG/WebP 样图** 或 **ComfyUI UI 格式工作流** 时：能自动提取内嵌 `prompt`（API 格式）直接导入；如果文件里只有纯 UI 图（无 API `prompt`），给出极其清晰的人话提示与一步步导出 API 格式的图文指引（或尽最大可能解析出结构概览帮助排查），绝不抛出冷冰冰的 `400 JSON 格式无效`；"
+        }
+      ]
+    },
+    {
+      "id": "T09",
+      "task_lines": [
+        25,
+        72
+      ],
+      "task_quote": "同图多分支保存（草图分支 + 终图分支 + 对比图分支）……区分最终出图保存节点 vs 中间预览节点",
+      "classification": [
+        "OUTPUT_SCOPE_CONTRACT_EVIDENCED",
+        "CUSTOM_SINK_PROTOCOL_BOUNDARY_ALLOWED",
+        "SOME_REAL_CUSTOM_PROTOCOLS_UNMEASURED"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T09]",
+          "facts": "current75结构成员46API/26UI来自保存/预览类存在，不证明最终分支判断；230五字段不含output。R2另有output请求，不合并分母。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "line45",
+          "facts": "125/125成功compile输出集合及独立祖先闭包精确；是这些请求的闭包证明，不是全部自定义收集协议。"
+        },
+        {
+          "source": "COMPILE_R6",
+          "location": "lines11-13,62",
+          "facts": "完整typed图/输出root/依赖闭包及预期剪枝有独立冻结oracle；保留双终图不等于错分支。"
+        }
+      ],
+      "genuine_remaining": "真实特殊输出收集协议和未见sink仍有覆盖缺口；需把输出命中/最终选择/剪枝/可执行协议分开，不能以名字含Save或返回一张预览当终图。",
+      "allowed_boundary": "未知custom bundle缺执行协议时明确要求选择或适配器是允许的；多个真实最终保存可保留，不必为迎合旧单输出oracle强行只留一个。",
+      "historical_limit": "旧R2manual-mode output目标集合一致的false维持其策略差异，不改成精确自动通过。",
+      "minimal_action": "把现有真实output请求与两个具体中性多保存/预览方法连接；未知custom sink单列明确manual/协议边界。无具体错误不为每个保存节点名新增特判；有实际错误再定向修复。",
+      "regression_categories": [
+        "T09"
+      ],
+      "final_acceptance": "PENDING_CROSS_WITH_OUTPUT_PROTOCOL_LIMITS",
+      "task_source_lines": [
+        {
+          "line": 25,
+          "text": "     9. **奇葩输出节点**：`SaveImagePlus`、`Image Save with Prompt`、`SaveImageWebsocket`、`PreviewImage`、`PreviewChooser`、同图多分支保存（草图分支 + 终图分支 + 对比图分支）；"
+        },
+        {
+          "line": 72,
+          "text": "   - 改进输出节点与多参考图节点识别（区分最终出图保存节点 vs 中间预览节点，区分角色参考图 vs ControlNet 线稿图 vs 蒙版图），并在诊断报告里给出清晰的修复建议与推荐槽位。"
+        }
+      ]
+    },
+    {
+      "id": "T10",
+      "task_lines": [
+        26,
+        74,
+        104
+      ],
+      "task_quote": "超巨型 120～300+ 节点“瑞士军刀”工作流：同时塞了文生图/图生图/放大/修复多条路径且靠 Switch 切换的巨无霸",
+      "classification": [
+        "REAL_LARGE_STRUCTURE_PARTIAL",
+        "SYNTHETIC_SCALE_AND_WEB_SCALE_SEPARATE",
+        "REAL_MULTIROUTE_INTENT_NEEDS_PROOF"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows[id=T10]",
+          "facts": "按节点数≥120筛选：R3有1API/2UI，current75有1UI；已存R3为153节点API，20次LoRA负值/禁用整图精确。成员规则本身不证明多路Switch意图。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "line71",
+          "facts": "新13样本没有120+巨图；不能把小图blind分母称巨图压力测试。"
+        },
+        {
+          "source": "REV9_LEDGER",
+          "location": "/r6_all_initial_seals_and_cross_root_handoff",
+          "facts": "root报Web初版200节点/30+LoRA四格实际交互已封存，总252动作30亲见图；这是UI交互/中性图规模，不替代真实巨图意图与Mio全链。"
+        }
+      ],
+      "genuine_remaining": "真实大图的节点数已有证据，仍欠同一原件存在多输出/多采样/多阶段与Switch分支的可查结构摘要；不能仅因153或200节点宣称瑞士军刀全链。",
+      "allowed_boundary": "若真实巨图为UI-only，可按原合同给结构概览和API导出引导，不必强制其compile；这仍需真实多路结构证明。120～300+是规模范围，不要求一定另找300+API图才能验收。",
+      "historical_limit": "合成200图与私有138图都不替代公开真实巨图来源；原25缺失也不被新大图抵销。",
+      "minimal_action": "先对固定现有可用≥120节点真实图作有限纯结构核对，输出原SHA、node/edge/mode计数、多输出/多采样/静态switch或多阶段中性节点与端口证据，不读写作者文本/资产。若已有原件足够则补索引即可；不足才明确这项真实结构覆盖未证，另行有限补采/请求。",
+      "regression_categories": [
+        "T10"
+      ],
+      "final_acceptance": "PENDING_BOUNDED_EXISTING_GIANT_STRUCTURE_CHECK_AND_CROSS",
+      "task_source_lines": [
+        {
+          "line": 26,
+          "text": "     10. **超巨型 120～300+ 节点“瑞士军刀”工作流**：同时塞了文生图/图生图/放大/修复多条路径且靠 Switch 切换的巨无霸。"
+        },
+        {
+          "line": 74,
+          "text": "   - 前端配合后端新诊断信息，让用户在导入复杂野生工作流时：一眼看懂自动识别出了哪些槽位（正/负词、尺寸、种子、参考图、LoRA 列表、输出节点）、哪些节点是失活/不确定需要人工点选一下，支持快速一键采纳推荐映射或手动覆盖，且大工作流（150+ 节点）搜索和映射丝滑不卡顿。"
+        },
+        {
+          "line": 104,
+          "text": "   - 在真实 Chrome 1440×900 与 390×844（亮/暗主题）下，实际测试导入超大型 200 节点工作流、UI-only 格式工作流、带 30+ LoRA 的工作流：检查诊断反馈是否说人话、映射搜索与一键采纳是否流畅、无溢出截断、键盘操作与焦点正常。"
+        }
+      ]
+    },
+    {
+      "id": "W01",
+      "task_lines": [
+        42
+      ],
+      "task_quote": "筛选下载 25～35 个高赞、高复杂度、涵盖不同底层模型（SDXL/Illustrious/NoobAI/Flux/SD3.5）与多插件的静态图像工作流（含 JSON 及带内嵌 workflow/prompt 的样图）",
+      "classification": [
+        "HISTORICAL_COLLECTION_RECORDED",
+        "ORIGINAL25_RAW_UNAVAILABLE",
+        "HISTORICAL_CURATOR_SORT_UNPROVEN",
+        "CURRENT_METADATA_NOT_GRAPH_RECOVERY"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/civitai_curation_evidence,/missing_original25_prefix_only",
+          "facts": "历史Civitai35行/社区40行；复杂度节点数/类及架构提示可查，但无原hunter查询排序或采集时likes计数证据。原缺25仅12位前缀，full SHA为null。"
+        },
+        {
+          "source": "CIVI_META",
+          "location": "lines3-34",
+          "facts": "今日余33固定来源31HTTP200/2HTTP403，加前一来源合计32/34unique、33/35行有元数据；32声明Workflows。该阶段graph bytes0、historical popularity proof0、original bytes recovered0。"
+        },
+        {
+          "source": "REV9_LEDGER",
+          "location": "/civitai_independent_static_supplement_evidence",
+          "facts": "redirectfix新增取得1份UI结构26节点44边，52217bytes，有独立rawSHA；5GET阶段与前4GET共9GET。不是原字节恢复、不替换current75。"
+        },
+        {
+          "source": "PREFLIGHT_V3",
+          "location": "legacy identity semantics correction",
+          "facts": "只有10行fullcanonical支持其历史12prefix是canonical前缀；另外25行保守标legacy_canonical_prefix_unverified，不证明其逐行算法或原字节。"
+        }
+      ],
+      "genuine_remaining": "原任务的历史高赞筛选与25份原始图保管/身份不能从当前安全证据补齐。今日thumbsUpCount不是采集时image likes/排序，模型metadata不是工作流。",
+      "allowed_boundary": "公开页面/已登录浏览器均被原任务允许；HTTP403或历史缓存丢失不是解析引擎自动失败。不能用静态人工边界豁免采集要求本身。",
+      "historical_limit": "若原缓存/原hunter记录确已不可得，原35的原字节与历史排序无法追认完成；新的curated集合只能独立补充，不能改写原75身份或历史失败。",
+      "minimal_action": "先在最终交付明确保留这两个不可重建的历史缺口，并按已存节点数/架构提示写可证明复杂度。若用户原采集交付仍要求一组当前可复核25～35高赞复杂Civitai靶场，应另建有当日公开排序/赞计数/结构标准/完整SHA的独立有限集合；不能假称恢复旧25，也不应无限重试旧HTTP失败。",
+      "final_acceptance": "HISTORICAL_REQUIREMENT_NOT_FULLY_RECONSTRUCTABLE_CURRENT_SUPPLEMENT_SEPARATE",
+      "task_source_lines": [
+        {
+          "line": 42,
+          "text": "   - 尝试通过本机浏览器调试连接（复用用户 Civitai 登录态，严守隐私红线不留存/不回显 Cookie）或公开页面，筛选下载 25～35 个**高赞、高复杂度、涵盖不同底层模型（SDXL/Illustrious/NoobAI/Flux/SD3.5）与多插件的静态图像工作流**（含 JSON 及带内嵌 workflow/prompt 的样图），自动过滤剔除全部视频/3D/音频类工作流。"
+        }
+      ]
+    },
+    {
+      "id": "W03",
+      "task_lines": [
+        47,
+        48,
+        71
+      ],
+      "task_quote": "把收集到的 50～80 个真实野生工作流全量跑一遍 Mio 的 import / inspect / loras / compile / diagnose",
+      "classification": [
+        "CURRENT_FIXED75_WHOLE_QUEUE_EVIDENCED",
+        "FORMAT_DEPENDENT_NOT_APPLICABLE_ALLOWED",
+        "ORIGINAL75_ALL_BYTES_NOT_RECOVERED"
+      ],
+      "evidence": [
+        {
+          "source": "CURRENT75_FE",
+          "location": "/scope,/handler_and_preservation_checks,/denominator_identity",
+          "facts": "同一固定75顺序/完整sourceSHA及230请求身份复用；46API走既有五段core直调，29UI进行decode/inspection/导出指导；不是75份API五段全成功，也不是实际HTTP运输测试。"
+        },
+        {
+          "source": "BLIND_R6",
+          "location": "calls and lines45-49",
+          "facts": "新13=6API7UI，184实际calls含13decode/13inspect/13import/6loras/133compile/6diagnose；7UI import实际预期拒绝并给引导。"
+        }
+      ],
+      "genuine_remaining": "最终矩阵应逐格式/阶段标实际执行、预期拒绝、不适用或未执行，不能让五段总称掩盖UI未进入compile/loras/diagnose。历史原75缺25的基线记录与当前75整队列必须分栏。",
+      "allowed_boundary": "UI-only先尝试处理/识别并给清晰API导出路径即可；不要求在缺API的情况下伪造compile/LoRA/依赖诊断。一次清晰预期拒绝不是该输入未测或技术失败。",
+      "historical_limit": "当前75由50恢复+25预选公开API补充，不是Wave0原75原件全回放。已具备当前固定队列的50～80范围及同批before/after，但历史原队列保管缺口独立存在。",
+      "minimal_action": "在最终报告发布一个75×阶段的紧凑结果矩阵/聚合索引：46API五段与29UI识别指导分开；用R6真实UI import补充证明引导可用但不移植为当前29的逐项HTTP执行。无需为纯UI补造非法API或重跑相同已证core。",
+      "regression_categories": [
+        "T08"
+      ],
+      "final_acceptance": "CURRENT_QUEUE_CONTRACT_EVIDENCED_PENDING_MATRIX_AND_CROSS",
+      "task_source_lines": [
+        {
+          "line": 47,
+          "text": "   - 写一个临时压测脚本（保存在临时目录，不入库），把收集到的 **50～80 个真实野生工作流**全量跑一遍 Mio 的 `import / inspect / loras / compile / diagnose`，自动生成一份触目惊心的**《野生工作流兼容性体检矩阵报告》**，精准统计："
+        },
+        {
+          "line": 48,
+          "text": "     - 哪些直接导入失败（如 UI 格式未识别/无清晰引导）？"
+        },
+        {
+          "line": 71,
+          "text": "   - 当用户直接拖入 **Civitai PNG/WebP 样图** 或 **ComfyUI UI 格式工作流** 时：能自动提取内嵌 `prompt`（API 格式）直接导入；如果文件里只有纯 UI 图（无 API `prompt`），给出极其清晰的人话提示与一步步导出 API 格式的图文指引（或尽最大可能解析出结构概览帮助排查），绝不抛出冷冰冰的 `400 JSON 格式无效`；"
+        }
+      ]
+    },
+    {
+      "id": "I06",
+      "task_lines": [
+        10,
+        76
+      ],
+      "task_quote": "把 Wave 0 中发现的每一类典型奇葩拓扑，全部提炼为干净、极简、100% 脱敏的合成工作流测试夹具，补进 server/tests/",
+      "classification": [
+        "CONCRETE_TEN_CATEGORY_TEST_METHODS_FOUND",
+        "CANDIDATE_GIT_BYTES_VERIFIED",
+        "FULL_SUITE_EVIDENCE_NOT_INDIVIDUAL_METHOD_LOG"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/topology_rows/*/permanent_minimal_test_refs,/permanent_test_text_index",
+          "facts": "十类均有具体方法引用，不是只有模块名。本次以实际fe Git bytes复核8个Python测试模块及1个Web测试文件，见test_index。"
+        },
+        {
+          "source": "CI_FE",
+          "location": "candidate checkout/full required suite",
+          "facts": "push实际fe、PR实际merge c59eaf873ce98d0940a08ee70c0a1991475e5139；6job/70step成功，14项必需命令覆盖，44全部脚本组/76实际命令。不能把quiet suite伪装成每一方法单项日志。"
+        },
+        {
+          "source": "GENERALITY_R6",
+          "location": "lines47-49",
+          "facts": "M1/M2新candidate通用机制已静态审阅；新test_workflow_inspection_candidates.py有8个具体中性方法。R5发现仍按原失败保存，R6cross未签。"
+        }
+      ],
+      "genuine_remaining": "主要是缺一张交付可读的“真实发现→通用能力→具体方法/源码SHA→实际门禁覆盖方式”索引；不是已证十类没有任何永久回归。不能用方法存在证明所有真实整链都通过，也不能对每个例举节点词重复造夹具。",
+      "allowed_boundary": "未知协议的拒绝/明确接管也应作为回归合同测试；不要求每类都自动穿透。原子回归与整链意图分母必须分开。",
+      "historical_limit": "已有coverage名称中的typed不得覆盖current75后来确认的Python==限制；R5 replay初始format==api composite0/3与离线assessment都保留。",
+      "minimal_action": "把本文件test_index及十类映射纳入最终文档索引；引用全suite source-anchored门禁，必要时由CI现有test inventory验证发现关系而非重跑。仅对已有真实根因确无对应assertion的具体缺口补最小合成回归。",
+      "regression_categories": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T08",
+        "T09",
+        "T10",
+        "M1_M2_CANDIDATES"
+      ],
+      "final_acceptance": "EVIDENCE_INDEX_DELIVERABLE_PENDING_CROSS",
+      "task_source_lines": [
+        {
+          "line": 10,
+          "text": "   - 当我们基于某类野生工作流修完一个通用引擎 Bug 后，只提取其**最小化、彻底脱敏的合成拓扑 JSON**（不含原作者提示词、版权图片或任何个人信息）写入 `server/tests/` 作为永久回归测试夹具。"
+        },
+        {
+          "line": 76,
+          "text": "   - 把 Wave 0 中发现的每一类典型奇葩拓扑，全部提炼为**干净、极简、100% 脱敏的合成工作流测试夹具**，补进 `server/tests/`，保证今后任何改动都不会让这几十类拓扑能力退化！"
+        }
+      ]
+    },
+    {
+      "id": "M01",
+      "task_lines": [
+        82
+      ],
+      "task_quote": "重新把 Wave 0 临时目录里的全部 50～80 个真实野生工作流再跑一遍压测脚本……按模型/插件生态分类的改前识别率 → 改后识别率……明确边界说明",
+      "classification": [
+        "CURRENT75_SAME_COHORT_COMPARISON_VALID",
+        "HISTORICAL_ORIGINAL75_NOT_IDENTICAL",
+        "DOCUMENTARY_CORRECTION_REQUIRED",
+        "STRICT_TYPED_SUPPLEMENT_SEPARATE"
+      ],
+      "evidence": [
+        {
+          "source": "CURRENT75_FE",
+          "location": "/denominator_identity,/original_before,/candidate_after,/manual_boundary",
+          "facts": "同75/完整SHA/230请求身份一致；Python值比较206/230→226/230；automatic138/160→156/160；manual-required abstention27/29→29/29；absent41/41不变；原四false不改。"
+        },
+        {
+          "source": "REV9_CALC",
+          "location": "/original75_historical_only,/recovery,/current75_cohort,/model_structural_hints,/ecosystem_structural_categories",
+          "facts": "原75=35Civitai40community；恢复50+补充25API构成当前75=46API29UI。现有模型/生态分类是aa06→ed；不能写成fe分类重算。"
+        },
+        {
+          "source": "COMPILE_R6",
+          "location": "lines42-64",
+          "facts": "新29真实typed手选和原四false独立补充证据，不能改原230真值或将其宣称完整typed。"
+        },
+        {
+          "source": "REPO_DOC_SNAPSHOT",
+          "location": "line90",
+          "facts": "仍写160/160、230/230、R1 70/70，与冻结后续156/160、226/230、66/70冲突；必须更正或明确旧快照与纠错。"
+        }
+      ],
+      "genuine_remaining": "最终对比交付需明确两个75不是同一队列，修正过时正确率，并分别列自动/人工弃权/显式手选/absent/未记录及分类分母。原全75再回放要求的缺失25历史部分确未恢复。",
+      "allowed_boundary": "报告客观说明仍无法静态处理的动态插件正是原任务要求之一；自动率不是必须100%，但不能把历史false洗为安全或用手选率替换自动率。",
+      "historical_limit": "当25原件/完整hash不存在，当前队列的有效同批比较不能补签原Wave0全队列复测；两者独立记账。",
+      "minimal_action": "最终报告发布当前固定75真实同批数据、aa06→ed分类与fe整队列连续性、独立R6typed证据；修正仓库doc第90行，其他历史段明确实际阶段/HEAD。对原25只能给不可恢复限制或以后独立新队列，不能追造原值。",
+      "final_acceptance": "CURRENT_COMPARISON_EVIDENCED_HISTORICAL_AND_DOCUMENTATION_LIMIT_PENDING",
+      "task_source_lines": [
+        {
+          "line": 82,
+          "text": "1. 重新把 Wave 0 临时目录里的 **全部 50～80 个真实野生工作流**再跑一遍压测脚本，生成**《改前 vs 改后真实野生工作流兼容性对比报告》**（列出总样本数、按模型/插件生态分类的改前识别率 → 改后识别率、仍无法静态自动处理的极少数动态插件及明确边界说明）。"
+        }
+      ]
+    },
+    {
+      "id": "C07",
+      "task_lines": [
+        98
+      ],
+      "task_quote": "有没有破坏既有 138 节点工作流与已有 [mio:*] 标签的向后兼容？",
+      "classification": [
+        "PREEXISTING_COMPILE_FAILURE_NOT_NEW_REGRESSION",
+        "REAL_CONSERVATIVE_BINDING_CHANGE",
+        "PRIVATE_FULL_STATE_UNAVAILABLE",
+        "TAG_REGRESSION_SEPARATE"
+      ],
+      "evidence": [
+        {
+          "source": "COVERAGE_ED",
+          "location": "/private138_before_after_and_separate_regressions",
+          "facts": "旧6f9与实测ed均compile=false，均在_frontend_plan缺frontend state；不是新增完整编译回归。138node/43LoRA/tag0/mapping0。旧width/height/batch自动各1，ed均撤回，seed2/output1保留。"
+        },
+        {
+          "source": "COVERAGE_ED",
+          "location": "/private138_before_after_and_separate_regressions/current_historical_literal_mapping_checks",
+          "facts": "width/height历史字面目标手选绑定阶段整图精确、resolveissues0；并非完整compile或有效最终尺寸控制。batch完整手选compile未测。"
+        },
+        {
+          "source": "COMPILE_R6",
+          "location": "line64",
+          "facts": "没有修补私图/抓取frontend state/新跑private138 compile。历史29标签mapping测试是28绑定方法+1slot接受，新的29文本真实手选是另一个分母。"
+        },
+        {
+          "source": "GENERALITY_R6",
+          "location": "existing138 compatibility boundary",
+          "facts": "缺状态与自动绑定撤回的静态合同已审；此首版不签私图全链通过。"
+        }
+      ],
+      "genuine_remaining": "应分别判断三件事：同一缺frontend-state失败是否新增（现有证据为否）；width/height/batch保守撤回是否有充分安全原因及可用接管（真实行为变化需解释）；标签/mapping支持是否有独立回归。完整私图能否compile目前未证。",
+      "allowed_boundary": "缺执行state协议时明确拒绝且不伪造用户状态是合理边界，不能要求为验收擅自读取或重建私人浏览器状态。边界不自动证明被撤回的batch有专属提示或有效尺寸已恢复。",
+      "historical_limit": "原图本来没有tag/config，不能拿它证明标签兼容；before/after同失败不隐藏撤回行为，也不能证明所有向后兼容。",
+      "minimal_action": "最终报告保留同失败+实际撤回+独立标签回归三栏。依据现有源码/真实绑定记录核保守原因与接管提示；若要求私图完整compile，必须另有合法、最小、可比的state输入才可独立验证，无该输入则只保留未证，不造状态、不接触用户凭据。",
+      "final_acceptance": "NO_NEW_FULL_COMPILE_REGRESSION_DEMONSTRATED_PRIVATE_FULL_COMPILE_UNPROVED",
+      "task_source_lines": [
+        {
+          "line": 98,
+          "text": "   - 逐行审查改动源码：是否违背 `ROADMAP.md` §2.1 搞了脆弱的硬编码节点白名单？抽象层次是否清晰、无循环依赖、单文件长度克制？有没有破坏既有 138 节点工作流与已有 `[mio:*]` 标签的向后兼容？"
+        }
+      ]
+    }
+  ],
+  "test_index": {
+    "evidence_kind": "STATIC_AST_AND_CANDIDATE_GIT_BYTES_PLUS_INDEPENDENT_FULL_SUITE_GATE",
+    "not_individual_method_run_claim": true,
+    "source_revision": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+    "source_identity": "下列9文件本次本机原字节均与git show fe:<path>逐字节相同；Python所列类/方法没有skip decorator或skip调用。ApiCase继承链未在本次额外展开，因此不伪造单项执行日志。",
+    "files": [
+      {
+        "path": "server/tests/test_workflow_conditioning_stage_scope.py",
+        "sha256": "43b99e117a1bd34dcf4733d4ee08deb69479b08209da8939f2b87299c37f6758"
+      },
+      {
+        "path": "server/tests/test_workflow_graph_routes.py",
+        "sha256": "1f7e4cb8fa64849d9fce6f609d275f1c7efbcb525026eac46bdf9c65241d02eb"
+      },
+      {
+        "path": "server/tests/test_workflow_import_media.py",
+        "sha256": "a249e7841be71bc8b542394ecffe2da6cb16ea92fe39572df6799cf344b099b3"
+      },
+      {
+        "path": "server/tests/test_workflow_lora_numeric_strings.py",
+        "sha256": "5e47cc6bacb48ce85969a41c0687fabeeb5724f1f6147ed9bcf1fc9e2964ebcd"
+      },
+      {
+        "path": "server/tests/test_workflow_lora_structures.py",
+        "sha256": "31e951360634778e3883a9f9945ae0f3c61f2fa4703cb162c4ab6a786abed847"
+      },
+      {
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "sha256": "ac8600189d7f3cd34ba3a724b4770fc8bbdd579b7b2715c58b6b37348ecf1a3a"
+      },
+      {
+        "path": "server/tests/test_workflow_wild_contracts.py",
+        "sha256": "c7932ce41700848ec809921f58d2b5ffa67ead9fdbd2d5e1d84980a2cea5fb78"
+      },
+      {
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "sha256": "1cd613abbae1be087b4464e189bc4c86851d31227db5038ce4690789450f40fd"
+      },
+      {
+        "path": "web/src/pages/settings/WorkflowMappings.test.tsx",
+        "sha256": "f5d5cd26b29a081816665ea422e27894954ba3f08969c4e64df5bf822f464717"
+      }
+    ],
+    "category_methods": {
+      "T01": [
+        "test_workflow_semantic_bindings::test_modern_sampler_guider_noise_schedule_and_multitext",
+        "test_workflow_wild_contracts::test_modern_guider_with_deep_text_and_noise_routes_writes_only_literal_origins"
+      ],
+      "T02": [
+        "test_workflow_semantic_bindings::test_primary_stage_prompts_and_size_do_not_overwrite_refiner_inputs",
+        "test_workflow_semantic_bindings::test_reference_conditioning_dependency_preserves_later_canvas_and_prompt",
+        "test_workflow_conditioning_stage_scope::test_explicit_mapping_can_choose_either_stage"
+      ],
+      "T03": [
+        "test_workflow_graph_routes::test_repeated_bus_types_require_named_output_ports",
+        "test_workflow_graph_routes::test_distinct_bus_types_follow_requested_output_slot",
+        "test_workflow_graph_routes::test_unknown_unary_transform_does_not_declare_identity"
+      ],
+      "T04": [
+        "test_workflow_graph_routes::test_literal_selector_through_deep_primitive_chain",
+        "test_workflow_graph_routes::test_modes_never_expose_inactive_widgets_as_writable_origins",
+        "test_workflow_graph_routes::test_dynamic_selector_is_explicitly_unresolved",
+        "test_workflow_wild_contracts::test_switch_override_keeps_both_real_branches_and_does_not_capture_old_selection"
+      ],
+      "T05": [
+        "test_workflow_lora_structures::test_flat_sparse_stack_keeps_position_links_counts_and_duplicate_identity",
+        "test_workflow_lora_structures::test_power_dictionary_sparse_pins_keep_native_metadata_and_negative_weights",
+        "test_workflow_lora_structures::test_unchanged_disabled_pins_keep_native_weights_when_another_pin_changes",
+        "test_workflow_wild_contracts::test_thirty_repeated_model_only_loras_keep_stable_keys_and_individual_precision",
+        "test_workflow_lora_numeric_strings::test_partial_model_and_clip_edits_preserve_unedited_numeric_strings"
+      ],
+      "T06": [
+        "test_workflow_semantic_bindings::test_string_helper_controls_are_not_prompt_targets_and_concat_is_ambiguous",
+        "test_workflow_semantic_bindings::test_distinct_encoder_fields_and_regional_assembly_require_mapping",
+        "test_workflow_semantic_bindings::test_regional_text_append_chain_requires_mapping_and_preserves_all_origins"
+      ],
+      "T07": [
+        "test_workflow_import_media::test_image_candidates_keep_reference_control_init_and_mask_manual",
+        "test_workflow_semantic_bindings::test_generation_image_domain_excludes_reference_mask_and_control_inputs",
+        "test_workflow_semantic_bindings::test_model_reference_and_control_canvases_keep_their_own_dimensions"
+      ],
+      "T08": [
+        "test_workflow_import_media::test_png_text_compressed_and_international_metadata",
+        "test_workflow_import_media::test_webp_uses_prompt_exif_before_frontend_workflow",
+        "test_workflow_import_media::test_ui_only_is_reviewable_with_counts_dynamic_warning_and_steps",
+        "test_workflow_import_media::test_malformed_metadata_is_rejected_before_node_inspection",
+        "test_workflow_import_media::test_api_prompt_wrapper_can_be_imported_and_patched_consistently"
+      ],
+      "T09": [
+        "test_workflow_semantic_bindings::test_final_save_suppresses_only_previews_of_its_own_image_path",
+        "test_workflow_wild_contracts::test_multiple_final_saves_survive_and_shared_intermediate_preview_is_not_final"
+      ],
+      "T10": [
+        "test_workflow_wild_contracts::test_two_hundred_node_graph_freezes_values_without_mutating_edges_or_document",
+        "WorkflowMappings::searches a 200-node graph with a bounded option list and keyboard selection"
+      ],
+      "M1_M2_CANDIDATES": [
+        "test_workflow_inspection_candidates::test_empty_paired_and_typed_text_fields_are_manual_candidates",
+        "test_workflow_inspection_candidates::test_empty_literal_text_chains_need_payload_context_not_just_string_values",
+        "test_workflow_inspection_candidates::test_image_roles_cross_payload_steps_without_merging_independent_sources",
+        "test_workflow_inspection_candidates::test_manual_mapping_and_explicit_tags_only_write_the_selected_source",
+        "test_workflow_inspection_candidates::test_typed_payloads_exclude_scalar_outputs_and_control_dependencies",
+        "test_workflow_inspection_candidates::test_invalid_ports_and_inactive_or_ambiguous_bypasses_do_not_gain_roles",
+        "test_workflow_inspection_candidates::test_selectors_keep_static_branches_and_auxiliary_outputs_separate",
+        "test_workflow_inspection_candidates::test_cyclic_payload_dependencies_are_bounded_and_leave_graph_unchanged"
+      ]
+    },
+    "method_locations": [
+      {
+        "category": "T01",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_modern_sampler_guider_noise_schedule_and_multitext",
+        "line": 48,
+        "end_line": 66,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T01",
+        "path": "server/tests/test_workflow_wild_contracts.py",
+        "class": "WildWorkflowContractsTests",
+        "method": "test_modern_guider_with_deep_text_and_noise_routes_writes_only_literal_origins",
+        "line": 192,
+        "end_line": 237,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T02",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_primary_stage_prompts_and_size_do_not_overwrite_refiner_inputs",
+        "line": 223,
+        "end_line": 241,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T02",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_reference_conditioning_dependency_preserves_later_canvas_and_prompt",
+        "line": 305,
+        "end_line": 361,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T02",
+        "path": "server/tests/test_workflow_conditioning_stage_scope.py",
+        "class": "ConditioningStageScopeTests",
+        "method": "test_explicit_mapping_can_choose_either_stage",
+        "line": 136,
+        "end_line": 147,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T03",
+        "path": "server/tests/test_workflow_graph_routes.py",
+        "class": "SemanticGraphTests",
+        "method": "test_repeated_bus_types_require_named_output_ports",
+        "line": 70,
+        "end_line": 93,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T03",
+        "path": "server/tests/test_workflow_graph_routes.py",
+        "class": "SemanticGraphTests",
+        "method": "test_distinct_bus_types_follow_requested_output_slot",
+        "line": 95,
+        "end_line": 107,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T03",
+        "path": "server/tests/test_workflow_graph_routes.py",
+        "class": "SemanticGraphTests",
+        "method": "test_unknown_unary_transform_does_not_declare_identity",
+        "line": 150,
+        "end_line": 166,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T04",
+        "path": "server/tests/test_workflow_graph_routes.py",
+        "class": "SemanticGraphTests",
+        "method": "test_literal_selector_through_deep_primitive_chain",
+        "line": 31,
+        "end_line": 46,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T04",
+        "path": "server/tests/test_workflow_graph_routes.py",
+        "class": "SemanticGraphTests",
+        "method": "test_modes_never_expose_inactive_widgets_as_writable_origins",
+        "line": 109,
+        "end_line": 126,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T04",
+        "path": "server/tests/test_workflow_graph_routes.py",
+        "class": "SemanticGraphTests",
+        "method": "test_dynamic_selector_is_explicitly_unresolved",
+        "line": 48,
+        "end_line": 57,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T04",
+        "path": "server/tests/test_workflow_wild_contracts.py",
+        "class": "WildWorkflowContractsTests",
+        "method": "test_switch_override_keeps_both_real_branches_and_does_not_capture_old_selection",
+        "line": 103,
+        "end_line": 118,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T05",
+        "path": "server/tests/test_workflow_lora_structures.py",
+        "class": "SparseLoRAStructureTests",
+        "method": "test_flat_sparse_stack_keeps_position_links_counts_and_duplicate_identity",
+        "line": 32,
+        "end_line": 60,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T05",
+        "path": "server/tests/test_workflow_lora_structures.py",
+        "class": "SparseLoRAStructureTests",
+        "method": "test_power_dictionary_sparse_pins_keep_native_metadata_and_negative_weights",
+        "line": 62,
+        "end_line": 97,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T05",
+        "path": "server/tests/test_workflow_lora_structures.py",
+        "class": "SparseLoRAStructureTests",
+        "method": "test_unchanged_disabled_pins_keep_native_weights_when_another_pin_changes",
+        "line": 177,
+        "end_line": 215,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T05",
+        "path": "server/tests/test_workflow_wild_contracts.py",
+        "class": "WildWorkflowContractsTests",
+        "method": "test_thirty_repeated_model_only_loras_keep_stable_keys_and_individual_precision",
+        "line": 120,
+        "end_line": 170,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T05",
+        "path": "server/tests/test_workflow_lora_numeric_strings.py",
+        "class": "NumericStringLoRATests",
+        "method": "test_partial_model_and_clip_edits_preserve_unedited_numeric_strings",
+        "line": 145,
+        "end_line": 153,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T06",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_string_helper_controls_are_not_prompt_targets_and_concat_is_ambiguous",
+        "line": 183,
+        "end_line": 191,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T06",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_distinct_encoder_fields_and_regional_assembly_require_mapping",
+        "line": 125,
+        "end_line": 135,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T06",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_regional_text_append_chain_requires_mapping_and_preserves_all_origins",
+        "line": 137,
+        "end_line": 181,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T07",
+        "path": "server/tests/test_workflow_import_media.py",
+        "class": "WorkflowDecodeTests",
+        "method": "test_image_candidates_keep_reference_control_init_and_mask_manual",
+        "line": 194,
+        "end_line": 209,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T07",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_generation_image_domain_excludes_reference_mask_and_control_inputs",
+        "line": 559,
+        "end_line": 574,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T07",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_model_reference_and_control_canvases_keep_their_own_dimensions",
+        "line": 525,
+        "end_line": 557,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T08",
+        "path": "server/tests/test_workflow_import_media.py",
+        "class": "WorkflowDecodeTests",
+        "method": "test_png_text_compressed_and_international_metadata",
+        "line": 71,
+        "end_line": 82,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T08",
+        "path": "server/tests/test_workflow_import_media.py",
+        "class": "WorkflowDecodeTests",
+        "method": "test_webp_uses_prompt_exif_before_frontend_workflow",
+        "line": 94,
+        "end_line": 98,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T08",
+        "path": "server/tests/test_workflow_import_media.py",
+        "class": "WorkflowDecodeTests",
+        "method": "test_ui_only_is_reviewable_with_counts_dynamic_warning_and_steps",
+        "line": 100,
+        "end_line": 116,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T08",
+        "path": "server/tests/test_workflow_import_media.py",
+        "class": "WorkflowDecodeTests",
+        "method": "test_malformed_metadata_is_rejected_before_node_inspection",
+        "line": 166,
+        "end_line": 179,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T08",
+        "path": "server/tests/test_workflow_import_media.py",
+        "class": "WorkflowMediaApiTests",
+        "method": "test_api_prompt_wrapper_can_be_imported_and_patched_consistently",
+        "line": 285,
+        "end_line": 297,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T09",
+        "path": "server/tests/test_workflow_semantic_bindings.py",
+        "class": "SemanticBindingsTests",
+        "method": "test_final_save_suppresses_only_previews_of_its_own_image_path",
+        "line": 441,
+        "end_line": 452,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T09",
+        "path": "server/tests/test_workflow_wild_contracts.py",
+        "class": "WildWorkflowContractsTests",
+        "method": "test_multiple_final_saves_survive_and_shared_intermediate_preview_is_not_final",
+        "line": 239,
+        "end_line": 254,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T10",
+        "path": "server/tests/test_workflow_wild_contracts.py",
+        "class": "WildWorkflowContractsTests",
+        "method": "test_two_hundred_node_graph_freezes_values_without_mutating_edges_or_document",
+        "line": 55,
+        "end_line": 78,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "T10",
+        "path": "web/src/pages/settings/WorkflowMappings.test.tsx",
+        "method": "searches a 200-node graph with a bounded option list and keyboard selection",
+        "line": 161,
+        "kind": "typescript_test_text"
+      },
+      {
+        "category": "M1_M2_CANDIDATES",
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "class": "WorkflowInspectionCandidateTests",
+        "method": "test_empty_paired_and_typed_text_fields_are_manual_candidates",
+        "line": 89,
+        "end_line": 181,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "M1_M2_CANDIDATES",
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "class": "WorkflowInspectionCandidateTests",
+        "method": "test_empty_literal_text_chains_need_payload_context_not_just_string_values",
+        "line": 183,
+        "end_line": 267,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "M1_M2_CANDIDATES",
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "class": "WorkflowInspectionCandidateTests",
+        "method": "test_image_roles_cross_payload_steps_without_merging_independent_sources",
+        "line": 269,
+        "end_line": 283,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "M1_M2_CANDIDATES",
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "class": "WorkflowInspectionCandidateTests",
+        "method": "test_manual_mapping_and_explicit_tags_only_write_the_selected_source",
+        "line": 285,
+        "end_line": 325,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "M1_M2_CANDIDATES",
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "class": "WorkflowInspectionCandidateTests",
+        "method": "test_typed_payloads_exclude_scalar_outputs_and_control_dependencies",
+        "line": 327,
+        "end_line": 353,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "M1_M2_CANDIDATES",
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "class": "WorkflowInspectionCandidateTests",
+        "method": "test_invalid_ports_and_inactive_or_ambiguous_bypasses_do_not_gain_roles",
+        "line": 355,
+        "end_line": 385,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "M1_M2_CANDIDATES",
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "class": "WorkflowInspectionCandidateTests",
+        "method": "test_selectors_keep_static_branches_and_auxiliary_outputs_separate",
+        "line": 387,
+        "end_line": 425,
+        "kind": "python_unittest_method_ast"
+      },
+      {
+        "category": "M1_M2_CANDIDATES",
+        "path": "server/tests/test_workflow_inspection_candidates.py",
+        "class": "WorkflowInspectionCandidateTests",
+        "method": "test_cyclic_payload_dependencies_are_bounded_and_leave_graph_unchanged",
+        "line": 427,
+        "end_line": 442,
+        "kind": "python_unittest_method_ast"
+      }
+    ],
+    "reference_count": 40,
+    "unique_method_count": 40
+  },
+  "minimum_action_list": [
+    {
+      "id": "A1",
+      "type": "DOCUMENT_CORRECTION",
+      "requirements": [
+        "M01",
+        "W03",
+        "I06"
+      ],
+      "action": "修正最终仓库报告的过期160/160、230/230、R1 70/70，替换为准确阶段/HEAD/分母；将具体十类方法索引纳入交付。",
+      "product_execution_needed": false
+    },
+    {
+      "id": "A2",
+      "type": "EXISTING_EVIDENCE_JOIN",
+      "requirements": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T09"
+      ],
+      "action": "在已有safe manifest/保存请求中连接结构类别、实际格式、实际请求、自动/手选/拒绝及具体回归；有空白就列未测，不把每个例举词升级成新任务。",
+      "product_execution_needed": false
+    },
+    {
+      "id": "A3",
+      "type": "BOUNDED_STATIC_STRUCTURE_CHECK",
+      "requirements": [
+        "T10"
+      ],
+      "action": "仅对已有冻结巨型真实图做SHA一致的中性结构核查，证明或否定多路/采样/切换共现；不足再决定有限补证。",
+      "product_execution_needed": false
+    },
+    {
+      "id": "A4",
+      "type": "HISTORICAL_LIMIT_NOT_RECONSTRUCTED",
+      "requirements": [
+        "W01",
+        "M01",
+        "W03"
+      ],
+      "action": "保留原25丢失/12prefix限制和历史高赞排序缺证；如需新的25～35当前可复核Civitai集合，必须独立身份/分母/当日策展记录，不能改名原集合。",
+      "product_execution_needed": "仅新采集若被采用；非产品行为修复"
+    },
+    {
+      "id": "A5",
+      "type": "SAFETY_PROCESS_RECONCILIATION",
+      "requirements": [
+        "S03",
+        "S04"
+      ],
+      "action": "用已有safe receipts区分actual sensitive access、metadata-only、unknown，以及CDP条件是否曾触发；不为补证读取Cookie/Profile或解封未知私输出。",
+      "product_execution_needed": false
+    },
+    {
+      "id": "A6",
+      "type": "PRIVATE_COMPATIBILITY_QUALIFICATION",
+      "requirements": [
+        "C07"
+      ],
+      "action": "分开既存缺state失败、实际自动绑定撤回、独立tag/mapping回归；完整私图compile只在另有合法可比state时可证，否则保留未证。",
+      "product_execution_needed": "当前不需要；未来完整compile须有合法可比输入"
+    },
+    {
+      "id": "A7",
+      "type": "PENDING_FORMAL_REVIEW_AND_DELIVERY",
+      "requirements": [],
+      "action": "R6五路cross/final、Low处置、实际缓存清理、原工作区保护结论、最终文档commit/push与最终CI由root按真实证据补齐；不在本分析签PASS。",
+      "product_execution_needed": false
+    }
+  ],
+  "conclusion": {
+    "new_technical_failure_count": null,
+    "reason": "纯证据审阅不能把未测/历史丢失/允许的人工边界自动转成产品缺陷数。R6已有原false与Low完整保留，是否需下一轮由正式cross判断。",
+    "not_all17_are_technical_failures": true,
+    "not_all17_are_closed_by_generic_boundary": true,
+    "whole_goal_complete": false,
+    "formal_cross_final": "PENDING",
+    "cleanup_final_commit_push_final_ci": "PENDING"
+  },
+  "publication_followup": {
+    "state": "HISTORICAL_GAP_ANALYSIS_WITH_R6_FINAL_FOLLOWUP",
+    "analysis_source_sha256": "5b7702b2b9346e1e1ee938d80bf742e012b2c6ecd59d90e477b2f174d50053e8",
+    "not_a_current_list_of_17_unfinished_technical_requirements": true,
+    "current_ledger": "requirement-evidence-ledger.json",
+    "current_report": "final-report.md",
+    "r6_final_round": "protocol/root-round-acceptance.json",
+    "final_five_verdict": "5/5 VERIFIED PASS; zero confirmed Medium or higher",
+    "giant_structure": "giant-structure-safe-v2.json; four port-proved sampling payload stages, six reachable stage pairs; original seven name matches include three controls",
+    "retained_limits": [
+      "Original 25 Civitai graphs/full identities and collection-time high-like curation cannot be reconstructed",
+      "UI-only overview/API-export guidance and legal manual takeover are explicit task contracts",
+      "Private frontend state/full compile and every real plugin/model family remain unproven",
+      "Original false assertions and process disclosures are retained"
+    ],
+    "delivery_receipt": "delivery-receipt.md",
+    "postcommit_receipt": "https://github.com/lumingya/comfy-comic-studio/pull/1"
+  },
+  "evidence_resolution": [
+    {
+      "source_identity": "docs/COMFY_WORKFLOW_COMPATIBILITY_2026-11-21.md",
+      "resolution": "EXISTING_REPOSITORY_EVIDENCE",
+      "published_pointer": "../../../COMFY_WORKFLOW_COMPATIBILITY_2026-11-21.md",
+      "published_sha256": "9582947dbd6d994448aa6b049c67e0f5b2f169d430fecf7732a64e09136fe125"
+    },
+    {
+      "source_identity": "external-temp-evidence/audits/r6/blind/report.md",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "audits/blind/report.md",
+      "published_sha256": "5e1c575aa22fc3d6dcd19d5efffc4f33810ddc64e3447a2b1ca8ccc31ecc21c6"
+    },
+    {
+      "source_identity": "external-temp-evidence/audits/r6/compile/report.md",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "audits/compile/report.md",
+      "published_sha256": "b5ea489e8e0aff3e3939fffb220b7ab1274e56fddaaeb422cae95ff74de74ca6"
+    },
+    {
+      "source_identity": "external-temp-evidence/audits/r6/generality/report.md",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "audits/generality/report.md",
+      "published_sha256": "d49bc1a837c3ce75b480038b8b3065ca6fce795519abdd835e16ab75df936dcc"
+    },
+    {
+      "source_identity": "external-temp-evidence/audits/r6/preflight/report-v2.md",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "evidence/core-and-ci/seen-prefix/report-v2.md",
+      "published_sha256": "37934cc793a851623b4e146e71c7d0350116a4e3b8bbbea2f94962414fee73e3"
+    },
+    {
+      "source_identity": "external-temp-evidence/audits/r6/preflight/report-v3.md",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "evidence/core-and-ci/seen-prefix/report-v3.md",
+      "published_sha256": "f76f9a58c1896d347c7f8b6900ba37b96e7b8188d5ad93f0d4439e4baecdf705"
+    },
+    {
+      "source_identity": "external-temp-evidence/audits/r6/privacy/report.md",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "audits/privacy/report.md",
+      "published_sha256": "628d71af896e5dcebb3988b57c64b2170e13802d8d201ea890753697c80102cb"
+    },
+    {
+      "source_identity": "external-temp-evidence/repairs/final-current75-replay/summary.json",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "evidence/core-and-ci/current75/summary.json",
+      "published_sha256": "570f81402b040ca4d43bc6cbfc25abfa9c36610ae869a0ae5810b2db9f0435b4"
+    },
+    {
+      "source_identity": "external-temp-evidence/repairs/r5-final-draft/coverage-map.json",
+      "resolution": "HISTORICAL_SOURCE_IDENTITY_ONLY",
+      "file_existence_claimed": false,
+      "history_entry_point": "../r5/index.md"
+    },
+    {
+      "source_identity": "external-temp-evidence/repairs/r6-candidate-ci/ci-verified.json",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "evidence/core-and-ci/ci/ci-verified.json",
+      "published_sha256": "2c3fcf2dd12e07bede90c13f19914cf659a60053c667427aca4ddd725740add2"
+    },
+    {
+      "source_identity": "external-temp-evidence/repairs/r6-civitai-known-source-metadata/report.md",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "evidence/core-and-ci/civitai-metadata/report.md",
+      "published_sha256": "d27661018aee1212ba8ac08fccd19655e6dd5ac93fd8e5443243e19c8c8b3b65"
+    },
+    {
+      "source_identity": "external-temp-evidence/repairs/r6-civitai-static-recovery-redirectfix/provenance-safe.json",
+      "resolution": "PUBLISHED_SAFE_COUNTERPART",
+      "published_pointer": "evidence/core-and-ci/recovery-redirect/provenance-safe.json",
+      "published_sha256": "41195d0b1810c4ba240779be26b2b3abea60086922e4f84b4108f72e8cf8d44f"
+    }
+  ]
+}

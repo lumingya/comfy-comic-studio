@@ -1,0 +1,82 @@
+{
+  "schema": "r5-replay-provenance-safe-v1",
+  "start_utc": "2026-11-26T08:13:12.039696+00:00",
+  "end_utc": "2026-11-26T08:13:13.986035+00:00",
+  "script_sha256": "1ac4fef9789c51bc4916f5cfae6c236af78ba7f542642a0ccbd51eba08cf2fbd",
+  "source_before": {
+    "utc": "2026-11-26T08:13:12.244173+00:00",
+    "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+    "runtime_count": 218,
+    "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+    "all_server_count": 407,
+    "all_server_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32",
+    "helper_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+    "tracked_and_untracked_worktree_clean": true
+  },
+  "source_after": {
+    "utc": "2026-11-26T08:13:13.982340+00:00",
+    "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+    "runtime_count": 218,
+    "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+    "all_server_count": 407,
+    "all_server_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32",
+    "helper_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+    "tracked_and_untracked_worktree_clean": true
+  },
+  "initial_guard": {
+    "pid": 50572,
+    "utc": "2026-11-26T08:13:12.253388+00:00",
+    "affinity": 1,
+    "priority": 16384,
+    "readback_verified": true,
+    "mio_module_present": false
+  },
+  "final_guard": {
+    "pid": 50572,
+    "utc": "2026-11-26T08:13:13.986003+00:00",
+    "affinity": 1,
+    "priority": 16384,
+    "readback_verified": true,
+    "mio_module_present": true
+  },
+  "input_shas_before": {
+    "initial-seal.json": "1417d3f811d003251784623bd2cccde73da096b415f35287095b33d422e9c5eb",
+    "pre-product-seal.json": "f741d5aa73c63925e10ebe8745c839851f0fc16d8c3df8291a56e3c218d57444",
+    "oracle.private.json": "56f3765f8bc758e367eda76a35f63e1c5545169fcb658b39e2c99ce4ac7bdc5d",
+    "selected-manifest.json": "1e4c8d320c931086c1f9f7269bd57e8f51d62e5545599bc7ba46c83f83d80bea",
+    "candidates/C02.json": "55f3d8dcd60bf90c552bac64f99a072d1dfeaa6f744fa6491931ed752ecfeb3e",
+    "product-private/C02.json": "a256227218abdeda141eb0e792261f9eed0308eae8fba536a86981fb0a66ace4",
+    "candidates/C03.json": "f2b4a1fd16f434f7d4ff50ad53b3cafd13091ae377e5438202f97088aee836b1",
+    "product-private/C03.json": "fbb35e246f411b23092a7306b394e9030eddd792c111a01d5b17a07ca04b2f67",
+    "candidates/C05.json": "cead3fa8bc56c54e5701fa997d77fd64756ce8690de063c4160c1d8255fc59ad",
+    "product-private/C05.json": "ab20b640288afe3e46a1a504aaad05696d0e152bcd8f347ff76a97548124d3eb"
+  },
+  "input_shas_after": {
+    "initial-seal.json": "1417d3f811d003251784623bd2cccde73da096b415f35287095b33d422e9c5eb",
+    "pre-product-seal.json": "f741d5aa73c63925e10ebe8745c839851f0fc16d8c3df8291a56e3c218d57444",
+    "oracle.private.json": "56f3765f8bc758e367eda76a35f63e1c5545169fcb658b39e2c99ce4ac7bdc5d",
+    "selected-manifest.json": "1e4c8d320c931086c1f9f7269bd57e8f51d62e5545599bc7ba46c83f83d80bea",
+    "candidates/C02.json": "55f3d8dcd60bf90c552bac64f99a072d1dfeaa6f744fa6491931ed752ecfeb3e",
+    "product-private/C02.json": "a256227218abdeda141eb0e792261f9eed0308eae8fba536a86981fb0a66ace4",
+    "candidates/C03.json": "f2b4a1fd16f434f7d4ff50ad53b3cafd13091ae377e5438202f97088aee836b1",
+    "product-private/C03.json": "fbb35e246f411b23092a7306b394e9030eddd792c111a01d5b17a07ca04b2f67",
+    "candidates/C05.json": "cead3fa8bc56c54e5701fa997d77fd64756ce8690de063c4160c1d8255fc59ad",
+    "product-private/C05.json": "ab20b640288afe3e46a1a504aaad05696d0e152bcd8f347ff76a97548124d3eb"
+  },
+  "results_sha256": "9098921c9a9c81be8520bccb06c85f4377d39beef2a37e9bf03c527d88a20409",
+  "private_evidence_sha256": "3aff56402e7276f6015e91d86500c8ef75e7bc860e79a4c8c3b9782ae975fd56",
+  "pre_call_seal_sha256": "faf77cb235eb8e512de90d430313eeaebc900fda860adeaa42953afe872a9ca2",
+  "boundary": {
+    "http_calls": 0,
+    "browser_calls": 0,
+    "gpu_or_model_execution": 0,
+    "shared_database_calls": 0,
+    "source_or_repository_writes": 0,
+    "test_suite_runs": 0,
+    "new_samples": 0,
+    "inspection_expected": 3,
+    "manual_compile_expected": 5,
+    "automatic_binding_scope": "Default bindings, selected nodes and outputs from the three inspections only; no automatic value-edit request replay."
+  },
+  "finite_replay_verified": false
+}

@@ -1,0 +1,9 @@
+{
+  "utc": "2026-11-26T10:17:24.961376+00:00",
+  "pid": 36348,
+  "affinity": 1,
+  "priority": 16384,
+  "source_files_exact": true,
+  "source_file_count": 647,
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1"
+}

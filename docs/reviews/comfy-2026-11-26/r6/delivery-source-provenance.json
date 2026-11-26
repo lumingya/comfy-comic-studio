@@ -1,0 +1,89 @@
+{
+  "schema": "mio.r6-delivery-document-publication.v1",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "files": 7,
+  "records": [
+    {
+      "source_pointer": "repairs/r6-delivery-draft/final-report-draft.md",
+      "source_sha256": "dea56b0ffae30adc95820150db21bba55878f2c13c863b0a1640b4733eaa49c4",
+      "source_bytes": 18399,
+      "published_pointer": "final-report.md",
+      "published_sha256": "267a22c8968f68e6b5c0f776acc0ead93a02981c1eda3827de8f840f4f8f9c59",
+      "published_bytes": 21346,
+      "source_byte_identical": false,
+      "transformation": "UTF-8 LF publication with explicit evidence resolution, source/published identity distinction, final R6 follow-up and postcommit delivery predicates; historical counts and original false retained"
+    },
+    {
+      "source_pointer": "repairs/r6-delivery-draft/requirement-evidence-ledger.json",
+      "source_sha256": "c89794a9c62328398fff13dff663ba9f81f1a34f28ee1ca71923cfe9e0a6e052",
+      "source_bytes": 128503,
+      "published_pointer": "requirement-evidence-ledger.json",
+      "published_sha256": "9eb8d95945fe3b05ef1c4f53353d733708a9dd2b61d72362d24f29e127098eb6",
+      "published_bytes": 351239,
+      "source_byte_identical": false,
+      "transformation": "UTF-8 LF publication with explicit evidence resolution, source/published identity distinction, final R6 follow-up and postcommit delivery predicates; historical counts and original false retained"
+    },
+    {
+      "source_pointer": "repairs/r6-delivery-draft/classification-calculations.json",
+      "source_sha256": "4587ebdba924c215bd733a8311c3cf08f833ae5c5c7f22d8a62baa07ed4e8d6a",
+      "source_bytes": 221779,
+      "published_pointer": "classification-calculations.json",
+      "published_sha256": "bff82537d2bfc83efd5d1162812343cd16aee58ed47c6e49cc796adbbd04227d",
+      "published_bytes": 229535,
+      "source_byte_identical": false,
+      "transformation": "UTF-8 LF publication with explicit evidence resolution, source/published identity distinction, final R6 follow-up and postcommit delivery predicates; historical counts and original false retained"
+    },
+    {
+      "source_pointer": "repairs/r6-final-draft/acceptance-gap-analysis.json",
+      "source_sha256": "5b7702b2b9346e1e1ee938d80bf742e012b2c6ecd59d90e477b2f174d50053e8",
+      "source_bytes": 83411,
+      "published_pointer": "acceptance-gap-analysis.json",
+      "published_sha256": "7506ecb63ba15ddbf30751eac7b04c29ea6b6f92da8388e67a38229708fe651d",
+      "published_bytes": 88367,
+      "source_byte_identical": false,
+      "transformation": "UTF-8 LF publication with explicit evidence resolution, source/published identity distinction, final R6 follow-up and postcommit delivery predicates; historical counts and original false retained"
+    },
+    {
+      "source_pointer": "repairs/r6-final-draft/acceptance-gap-analysis.md",
+      "source_sha256": "c6dfbde1ce6373c04f1dd56ce7b73dea85bcf9d6bdc4704a3a673195bc27f155",
+      "source_bytes": 14550,
+      "published_pointer": "acceptance-gap-analysis.md",
+      "published_sha256": "e2b140a21c3dd155a9a46530f3304ef37f5527dda018b7a357e76c783318066d",
+      "published_bytes": 16514,
+      "source_byte_identical": false,
+      "transformation": "UTF-8 LF publication with explicit evidence resolution, source/published identity distinction, final R6 follow-up and postcommit delivery predicates; historical counts and original false retained"
+    },
+    {
+      "source_pointer": "repairs/r6-final-draft/giant-structure-safe.json",
+      "source_sha256": "5fd95919127dc595886f0a99b87d277f720f28bd7bba48558b6a45bcf8d75d12",
+      "source_bytes": 10045,
+      "published_pointer": "giant-structure-safe.json",
+      "published_sha256": "5fd95919127dc595886f0a99b87d277f720f28bd7bba48558b6a45bcf8d75d12",
+      "published_bytes": 10045,
+      "source_byte_identical": true,
+      "transformation": "none"
+    },
+    {
+      "source_pointer": "repairs/r6-final-draft/giant-structure-safe-v2.json",
+      "source_sha256": "2dd10a6ceaa2908cd855d2361194803c70f4d759159dc077a4af8f48f4862295",
+      "source_bytes": 12793,
+      "published_pointer": "giant-structure-safe-v2.json",
+      "published_sha256": "2dd10a6ceaa2908cd855d2361194803c70f4d759159dc077a4af8f48f4862295",
+      "published_bytes": 12793,
+      "source_byte_identical": true,
+      "transformation": "none"
+    }
+  ],
+  "raw_workflows_or_images_published": false,
+  "source_audit_seals_mutated": false,
+  "product_test_browser_network_build_calls": 0,
+  "publication_is_not_postcommit_ci_or_cleanup_proof": true,
+  "postcommit_receipt": "https://github.com/lumingya/comfy-comic-studio/pull/1",
+  "delivery_reference_contract": "The commit that contains this receipt and the final report; its actual SHA and postcommit CI belong to the PR body receipt, avoiding a new documentation commit solely to record its own CI",
+  "manifest_self_hash": "Use the final Git blob/commit; no self-referential SHA field",
+  "post_source_safe_receipts_linked": [
+    "protocol/root-delivery-process-events.json",
+    "protocol/protected-workspaces-delivery.json",
+    "protocol/owned-process-cleanup.json"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "mio.r6.root-post-initial-process-events.v1",
+  "utc": "2026-11-26T10:17:57.864982+00:00",
+  "events": [
+    {
+      "kind": "pure_file_schema_projection_error",
+      "stage": "privacy_seal_inventory_readback",
+      "error_type": "TypeError",
+      "uncaught": true,
+      "stdout_scope": "generic stdin traceback and generic type message only",
+      "root_cause": "assumed file/path instead of pointer field",
+      "product_calls": 0,
+      "repo_changes": 0,
+      "graph_prompt_asset_credential_echo": false
+    },
+    {
+      "kind": "pure_file_pointer_base_error",
+      "stage": "privacy_seal_inventory_readback",
+      "error_type": "AssertionError",
+      "uncaught": false,
+      "stdout_scope": "error type only",
+      "root_cause": "used role directory for TEMP-root-relative evidence pointers",
+      "product_calls": 0,
+      "repo_changes": 0,
+      "graph_prompt_asset_credential_echo": false
+    }
+  ],
+  "recovery": "schema key names and known pointer fields inspected, then all twelve TEMP-root-relative artifact hashes verified; no role file modified",
+  "original_process_events_sha256": "e4767cffe8b836d492c4ea51f38cf7b11b05ea9fa3863a0a9c6bd5b7902d7e37"
+}

@@ -1,0 +1,211 @@
+{
+  "schema": "fixed-two-civitai-static-provenance-v1",
+  "guard": {
+    "pid": 24456,
+    "affinity_readback": "0x1",
+    "priority_class_readback": 16384
+  },
+  "browser_before": {
+    "pid": 46124,
+    "port": 59871,
+    "loopback_listener_exact": true,
+    "task_profile_exact": true,
+    "alive": true,
+    "tls_bypass_flags_absent": true,
+    "command_line_sha256": "162350712c5818dd41172b29ff448aa6de74df152bbf4cb54450d685de0f943f",
+    "creation_filetime": 134401491232155198
+  },
+  "collector_sha256": "d6deb43a367128536a07ea56e619e2ffd3fd4e1d522b308f5793f79f1bf0586a",
+  "execution_plan_sha256": "cc42e5844bbc555184750e01b1e868a0c4e3e0e29e67b32046fcba9878f058be",
+  "old_source_hashes": [
+    {
+      "label": "original_manifest",
+      "before_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+      "after_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+      "unchanged": true
+    },
+    {
+      "label": "installed_protocol",
+      "before_sha256": "3f6ef9c13ca4e92bc06426a01f2c3198448e949f64f62eb02e2db23146a8d06c",
+      "after_sha256": "3f6ef9c13ca4e92bc06426a01f2c3198448e949f64f62eb02e2db23146a8d06c",
+      "unchanged": true
+    },
+    {
+      "label": "sealed_original_action_plan",
+      "before_sha256": "a9dba5c76af313d428d75b3780af6d94035e4a86e308cd397f609b62e3a83edc",
+      "after_sha256": "a9dba5c76af313d428d75b3780af6d94035e4a86e308cd397f609b62e3a83edc",
+      "unchanged": true
+    },
+    {
+      "label": "original_action_report",
+      "before_sha256": "1d96ca97517abd4646837bf3c7cdcdfe4f3e0889f32f7514a3b65828540bcb7f",
+      "after_sha256": "1d96ca97517abd4646837bf3c7cdcdfe4f3e0889f32f7514a3b65828540bcb7f",
+      "unchanged": true
+    },
+    {
+      "label": "dedup_pure_function_source",
+      "before_sha256": "74b0f79370cb03bb434a6c58fe3e6e6697db02aa0d74ef57ac3cce5240739ae3",
+      "after_sha256": "74b0f79370cb03bb434a6c58fe3e6e6697db02aa0d74ef57ac3cce5240739ae3",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-public-metadata:results.json",
+      "before_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "after_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-public-metadata:provenance-safe.json",
+      "before_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "after_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-public-metadata:report.md",
+      "before_sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "after_sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-chrome-public-check:results.json",
+      "before_sha256": "8ffae956a6687f0598b111fb7eebe8476bed4b10c241d00e3ba679d4f0042625",
+      "after_sha256": "8ffae956a6687f0598b111fb7eebe8476bed4b10c241d00e3ba679d4f0042625",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-chrome-public-check:provenance-safe.json",
+      "before_sha256": "874da244158217fea3f218eda2c56c7d60604e1304c7eb3bc47f0323f86d3c1c",
+      "after_sha256": "874da244158217fea3f218eda2c56c7d60604e1304c7eb3bc47f0323f86d3c1c",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-chrome-public-check:report.md",
+      "before_sha256": "73afa86222c23ab3cad9293742c720fbd8c13471bbfdf90c12130b43f4927af0",
+      "after_sha256": "73afa86222c23ab3cad9293742c720fbd8c13471bbfdf90c12130b43f4927af0",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-chrome-metadata:results.json",
+      "before_sha256": "5584f3f9205090870e02fde0e7b909cb82707d6611434a8d807d0d6e1db945ff",
+      "after_sha256": "5584f3f9205090870e02fde0e7b909cb82707d6611434a8d807d0d6e1db945ff",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-chrome-metadata:provenance-safe.json",
+      "before_sha256": "53f67ba84fc825fa4a4eebce1a35d934d19c479fec7677240ff05dee37d3258e",
+      "after_sha256": "53f67ba84fc825fa4a4eebce1a35d934d19c479fec7677240ff05dee37d3258e",
+      "unchanged": true
+    },
+    {
+      "label": "r5-civitai-chrome-metadata:report.md",
+      "before_sha256": "1cb1356224f25dfd81cdcb3aa7d0fabf9c98eeb66f88856ecf665aaa18a8e042",
+      "after_sha256": "1cb1356224f25dfd81cdcb3aa7d0fabf9c98eeb66f88856ecf665aaa18a8e042",
+      "unchanged": true
+    },
+    {
+      "label": "r6-civitai-known-source-metadata:results.json",
+      "before_sha256": "79ef8f1f36fa85672308de516dfa2d626160a130d4d7b320376a4a485955367a",
+      "after_sha256": "79ef8f1f36fa85672308de516dfa2d626160a130d4d7b320376a4a485955367a",
+      "unchanged": true
+    },
+    {
+      "label": "r6-civitai-known-source-metadata:provenance-safe.json",
+      "before_sha256": "1d74877ac4e439d9c5bf4a7616049b89b8c08ae67b2160ba73701bc58cd496fe",
+      "after_sha256": "1d74877ac4e439d9c5bf4a7616049b89b8c08ae67b2160ba73701bc58cd496fe",
+      "unchanged": true
+    },
+    {
+      "label": "r6-civitai-known-source-metadata:report.md",
+      "before_sha256": "d27661018aee1212ba8ac08fccd19655e6dd5ac93fd8e5443243e19c8c8b3b65",
+      "after_sha256": "d27661018aee1212ba8ac08fccd19655e6dd5ac93fd8e5443243e19c8c8b3b65",
+      "unchanged": true
+    },
+    {
+      "label": "preserved_zero_http_stage:execution-plan.json",
+      "before_sha256": "52f4ddfad4ff910cf3443adb3b8b39104a5aab8b7381a9da2456a80fe93a515a",
+      "after_sha256": "52f4ddfad4ff910cf3443adb3b8b39104a5aab8b7381a9da2456a80fe93a515a",
+      "unchanged": true
+    },
+    {
+      "label": "preserved_zero_http_stage:results.json",
+      "before_sha256": "dff9a7419fd79dee010a364e77e111afc661c11ff805573dff1af2b82469ba30",
+      "after_sha256": "dff9a7419fd79dee010a364e77e111afc661c11ff805573dff1af2b82469ba30",
+      "unchanged": true
+    },
+    {
+      "label": "preserved_zero_http_stage:provenance-safe.json",
+      "before_sha256": "abaeb12890325cbde7f33f49be26502889dfc1df6c3442210f041653c127f6f2",
+      "after_sha256": "abaeb12890325cbde7f33f49be26502889dfc1df6c3442210f041653c127f6f2",
+      "unchanged": true
+    },
+    {
+      "label": "preserved_zero_http_stage:report.md",
+      "before_sha256": "554041bec6671c309314b02ab588277efb51df9ea7e3dde20f7114da8d9f77be",
+      "after_sha256": "554041bec6671c309314b02ab588277efb51df9ea7e3dde20f7114da8d9f77be",
+      "unchanged": true
+    },
+    {
+      "label": "preserved_zero_http_stage:seen-increment.json",
+      "before_sha256": "652e6ea64b368e900c36039566f22ba8e4092f578ac56ae24e955f9822c3b357",
+      "after_sha256": "652e6ea64b368e900c36039566f22ba8e4092f578ac56ae24e955f9822c3b357",
+      "unchanged": true
+    },
+    {
+      "label": "preserved_zero_http_stage:recover_two.py",
+      "before_sha256": "7c257f1d6f83650c92218f3c7ea8495a4d662a81689122d75761db2217238254",
+      "after_sha256": "7c257f1d6f83650c92218f3c7ea8495a4d662a81689122d75761db2217238254",
+      "unchanged": true
+    }
+  ],
+  "privacy": {
+    "raw_metadata_saved": false,
+    "full_download_urls_queries_locations_headers_or_cookies_saved_or_emitted": false,
+    "raw_graph_in_public_artifacts": false,
+    "private_cache_only_for_valid_static_json": true,
+    "existing_contexts_pages_profile_or_cookies_enumerated": false,
+    "browser_close_called": false,
+    "Mio_imports": 0,
+    "product_requests": 0,
+    "tests": 0,
+    "source_edits": 0
+  },
+  "limits": {
+    "metadata": 2,
+    "file_initial": 2,
+    "file_redirect": 2,
+    "total": 6,
+    "retries": 0
+  },
+  "caps": {
+    "chunk_decoded_bytes": 16384,
+    "metadata_decoded_bytes": 524288,
+    "file_decoded_bytes": 2097152,
+    "metadata_attempt_seconds": 32,
+    "file_attempt_seconds": 35,
+    "source_total_seconds": 125
+  },
+  "transport_limit": "System DNS private-address diagnostics from zero-HTTP stage are not Chrome remote-IP evidence. Exact trusted HTTPS names only; all URL IP literals rejected; no DNS pinning or actual remote public-IP claim. Chrome TLS bypass flags absent, Context ignore_https_errors=False, no proxy changes.",
+  "preserved_harness_failure": {
+    "previous_results_sha256": "dff9a7419fd79dee010a364e77e111afc661c11ff805573dff1af2b82469ba30",
+    "previous_actual_http_gets": 0,
+    "system_dns_diagnostic_categories": {
+      "IPv4": "private_non_global",
+      "IPv6": "private_non_global"
+    },
+    "local_listener_cleanup_KeyError": true,
+    "first_failed_stage_not_rewritten": true
+  },
+  "response_observation_only_no_page_commit_claim": true,
+  "results_sha256": "e6130b3602d7ddef0c524d6bf60d02cd67990f679e28ea113a5e2e821f22b501",
+  "browser_after": {
+    "pid": 46124,
+    "port": 59871,
+    "loopback_listener_exact": true,
+    "task_profile_exact": true,
+    "alive": true,
+    "tls_bypass_flags_absent": true,
+    "command_line_sha256": "162350712c5818dd41172b29ff448aa6de74df152bbf4cb54450d685de0f943f",
+    "creation_filetime": 134401491232155198
+  },
+  "seen_increment_sha256": "e40736594511747c5e8f6b23fe53d94b6c832eb2c77ee8a41d1f40850b3f59d8"
+}

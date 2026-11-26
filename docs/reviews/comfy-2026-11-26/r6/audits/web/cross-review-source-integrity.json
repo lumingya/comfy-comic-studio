@@ -1,0 +1,155 @@
+{
+  "schema": "mio.r6.web.cross-source-integrity.v1",
+  "utc": "2026-11-26T10:45:36.150265+00:00",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "runtime_files_exact": 218,
+  "web_source_files_exact": 429,
+  "all_source_files_exact": 647,
+  "git_status_record_count": 0,
+  "git_status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "own_initial_evidence_exact": 112,
+  "source_anchors": {
+    "server/mio_server/comfy/inspection_candidates.py": {
+      "sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+      "line_ranges": [
+        [
+          261,
+          319
+        ]
+      ]
+    },
+    "server/mio_server/comfy/inspection.py": {
+      "sha256": "6e59f08ed677d22ba5af30be21eca61bcbb6ca182e391f182fda7432fb8727bb",
+      "line_ranges": [
+        [
+          148,
+          195
+        ]
+      ]
+    },
+    "server/mio_server/comfy/workflow_graph.py": {
+      "sha256": "9d2ec7475710e822f8959b906821d908c52723214b9d32b3e03ba9856523462d",
+      "line_ranges": [
+        [
+          132,
+          211
+        ]
+      ]
+    },
+    "server/mio_server/comfy/workflow_slot_graph.py": {
+      "sha256": "d3c62a6e13d38e195b79461a17a2b682a79ab2239cb0699dd9ceb87d0a42fb36",
+      "line_ranges": [
+        [
+          21,
+          46
+        ],
+        [
+          51,
+          80
+        ],
+        [
+          99,
+          120
+        ]
+      ]
+    },
+    "server/mio_server/comfy/compile.py": {
+      "sha256": "2141ec096e59d5fda89bde5e1dfc4d7e123d70012301dbe39def736b007fe3f5",
+      "line_ranges": [
+        [
+          293,
+          345
+        ]
+      ]
+    },
+    "server/mio_server/comfy/bindings.py": {
+      "sha256": "a5a660e779ca3eca7d59fa44d8796ea5dc92e6a62f526d5d8bfbcbda2a48263c",
+      "line_ranges": [
+        [
+          312,
+          345
+        ]
+      ]
+    },
+    "web/src/pages/settings/WorkflowMappings.tsx": {
+      "sha256": "dbf14df38ed65c4f424fe46cd3f38c6874d327ebc8deddff4b8937af4c767031",
+      "line_ranges": [
+        [
+          10,
+          10
+        ],
+        [
+          89,
+          173
+        ],
+        [
+          222,
+          348
+        ]
+      ]
+    },
+    "web/src/pages/settings/WorkflowInspection.tsx": {
+      "sha256": "17f9913b1699aed195b36e763c37cd5e50afa13f542d1a3ec2ba96fd50dec4ed",
+      "line_ranges": [
+        [
+          190,
+          232
+        ],
+        [
+          283,
+          370
+        ]
+      ]
+    },
+    "web/src/pages/settings/WorkflowsSection.tsx": {
+      "sha256": "752eefdb5325e80b9dd8c1ce08b1d9520e142382d9d159da1dfd8d713c7a8232",
+      "line_ranges": [
+        [
+          77,
+          129
+        ],
+        [
+          239,
+          257
+        ]
+      ]
+    },
+    "web/src/pages/settings/ConfigurationParts.tsx": {
+      "sha256": "1317ce99e56c5291feb17d9d3cf2c73debf5ee78ebe9cf21751d96e97f35f73a",
+      "line_ranges": [
+        [
+          145,
+          158
+        ]
+      ]
+    },
+    "web/src/i18n/configuration.ts": {
+      "sha256": "e2dd6316fbd0de1c3dfb5cdd6df83c76048d456dfaca3f43ed12810d580f0374",
+      "line_ranges": [
+        [
+          160,
+          160
+        ],
+        [
+          259,
+          269
+        ]
+      ]
+    },
+    "web/src/api/client.ts": {
+      "sha256": "482d7ce1d379ce058838bac19663920ba758667fec67c240dc5931162076b89f",
+      "line_ranges": [
+        [
+          16,
+          22
+        ]
+      ]
+    }
+  },
+  "product_imports": 0,
+  "product_calls": 0,
+  "browser_calls": 0,
+  "network_calls": 0,
+  "test_build_runs": 0
+}

@@ -1,0 +1,116 @@
+{
+  "schema": "mio.r6-generality-cross-structure.v1",
+  "source_sha256": "ce41f4b82c583da615fa6e8f08c6fcbe0fa7dbf8efc557a04c93f9243a54deb0",
+  "projection": [
+    {
+      "sample": "own-04",
+      "node_count": 14,
+      "edge_count": 18,
+      "checks": [
+        {
+          "target_pointer": "/32/inputs/image",
+          "source_node_pointer": "/1",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/7/inputs/images",
+          "source_node_pointer": "/32",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/17/inputs/mask",
+          "source_node_pointer": "/32",
+          "source_index": 3,
+          "present": true
+        },
+        {
+          "target_pointer": "/18/inputs/images",
+          "source_node_pointer": "/17",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/34/inputs/image",
+          "source_node_pointer": "/32",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/34/inputs/detailer_pipe",
+          "source_node_pointer": "/32",
+          "source_index": 4,
+          "present": true
+        },
+        {
+          "target_pointer": "/24/inputs/images",
+          "source_node_pointer": "/34",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/25/inputs/mask",
+          "source_node_pointer": "/34",
+          "source_index": 3,
+          "present": true
+        }
+      ]
+    },
+    {
+      "sample": "own-17",
+      "node_count": 36,
+      "edge_count": 52,
+      "checks": [
+        {
+          "target_pointer": "/64:63/inputs/positive",
+          "source_node_pointer": "/64:61",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/64:63/inputs/negative",
+          "source_node_pointer": "/64:62",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/4/inputs/basic_pipe",
+          "source_node_pointer": "/64:63",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/9/inputs/positive",
+          "source_node_pointer": "/10",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/17/inputs/positive",
+          "source_node_pointer": "/18",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/26/inputs/positive",
+          "source_node_pointer": "/27",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/30/inputs/positive",
+          "source_node_pointer": "/31",
+          "source_index": 0,
+          "present": true
+        },
+        {
+          "target_pointer": "/40/inputs/basic_pipe",
+          "source_node_pointer": "/64:63",
+          "source_index": 0,
+          "present": true
+        }
+      ]
+    }
+  ]
+}

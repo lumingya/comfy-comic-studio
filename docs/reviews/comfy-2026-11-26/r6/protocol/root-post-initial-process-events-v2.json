@@ -1,0 +1,26 @@
+{
+  "schema": "mio.r6.root-post-initial-process-events.v2",
+  "utc": "2026-11-26T10:20:36.888031+00:00",
+  "prior_evidence": "root-post-initial-process-events.json",
+  "prior_sha256": "4680c26017c9e09dc4912da251a6add2ef87e7964e53f14e40371480bcb56a68",
+  "additional_events": [
+    {
+      "kind": "pure_file_inline_syntax_error",
+      "error_type": "SyntaxError",
+      "uncaught": true,
+      "effect": "inline module did not parse; no writes or product calls",
+      "stdout_scope": "generic stdin line and neutral package-count code only"
+    },
+    {
+      "kind": "pure_file_optional_inventory_key_error",
+      "error_type": "KeyError",
+      "uncaught": false,
+      "effect": "lease release state was written and read back; optional inventory read stopped",
+      "stdout_scope": "error type only"
+    }
+  ],
+  "graph_prompt_asset_credential_echo": false,
+  "repo_changes": 0,
+  "product_calls": 0,
+  "lease_state_current_holder": null
+}

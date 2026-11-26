@@ -1,0 +1,4943 @@
+{
+  "schema": "r6-blind-public-provenance-v1",
+  "original_selected_manifest_sha256": "02f5f3463945d8cd5d43fa2ba226a423164f26e1c941f92dc6adbc85dce8c7f3",
+  "original_all_candidates_sha256": "e47ec79e4bd2ff9af84c3ffc5afb61f0e7c18ac73dbb99602c68ff102c8ac218",
+  "seen_ledger_sha256": "a6b4c101ba737e458a87e95222abadad68916cb06d3826b5211d9f0e8bab0d53",
+  "dedup_layers": [
+    "source_normalized",
+    "source_family",
+    "raw_actual",
+    "raw_saved",
+    "api_canonical_v1",
+    "ui_canonical_v1",
+    "topology_wl32_v1",
+    "legacy_raw_prefix_unverified",
+    "legacy_canonical_unverified",
+    "legacy_topology_unverified",
+    "legacy_canonical_prefix_unverified"
+  ],
+  "missing_historical_originals": 25,
+  "civitai35_fullcanonical_support_count": 10,
+  "old75_weak_prefix_algorithm_known": false,
+  "raw_and_canonical_checked_against_weak_prefix": true,
+  "exhaustive_dedup_against_unavailable_originals_claimed": false,
+  "download_candidate_count": 62,
+  "selected_count": 13,
+  "source_only_location_count": 54,
+  "source_only_unique_graph_count_claimed": false,
+  "identities_not_graphs_or_assets": true,
+  "disposition_counts": {
+    "seen_identity_match": 15,
+    "selected": 13,
+    "coverage_not_selected": 19,
+    "no_graph": 8,
+    "failed_acquisition": 2,
+    "modality_excluded": 5
+  },
+  "candidates": [
+    {
+      "id": "own-01",
+      "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/inpaint_flux.png",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 4262468,
+      "identity": {
+        "raw_sha256": "be2cf586312242966c273603dbde153421acb4ce2e36f421db11b1c3573408f6",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "4b7c7f014460e216db59ec2ea50deb165a30b78d026f17dbd511230cc4074b6b",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "059d385759d59f44270187a0063a3f1d936721095105a813b7bfe9df491e3630",
+              "node_count": 21,
+              "edge_count": 26
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/inpaint_flux.png",
+          "normalized_sha256": "6438f3e43bee03752001c81eea75d04c903464f1ebb7041603f78a770b6b8325",
+          "family_sha256": "a39b9c74a0f00a616020c208afc693053f094b1b51119bdb137e299fc45fc427"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [
+            "059d385759d59f44270187a0063a3f1d936721095105a813b7bfe9df491e3630"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 21,
+          "lora_node_count": 0,
+          "image_loader_count": 2,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "controlnet",
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-02",
+      "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/inpaint_hires.png",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 1996430,
+      "identity": {
+        "raw_sha256": "8d1198ae723fe6e0801a104a4ac83261e8754c63fb55fcc28bdf55330f3f610c",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "731b41e134586c148b066216a19d44a0d8297e7bf507e66ebd5c7ce3b4be06c1",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "1b90d0b2dbdaad00166f760486c63b236389b32d156a743d6715209c46db1e25",
+              "node_count": 21,
+              "edge_count": 36
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/inpaint_hires.png",
+          "normalized_sha256": "a5f07628276c2b591c27bc16045f316c4c3d2523e9509afc34c887096f410c5c",
+          "family_sha256": "198dd9cb78c4834de9b42da8adcec4c3e0c921c856d0ad4901ff9f85d4109dd4"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 21,
+          "lora_node_count": 0,
+          "image_loader_count": 2,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-03",
+      "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/inpaint_sd15.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 4780948,
+      "identity": {
+        "raw_sha256": "eab85b6b958e85f1a4406ba8fe0b9bc0c487bc808c958076e47299390ad9e50a",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "729972839f27768c166ba9c8ca45123bd61a263694662c00e09a39169ee4ba9f",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "7a11817fafaa221e8b7522a8aacd06ff567d9ea2f37d8e4f3bd50881b910d885",
+              "node_count": 11,
+              "edge_count": 18
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/inpaint_sd15.png",
+          "normalized_sha256": "1414c931912cee9c29849858e4c34ed7b54f41f6bdee7a0be91694304c6d2e4c",
+          "family_sha256": "66f5bcca5613ddd58b9b4427250ab789fbce99f2c89d03f12b70c36ab110963a"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 11,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-04",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/2pass-2pass.png",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 154660,
+      "identity": {
+        "raw_sha256": "85f263db14525c31ea746609286136081e92e9e09e5c48ea750a76b1648501f7",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "a69e8bbdec2fd5338f6ff77b1753cb7fa998813e2841bdb4e53865774c6aa30b",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "5fccb3ce7452a1dcb46236db0064b495c7b9faae46fbaa78080b9492e53680a8",
+              "node_count": 14,
+              "edge_count": 18
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "1d27dae557b716182b7c1314aa9a6062a11ee8de1a5178e6b81fde9d5e72c4e8",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "84aae343bda8ea55e983b92a376f9f27d5785218ef626285f4a41060dffd6649",
+              "node_count": 20,
+              "edge_count": 24
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/2pass-2pass.png",
+          "normalized_sha256": "068f133a51ace038fb449dd4ead43d3ca763c5664d486446fcdba3187ff87e94",
+          "family_sha256": "e861830f4f4dc44f3d92646fcb74ab1c90be9ddf2c86cc5c707a40dc4ec321d5"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 14,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 0,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 20,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 0,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-05",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/combination-refined.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 722310,
+      "identity": {
+        "raw_sha256": "f4dc938a12ef9561041c9f3274a26dee7e4bc322a66cb0f7d7e643d66f1097eb",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "e185198df4f98c4f2fec0ad1f69c2d1c41e39a37eea8550918310cb68e7506b3",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "077295b25093e02605534682857c75b7fcf40d78271f1f62ac31bc0308713dd3",
+              "node_count": 21,
+              "edge_count": 35
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/combination-refined.png",
+          "normalized_sha256": "a6b44d7a65b67c25a12fdf0ce39ffc0dfec1e47eca64e76623efbf2fde11d77b",
+          "family_sha256": "b6ac1ee904fd4d8200640f5f6b8751e08d373312ce0de96751bc4c27a8804859"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 21,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-06",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/simple-refined.png",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 237052,
+      "identity": {
+        "raw_sha256": "97dd9c7b6b78ccb9420d9ee97f59e5b013e69354045a15c9bcfc50b55f96afa0",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "f4655810d553ef8e4783b1d2b4ffa4b9f2bf1eb9f7b85085a20ce207c4558a15",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "cf734014c6bf931cd8e805b51d86460f306e08b0e86a385f8eeb279b85bec1c7",
+              "node_count": 15,
+              "edge_count": 22
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "35ac53cfa62008915e0b21c928fd7170fb4c52abbd71eb8461d48df376c9c266",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "83814204a0f7a2e27bdb47a082779c85c9cd864312b7db04a08d56b57a80c9c3",
+              "node_count": 24,
+              "edge_count": 31
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/simple-refined.png",
+          "normalized_sha256": "4106835ec423e4ecb5def91d03ba1f17655c9f6bba162447671da73c837add2e",
+          "family_sha256": "ae60527bd06f86f23290cb1a15bc9f7260755408299f5648a83188b6b8a0da34"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 15,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 24,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-07",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/upscale-3x.png",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 1841343,
+      "identity": {
+        "raw_sha256": "1ac3b91a3e4c0d846096db57d0149f616a08aaa8ffbb593536b9ac1975581171",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "b3cf1e99ac3bde937f3023f1db674634a908533a345d872ad836e460dfcdad07",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "68d11b6eac10a9c656d08e3de26f77bb83daffc68abec82a41e4bfdf44f86bd6",
+              "node_count": 32,
+              "edge_count": 55
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "76ba527618c8cfe8459c7f146cef72c43d4236b46cb7098eb34184a74c5c7410",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "ab5dc148615d858189b50909cb84f2dc3b5c3dc50297488e4a24d702390ce9e6",
+              "node_count": 35,
+              "edge_count": 58
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/upscale-3x.png",
+          "normalized_sha256": "c4167baf25b451d2b7991a659258a79d44fd58f3d71930b5c91c2f7475556c2b",
+          "family_sha256": "59bfe0844cf255b94650b268dbad4ddd9acd6acf285969349722c3669e2ca091"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 32,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 3,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 35,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 3,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-08",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/upscale-workflow.png",
+      "selected": false,
+      "disposition": "no_graph",
+      "byte_count": 194384,
+      "identity": {
+        "raw_sha256": "128a8f3dedb0e9f08fbdd13ecbdffc163c763a9f26e5fac0007f1ca2b5a7ba21",
+        "graphs": [],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/upscale-workflow.png",
+          "normalized_sha256": "f8ccd903b343d54dac39b3bfb0ab3afe0cfd62d31ed8691da3587a470e4f2259",
+          "family_sha256": "1cf94c4d0adfdadf30f0a4c4c5b50d7283e3f88534efb3ddc4514703c1178231"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": []
+    },
+    {
+      "id": "own-09",
+      "url": "https://raw.githubusercontent.com/Acly/comfyui-tooling-nodes/main/workflows/image_tiles.png",
+      "selected": false,
+      "disposition": "no_graph",
+      "byte_count": 684435,
+      "identity": {
+        "raw_sha256": "6f8dc5547d63e19a813d375b0e2b05d7b30173ab1c210a6df17f6baa6c322792",
+        "graphs": [],
+        "source": {
+          "url": "https://raw.githubusercontent.com/Acly/comfyui-tooling-nodes/main/workflows/image_tiles.png",
+          "normalized_sha256": "bc5f41f2dc1abb00476dd5f1019e9429c7638c290d063b30b00d3e1b72e3808d",
+          "family_sha256": "9ae1573581f10207ef3a689aeabf9687b98772be7993cc1900d761ea398d8983"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": []
+    },
+    {
+      "id": "own-10",
+      "url": "https://raw.githubusercontent.com/Acly/comfyui-tooling-nodes/main/workflows/region_attention_mask.png",
+      "selected": false,
+      "disposition": "no_graph",
+      "byte_count": 428081,
+      "identity": {
+        "raw_sha256": "b97b64c74976fcea4ed148e2253bd70f076a1c7a5cd4dcb1acb91f2b43e1aa60",
+        "graphs": [],
+        "source": {
+          "url": "https://raw.githubusercontent.com/Acly/comfyui-tooling-nodes/main/workflows/region_attention_mask.png",
+          "normalized_sha256": "e1cf654b321db6e5eeff6d9b7793e96135a82f5a4df7b2bbf1e84674d39a3906",
+          "family_sha256": "bf23c0026dcdee65e4e25f61a34a348208079a985ab2fc0589b3c7d846cf7a18"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": []
+    },
+    {
+      "id": "own-11",
+      "url": "https://raw.githubusercontent.com/ydsgangge-ux/yount-AI/main/workflow_api.json",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 2408,
+      "identity": {
+        "raw_sha256": "9f667e14b6b2ce4e02e2e7bb5b720de6a221d845f4daf5c639f066860db75020",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "8735375ca32829965e1fab297371dbe5ae7fadc793c626dbf75c7b0b345042bb",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "623d948f50488ffe72ae8c70fd8381d7d1c876655be3b9df473314e1f4c6317c",
+              "node_count": 9,
+              "edge_count": 12
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ydsgangge-ux/yount-AI/main/workflow_api.json",
+          "normalized_sha256": "92b56c616ecba9d83c95d3c4115f1e7314a276e805ac082207778127ff803316",
+          "family_sha256": "9cad01464cd8b196447028b7f58cef8433c4b46c4e33b9a76828f90cf4cb1238"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 1,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [
+            "92b56c616ecba9d83c95d3c4115f1e7314a276e805ac082207778127ff803316"
+          ],
+          "source_family": [
+            "9cad01464cd8b196447028b7f58cef8433c4b46c4e33b9a76828f90cf4cb1238"
+          ],
+          "raw_actual": [
+            "9f667e14b6b2ce4e02e2e7bb5b720de6a221d845f4daf5c639f066860db75020"
+          ],
+          "raw_saved": [
+            "9f667e14b6b2ce4e02e2e7bb5b720de6a221d845f4daf5c639f066860db75020"
+          ],
+          "api_canonical_v1": [
+            "8735375ca32829965e1fab297371dbe5ae7fadc793c626dbf75c7b0b345042bb"
+          ],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [
+            "623d948f50488ffe72ae8c70fd8381d7d1c876655be3b9df473314e1f4c6317c"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 9,
+          "lora_node_count": 1,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "own-12",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/hair-restyle.png",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 4792852,
+      "identity": {
+        "raw_sha256": "a673285297061176b9c06696b4ebb07528dc8055a879a1534aaf07a40f6f4a5f",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "b65db6da466b98becef2aa4f05dead1c8830b30f59878e936a6081ab1a5da514",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "c145b67d3a85f2f1c8524a723e8cb1e37fdfdf4feda9f9ce77ba7c7ca0a4d7ac",
+              "node_count": 49,
+              "edge_count": 50
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/hair-restyle.png",
+          "normalized_sha256": "0a538ab35901461c286ae3d6c780d2367323c2cedc3afc28d67c4761637f9a43",
+          "family_sha256": "368c5c1536da30dbe6ae3df41700717410f1f27a59c8312d41bd4aa8042a7b1d"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 49,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-13",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/dwpose-segs-handfix.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 2555673,
+      "identity": {
+        "raw_sha256": "3f2cbe6da355f299c9d4676bd442208ed2fe7c97ad1e02319cfddb4892f701fe",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "7e359fe54af871ba5b7f2067b03e534d6aa0b04570d0b71e8f9dd6b3600a2142",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "6332607d12c78e7bf21c85e32498885e0f2058aab081191c46f03e260eb763af",
+              "node_count": 19,
+              "edge_count": 20
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/dwpose-segs-handfix.png",
+          "normalized_sha256": "7d3085877f1c723ba619a7b3bc9ea60505ed377b8dbb9f3d5cca0faa714ec660",
+          "family_sha256": "bc103905e110260f6e66d1973b1c94535e085e9b10ddfe57f4f1db8f4073f1b2"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 19,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "controlnet",
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-14",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/crowd-face.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 5168439,
+      "identity": {
+        "raw_sha256": "33fcbe65adebee06b5e4f9c5a5992781832381184b8aa76aa7e811796ac65568",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "dfcc45b4c88a4c48e2cbd923fd796751a32977fac646038c6b53030fcf059370",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "ebd38273bc8d41e8e408def71b5841a3e2f98c450057b21146a53569cd79ec59",
+              "node_count": 22,
+              "edge_count": 32
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/crowd-face.png",
+          "normalized_sha256": "6f2d9bf650e37959689e635147dd651621e9f89a866b7ef50c062d1a132dac37",
+          "family_sha256": "62af3f6c9694658c1a2916e280137cb65416f42128717dce58492e6197ae8efc"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 22,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-15",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/gender-senstivie-detailer.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 2359980,
+      "identity": {
+        "raw_sha256": "efab24e4b63007ad28a84d0b553737a644fffa643913de08f907d68021664f8b",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "4f4b5d7e5cf3f03072cd05d2998aaf175e7cf6619a27b039ca89a25e445f8e9b",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "6b45f95ae5065ed890be1fc32e9f850a3f82f68fa3837cd95d1491d9a546c8a1",
+              "node_count": 29,
+              "edge_count": 25
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/gender-senstivie-detailer.png",
+          "normalized_sha256": "f3c328eb7fd750b6a31083c01e5a7943794e862cfde1f0947be36ff1363593a3",
+          "family_sha256": "3825c7c782bbb025b8142707feed47d87d80041e004b56cd14b8ab8261985806"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 29,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-16",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/prompt-per-tile.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 3903229,
+      "identity": {
+        "raw_sha256": "8b9e5ef63d85a0e633ba62d48e1e8eef3c7b726fba59dc71ad29e06b25d58035",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "0f549ae0db3a1b50bbdd458cf46c234309451b6322af515a5862db59e0328a16",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "d8819c0ed7e2cb3f741e7e298c4985a39f83ee3cc8c9dd6986d37a89afac5c5f",
+              "node_count": 19,
+              "edge_count": 31
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/prompt-per-tile.png",
+          "normalized_sha256": "afb46e9f7cee7b20feafac7a40a8804988a0f7296ada8220c498f5344fbeaf65",
+          "family_sha256": "55b806155a791d4c61c9d2670af6636371be4b559f4377314d60b300079b3158"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 19,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-17",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/regionalsampling-ancestral.png",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 4768522,
+      "identity": {
+        "raw_sha256": "eb9bbf294bbd8a8fd188470a53077ce7232bdc96cfd7674340debbe758f3c516",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "281fafd15f5344d438f32017c9a9ccf020936eb2a85331b95527c755a35216c7",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "bbabd6fe05763e23af8bbfb892d136448cd93a34f1ca947236dc4a22580d0823",
+              "node_count": 36,
+              "edge_count": 52
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "0e0c676aacac331256179251dbff3fb037627e3ab2057ad3bc110d0e365e0b4a",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "ad764f4f09e8b551d8036ecc0707fb3816f6bf5388cf3e0d99c0300a87ae09dd",
+              "node_count": 38,
+              "edge_count": 49
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/regionalsampling-ancestral.png",
+          "normalized_sha256": "45e96aea66a5ba1c25b10a9f442ad9315df0041fddaae1787f5347c9f5a403e0",
+          "family_sha256": "9f30c4c57d822889dcb6b342ae370b01842c382c0bc3f023e15cca6344bffb5f"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 36,
+          "lora_node_count": 0,
+          "image_loader_count": 4,
+          "sampler_node_count": 8,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 38,
+          "lora_node_count": 0,
+          "image_loader_count": 4,
+          "sampler_node_count": 8,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-18",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/regionalsampling.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 7916077,
+      "identity": {
+        "raw_sha256": "0bed233bd948511df11c252d77395acc6754750da8a248a8d33af781db314d9a",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "626e0c7e80c9f5e07882a6599f8c82aa7b064185ac6500a2182607523d6e3f01",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "a21d336a8d6ddce08ea6b0eddf09aa4e642a7b8c11419db6147416fa91e448cd",
+              "node_count": 38,
+              "edge_count": 49
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/regionalsampling.png",
+          "normalized_sha256": "11b63c33a687c0a84eecc063e97bf3280f65713673f392b75c8b85a0946539c4",
+          "family_sha256": "3c5e8a74f2b4559b023c2db738d8763cdda309e990e1a8daa79670781167c5f5"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 38,
+          "lora_node_count": 0,
+          "image_loader_count": 4,
+          "sampler_node_count": 8,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "own-19",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/rp-mask1.png",
+      "selected": false,
+      "disposition": "no_graph",
+      "byte_count": 605369,
+      "identity": {
+        "raw_sha256": "82d0cceede68320d263700b7d99cf8637b36d7dcaf94e3fa930f299ddeb20705",
+        "graphs": [],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/rp-mask1.png",
+          "normalized_sha256": "bd392ada47951486701d2db335855a305e7bf0c4cb2d9f396031ab95547f6c23",
+          "family_sha256": "808a6234c7bf85ac70517d248c91ec39f2a07b518108593587df8a6b5d4bf279"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": []
+    },
+    {
+      "id": "own-20",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/rp-mask2.png",
+      "selected": false,
+      "disposition": "no_graph",
+      "byte_count": 605776,
+      "identity": {
+        "raw_sha256": "3246cd829cb1ec3e5ff2f755c0d9083ae902f8d5a37f5a57c92caeaa89de1ad8",
+        "graphs": [],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/rp-mask2.png",
+          "normalized_sha256": "93c7c2ffa5781b73c4974d1a7d4a0838cc6d9669fb65950770f6d5e929ae4e4b",
+          "family_sha256": "db355d18cc163a4da722f787dd5fd5bd6d0286729e3cc1f4a423f33320039a33"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": []
+    },
+    {
+      "id": "own-21",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/rp-mask3.png",
+      "selected": false,
+      "disposition": "no_graph",
+      "byte_count": 605810,
+      "identity": {
+        "raw_sha256": "a791f26b6c13a01212adc8f8c4712b45a4ca90aee24a9cda64014f633709b2e9",
+        "graphs": [],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/rp-mask3.png",
+          "normalized_sha256": "62f7483587a6cc5404b267e1f631d480bd42a732504ea95e6593c6ac89821469",
+          "family_sha256": "cf6ee576964d05366d9b7a7e87c933639655884252988a6882251e68edf66751"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": []
+    },
+    {
+      "id": "own-22",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/rp-mask4.png",
+      "selected": false,
+      "disposition": "no_graph",
+      "byte_count": 605120,
+      "identity": {
+        "raw_sha256": "f629c8d523f42a1c2f1e6f17369ea05540ab274724ba83d364714fc30c30e92c",
+        "graphs": [],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/rp-mask4.png",
+          "normalized_sha256": "e05a3957a3bbae1369c2cb89dd625e94ad8e03e7d3d1cfa3254853df8a400ddf",
+          "family_sha256": "b2af3a6868a5fbd607e5454d1f0c6f3239cffcfe87830f58baacb78312368905"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": []
+    },
+    {
+      "id": "own-23",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Inspire-Pack/workflow/regional-sampling.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 5057750,
+      "identity": {
+        "raw_sha256": "ac9e8a0f5babe700f465caa7a0b51d56fafc67cabbe4257fc4e28173fd4f12bb",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "cd6ca49f0a5bbf2a4dcbe8e27c4d0cf049a5029027ddcab882d4c46946b02b4c",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "dbba8c28edccc61c9915f4fbce25bad752a8cd1a4c84153d2db0000460397917",
+              "node_count": 31,
+              "edge_count": 38
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Inspire-Pack/workflow/regional-sampling.png",
+          "normalized_sha256": "af36d0138e6653576424f4404003b87d456b32d223e1ba16efbbad6a485acca3",
+          "family_sha256": "ec4eac923768fed658082f6d03779893fc11e66bc1959c43ed935b81309f2efd"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 31,
+          "lora_node_count": 0,
+          "image_loader_count": 2,
+          "sampler_node_count": 4,
+          "excluded_modality": false,
+          "class_families": [
+            "controlnet",
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "api001",
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/sdxl/sdxl_refiner_prompt_example.png",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 1249954,
+      "identity": {
+        "raw_sha256": "6860997bed840ddd2d2a67b5c329c9d5e097b0a68b5de31ed91225da12535aaf",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "4f866a7b26232a07afd5c2629cb953429ad797e830489985ad678fcc7f3c021e",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "340db691fd8c72692b2a807964ff370ee4e82353aa844c4df2d6770e4821f350",
+              "node_count": 11,
+              "edge_count": 15
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "a9f7fd5ca309715e04b0e01573ce07c1471f2333b59dd18e2e35ee11cbf70eaf",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "a82369724d9e37ab9f831787e8abf8e73910f2b50098111924db861e11f429ac",
+              "node_count": 19,
+              "edge_count": 19
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/sdxl/sdxl_refiner_prompt_example.png",
+          "normalized_sha256": "47115eb31892518059d89fce1383e3362bd918ac40e12901ff37151c55aedc09",
+          "family_sha256": "bcc50eaaa74f26ae62842bc5ff79a856a226bb1287e96cdea845b0e0760f2dbb"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 1,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 1,
+          "topology_wl32_v1": 2,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [
+            "47115eb31892518059d89fce1383e3362bd918ac40e12901ff37151c55aedc09"
+          ],
+          "source_family": [
+            "bcc50eaaa74f26ae62842bc5ff79a856a226bb1287e96cdea845b0e0760f2dbb"
+          ],
+          "raw_actual": [
+            "6860997bed840ddd2d2a67b5c329c9d5e097b0a68b5de31ed91225da12535aaf"
+          ],
+          "raw_saved": [
+            "6860997bed840ddd2d2a67b5c329c9d5e097b0a68b5de31ed91225da12535aaf"
+          ],
+          "api_canonical_v1": [
+            "4f866a7b26232a07afd5c2629cb953429ad797e830489985ad678fcc7f3c021e"
+          ],
+          "ui_canonical_v1": [
+            "a9f7fd5ca309715e04b0e01573ce07c1471f2333b59dd18e2e35ee11cbf70eaf"
+          ],
+          "topology_wl32_v1": [
+            "340db691fd8c72692b2a807964ff370ee4e82353aa844c4df2d6770e4821f350",
+            "a82369724d9e37ab9f831787e8abf8e73910f2b50098111924db861e11f429ac"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 11,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 19,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "api002",
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/sdxl/sdxl_revision_text_prompts.png",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 1702017,
+      "identity": {
+        "raw_sha256": "b8117dd8baa5ec41fd9deef5d03afa0fe4e18fea178bba9272a92272195b7539",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "19437fa3918d2557a32a4f00e8568cc74517185ce63b4988cddc079988e1a051",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "0e509acb3ed4f77c3cbd25736aaf3d57c9dfb87533331b94050c01c09bd7b0d6",
+              "node_count": 14,
+              "edge_count": 17
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "91b5c5a5830d131e178de8a1443d5fe411f821cadd3a4c1be7a581db34b53be9",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "0e509acb3ed4f77c3cbd25736aaf3d57c9dfb87533331b94050c01c09bd7b0d6",
+              "node_count": 14,
+              "edge_count": 17
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/sdxl/sdxl_revision_text_prompts.png",
+          "normalized_sha256": "97c17d39f7f20074203a03d4e9eca6b5e46a3cff05afcbaf08d1ff1c9b19589f",
+          "family_sha256": "5aa3b1ad157e07ab38ab9cd08b4ed04411dfdef538aa4bc61c24b142b51a2b70"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 14,
+          "lora_node_count": 0,
+          "image_loader_count": 2,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 14,
+          "lora_node_count": 0,
+          "image_loader_count": 2,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "api003",
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/noisy_latent_composition/noisy_latents_3_subjects.png",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 2637425,
+      "identity": {
+        "raw_sha256": "48b60f8e0109527eeaadfb56e8ed2830c9b08e4de6ab722423f4daac06791a9a",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "3bff2ca943fb3008133a584b0c1a1f3b5f0b6fbcacbfe46093f20b85a92bdb31",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "2060932017e914d812bb0f6d28080345440487f09c19d891926ba9ed2d061adc",
+              "node_count": 20,
+              "edge_count": 35
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "cdbb65bfd4b93029899436d2126e7dc1543ea7ccde702569760a3be05d5e0ff6",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "2060932017e914d812bb0f6d28080345440487f09c19d891926ba9ed2d061adc",
+              "node_count": 20,
+              "edge_count": 35
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/noisy_latent_composition/noisy_latents_3_subjects.png",
+          "normalized_sha256": "81c9ee75c5e7502d371e6f21c5476998187b64608c0a9e5c54f7033fe2fce8de",
+          "family_sha256": "c6c27de92f0d19b6b9bafe7b3f8a51c90573ad4976835fb164198e6740207bce"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 1,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 1,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [
+            "81c9ee75c5e7502d371e6f21c5476998187b64608c0a9e5c54f7033fe2fce8de"
+          ],
+          "source_family": [
+            "c6c27de92f0d19b6b9bafe7b3f8a51c90573ad4976835fb164198e6740207bce"
+          ],
+          "raw_actual": [
+            "48b60f8e0109527eeaadfb56e8ed2830c9b08e4de6ab722423f4daac06791a9a"
+          ],
+          "raw_saved": [
+            "48b60f8e0109527eeaadfb56e8ed2830c9b08e4de6ab722423f4daac06791a9a"
+          ],
+          "api_canonical_v1": [
+            "3bff2ca943fb3008133a584b0c1a1f3b5f0b6fbcacbfe46093f20b85a92bdb31"
+          ],
+          "ui_canonical_v1": [
+            "cdbb65bfd4b93029899436d2126e7dc1543ea7ccde702569760a3be05d5e0ff6"
+          ],
+          "topology_wl32_v1": [
+            "2060932017e914d812bb0f6d28080345440487f09c19d891926ba9ed2d061adc"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 20,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 5,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 20,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 5,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "api004",
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/area_composition/night_evening_day_morning_subject.png",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 3314763,
+      "identity": {
+        "raw_sha256": "1973a0be9c12b5e2ed501e0f1a37c5332319b92d30becc56a001b57f46396263",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "f915a911c1472c8dddcc49bb5deba1730a8b5c22cbf679881e11f4aa74ce32db",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "bf4351e582f88e8f84043b25ca02df83a1d2086606790014bbf3cbce0386be90",
+              "node_count": 32,
+              "edge_count": 40
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "57a5cc3049212b88719a7521ec5ef815a908477dcac0451eb46b994e01d24ff6",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "bf4351e582f88e8f84043b25ca02df83a1d2086606790014bbf3cbce0386be90",
+              "node_count": 32,
+              "edge_count": 40
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/area_composition/night_evening_day_morning_subject.png",
+          "normalized_sha256": "625313f778a3a50e637f3faceb75476850e52d77d99100143521eeed54143df9",
+          "family_sha256": "d809d59956d115ecf98d6a6dab6cb35c291288fca6a1511b495418cb4a6878f5"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 1,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 1,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [
+            "625313f778a3a50e637f3faceb75476850e52d77d99100143521eeed54143df9"
+          ],
+          "source_family": [
+            "d809d59956d115ecf98d6a6dab6cb35c291288fca6a1511b495418cb4a6878f5"
+          ],
+          "raw_actual": [
+            "1973a0be9c12b5e2ed501e0f1a37c5332319b92d30becc56a001b57f46396263"
+          ],
+          "raw_saved": [
+            "1973a0be9c12b5e2ed501e0f1a37c5332319b92d30becc56a001b57f46396263"
+          ],
+          "api_canonical_v1": [
+            "f915a911c1472c8dddcc49bb5deba1730a8b5c22cbf679881e11f4aa74ce32db"
+          ],
+          "ui_canonical_v1": [
+            "57a5cc3049212b88719a7521ec5ef815a908477dcac0451eb46b994e01d24ff6"
+          ],
+          "topology_wl32_v1": [
+            "bf4351e582f88e8f84043b25ca02df83a1d2086606790014bbf3cbce0386be90"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 32,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 32,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "api005",
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/area_composition/square_area_for_2_subjects.png",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 3196247,
+      "identity": {
+        "raw_sha256": "114d344974bf01ad583acb2a2dfb62ac4166e96016c1386095c1a30f2c62f792",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "b0af9e1f506d7406572a96886d09eac394d61f6ecfa5eb014c26dd08fe95f447",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "418e0d4a4895b2e8960eb648e5e9393181c57d3754763057d9ba756b307172b8",
+              "node_count": 21,
+              "edge_count": 28
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "049818245581e4dc34f02c9e5e7ffced24597bb77c5b139fa2c3a7467f26710d",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "418e0d4a4895b2e8960eb648e5e9393181c57d3754763057d9ba756b307172b8",
+              "node_count": 21,
+              "edge_count": 28
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/area_composition/square_area_for_2_subjects.png",
+          "normalized_sha256": "1d4deec0aabc75c44b1624e50e9570b2dde58b42b08c1b4572032c374842569b",
+          "family_sha256": "03a4e28509a85bc6036df0b8c74490a957e83e770b1201c672d34d8a3e3752a5"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 1,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 1,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [
+            "1d4deec0aabc75c44b1624e50e9570b2dde58b42b08c1b4572032c374842569b"
+          ],
+          "source_family": [
+            "03a4e28509a85bc6036df0b8c74490a957e83e770b1201c672d34d8a3e3752a5"
+          ],
+          "raw_actual": [
+            "114d344974bf01ad583acb2a2dfb62ac4166e96016c1386095c1a30f2c62f792"
+          ],
+          "raw_saved": [
+            "114d344974bf01ad583acb2a2dfb62ac4166e96016c1386095c1a30f2c62f792"
+          ],
+          "api_canonical_v1": [
+            "b0af9e1f506d7406572a96886d09eac394d61f6ecfa5eb014c26dd08fe95f447"
+          ],
+          "ui_canonical_v1": [
+            "049818245581e4dc34f02c9e5e7ffced24597bb77c5b139fa2c3a7467f26710d"
+          ],
+          "topology_wl32_v1": [
+            "418e0d4a4895b2e8960eb648e5e9393181c57d3754763057d9ba756b307172b8"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 21,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 21,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "api006",
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/lora/lora_multiple.png",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 181377,
+      "identity": {
+        "raw_sha256": "204678664ad2aa9776fc0a5ffc9b8b58bcae287ff0b950b919f77d3699885cb3",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "672e1b26d97e42ee644738d6f4a09cafd4c63d23d6929ff603a592ec359c00fc",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "437bd5da85888fd49f690b5fc9c0a284bc1ace17ddabb6d7d86ea27af9ffbdb9",
+              "node_count": 9,
+              "edge_count": 13
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "675270dc5310d683a818ccd552143be64e72b8aa4f7f7a1d5821c836f8287201",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "437bd5da85888fd49f690b5fc9c0a284bc1ace17ddabb6d7d86ea27af9ffbdb9",
+              "node_count": 9,
+              "edge_count": 13
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/lora/lora_multiple.png",
+          "normalized_sha256": "0082dcd295279362058e6f0362f2ed6797053e62702523f9f9185d6367c4915b",
+          "family_sha256": "34442a7107b25de5af05722b0b3e560f0616af88eec42b49939dbcf066aedf59"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 1,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 1,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [
+            "0082dcd295279362058e6f0362f2ed6797053e62702523f9f9185d6367c4915b"
+          ],
+          "source_family": [
+            "34442a7107b25de5af05722b0b3e560f0616af88eec42b49939dbcf066aedf59"
+          ],
+          "raw_actual": [
+            "204678664ad2aa9776fc0a5ffc9b8b58bcae287ff0b950b919f77d3699885cb3"
+          ],
+          "raw_saved": [
+            "204678664ad2aa9776fc0a5ffc9b8b58bcae287ff0b950b919f77d3699885cb3"
+          ],
+          "api_canonical_v1": [
+            "672e1b26d97e42ee644738d6f4a09cafd4c63d23d6929ff603a592ec359c00fc"
+          ],
+          "ui_canonical_v1": [
+            "675270dc5310d683a818ccd552143be64e72b8aa4f7f7a1d5821c836f8287201"
+          ],
+          "topology_wl32_v1": [
+            "437bd5da85888fd49f690b5fc9c0a284bc1ace17ddabb6d7d86ea27af9ffbdb9"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 9,
+          "lora_node_count": 2,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 9,
+          "lora_node_count": 2,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "api007",
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/lora/lora.png",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 207743,
+      "identity": {
+        "raw_sha256": "2b8520b0a44f60dd427d053f4ff7318a44278f31ecc065a9a3e82d1b9b8fbff1",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "356783abc13810b43a351aa8b7f98deb54c83cadc870368ffddfa3bbb9cf7f77",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "58e55292d249c5dad4e3ecd8b01bd1919779d1690bfc4bc3146a4d0d85b11dfc",
+              "node_count": 8,
+              "edge_count": 11
+            }
+          },
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "859b4766896f6f8e09a179095804446caf2ddb90dbe32c3f349ac043f213aee9",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "58e55292d249c5dad4e3ecd8b01bd1919779d1690bfc4bc3146a4d0d85b11dfc",
+              "node_count": 8,
+              "edge_count": 11
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/lora/lora.png",
+          "normalized_sha256": "4a06b54aefc4972bec174c8388fcd595a0c61c7058653ddb64868b71ec0b2adf",
+          "family_sha256": "69abb62b02a7d0b3c5f2dfe5dd326f5b1408181256165a5b580720547c9071f6"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 1,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 1,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [
+            "4a06b54aefc4972bec174c8388fcd595a0c61c7058653ddb64868b71ec0b2adf"
+          ],
+          "source_family": [
+            "69abb62b02a7d0b3c5f2dfe5dd326f5b1408181256165a5b580720547c9071f6"
+          ],
+          "raw_actual": [
+            "2b8520b0a44f60dd427d053f4ff7318a44278f31ecc065a9a3e82d1b9b8fbff1"
+          ],
+          "raw_saved": [
+            "2b8520b0a44f60dd427d053f4ff7318a44278f31ecc065a9a3e82d1b9b8fbff1"
+          ],
+          "api_canonical_v1": [
+            "356783abc13810b43a351aa8b7f98deb54c83cadc870368ffddfa3bbb9cf7f77"
+          ],
+          "ui_canonical_v1": [
+            "859b4766896f6f8e09a179095804446caf2ddb90dbe32c3f349ac043f213aee9"
+          ],
+          "topology_wl32_v1": [
+            "58e55292d249c5dad4e3ecd8b01bd1919779d1690bfc4bc3146a4d0d85b11dfc"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 8,
+          "lora_node_count": 1,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        },
+        {
+          "node_count": 8,
+          "lora_node_count": 1,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "com-01",
+      "url": "https://raw.githubusercontent.com/pwillia7/Basic_ComfyUI_Workflows/2e2bd91caf47bf3a4fa7cd9862146bb4dee114ee/WorkflowJsons/facedetailer.json",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 16499,
+      "identity": {
+        "raw_sha256": "31182bc02ef70dd75083c6694a2548cfcba75e04d5c53529161d4b404ce18c27",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "26d104c105ff38a2d90d96a6b468365033dabd0230f21146faff87ad9dd1a882",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "65c4a4d2d41d059285a93185b7edcb5881d45bfb79de1c0f8710d15f2d577705",
+              "node_count": 16,
+              "edge_count": 22
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/pwillia7/Basic_ComfyUI_Workflows/2e2bd91caf47bf3a4fa7cd9862146bb4dee114ee/WorkflowJsons/facedetailer.json",
+          "normalized_sha256": "b43800ab2b3ba30d5c317c707810d4999447c18acbcb6a7887dad60a8a6e40ef",
+          "family_sha256": "d82db5583e7138aac668759e937f204f20ae2ba9c78695979a7a394ebe24437c"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 16,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact",
+            "rgthree"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "com-02",
+      "url": "https://raw.githubusercontent.com/camenduru/comfyui-colab/dffe987571e817d1af7293ee29f580cc9753f024/workflow/InstantID_IPAdapter_ControlNet_FaceDetailer.json",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 33893,
+      "identity": {
+        "raw_sha256": "34cd23f0e2e18c80c170304c5d7c90441e27098d4dccf3c83ebc7931b373e798",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "58cbd3d8484b7ed30e459325cd62b55f1d75e7e9fb8ff61c5dc19307185868f8",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "ec05f1f6d920f454b26fd76955b10b601fb746ba5758a067c7b41139afdbc9b1",
+              "node_count": 31,
+              "edge_count": 53
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/camenduru/comfyui-colab/dffe987571e817d1af7293ee29f580cc9753f024/workflow/InstantID_IPAdapter_ControlNet_FaceDetailer.json",
+          "normalized_sha256": "b9a93bae2baee86833591f7cfdb22125f87c8e17ad5d5a051fd6cb0299d1c7d8",
+          "family_sha256": "810cf911630d2f25b915c2fe02b99ebd3638e1aa8f3a313e53d20f65d695d229"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 31,
+          "lora_node_count": 0,
+          "image_loader_count": 3,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "controlnet",
+            "core_or_other",
+            "impact",
+            "ipadapter"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "com-03",
+      "url": "https://raw.githubusercontent.com/highmore9501/stable-diffusion-api-test/b0643251fdce8595d105cf829367bea8749c3638/workspace/img-seg/face-detection.json",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 9781,
+      "identity": {
+        "raw_sha256": "b692a86831e648d5fa0090d444c1107aaa750cde86c7ea0dc60a56df011a75da",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "123a633980463f34ec30155b77916dca624f3be7e41acbb5c38edd0604f4ad3c",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "4c0b2415da78ee08c6ce5992964f832cfcf5d8a78639cd14dc921617137f0698",
+              "node_count": 11,
+              "edge_count": 16
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/highmore9501/stable-diffusion-api-test/b0643251fdce8595d105cf829367bea8749c3638/workspace/img-seg/face-detection.json",
+          "normalized_sha256": "ac4cb4f8ee496f53a86e4a9d1bf3a7b27030aa7a1c744de828b2b5e6d4ede751",
+          "family_sha256": "f267c92b838d9aedbc67f813b14fc55149b971c210d743c0071e30ace35af13c"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 11,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 0,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "com-04",
+      "url": "https://raw.githubusercontent.com/ecjojo/ComfyUI-Templates/ea6c0584d7d5e9fd070c285ca225867fae4cbd40/_Outdated/HDImageGen_with2Lora.json",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 13672,
+      "identity": {
+        "raw_sha256": "28ead222886c62c96f77b2ac70f543408a68a699520e1a7f02b2208004509630",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "2e28997ef73eaf296696a0af1b88d1da7294280e4b94cf99ee626a91b73d08bd",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "4349d7675209722ee73f1985852683b5ee623881d4815c1ff7621fba33ff30db",
+              "node_count": 12,
+              "edge_count": 21
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ecjojo/ComfyUI-Templates/ea6c0584d7d5e9fd070c285ca225867fae4cbd40/_Outdated/HDImageGen_with2Lora.json",
+          "normalized_sha256": "8a6e48ac66db20eb845dfff9ae243713d1eeb78337b4d1bb6b8655ebf2d7e6e8",
+          "family_sha256": "c8e14bb6c5058939e943bd2045b1aa8f81f1b8996e4d73c3688f212cdf275466"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 12,
+          "lora_node_count": 2,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "com-05",
+      "url": "https://raw.githubusercontent.com/tutu329/life-agent/f68218fdd179dcfcb025b31d2e99d17940f12d3f/tools/t2i/%23beauty.json",
+      "selected": false,
+      "disposition": "failed_acquisition",
+      "byte_count": null,
+      "identity": null,
+      "shapes": [],
+      "error_type": "HTTPError",
+      "http_status": 404
+    },
+    {
+      "id": "com-06",
+      "url": "https://raw.githubusercontent.com/diegomartinez2/DMG/5dee9e5cab96da90e97e818fa5d5bfc2edc8c716/Transformers/ComfyUI/mini-full-workflow.json",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 16221,
+      "identity": {
+        "raw_sha256": "540425989c16d109b3f32096392377bd7c3ba6abc72622e865667c468078f36f",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "6bb744172d57c6c5e58dbfcda02f37bee79445115e2b3b204e06ffe5bb879f20",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "b8292263bb80ed06196c8a32d0ef5fe5f31a1040b9f2432e1f45fef1c3a96acf",
+              "node_count": 15,
+              "edge_count": 26
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/diegomartinez2/DMG/5dee9e5cab96da90e97e818fa5d5bfc2edc8c716/Transformers/ComfyUI/mini-full-workflow.json",
+          "normalized_sha256": "fc7d8dbdc68ff7519d53bd5e55abbbc7cf564780077723b075a0e2f9d27177e1",
+          "family_sha256": "3a59c916d958832dd99718bfa5b3753e4f59dab52dc30f99c329870a6e6daccb"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 15,
+          "lora_node_count": 1,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "controlnet",
+            "core_or_other",
+            "efficiency",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "com-07",
+      "url": "https://raw.githubusercontent.com/Futino/aitino/c71da8fc2ac721184f09efdf64842be69940d8e5/apps/web/static/comfyworkflows_watercolor_deer.json",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 16510,
+      "identity": {
+        "raw_sha256": "f9e4caa6de5645cbd1452364a132b964b7a03a0929b5690d40431c39d672a412",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "a7af377a681d8d415eb4005dc34081d23b764210c7f973327a8b484ca65940c6",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "9aa4a6adf128dd66db114d0903283f80183199cafedf8f25bfe9923f5ea5245a",
+              "node_count": 18,
+              "edge_count": 31
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/Futino/aitino/c71da8fc2ac721184f09efdf64842be69940d8e5/apps/web/static/comfyworkflows_watercolor_deer.json",
+          "normalized_sha256": "1cadb74e9c31796fe30c2ce458dfa74ca3abd0d8f13af6fbdd70afa0223b676a",
+          "family_sha256": "64754989656fb039cbcb5790b4f8c66cbd0a461733992362d6edd8d1684e91f0"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 18,
+          "lora_node_count": 1,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "com-08",
+      "url": "https://raw.githubusercontent.com/SciensOne/comfyui-workflow-generator/main/workflows/img-sdxl-illustrious.json",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 102731,
+      "identity": {
+        "raw_sha256": "bd81fe512ed5bcacd19f8306de0cff1ddf32478622bb3139d6e69b3fa0ebb8a7",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "3fd212ad3399338bc4a255016e0a7185d1cb6899e824a75432f5315c807e1dc4",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "b46a3f54c987b7c7d5007df068c350dd353b1b55e9ca5c141fa87641684a01db",
+              "node_count": 68,
+              "edge_count": 195
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/SciensOne/comfyui-workflow-generator/main/workflows/img-sdxl-illustrious.json",
+          "normalized_sha256": "56e6b7ab2fbe1137ea1af6be99b04dbcdd9bf9dc550bb945be3089eef5c0e6cc",
+          "family_sha256": "12b41b382769e694a31c204bc93ab64cd691b2d2de14bbc04bd041e403742789"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 68,
+          "lora_node_count": 1,
+          "image_loader_count": 1,
+          "sampler_node_count": 5,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "com-09",
+      "url": "https://huggingface.co/kirusanth08/art-lora-flux1-dev/resolve/main/workflow.json",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 7335,
+      "identity": {
+        "raw_sha256": "c949180332018c0b93773fb9b83713d592f60d505ce8cb915d85ceeea3e70155",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "06cd400adbc311ba2319203fc7638cd6f95be2686ad1b858c68d76f5e8792b84",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "bd395ea18e4d65feff5c08b8aead0692653a85f8777a339af3845a033d959c9a",
+              "node_count": 11,
+              "edge_count": 11
+            }
+          }
+        ],
+        "source": {
+          "url": "https://huggingface.co/kirusanth08/art-lora-flux1-dev/resolve/main/workflow.json",
+          "normalized_sha256": "c9d20a30f9bc89f70a1dc7b4273bf67c856b9e23d38f01de34cb09de79d97e87",
+          "family_sha256": "6663fc0846c4f02d0bd7e44631e7e0fee1ff80f244e48084348a2fb8c8398faf"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [
+            "bd395ea18e4d65feff5c08b8aead0692653a85f8777a339af3845a033d959c9a"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 11,
+          "lora_node_count": 1,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "final-01",
+      "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w1-pose-edit/workflow_api.json",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 4747,
+      "identity": {
+        "raw_sha256": "34b5ef417ae88213b0f5c0e2d3bcbbe4f6bcdcf770c9d476a850ac5bc821d075",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "859dc73edf18a89636c16e465716fc2370f52cf1b72391fd6ad47199238bb540",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "85d2650c9ac24282ee79104c39df91e2a391519882830fc4cc223b1d28fd818f",
+              "node_count": 20,
+              "edge_count": 30
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w1-pose-edit/workflow_api.json",
+          "normalized_sha256": "99ad0da3d91b8e8356d307ad90f373b0c2ce3b87335cb279ea8d643931208bee",
+          "family_sha256": "95e2366f9e7abddd9b73aa56615121e2fbcee6d889c5bc727f8753f0b8c67e5d"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 20,
+          "lora_node_count": 1,
+          "image_loader_count": 2,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "controlnet",
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-02",
+      "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w3-spritesheet/workflow_api.json",
+      "selected": false,
+      "disposition": "modality_excluded",
+      "byte_count": 2273,
+      "identity": {
+        "raw_sha256": "9b6522aba66206dc88fa0f08c3eae2f5066d318a57710f1ac89cc0c15657af2b",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "7288ac437a6aa4c27f997c104164f68f91985085013fbe0b6ef0ac5f68028c7c",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "c486d875179865883cada15aafe2cf5dac3d794d8aaefca723c42f5e237f6b89",
+              "node_count": 13,
+              "edge_count": 13
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w3-spritesheet/workflow_api.json",
+          "normalized_sha256": "fc6026de17802b8c43a130d0dd7b63b2e3c96d9419818017ae14d8542f897f62",
+          "family_sha256": "298376ac35fb2e389410822782bb947b2bbc1222aabb3e36c14bbb3fff37eed2"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 13,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 0,
+          "excluded_modality": true,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-03",
+      "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w4-cosmetic-inpaint/pass1_rough_api.json",
+      "selected": false,
+      "disposition": "modality_excluded",
+      "byte_count": 5096,
+      "identity": {
+        "raw_sha256": "047005af9a97718eefd6e6ed72557e473f29274aedcc82d060535a08b9b549bc",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "c976b248c7024fdfbaf8ea15f19cf153cfe88a464c409d2a7eafe3de3a8c24d1",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "90ab1576ea0f3bf605ed65c4a62e2de392f115d5c356e21c0666e8aa61953f8f",
+              "node_count": 26,
+              "edge_count": 39
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w4-cosmetic-inpaint/pass1_rough_api.json",
+          "normalized_sha256": "490ecc11fccb43162fc01eb84884bbf97b4dd889131ab26b5c4058ab156c6815",
+          "family_sha256": "87c5a97e7c192d67c0f6aae5e7960a3ea7e347c706825eb1df02098988c8a5f3"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 26,
+          "lora_node_count": 1,
+          "image_loader_count": 1,
+          "sampler_node_count": 2,
+          "excluded_modality": true,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-04",
+      "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w4-cosmetic-inpaint/pass2_clean_api.json",
+      "selected": false,
+      "disposition": "modality_excluded",
+      "byte_count": 5094,
+      "identity": {
+        "raw_sha256": "771b50eb697e7fcd4bbc05b01a6a0f6e7b81de8f33f6ede695adcc2a60cc4135",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "5997cb58edeb505d89ab88a619329dd73f8c6f5b0ea17d4a000067372f09a919",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "725ee02664d42d62eb0ac7aff1c3640b1c219ffc658d1dc398ec88d6efa7a8d9",
+              "node_count": 28,
+              "edge_count": 37
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w4-cosmetic-inpaint/pass2_clean_api.json",
+          "normalized_sha256": "b3b53c183fbb60eef581fc88267e25beed7a0e517e12b3d5a2805df0439a0067",
+          "family_sha256": "8b901a06b6de308535bf0ef302a401782e82d2871c0a41fdf4b6308f3c4f2d21"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 28,
+          "lora_node_count": 1,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": true,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-05",
+      "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w5-cosmetic-spritesheet/workflow_api.json",
+      "selected": false,
+      "disposition": "modality_excluded",
+      "byte_count": 2730,
+      "identity": {
+        "raw_sha256": "16f75351fa5430dcf3dd062fd4b9989268fe28e69e529993382f9f63d27c1070",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "9878cb07308e1d8b7ba9d53e5d13531d359174b6df37ac43ee782f148be30522",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "f1a2e5368cee40cef1f2d33f38118238ac8df2306f120cdeae74e82cf497df5a",
+              "node_count": 14,
+              "edge_count": 14
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/mor-o/comfyui-2d-character-pipeline/main/workflows/w5-cosmetic-spritesheet/workflow_api.json",
+          "normalized_sha256": "a97907e590967d336f30f170a8c50e97a780b6fd4ca38a0ca036c2cf233eab7c",
+          "family_sha256": "b6277559c7c20cac6786fa1639b16f348b6158871df7479c3c6fa5e02ad15fa5"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 14,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 0,
+          "excluded_modality": true,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-06",
+      "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/sdxl/img2img.json",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 2781,
+      "identity": {
+        "raw_sha256": "6dd77b121a39f3522cd787426366a1076a39a38cb706c07185441e65b1b9bfad",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "6ff4537d3a3610b072caaadd481a6b83d77aff3f9a26ccbc7d341b8713ec75e3",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "c15cc86c83dee73c76e0a67991bf15da8db29f23e2001fd802a007d0b953ea91",
+              "node_count": 9,
+              "edge_count": 12
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/sdxl/img2img.json",
+          "normalized_sha256": "e668e0f47e400cee7bd62e6315d1521eacf81affb54f094033614d3e5f499eb0",
+          "family_sha256": "27d2a268c4d5d2ff2c9a2f89481d672f2f5fbd5d47dbc7c969ef2dc19e694fa7"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 1,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [
+            "27d2a268c4d5d2ff2c9a2f89481d672f2f5fbd5d47dbc7c969ef2dc19e694fa7"
+          ],
+          "raw_actual": [
+            "6dd77b121a39f3522cd787426366a1076a39a38cb706c07185441e65b1b9bfad"
+          ],
+          "raw_saved": [
+            "6dd77b121a39f3522cd787426366a1076a39a38cb706c07185441e65b1b9bfad"
+          ],
+          "api_canonical_v1": [
+            "6ff4537d3a3610b072caaadd481a6b83d77aff3f9a26ccbc7d341b8713ec75e3"
+          ],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [
+            "c15cc86c83dee73c76e0a67991bf15da8db29f23e2001fd802a007d0b953ea91"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [
+            "6ff4537d3a3610b072caaadd481a6b83d77aff3f9a26ccbc7d341b8713ec75e3"
+          ],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 9,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-07",
+      "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/sdxl/txt2img-with-refiner.json",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 3206,
+      "identity": {
+        "raw_sha256": "0c4c34b4606cc17f23ec06a63c303dc34bdd6cfa186fdd1130926bb8182e5920",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "8f5b3b4bc334653871af344938385da5b2087f763578ce67180e9d4e8e1a71f7",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "340db691fd8c72692b2a807964ff370ee4e82353aa844c4df2d6770e4821f350",
+              "node_count": 11,
+              "edge_count": 15
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/sdxl/txt2img-with-refiner.json",
+          "normalized_sha256": "efb52df6db471fe13ab038b3070f69cb4da5b98afc5ca255076cbc826e287fab",
+          "family_sha256": "c478e88bc167a3266e6d5caff628e80d1af4aaf0ab7184bb1936594df419f664"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 1,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [
+            "c478e88bc167a3266e6d5caff628e80d1af4aaf0ab7184bb1936594df419f664"
+          ],
+          "raw_actual": [
+            "0c4c34b4606cc17f23ec06a63c303dc34bdd6cfa186fdd1130926bb8182e5920"
+          ],
+          "raw_saved": [
+            "0c4c34b4606cc17f23ec06a63c303dc34bdd6cfa186fdd1130926bb8182e5920"
+          ],
+          "api_canonical_v1": [
+            "8f5b3b4bc334653871af344938385da5b2087f763578ce67180e9d4e8e1a71f7"
+          ],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [
+            "340db691fd8c72692b2a807964ff370ee4e82353aa844c4df2d6770e4821f350"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [
+            "8f5b3b4bc334653871af344938385da5b2087f763578ce67180e9d4e8e1a71f7"
+          ],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 11,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 2,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-08",
+      "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/sdxl/txt2img.json",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 1755,
+      "identity": {
+        "raw_sha256": "c09be4667ced7ba3fd51530832b326514c98f9fb56c681d7fae3861e7ccc4ec8",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "ff7b82ed50d8fa390b06c4504d4846ac3b14d85531d10f40aa273bfef6f717b7",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "b5172b467e2c7b979dc538934d090b4b0783d427779ac17340f178c78bc62867",
+              "node_count": 7,
+              "edge_count": 9
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/sdxl/txt2img.json",
+          "normalized_sha256": "25cd609dcd4661ad8e7e0c48d916fb23698380a2814af1b7daf0745db553c3a5",
+          "family_sha256": "57004249e07bde9b2fa38aa89da276fa44c341e2e0af1a83c224dbedbf63f80c"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [
+            "57004249e07bde9b2fa38aa89da276fa44c341e2e0af1a83c224dbedbf63f80c"
+          ],
+          "raw_actual": [
+            "c09be4667ced7ba3fd51530832b326514c98f9fb56c681d7fae3861e7ccc4ec8"
+          ],
+          "raw_saved": [
+            "c09be4667ced7ba3fd51530832b326514c98f9fb56c681d7fae3861e7ccc4ec8"
+          ],
+          "api_canonical_v1": [
+            "ff7b82ed50d8fa390b06c4504d4846ac3b14d85531d10f40aa273bfef6f717b7"
+          ],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [
+            "b5172b467e2c7b979dc538934d090b4b0783d427779ac17340f178c78bc62867"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 7,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-09",
+      "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/flux/img2img.json",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 2505,
+      "identity": {
+        "raw_sha256": "49d7a0b9dbcb55ba763afe5b827bd8a23f19a5b9a8d01857affee304ae385c88",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "0505e5969df5e26b0d90ceba0024a6bf8a7c8852d8e597b9fec4aa72ea3de4cc",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "eee67ed29aa252510d46ae8f8f0eb94952f372a7d591ee6160f4ca01ddbee15a",
+              "node_count": 10,
+              "edge_count": 12
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/flux/img2img.json",
+          "normalized_sha256": "1093e99cff7a37465d31b4f96d9d11e6bcc76734a8eecc648385ab1f1349bf96",
+          "family_sha256": "dff72849e708d71a42b18426dde524fd3cc4e4245f85e2cdf00c8d6b1fee0294"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 1,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [
+            "dff72849e708d71a42b18426dde524fd3cc4e4245f85e2cdf00c8d6b1fee0294"
+          ],
+          "raw_actual": [
+            "49d7a0b9dbcb55ba763afe5b827bd8a23f19a5b9a8d01857affee304ae385c88"
+          ],
+          "raw_saved": [
+            "49d7a0b9dbcb55ba763afe5b827bd8a23f19a5b9a8d01857affee304ae385c88"
+          ],
+          "api_canonical_v1": [
+            "0505e5969df5e26b0d90ceba0024a6bf8a7c8852d8e597b9fec4aa72ea3de4cc"
+          ],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [
+            "eee67ed29aa252510d46ae8f8f0eb94952f372a7d591ee6160f4ca01ddbee15a"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [
+            "0505e5969df5e26b0d90ceba0024a6bf8a7c8852d8e597b9fec4aa72ea3de4cc"
+          ],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 10,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-10",
+      "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/flux/txt2img.json",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 1949,
+      "identity": {
+        "raw_sha256": "a35206360edfe48357c711bef7df9809d6c554bb6f2028cdea6547c28a19170e",
+        "graphs": [
+          {
+            "representation": "api",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "04845126ce785522700887702b12b60d7ad222dd644fcdce00e40df05417f195",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "f71522fbedca96aa0fb01b45ad63f2561e7b3e16af616e4f005c55e981687340",
+              "node_count": 7,
+              "edge_count": 9
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/main/example-workflows/flux/txt2img.json",
+          "normalized_sha256": "32bf8fe36d6a507e3460e88d6d030c38d0f7f7b133a51ccf4583089798ae1bd8",
+          "family_sha256": "3e659a10a47322ef14eacb94b3b08522f88466a349b81333c2119a9531d1a760"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 1,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [
+            "3e659a10a47322ef14eacb94b3b08522f88466a349b81333c2119a9531d1a760"
+          ],
+          "raw_actual": [
+            "a35206360edfe48357c711bef7df9809d6c554bb6f2028cdea6547c28a19170e"
+          ],
+          "raw_saved": [
+            "a35206360edfe48357c711bef7df9809d6c554bb6f2028cdea6547c28a19170e"
+          ],
+          "api_canonical_v1": [
+            "04845126ce785522700887702b12b60d7ad222dd644fcdce00e40df05417f195"
+          ],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [
+            "f71522fbedca96aa0fb01b45ad63f2561e7b3e16af616e4f005c55e981687340"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 7,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "api"
+        }
+      ]
+    },
+    {
+      "id": "final-11",
+      "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/discomfort_test1.json",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 8994,
+      "identity": {
+        "raw_sha256": "fcac097e45892fc1d7450435e0d4ac56df9e38d7da32d3665cd6544b156a1d48",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "355a44bb0547c51b9a2b757766fe8d1dc555ec3734adf2326fc49559334681a4",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "2adbdbc52f8ff891f82351745517db70b996cfbbfc2cbbc20457fb971e759224",
+              "node_count": 10,
+              "edge_count": 12
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/discomfort_test1.json",
+          "normalized_sha256": "0546c7b0af933ebf49db154ccde115d712bd40bdb8f9fc499aab4e39e84ceaae",
+          "family_sha256": "cb5cc8d13b472ccf051bc35ca60a47ed2babed4821890a8dbfe3de95de2a65b5"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 10,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "final-12",
+      "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/discomfort_test2.json",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 9975,
+      "identity": {
+        "raw_sha256": "0b5c10ee14618d642459d96d5a661edfb6d83e9f429956d0d67116187083396d",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "245a8be5d53ee8776f0c69dbc2a0c32a3a1d4bc898625c591737513d50900937",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "9d39329f161848ee2f4012169fab736aafdb22cf1714955c72db0155d2a2fe55",
+              "node_count": 11,
+              "edge_count": 14
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/discomfort_test2.json",
+          "normalized_sha256": "b469b8a0967bc394a3acc970066e994f77dc683ababb727c30e68c176f8d387e",
+          "family_sha256": "e35524059c7f716da7a23d6ea6811095df8bfecae95a4f22bff4debdb4b4fb86"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 11,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "final-13",
+      "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/latent_1024x1024_empty.json",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 1719,
+      "identity": {
+        "raw_sha256": "6b3d12a9dd1fff9191f37a4ba54a4f8c0645a820d56eddf812b80d20a1778998",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "a2f0673e1fbd149d83a3aa051f56ac56ba3748f783593a6395ba939264511a2a",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "27754334e05e8aeaf5a3835891ff6d568b46dc9e7e9589fe0485e423de836513",
+              "node_count": 2,
+              "edge_count": 1
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/latent_1024x1024_empty.json",
+          "normalized_sha256": "6ab2a98fbdef6406cce5574bcd9835046a0375b28298978ad6b4cd600c1ff3c0",
+          "family_sha256": "991e9021a277898dfc94a8d838837bbdeb19d186d2c25146606072695402fe58"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 2,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 0,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "final-14",
+      "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/latent_from_input_image.json",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 4161,
+      "identity": {
+        "raw_sha256": "f766b4ca21e8ceae19ab1b2f5a9d109cd0a51cea823c6284c5ff770ed6624ac6",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "289cb70838395fdf86d24db52873f2781b35e32a19632ea8f865f08f6986840a",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "4fba24a0b5b93d5f683fe57c851ad54bfe32119c6a687fe16574a416ff3a78ac",
+              "node_count": 5,
+              "edge_count": 4
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/latent_from_input_image.json",
+          "normalized_sha256": "921e6d950db38372e7d3939fbd4e728d3961f65754c5c27d69631016fc4e41b4",
+          "family_sha256": "8d846e3240340dd16c4351e16bf5b78dbcbdb08ab5c882388c9deb6a23c37b3c"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 5,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 0,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "final-15",
+      "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/sdxl_load_model_and_lora.json",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 7871,
+      "identity": {
+        "raw_sha256": "9e7747d046e37282609fc56e70e1bd2335bd6dfa4ecc1231d94c948ea3823857",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "973fd2d7e83462c1a7b9c115f182cb6e022bf1282436713915b819d7e051ee60",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "5abbdc5b2657780e48cc3a7bf70cd0e5e9c5f82e3413b8c24aba5a5279182a01",
+              "node_count": 8,
+              "edge_count": 9
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/sdxl_load_model_and_lora.json",
+          "normalized_sha256": "ba6e8b81e64149ad9e5abb68c6a69fed3ede42f1725c82ddcfe51fb35f05908a",
+          "family_sha256": "09c111828e714dfc211d38e9423b13a8bfe97acc0e240b00f0c1f03684298bc2"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 8,
+          "lora_node_count": 1,
+          "image_loader_count": 0,
+          "sampler_node_count": 0,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "last-01",
+      "url": "https://raw.githubusercontent.com/PanicTitan/ComfyUI-Fooocus-V2-Expansion/main/Fooocus-ComfyUI.json",
+      "selected": false,
+      "disposition": "seen_identity_match",
+      "byte_count": 33518,
+      "identity": {
+        "raw_sha256": "6195cd7336188cb870114ad33cfb02ee2956106b1440c48243e8c0c9312a1ac7",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "bf90c3fc9be15536e88444e3affc51a94e5702bd3b0f20008c96437aa0c0d875",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "00d87aad083db31bd25be0ad98918d0e2e4ef429d9aaef31162d837ed5d6e68f",
+              "node_count": 21,
+              "edge_count": 22
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/PanicTitan/ComfyUI-Fooocus-V2-Expansion/main/Fooocus-ComfyUI.json",
+          "normalized_sha256": "43080cec04352039d1b328b80effe9e7c8f60b0e6e6fad8cfd68fced208b4830",
+          "family_sha256": "2b742733c195086989cba890b19a8e2a88a6437175f3b1aafb7d838323e37dd8"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 1,
+          "source_family": 1,
+          "raw_actual": 1,
+          "raw_saved": 1,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 1,
+          "topology_wl32_v1": 1,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": false,
+        "file_type": "json",
+        "layer_hit_identities": {
+          "source_normalized": [
+            "43080cec04352039d1b328b80effe9e7c8f60b0e6e6fad8cfd68fced208b4830"
+          ],
+          "source_family": [
+            "2b742733c195086989cba890b19a8e2a88a6437175f3b1aafb7d838323e37dd8"
+          ],
+          "raw_actual": [
+            "6195cd7336188cb870114ad33cfb02ee2956106b1440c48243e8c0c9312a1ac7"
+          ],
+          "raw_saved": [
+            "6195cd7336188cb870114ad33cfb02ee2956106b1440c48243e8c0c9312a1ac7"
+          ],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [
+            "bf90c3fc9be15536e88444e3affc51a94e5702bd3b0f20008c96437aa0c0d875"
+          ],
+          "topology_wl32_v1": [
+            "00d87aad083db31bd25be0ad98918d0e2e4ef429d9aaef31162d837ed5d6e68f"
+          ],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 21,
+          "lora_node_count": 1,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "easy"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "last-02",
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/TwoAdvancedSamplers-workflow.png",
+      "selected": false,
+      "disposition": "no_graph",
+      "byte_count": 99667,
+      "identity": {
+        "raw_sha256": "43c72e63bb585548b3dd484ac2cfa92db122290e6f24e2f75607bcd43abdf9f1",
+        "graphs": [],
+        "source": {
+          "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/TwoAdvancedSamplers-workflow.png",
+          "normalized_sha256": "4685a21da65593dd52061edf025d06a0eb8bdd4e12a7063b69f421424bd34690",
+          "family_sha256": "dc686a3a5c0947c8838a2de86f67c2155e0d3f8b7b967d9fb00e0695cfa5c4d2"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": []
+    },
+    {
+      "id": "last-03",
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/TwoAdvancedSamplers-original.png",
+      "selected": true,
+      "disposition": "selected",
+      "byte_count": 1229943,
+      "identity": {
+        "raw_sha256": "cddffce83617affa29d2921c811b97a0c5594a3588267bebd09f71668cf0ba02",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "f4201f31bf08b0a80b626b2886dd1b3be263b848550f29aacb48521e4757c4c1",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "86708d65e619ce26a94758aef619ab141bfde69760aa1c535fe5c3b7f09177f7",
+              "node_count": 29,
+              "edge_count": 46
+            }
+          }
+        ],
+        "source": {
+          "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/TwoAdvancedSamplers-original.png",
+          "normalized_sha256": "540f4aa6388f96777b72f16787182ce56ec0cb58a1b6c7caadfa9527473390fb",
+          "family_sha256": "1d7509aad86de00e02855d28f4bf1ebdc8cdf5efa3e0bb6d5a4eea7c598f814f"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 29,
+          "lora_node_count": 1,
+          "image_loader_count": 0,
+          "sampler_node_count": 7,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "last-04",
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/TwoAdvancedSamplers-result.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 1207649,
+      "identity": {
+        "raw_sha256": "5fd2acb9186ce1d6534f9091e194e89a14fe7e04381cc4b20698863ebb6ad402",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "7b8d3ce9e7475afd3dfa57004dd4406c2c9d41df60cd302e4f3d664083e3362b",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "931f6e390ec451a3310bce967a8a7702a2e99be1d10ee309cf131c7386117c41",
+              "node_count": 28,
+              "edge_count": 45
+            }
+          }
+        ],
+        "source": {
+          "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/TwoAdvancedSamplers-result.png",
+          "normalized_sha256": "e9d120ded38aa4a6f354c274018afba6cf7ad1652fef01fc69950f6b76f99a09",
+          "family_sha256": "7bbf556abf09d8218ffb02b5d9de815477ef4080fc9472b027c86074883f6b0c"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 28,
+          "lora_node_count": 1,
+          "image_loader_count": 0,
+          "sampler_node_count": 7,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "last-05",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/pk_hook.png",
+      "selected": false,
+      "disposition": "failed_acquisition",
+      "byte_count": null,
+      "identity": null,
+      "shapes": [],
+      "error_type": "ValueError",
+      "http_status": null
+    },
+    {
+      "id": "last-06",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/detailer-hook.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 5530618,
+      "identity": {
+        "raw_sha256": "40e10ea74169253bc61ee54faeec056247f419118658139cf1ffa0b22c35ee84",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "d340270265895b9c39e4ea85f91d66a020e143eec47a244a6859b44765a1b9e3",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "9544653caa41782c6ef672942f4099ccc1030a1231a6f2c5b54ddd8988ad7ebd",
+              "node_count": 26,
+              "edge_count": 15
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/detailer-hook.png",
+          "normalized_sha256": "5fa4ffc2b4a22d6e6bf40b9751868011c028a549b7f61c1464c1f0fed8587f94",
+          "family_sha256": "687a7d4e6d91c1172d325fe3ff0013d70f704fd7ea640658a269a58d5a42ccd2"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 26,
+          "lora_node_count": 0,
+          "image_loader_count": 1,
+          "sampler_node_count": 1,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "last-07",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/meshgraphomer_dwpose_tile-segs-handfix.png",
+      "selected": false,
+      "disposition": "modality_excluded",
+      "byte_count": 3852465,
+      "identity": {
+        "raw_sha256": "561d7e1c6a543336f0f2a127f45b5e8dadf3f59ab5fee4de473fb400521dcf6f",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "8ee85527b0ee596cc907c2038721d635cc15150472936259fb32868a7edb516e",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "fc764e675af005f96d66349ff8be69e27dfe77deb20e7c4fac024f07b92941bf",
+              "node_count": 29,
+              "edge_count": 32
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/meshgraphomer_dwpose_tile-segs-handfix.png",
+          "normalized_sha256": "3bfb529c5f89a25b0d930ebb666e537e40196e9fb69b9f0824c309dfad182992",
+          "family_sha256": "aaa002d1534850e1b855e81444c2a4cf8478da52819d05e3ef78a94d3acd6540"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 29,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 1,
+          "excluded_modality": true,
+          "class_families": [
+            "controlnet",
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    },
+    {
+      "id": "last-08",
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/detailer-with-detail-daemon.png",
+      "selected": false,
+      "disposition": "coverage_not_selected",
+      "byte_count": 1897341,
+      "identity": {
+        "raw_sha256": "d4e8b33fe6f89b24c369f3aae276497c7b10d0f5592ec8d93c87a47eba19c534",
+        "graphs": [
+          {
+            "representation": "ui",
+            "canonical_algorithm": "json-sorted-utf8-finite-v1",
+            "canonical_sha256": "7247cea1fe1c64160619e3d425bee7f36e34cf61e47844d70eaa13ff97b7cdf9",
+            "topology": {
+              "algorithm": "directed-port-wl32-v1",
+              "sha256": "71350b90b757b6a5bec03bddeac7f2a7fb212de9774b627815b343567c0d64f4",
+              "node_count": 26,
+              "edge_count": 33
+            }
+          }
+        ],
+        "source": {
+          "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/workflow/detailer-with-detail-daemon.png",
+          "normalized_sha256": "d9d67c2531f18148316e848b89dedb95e03fb547c1f383323461d0f3927c68c7",
+          "family_sha256": "169176c69b5959d7341f176b82e6b347f4ed431779f891cb2e0ee8de4d6082ef"
+        },
+        "layer_hit_counts": {
+          "source_normalized": 0,
+          "source_family": 0,
+          "raw_actual": 0,
+          "raw_saved": 0,
+          "api_canonical_v1": 0,
+          "ui_canonical_v1": 0,
+          "topology_wl32_v1": 0,
+          "legacy_raw_prefix_unverified": 0,
+          "legacy_canonical_unverified": 0,
+          "legacy_topology_unverified": 0,
+          "legacy_canonical_prefix_unverified": 0
+        },
+        "fresh_available_layers": true,
+        "file_type": "png",
+        "layer_hit_identities": {
+          "source_normalized": [],
+          "source_family": [],
+          "raw_actual": [],
+          "raw_saved": [],
+          "api_canonical_v1": [],
+          "ui_canonical_v1": [],
+          "topology_wl32_v1": [],
+          "legacy_raw_prefix_unverified": [],
+          "legacy_canonical_unverified": [],
+          "legacy_topology_unverified": [],
+          "legacy_canonical_prefix_unverified": []
+        }
+      },
+      "shapes": [
+        {
+          "node_count": 26,
+          "lora_node_count": 0,
+          "image_loader_count": 0,
+          "sampler_node_count": 3,
+          "excluded_modality": false,
+          "class_families": [
+            "core_or_other",
+            "impact"
+          ],
+          "representation": "ui"
+        }
+      ]
+    }
+  ],
+  "source_only_candidates": [
+    {
+      "url": "https://github.com/AIGODLIKE/ComfyUI-BlenderAI-node/blob/d3165fee4a1bd24688315f938fcbfd7906a4c4f7/presets/07%E7%AC%AC%E4%B8%89%E6%96%B9%E8%8A%82%E7%82%B9/%E6%96%87%E7%94%9F%E5%9B%BE_%E9%9D%A2%E9%83%A8%E7%BB%86%E5%8C%96.json",
+      "source_normalized_sha256": "d0423baba3a53f2a4ca82a76ad53b286c87ca88ef72190b0cd1d1da2eca9d630",
+      "source_family_sha256": "770f7b1be1ae5e444fd2ff36e10622ecb3a74986441fc1edbb1945cf26f8152b",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/Futino/aitino/blob/c71da8fc2ac721184f09efdf64842be69940d8e5/apps/web/static/comfyworkflows_watercolor_deer.json",
+      "source_normalized_sha256": "07c7b4b759c53a9c8198739dbb12533a4aad5ee0a3a89823031ec22d1075d722",
+      "source_family_sha256": "64754989656fb039cbcb5790b4f8c66cbd0a461733992362d6edd8d1684e91f0",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/PanicTitan/ComfyUI-Fooocus-V2-Expansion/blob/main/Fooocus-ComfyUI.json",
+      "source_normalized_sha256": "2ebb301ad8f8e7aff3e1742ae1424ab668dd0d65082c89fc41a3a101745e9c07",
+      "source_family_sha256": "2b742733c195086989cba890b19a8e2a88a6437175f3b1aafb7d838323e37dd8",
+      "source_normalized_seen": false,
+      "source_family_seen": true,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/SciensOne/comfyui-workflow-generator/blob/main/workflows/img-sdxl-illustrious.json",
+      "source_normalized_sha256": "0c0f9769d575164cbb6ba066ca6a44debe5abbd71e95bfa88449d05546054589",
+      "source_family_sha256": "12b41b382769e694a31c204bc93ab64cd691b2d2de14bbc04bd041e403742789",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/axiomgraph/ComfyUIWorkflow/blob/main/Flux2%20Klein%209b%20Face%20Swap.json",
+      "source_normalized_sha256": "c264c7b7cecd64fbec75670de442473072743394d70ae0316719e30c299fb38d",
+      "source_family_sha256": "21df0182d39c945f454a51269e23cd30756ec7bc70e6e32ed69b96563d975f0d",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/camenduru/comfyui-colab/blob/dffe987571e817d1af7293ee29f580cc9753f024/workflow/InstantID_IPAdapter_ControlNet_FaceDetailer.json",
+      "source_normalized_sha256": "b327693ba25b678079148ba58b0a28cee15eb9630a866701d1d5efdc1c3f2ff0",
+      "source_family_sha256": "810cf911630d2f25b915c2fe02b99ebd3638e1aa8f3a313e53d20f65d695d229",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/diegomartinez2/DMG/blob/5dee9e5cab96da90e97e818fa5d5bfc2edc8c716/Transformers/ComfyUI/Very_simple.json",
+      "source_normalized_sha256": "ff27a47d0826f5c5a31deaf004285017f02679d2939b7b1b08582c508759dbf7",
+      "source_family_sha256": "ed0f511d4dd68e06f58f625c630284343c95495aca76957db7cde31c959d1c5e",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/diegomartinez2/DMG/blob/5dee9e5cab96da90e97e818fa5d5bfc2edc8c716/Transformers/ComfyUI/mini-full-workflow.json",
+      "source_normalized_sha256": "a188c016922834ae88e74a291f8115ce705494772d7495d89c2d4bfc7d76b7a2",
+      "source_family_sha256": "3a59c916d958832dd99718bfa5b3753e4f59dab52dc30f99c329870a6e6daccb",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/diegomartinez2/DMG/blob/5dee9e5cab96da90e97e818fa5d5bfc2edc8c716/Transformers/ComfyUI/trabajo_simple.json",
+      "source_normalized_sha256": "88dd1c4e732952d43f8317ba42b6de1cb77a1b2783991b1226892a093108bb2e",
+      "source_family_sha256": "45fed8c33daff2ca24d50bd077a53f311b497a61dded28c3a1124ec2715ece06",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ecjojo/ComfyUI-Templates/blob/ea6c0584d7d5e9fd070c285ca225867fae4cbd40/_Outdated/HDImageGen_with2Lora.json",
+      "source_normalized_sha256": "ef4ae820e5fc89de001f1ffc474000bf7f7fa99e798c092d53032d36666819fd",
+      "source_family_sha256": "c8e14bb6c5058939e943bd2045b1aa8f81f1b8996e4d73c3688f212cdf275466",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ecjojo/ComfyUI-Templates/blob/ea6c0584d7d5e9fd070c285ca225867fae4cbd40/_Outdated/HDcharacterLora_withop.json",
+      "source_normalized_sha256": "b4c2ced6e2b754cf3d58545216dbba39a6df7058fcb1ea5da91212c80f1ffead",
+      "source_family_sha256": "3cc12f28a5983aed735d32af21b60bc224ea04f87ea6bbb77fc426f138310159",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/highmore9501/stable-diffusion-api-test/blob/b0643251fdce8595d105cf829367bea8749c3638/workspace/img-seg/clothe-detection.json",
+      "source_normalized_sha256": "da4c28fdc9cee3a1046074ad44fcf3729b9781174d2da04010c5b9367532fe9a",
+      "source_family_sha256": "0e1e99804dc76eb72ba53db1905c4868a0e104888b72d7572e4ce02628d289d5",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/highmore9501/stable-diffusion-api-test/blob/b0643251fdce8595d105cf829367bea8749c3638/workspace/img-seg/face-detection.json",
+      "source_normalized_sha256": "c01f579aa2fd76c3dfeaf2b1e60a48ccd80e8db0d59ac7ed2a11f794eef1f76a",
+      "source_family_sha256": "f267c92b838d9aedbc67f813b14fc55149b971c210d743c0071e30ace35af13c",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/highmore9501/stable-diffusion-api-test/blob/b0643251fdce8595d105cf829367bea8749c3638/workspace/img-seg/person-detection.json",
+      "source_normalized_sha256": "523cb648a4c834f9fabe1311f5f0db245d52b2977b3e42dc0095a16ab964f6bb",
+      "source_family_sha256": "085aac856de7e5d85ba6bf38460f985bf76dd41879ec9f62d286809826b64cef",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/hktalent/ComfyUI-workflows/blob/main/ComfyUI%20workflow%20animatediff%2Bipadapter.json",
+      "source_normalized_sha256": "cd610a17c095fde69930fbc7a1686e906e039a3eb90398128a30589781a97578",
+      "source_family_sha256": "3d1b8d8e687278c14dc1ec6dd630b37206caedd433670a66c9cf5811c527f489",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/2pass-1pass.png",
+      "source_normalized_sha256": "1af35f05406a6d7c6191cdaddfb10a8b1d685613a2d0117bf30e7a1d552e651f",
+      "source_family_sha256": "e4be0aba71115f0747581b10c93978f162e53992db554a23e1502f0ac9809257",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/2pass-2pass.png",
+      "source_normalized_sha256": "30b66deed603ff09ca0d54a40ec0d2d72807ce297f2091a055952779882fec68",
+      "source_family_sha256": "e861830f4f4dc44f3d92646fcb74ab1c90be9ddf2c86cc5c707a40dc4ec321d5",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/2pass-original.png",
+      "source_normalized_sha256": "ca6b2128eac22a0f11f46f3bb397a1ba838d509ae3c7c42e7153b83e3d03deb5",
+      "source_family_sha256": "351a54e117a1628f72465226344f9f5bc6b04904111312c394f1df57f250963d",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/2pass-simple.png",
+      "source_normalized_sha256": "2597b5f8256167b1cc6980407a600ae293e45a74103ef1497afb86fdd71446e3",
+      "source_family_sha256": "a62f270e7db7606c5d429e5b4f449363bf0741ccccfa02db69b78e5f31fd3dfa",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/SAMDetector-menu.png",
+      "source_normalized_sha256": "7d6b7a1fee086517a29109dbc0ff53744a2401aff40c2bf5192c2ab4e1cd614a",
+      "source_family_sha256": "c670285bd21b0734313d9661efca95c5d2fb3514e11db1610392c8fabe8975a6",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/combination-original.png",
+      "source_normalized_sha256": "329075829421a05277502162d64b8f4fa78857aba4a7bd97a3140abce54057d3",
+      "source_family_sha256": "2459c35a2a2dcf8ddf4fc116a1a76820fe90f2c42e5168b3f13a430fc6163b4e",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/combination-refined.png",
+      "source_normalized_sha256": "2e999851f7a679e0c61050a53452f7edc179a0eb2cc86c9a82921a2a659f264e",
+      "source_family_sha256": "b6ac1ee904fd4d8200640f5f6b8751e08d373312ce0de96751bc4c27a8804859",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/simple-original.png",
+      "source_normalized_sha256": "fd2ac65148749b61a47c67719cb45ce8f907aeacd4a986978edcb18fe019ce45",
+      "source_family_sha256": "c3a369d288e6d1bcb4e259909d478a1c02726db8a54e9611e05eebb7be194766",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/simple-refined.png",
+      "source_normalized_sha256": "104a290bd31767dea88ca09fae8fab856080a898077de3317b4ba05c58a2da1d",
+      "source_family_sha256": "ae60527bd06f86f23290cb1a15bc9f7260755408299f5648a83188b6b8a0da34",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/simple.png",
+      "source_normalized_sha256": "d7611658b0757ee0b8670d89811d3ddc169c3ee154ace9f13627330402710d45",
+      "source_family_sha256": "877a7c417e5e93576615e40971f20c9b7bfaa95da80b875bf021c29b28d32e3a",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/upscale-3x.png",
+      "source_normalized_sha256": "3b2563d09e693e6c9a1d4f47ef564ed871b90b66d0e72180fbc84a83c24feb01",
+      "source_family_sha256": "59bfe0844cf255b94650b268dbad4ddd9acd6acf285969349722c3669e2ca091",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/upscale-original.png",
+      "source_normalized_sha256": "71c719a7e16b07d75877a2eae53835ab1325d5ef94b901a997220429fa65c22f",
+      "source_family_sha256": "dd00cb6877166607996da7d741e98c00a9e1a36a3b6554fed4a2459b62fda86d",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ltdrdata/ComfyUI-extension-tutorials/raw/Main/ComfyUI-Impact-Pack/images/upscale-workflow.png",
+      "source_normalized_sha256": "f18baf875f6d0f0f9f4e2af8a3b5dc67c7fdec04b35dce2bd463755973b30198",
+      "source_family_sha256": "1cf94c4d0adfdadf30f0a4c4c5b50d7283e3f88534efb3ddc4514703c1178231",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/mor-o/comfyui-2d-character-pipeline/blob/main/workflows/w2-video-gen/workflow_api.json",
+      "source_normalized_sha256": "b431c9ad37126338b0c63cc3fd75f318a2c4502efa6139888453d5e620a36947",
+      "source_family_sha256": "aa3b1e7c6d0d869878c165e2e8b21ccb27132d7ea8222bb1f900026a6443f22d",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ninjaneural/webui/blob/9cb7a380ee71ef15826aa031eafebc64e46e4f4f/memo/comfyui_anidiff_lora/workflow4.json",
+      "source_normalized_sha256": "aeef96d9d23eeaf47604c137f08f8af18120e4471c2cb11e0c3d6c911ffe42cc",
+      "source_family_sha256": "ddf0a878427cdea05a436bcf6abf7848ef0e1866c43a067742cc220bae34c296",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/pwillia7/Basic_ComfyUI_Workflows/blob/2e2bd91caf47bf3a4fa7cd9862146bb4dee114ee/WorkflowJsons/facedetailer.json",
+      "source_normalized_sha256": "d2e558d71dea549b86b75e8d7f91b3c46e5bcf143c4e2c2877135df3675094cd",
+      "source_family_sha256": "d82db5583e7138aac668759e937f204f20ae2ba9c78695979a7a394ebe24437c",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/tutu329/life-agent/blob/f68218fdd179dcfcb025b31d2e99d17940f12d3f/tools/t2i/%23beauty.json",
+      "source_normalized_sha256": "92c46c71f5c6c17f0a7796f533033e2e5ef1a17b035c4db2ec2992e7cf347fc7",
+      "source_family_sha256": "c94ababbbde848e7d8e80a6e66530b110eae03519dc007f8a4e1fcbb2c19602c",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://github.com/ydsgangge-ux/yount-AI/blob/main/workflow_api.json",
+      "source_normalized_sha256": "dbf4a91ed0d747c99750070ff5bbedbea89680e4ab606bb6588280cb9bcdc36e",
+      "source_family_sha256": "9cad01464cd8b196447028b7f58cef8433c4b46c4e33b9a76828f90cf4cb1238",
+      "source_normalized_seen": false,
+      "source_family_seen": true,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://huggingface.co/minhnhatdo/colab-notebook/blob/e84e4a1ce5eaf6df372f4fb928c67eb484edc511/workflow/workflow_api.json",
+      "source_normalized_sha256": "bb2000806d3f959fb0ce9f6d62cec632bc44cdf818710f94ce9c5269d64ef90c",
+      "source_family_sha256": "edab2f61968fe2a0ab8729aba268bbf4377b924d324afc080b5babc62c4d0239",
+      "source_normalized_seen": false,
+      "source_family_seen": true,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://huggingface.co/minhnhatdo/colab-notebook/blob/ee749d145346cd4221107a1d22f5527e40f0f024/workflow/workflow_api.json",
+      "source_normalized_sha256": "2ace3dd2b1894fe8d36778f462784f632ef1c197e2627f538467f6db32af3e68",
+      "source_family_sha256": "edab2f61968fe2a0ab8729aba268bbf4377b924d324afc080b5babc62c4d0239",
+      "source_normalized_seen": false,
+      "source_family_seen": true,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://huggingface.co/zjwfufu/SMD-MiniMax-H3-Ref2VA-4step-ComfyUI/blob/main/workflow_api.json",
+      "source_normalized_sha256": "05ec5205f17c63fef052179bd916e067c48be6738460108833526fc8ae1f729c",
+      "source_family_sha256": "d1cca955c3188be77e256b52dfca56ddf7c696b18599b297ce08ff9958bab48b",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Acly/comfyui-tooling-nodes/main/workflows/image_tiles.json",
+      "source_normalized_sha256": "668be504a656737044f98c9972225c3f2fe29e6706c4e4fda109a8d38cc3a8af",
+      "source_family_sha256": "69e4388d563360b71c5b5f36766cc8d004205ea19a669e917565a955710339f7",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Acly/comfyui-tooling-nodes/main/workflows/region_attention_mask.json",
+      "source_normalized_sha256": "4fa04da10ff7a7581ab32a45a3335ea035e95d28fb855bfb2462c68736a67326",
+      "source_family_sha256": "be783c671501f2dec2e8b216f89f3c3173e361174160b3631d907cb497818925",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/fidecastro/ComfyUI-serverless/main/examples/workflows/sdxl_run_ksampler.json",
+      "source_normalized_sha256": "44db1f2822e9c193358959dce16207b49d130bb70fd76ddc4cbb97ec9daf66e2",
+      "source_family_sha256": "ff266dce7f4cc81d3ed7081a80ef11258337116a56f1ef77b01640776ad404ce",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_cond_example.json",
+      "source_normalized_sha256": "3ffcbdf0aa3285411311d13ce807924fe20c6e567bc67d7dec6ba6060495209d",
+      "source_family_sha256": "f652283f9b9348e3b2ce6e67325d0fd40b5361c71613d7f6090ee6c72efe49e8",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_cond_fg_all.json",
+      "source_normalized_sha256": "4cd4d7b07cf0411c7b39c4ded1b7033c408c3a40717d3f5b51ab038e7922a67d",
+      "source_family_sha256": "210b4672f752934b767eb1083f3544e661434ee6a70387ffa977045555dac486",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_cond_joint_bg.json",
+      "source_normalized_sha256": "2eced5a78824c8da9cd7be23d0459cebb66c60fc1bd4229f49b921c3fa5d6f3f",
+      "source_family_sha256": "30d1a25fdffffffea80d8b9db5ca98e3e6bb92641c78c101be5987e914af510a",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_cond_joint_fg.json",
+      "source_normalized_sha256": "d185bfbcf70765986a1dbde56e9c48a2880c3fa276e69922cc930b7fae39c06f",
+      "source_family_sha256": "88b35992788972c8c2f078dfa5c4098d94bfd0c1b53abbf1bb98ff0279113aba",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_diff_bg.json",
+      "source_normalized_sha256": "138bfb19c45b2555cc3c35f7796084048b0e2bfb73e161fd376adbf64ecfe951",
+      "source_family_sha256": "cff5395fe81efccc0e834baec8e66668f44697ded71b76fe1368196cd506b4e8",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_diff_bg_stop_at.json",
+      "source_normalized_sha256": "314368b63a2653ce66d5667f5a1dc15a9fae9fda7cf09f64e45499de8c4ebc3b",
+      "source_family_sha256": "744dc197432fc2ec5a3c985e5e10ce4c6bcdcf83d172b1691af6ee2b48c08ffd",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_diff_fg.json",
+      "source_normalized_sha256": "28109e753beb93a0a9eb3b0f39fda69fcf0aa58d13b3e6c08f65975908c1f2bd",
+      "source_family_sha256": "6b97147c07c8a2185fe1e8a1cd0fe3c77892ec1eda856a7f0f9653dd0f03f33f",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_fg_example.json",
+      "source_normalized_sha256": "c6ca652790b025ac0564116f48b3f7262ae8b094b8ed3e656d4a9318feceba62",
+      "source_family_sha256": "6aabbc8d67c0c0865defa6b310dbfebfb33be9218782d4228a4418a999eaca6a",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_fg_example_rgba.json",
+      "source_normalized_sha256": "abc5692da3acd663777fe2ba696d0f97e1165d1b3976d036c4e5200c282b0b94",
+      "source_family_sha256": "e71b376d2edfd3a53e8f4d5d92bff878bbd40c29c9157e7f5f64f852157e2176",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huchenlei/ComfyUI-layerdiffuse/main/example_workflows/layer_diffusion_joint.json",
+      "source_normalized_sha256": "5948ad1f95775c7bfcf21ab1a5327e1350fde732e37a92806c4bdf56679ce4d0",
+      "source_family_sha256": "d6d82ee36d6db805c5dc3d71d9876a9b445f9d730cb9fd65615ae758c2d6a5a5",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/example_workflows/inpaint_flux.json",
+      "source_normalized_sha256": "cd9eaae27ffab2ec5e5c34a89050a244e242fde5af5a9dd1845732f08fcd5745",
+      "source_family_sha256": "0701202d0b9a2b2144ced8b5f8c6c09752f3ae16af967f0dafecdcc0c8c05c16",
+      "source_normalized_seen": false,
+      "source_family_seen": true,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/example_workflows/inpaint_hires.json",
+      "source_normalized_sha256": "b1333c3555460d7c79fce1a6cd8873677d9ad4b91c2da0c5dcc37c6bf35476a9",
+      "source_family_sha256": "ec6db0463ecb068483e4e0ba6b977c51309e5140e04d0737018cfa769089b8b4",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/lquesada/ComfyUI-Inpaint-CropAndStitch/main/example_workflows/inpaint_sd15.json",
+      "source_normalized_sha256": "69876dbf234c7aacb04f4ca3bc451ed12493517c0220dc4b8d21ef4f49fd42d4",
+      "source_family_sha256": "d32a898de4191970b9b6b86d7fd4a4347d2d1da95f35aeaad46a701f77b464d8",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-Impact-Pack/master/test/loop-test.json",
+      "source_normalized_sha256": "d836779a9faa4adb56fadac931555a068e95a32181ca530e2709d3d0c9be234b",
+      "source_family_sha256": "647769e22a50688d8d45b01f161d8342479b3911aa2ce5326626306f0e1c1a5c",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ltdrdata/ComfyUI-extension-tutorials/Main/ComfyUI-Impact-Pack/images/faceswap.png",
+      "source_normalized_sha256": "a37b5bee9be813b234619aeb8167d5d05caf0a3068f60c482c522bd50d7737fb",
+      "source_family_sha256": "3eda601d1e1d679410887f53a806e221bb8a1749a533e3524425dc7537f0243e",
+      "source_normalized_seen": false,
+      "source_family_seen": false,
+      "disposition": "discovered-not-downloaded",
+      "raw_graph_layers_tested": false
+    }
+  ]
+}

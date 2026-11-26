@@ -1,0 +1,39 @@
+{
+  "schema": "r6-blind-acquisition-accounting-safe-v1",
+  "own_http_actual": 93,
+  "own_http_stages": {
+    "rate_limited_tree_api": 8,
+    "diagnostic_api_retry": 1,
+    "raw_readmes": 7,
+    "initial_raw": 11,
+    "extra_html": 3,
+    "tutorial_readme": 1,
+    "tutorial_docs_and_images": 15,
+    "community_json": 9,
+    "api_repo_discovery": 5,
+    "api_subdir_discovery": 3,
+    "final_api_discovery_and_json": 22,
+    "last_raw": 8
+  },
+  "old_rate_limited_api_related_actual": 9,
+  "later_public_raw_sampling_is_separate_from_old_api403": true,
+  "own_public_search_calls": 7,
+  "own_public_search_queries": 22,
+  "helper_http_actual": 23,
+  "helper_search_actual": 1,
+  "helper_all_calls_actual": 24,
+  "own_http_and_helper_calls_are_same_metric": false,
+  "cross_account_source_overlap_retained": true,
+  "cross_account_exact_unique_source_count_proven": false,
+  "own_http_plus_helper_http_is_unique_sources_claimed": false,
+  "download_candidate_count": 62,
+  "source_only_location_count": 54,
+  "selected_count": 13,
+  "whole_browser_network_count_proven_by_this_ledger": false,
+  "source_ledger_hashes": {
+    "run-authorization-request.json": "96fbaa64b7b566c0d6f179705dee25c63ce11dbdeb0edeb04d6f0a5443087110",
+    "search-source-index.json": "694b241f5a64584ba3f5d2b5e1b4a7f2268000cc390170d68fa994fc95b3a2bc",
+    "candidates-final.json": "e47ec79e4bd2ff9af84c3ffc5afb61f0e7c18ac73dbb99602c68ff102c8ac218",
+    "source-only-candidates.json": "9de15e3d6d86d792e498081a07c619a4694369d32fa6aa66e8076abfe6d4c3d7"
+  }
+}

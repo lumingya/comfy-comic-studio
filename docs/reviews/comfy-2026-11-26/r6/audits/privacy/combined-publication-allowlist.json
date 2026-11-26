@@ -1,0 +1,363 @@
+{
+  "schema": "r6-privacy-combined-publication-allowlist-v1",
+  "utc": "2026-11-26T10:54:12.257152+00:00",
+  "role": "privacy",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "prepared_only": true,
+  "repository_publication_signed": false,
+  "initial_files_unchanged": true,
+  "existing_lists_unchanged": true,
+  "finite_schema_review_only": true,
+  "original_author_account_values_not_exported": true,
+  "source_scripts_private_manifests_raw_oracles_images_allowed": false,
+  "file_count_with_external_self_digest": 22,
+  "hashed_file_count": 21,
+  "omitted_count": 0,
+  "files": [
+    {
+      "pointer": "audits/r6/privacy/report.md",
+      "sha256": "628d71af896e5dcebb3988b57c64b2170e13802d8d201ea890753697c80102cb",
+      "bytes": 9440,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/machinechecks.json",
+      "sha256": "ddcd74dc06bb8198b6a96f2727b96a4bcb43cd16c58bdb463a99417f4e7fe133",
+      "bytes": 2367,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/core-machinechecks.json",
+      "sha256": "5df633c09d228e589f1c526c58487362f9a5e4d84896e7d6e45a03133a82d656",
+      "bytes": 93723,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/static-boundaries.json",
+      "sha256": "635170a0e36ed7054f4505f3ba31e16c7cd818d8319831ad9e2c43aa23b3ad91",
+      "bytes": 96625,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/archive-adjudication.json",
+      "sha256": "6bcc11b77b1543d2b9daff0fda38b5046b86770aebe750cfeb6734ffa960339b",
+      "bytes": 18520,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/token-adjudication.json",
+      "sha256": "97cf2ec8e7093d0c264b18f72b0a0a7d66c69dae2ef10c66d275947c7021077d",
+      "bytes": 4111,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/retention-machinechecks.json",
+      "sha256": "da99d23f603523738673772937077852df329f5c6318261faf0857a903abf38a",
+      "bytes": 19155,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/anonymization-machinechecks.json",
+      "sha256": "5d98fe5bbe5cd615ab7a6e59ff6c9241f5d9f7fc01bdffe004a43e84e914cc49",
+      "bytes": 11434,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/protected-workspaces-machinechecks.json",
+      "sha256": "5b0a7ff41cd834c6f2e8680bf5e9428dc1ece960ceb1930ac070e14b6b5e04f5",
+      "bytes": 1311,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/workspace-metadata-followup.json",
+      "sha256": "24d8735e3f1b26ee7fa9d81913f7d29590dfd2f65d4c281c268689ef70f8320e",
+      "bytes": 2164,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/ledger-machinechecks.json",
+      "sha256": "197ceedd4d521d095892432903d32a1e476c587fa8312728925a80adae00584e",
+      "bytes": 18663,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/ci/report.json",
+      "sha256": "4d49cbd29dff7d4ba2f98bb8e4ca8f3d3399fcbc7b124ec28c512c4802d0801a",
+      "bytes": 45594,
+      "phase": "initial",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/initial-seal.json",
+      "sha256": "1e88ad4f8a8fa7026b0f791625bad81ebcf4cb7d5e71ae31c0a7b100b91fa629",
+      "bytes": 2764,
+      "phase": "initial-seal",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/cross.md",
+      "sha256": "e36e02620b1af125b33b2288d48e2a2a1df3b8c16bf094a063dc960136d696b2",
+      "bytes": 11705,
+      "phase": "cross-final",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/cross-machinechecks.json",
+      "sha256": "671a2afc50e11678895e84d5cc7b99b8b8a04e8366d1b459c1c6ec2e439b6f21",
+      "bytes": 18991,
+      "phase": "cross-final",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/publication-machinechecks.json",
+      "sha256": "e45ec0ea0a0e55b13c93082c38ca991fc926990fdf224bcc3abacbd460e460cf",
+      "bytes": 45417,
+      "phase": "cross-final",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/public-safe-files.json",
+      "sha256": "b8d8a423d71b8af0507b43abe1fc90da89b1b8b19518e6d98b3b865112a50689",
+      "bytes": 13850,
+      "phase": "cross-final",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/final.md",
+      "sha256": "384ca450a5248b90d680a515bc33a598a63564d1190b33d43e9d4842119ac934",
+      "bytes": 3865,
+      "phase": "cross-final",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/final.json",
+      "sha256": "ce4e4e76c9c2531c25b3816afbf57f51d6dc52152552eda428ca2aa272f249d1",
+      "bytes": 2197,
+      "phase": "cross-final",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/cross-seal.json",
+      "sha256": "47b3171e8affd07c6ad54497cbe110b6ad5b196a46a9feff4db08551ee104881",
+      "bytes": 1674,
+      "phase": "cross-final",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    },
+    {
+      "pointer": "audits/r6/privacy/privacy-public-safe-files.json",
+      "sha256": "3c9d2920b3be7fdc2d958380bc59cb1467bcd086a0e7f6eb933d20a7c886d7ea",
+      "bytes": 1456,
+      "phase": "final-allowlist",
+      "publication_checks": {
+        "hash_verified": true,
+        "utf8_without_bom": true,
+        "private_path_or_credential_pattern_hits": 0,
+        "graph_shaped_containers": 0,
+        "sensitive_asset_filename_scalar_fields": 0,
+        "unredacted_author_or_account_fields": 0,
+        "author_or_account_fields_inspected": 0,
+        "large_embedded_data_urls": 0
+      }
+    }
+  ],
+  "omitted_files_and_projection_gaps": [],
+  "self": {
+    "pointer": "audits/r6/privacy/combined-publication-allowlist.json",
+    "sha256_scope": "external_receipt_required_self_hash_cannot_be_embedded_in_same_bytes",
+    "sha256_embedded": false,
+    "included_in_exact_list": true
+  },
+  "self_digest_rule": "Use the exact SHA256 returned with this file as the self row; embedding a full hash of these same bytes would be circular.",
+  "no_product_imports_calls_tests_builds_browser_network_or_repository_writes": true
+}

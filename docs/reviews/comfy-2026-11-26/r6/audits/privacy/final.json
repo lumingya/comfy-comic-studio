@@ -1,0 +1,58 @@
+{
+  "schema": "r6-privacy-final-scope-v1",
+  "utc": "2026-11-26T10:43:20.887647+00:00",
+  "role": "privacy",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "scope_verdict": "VERIFIED PASS",
+  "product_medium_or_higher_count": 0,
+  "new_privacy_product_findings": [],
+  "scope_signature_only": true,
+  "process_clean_pass": false,
+  "known_privacy_output_deviations_after_cross": 2,
+  "immutable_initial_privacy_output_deviation_count": 1,
+  "initial_files_unchanged": true,
+  "cross_authorization_sha256": "c57861556e6e7214ca75902cea363c4c9620edbd3ae3d0c4ae830de7fc8561d6",
+  "peer_reports": [
+    {
+      "pointer": "audits/r6/generality/report.md",
+      "sha256": "d49bc1a837c3ce75b480038b8b3065ca6fce795519abdd835e16ab75df936dcc"
+    },
+    {
+      "pointer": "audits/r6/compile/report.md",
+      "sha256": "b5ea489e8e0aff3e3939fffb220b7ab1274e56fddaaeb422cae95ff74de74ca6"
+    },
+    {
+      "pointer": "audits/r6/blind/report.md",
+      "sha256": "5e1c575aa22fc3d6dcd19d5efffc4f33810ddc64e3447a2b1ca8ccc31ecc21c6"
+    },
+    {
+      "pointer": "audits/r6/web/report.md",
+      "sha256": "cc4c156e13710d56214965dfba46842ec8bd883a947374c8bfdbe15ad36d161e"
+    }
+  ],
+  "approved_cross_hash_count": 65,
+  "prepared_public_files": 49,
+  "prepared_package_links": 46,
+  "original_sources_crossmatched": 22,
+  "original_source_reference_count": 42,
+  "original_sources_not_reread": 20,
+  "prepared_whitelist_pointer": "audits/r6/privacy/public-safe-files.json",
+  "prepared_whitelist_sha256": "b8d8a423d71b8af0507b43abe1fc90da89b1b8b19518e6d98b3b865112a50689",
+  "original53_completion_certified_by_this_role": false,
+  "root_actual_delivery_signed": false,
+  "cleanup_signed": false,
+  "actual_publication_signed": false,
+  "final_commit_push_signed": false,
+  "final_ci_signed": false,
+  "cross_product_imports": 0,
+  "cross_product_calls": 0,
+  "cross_tests": 0,
+  "cross_builds": 0,
+  "cross_browser_calls": 0,
+  "cross_network_calls": 0,
+  "cross_repository_writes": 0,
+  "cross_commits": 0,
+  "cross_pushes": 0,
+  "original_workspace_change_attribution_proven": false
+}

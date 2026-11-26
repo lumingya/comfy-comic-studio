@@ -1,0 +1,112 @@
+{
+  "schema": "mio.workflow.delivery.publication-check.v1",
+  "checked_at_utc": "2026-11-26T11:29:24.518950+00:00",
+  "role": "Independent static publication check; not a new product review and not a replacement for the sealed R6 five-way review.",
+  "verdict": "PUBLISHABLE_WITH_EXPLICIT_OPEN_C04",
+  "whole_objective_complete": false,
+  "source_candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "input_index": {
+    "initial_tree": "be36bfdc7e6a0e6b7b2235c3b0b8d8146feec17c",
+    "accepted_tree": "9e1985cbff75fa624886ba3420d16874f1fc21eb",
+    "changed_paths": 176,
+    "new_r6_paths": 173,
+    "preexisting_document_paths": 3,
+    "regular_stage0_files": 176,
+    "server_web_clients_tools_changes": 0,
+    "input_tree_excludes_this_check_two_output_files": true
+  },
+  "initial_full_static_scan": {
+    "source_map_sha256": "5766456816e4e50df994b82ca987867ec9caf9fad5a965d8cc1a36df4a82555c",
+    "mapped_original_payloads": 155,
+    "all_published_sha256_bytes_and_git_blob_sha1_matched": true,
+    "original_byte_identical_payloads": 78,
+    "normalized_or_known_prefix_redacted_payloads": 77,
+    "additional_draft_sources": 7,
+    "all_seven_original_source_sha256_and_bytes_reopened_and_matched": true,
+    "all_seven_published_sha256_and_bytes_matched": true,
+    "utf8_files": 176,
+    "bom_files": 0,
+    "unsupported_extensions": 0,
+    "max_input_blob_bytes": 401233,
+    "strong_credential_pattern_matches": 0,
+    "private_user_path_pattern_matches": 0,
+    "asset_filename_pattern_matches": 0,
+    "api_or_ui_graph_shapes": 0,
+    "raw_graph_literal_patterns": 0,
+    "metadata_key_occurrences": 6,
+    "metadata_occurrences_exactly_match_four_source_sha_and_six_pointer_type_length_exceptions": true,
+    "real_graph_structure_allowlisted": false,
+    "classification_numeric_and_boundary_subtrees_unchanged_from_source_draft": 9,
+    "all53_requirement_core_evidence_fields_preserved": true,
+    "allowed_C06_report_publication_state_change_only": true,
+    "ledger_requirement_ids_unique": 53,
+    "ledger_status_counts_match": true,
+    "delivery_dependency_rows_with_explicit_predicates": 15,
+    "whole_objective_complete_remains_false": true,
+    "classification_process_clean_pass_remains_false": true,
+    "cached_diff_check_exit": 0
+  },
+  "link_check": {
+    "markdown_files": 41,
+    "inline_local_links": 270,
+    "external_links_not_requested_over_network": 32,
+    "fragment_bearing_links": 3,
+    "target_file_existence_checked": true,
+    "heading_fragment_semantics_certified": false,
+    "outside_repo_relative_targets": 0,
+    "initial_missing_targets": 2,
+    "remaining_missing_targets_after_exact_two_replacements": 0,
+    "planned_own_report_targets": 2,
+    "fixes": [
+      {
+        "file": "index.md",
+        "from": "delivery-receipt.json",
+        "to": "delivery-receipt.md"
+      },
+      {
+        "file": "issues-closed.md",
+        "from": "../r5/integration-history/index.md",
+        "to": "../r5/ci-history/integration-history/index.md"
+      }
+    ]
+  },
+  "incremental_verification": {
+    "only_two_expected_blobs_changed_between_trees": true,
+    "each_change_exactly_the_single_target_replacement": true,
+    "corrected_target_files_present_in_index": true,
+    "incremental_diff_check_exit": 0,
+    "unchanged_blob_checks_not_rerun": true
+  },
+  "open_conditions": {
+    "C04_cache_cleanup": {
+      "actual_cache_deletion_executed": false,
+      "cleanup_complete": false,
+      "automatic_safety_review_refused_before_process_start": true,
+      "alternative_deletion_route_attempted_by_this_reviewer": false
+    },
+    "commit_push_clean_and_final_ci": "Postcommit facts are not yet established by this publication review. The containing delivery commit and actual remote push/PR checkout evidence belong in the existing PR receipt."
+  },
+  "process_boundary": {
+    "process_clean_pass": false,
+    "root_delivery_events_retained": true,
+    "known_schema_key_and_FileNotFoundError_filename_echo_not_repeated_here": true,
+    "this_review_did_not_read_cookies_user_browser_profile_or_unknown_untracked_content": true,
+    "finite_pattern_scans_do_not_prove_universal_absence_of_personal_information": true
+  },
+  "operations": {
+    "product_calls": 0,
+    "tests": 0,
+    "builds": 0,
+    "browser_calls": 0,
+    "network_calls": 0,
+    "gpu_or_model_calls": 0,
+    "source_or_sealed_audit_writes": 0,
+    "git_add_commit_push_calls": 0
+  },
+  "scope_limits": [
+    "All scan findings refer to the actual 176 input staged blobs identified by accepted_tree; the two check outputs are separately read back, not claimed as part of that self-referential tree.",
+    "Strong credential, private-path, asset-name and graph checks are bounded structural/pattern checks, not a zero-disclosure guarantee.",
+    "Existing five product verdicts and historical raw false assertions are preserved; this document certifies publication suitability only.",
+    "C04 remains open and whole objective completion must not be inferred from publication, later commits or later CI."
+  ]
+}
