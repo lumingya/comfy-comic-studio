@@ -552,6 +552,7 @@ const zh = {
     stopComparing: '结束对比',
     compareReference: '固定候选',
     compareCandidate: '浏览候选',
+    comparePinCandidate: '将浏览候选固定为基准',
     compareDetail: '原图细节',
     compareHint: '←/→ 切换右图 · 1/2 选择 · A 采用 · X 弃用',
     compareSplit: '分屏对比',

@@ -1,4 +1,5 @@
 import { fireEvent, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { assetUrl } from '../../api/client';
 import type { ActiveItem } from '../../api/jobs';
@@ -56,6 +57,16 @@ const selected = () => cards().filter((card) => card.getAttribute('aria-selected
 const thumbnailsRendered = () =>
   vi.mocked(assetUrl).mock.calls.filter(([, width]) => width === 480);
 const imageButton = (card: HTMLElement) => card.querySelector<HTMLButtonElement>('.take-image')!;
+const expectComparison = (reference: string, candidate: string) => {
+  expect(screen.getByRole('img', { name: '固定候选' })).toHaveAttribute(
+    'src',
+    expect.stringContaining(`asset_${reference}`),
+  );
+  expect(screen.getByRole('img', { name: '浏览候选' })).toHaveAttribute(
+    'src',
+    expect.stringContaining(`asset_${candidate}`),
+  );
+};
 
 describe('candidate board updates', () => {
   it('opens and browses across panels without rerendering the mounted thumbnail cards', () => {
@@ -216,6 +227,59 @@ describe('candidate board updates', () => {
     view.rerender(<BoardTab />);
     expect(cards()).toHaveLength(0);
     expect(screen.getByText('所有分幕均已采用画面')).toBeInTheDocument();
+  });
+
+  it('defaults to the non-adjacent adopted image against the selected candidate without adopting', () => {
+    ep.takes[0].status = 'adopted';
+    renderWithProviders(<BoardTab />);
+    fireEvent.click(imageButton(cards()[0]));
+    fireEvent.keyDown(window, { key: 'c' });
+    expectComparison('t0', 't3');
+    expect(actions.mutate).not.toHaveBeenCalled();
+  });
+
+  it('keeps two different images when the opened image is already adopted', () => {
+    ep.takes[3].status = 'adopted';
+    renderWithProviders(<BoardTab />);
+    fireEvent.click(imageButton(cards()[0]));
+    fireEvent.keyDown(window, { key: 'c' });
+    expectComparison('t3', 't2');
+    expect(actions.mutate).not.toHaveBeenCalled();
+  });
+
+  it('repins the browsing candidate by keyboard and keeps any same-panel pair available', async () => {
+    const user = userEvent.setup();
+    ep.takes[0].status = 'adopted';
+    renderWithProviders(<BoardTab />);
+    const opener = imageButton(cards()[0]);
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.keyDown(window, { key: 'c' });
+    expectComparison('t0', 't3');
+    screen.getByRole('button', { name: '将浏览候选固定为基准' }).focus();
+    await user.keyboard('{Enter}');
+    expectComparison('t3', 't2');
+    for (const candidate of ['t1', 't0', 't2']) {
+      fireEvent.keyDown(window, { key: 'ArrowRight' });
+      expectComparison('t3', candidate);
+    }
+    expect(actions.mutate).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '采用 · 浏览候选' }));
+    expect(actions.mutate).toHaveBeenCalledTimes(1);
+    expect(actions.mutate).toHaveBeenLastCalledWith(
+      { takeId: 't2', action: 'adopt' },
+      expect.anything(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: '采用 · 固定候选' }));
+    expect(actions.mutate).toHaveBeenCalledTimes(2);
+    expect(actions.mutate).toHaveBeenLastCalledWith(
+      { takeId: 't3', action: 'adopt' },
+      expect.anything(),
+    );
+    // Browsers dispatch a native cancel event when Escape closes a modal dialog.
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
   });
 
   it('compares original images within one panel and acts only on the explicitly selected side', () => {

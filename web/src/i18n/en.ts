@@ -593,6 +593,7 @@ const en: Widen<Dict> = {
     stopComparing: 'End comparison',
     compareReference: 'Pinned candidate',
     compareCandidate: 'Browsing candidate',
+    comparePinCandidate: 'Use browsing candidate as reference',
     compareDetail: 'Original size',
     compareHint: '←/→ browse right · 1/2 select · A adopt · X reject',
     compareSplit: 'Split compare',

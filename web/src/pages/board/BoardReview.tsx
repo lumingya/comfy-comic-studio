@@ -40,15 +40,25 @@ export function BoardReview(props: {
     props.onOpen(alternatives[(base + delta + alternatives.length) % alternatives.length].id);
     setSide(1);
   };
-  const compare = () => {
-    setDetail(false);
-    setSide(1);
-    if (pinned) return setPinnedId(null);
+  const pinCandidate = () => {
     if (props.panelTakes.length < 2) return;
     const current = props.panelTakes.findIndex((take) => take.id === props.take.id);
     const next = props.panelTakes[(current + 1) % props.panelTakes.length];
     setPinnedId(props.take.id);
     props.onOpen(next.id);
+    setDetail(false);
+    setSide(1);
+  };
+  const compare = () => {
+    setDetail(false);
+    setSide(1);
+    if (pinned) return setPinnedId(null);
+    if (props.panelTakes.length < 2) return;
+    const adopted = props.panelTakes.find(
+      (take) => take.status === 'adopted' && take.id !== props.take.id,
+    );
+    if (adopted) return setPinnedId(adopted.id);
+    pinCandidate();
   };
 
   useEffect(() => {
@@ -124,6 +134,16 @@ export function BoardReview(props: {
             <Columns2 size={15} /> {t(pinned ? 'board.stopComparing' : 'board.compare')}
             <span className="kbd">C</span>
           </button>
+          {pinned ? (
+            <button
+              type="button"
+              className="btn ghost sm"
+              disabled={props.panelTakes.length < 2}
+              onClick={pinCandidate}
+            >
+              {t('board.comparePinCandidate')}
+            </button>
+          ) : null}
           {pinned ? (
             <button
               className="btn"
