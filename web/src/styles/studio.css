@@ -111,8 +111,8 @@
 }
 
 .take-badges .chip {
-  backdrop-filter: blur(3px);
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  /* Repeated backdrop layers also slow comparison panning above a long board. */
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
 }
 
 .take-actions {
