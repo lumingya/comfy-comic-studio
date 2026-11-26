@@ -121,14 +121,20 @@ macOS / Linux 将最后一行换成 `./start.sh`。开发界面时另开终端�
 
 | 扩展                                               | 能力                           |
 | -------------------------------------------------- | ------------------------------ |
-| [单格精修](extensions/panel-retouch/README.md)     | 蒙版修图、外扩与指令编辑       |
+| [单格精修](extensions/panel-retouch/README.md)     | 支持键盘的蒙版修图、外扩与指令编辑 |
 | [质检与挑图](extensions/qa-review/README.md)       | VLM 评审、逐格复核与显式采纳   |
 | [成品精修](extensions/finalize-studio/README.md)   | 已采用草稿的批量精修与回退     |
-| [变体工坊](extensions/variant-workshop/README.md)  | 变体矩阵预览、批量生成与比较   |
+| [变体工坊](extensions/variant-workshop/README.md)  | 角色、服装、场景、画风四轴组合与比较 |
 | [剧本助手](extensions/script-assistant/README.md)  | 剧本和节奏建议的逐项审阅       |
 | [动态漫工作台](extensions/motion-studio/README.md) | 镜头、转场、配音试听与离线导出 |
 
 六个工作台都是独立、默认停用的沙箱面板。到「扩展 → 已安装」审阅内容摘要并启用，再从具体话的「扩展」菜单打开；打开面板不会提交生成任务。停用会撤除入口和后续请求，已提交任务需另行停止。包内容改变后须重新审阅；异常时用 `MIO_SAFE_MODE=1` 启动可跳过全部扩展。[离线教程](server/mio_server/manual/chapters/zh/start.html#optional-workspaces)列有逐项操作步骤。
+
+变体工坊可选「分镜预设变量」或「结构化设定集」，未选轴沿用原值。先预览最多 24 个组合并保存勾选子集，再选择版本、分幕和每幕候选数，核对任务与图片总量后生成；保存组合不会出图。
+
+单格精修的蒙版画布聚焦后，方向键移动 1 像素，Shift+方向键移动 10 像素；Space 或 Enter 开始/结束笔画，Esc 取消当前笔画，Tab 离开画布时将当前笔画结束为一次撤销。
+
+面板请求 29 秒超时后会中断本次连接并释放请求名额，但后端写入可能已经完成。先核对作品或任务结果，再手动重试；不会自动重复提交。
 
 ## 仓库一览
 

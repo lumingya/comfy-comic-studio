@@ -104,22 +104,20 @@
             </p>
             <h3 id="token-scopes">Give a token only the access it needs</h3>
             <p>
-              In Settings, create an API token with only the scopes the
-              program uses. An album directory only needs <code>read</code>.
-              Add <code>write</code> to edit storyboards or
-              <code>render</code> to start generation. Reserve
-              <code>admin</code> for programs that manage tokens or
-              extensions. The token is shown once; keep it somewhere private
-              and pass it only to the program that needs it.
+              In Settings, create an API token with only the scopes the program
+              uses. An album directory only needs <code>read</code>. Add
+              <code>write</code> to edit storyboards or <code>render</code> to
+              start generation. Reserve <code>admin</code> for programs that
+              manage tokens or extensions. The token is shown once; keep it
+              somewhere private and pass it only to the program that needs it.
             </p>
             <h3 id="webhooks">Notify another program when a task finishes</h3>
             <p>
               To have an automation send a notification when generation
               finishes, enter the receiving URL it provides in Settings →
-              Webhooks and subscribe to <code>job.completed</code>. Send a
-              test notification and check the delivery history. The receiver
-              uses the secret shown at creation to verify
-              <code>X-Mio-Signature</code>.
+              Webhooks and subscribe to <code>job.completed</code>. Send a test
+              notification and check the delivery history. The receiver uses the
+              secret shown at creation to verify <code>X-Mio-Signature</code>.
             </p>
             <h3 id="safe-mode">Troubleshoot extensions in safe mode</h3>
             <p>
@@ -128,28 +126,33 @@
               before starting Mio. In Windows PowerShell, run
               <code>$env:MIO_SAFE_MODE='1'</code> and then
               <code>.\start.bat</code>. On macOS or Linux, run
-              <code>MIO_SAFE_MODE=1 ./start.sh</code>. Mio skips extensions
-              for that run. After troubleshooting and disabling the affected
+              <code>MIO_SAFE_MODE=1 ./start.sh</code>. Mio skips extensions for
+              that run. After troubleshooting and disabling the affected
               extension, unset the variable and restart normally.
             </p>
             <h3 id="professional-tools">
               Install six optional professional tools
             </h3>
             <p>
-              The source repository includes six independent packages under
-              <code>examples/extensions/</code>. Import a folder or ZIP in
-              Extension market / Installed, review its digest, enable it, then
-              open a specific episode and choose a tool from the Extensions menu
-              beside Board / Script. These tools add no fixed main-navigation
-              entries. Installing, enabling or opening a panel does not generate
-              images. Read the episode, select the targets and explicitly
-              submit. Image services, VLMs and text models may charge for calls.
+              The source repository includes six official independent packages
+              under
+              <code>extensions/</code>. Import a folder or ZIP in Extension
+              market / Installed, review its digest, enable it, then open a
+              specific episode and choose a tool from the Extensions menu beside
+              Board / Script. These tools add no fixed main-navigation entries.
+              Installing, enabling or opening a panel does not generate images.
+              Read the episode, select the targets and explicitly submit. Image
+              services, VLMs and text models may charge for calls.
             </p>
             <ul>
               <li>
-                <code>panel-retouch</code>: rectangle or polygon masks,
+                <code>panel-retouch</code>: brush or rectangle masks, an eraser,
                 outpainting and instruction editing. Results are new candidates;
                 the adopted original remains. Disabled edit stages cannot run.
+                Focus the canvas and use arrows to move 1 pixel, or Shift+arrows
+                to move 10 pixels. Space or Enter starts/finishes a stroke; Esc
+                cancels the current stroke. Tab leaves the canvas and finishes
+                the stroke as one undo step.
               </li>
               <li>
                 <code>qa-review</code>: select candidates for assessment, then
@@ -163,15 +166,21 @@
                 the original is retained.
               </li>
               <li>
-                <code>variant-workshop</code>: derive versions from Bible styles
-                and character appearances, then generate, compare, adopt and
-                export each version separately. Generation never adopts
-                automatically.
+                <code>variant-workshop</code>: independently combine character,
+                outfit, scene and style. Ordinary storyboards default to
+                “Storyboard preset variables”; “Structured work bible” is the
+                other source. Unselected axes inherit their current values.
+                Preview up to 24 combinations and save a checked subset; saving
+                does not generate images. Before generating, select versions,
+                scenes and candidates per scene, then confirm the task and image
+                totals. Compare, adopt and export versions separately;
+                generation never adopts automatically.
               </li>
               <li>
-                <code>script-review</code>: review per-panel and sentence-level
-                diffs, then apply only checked operations. Revision conflicts
-                require a fresh review and cannot overwrite a newer script.
+                <code>script-assistant</code>: review script and pacing
+                proposals individually, then apply only checked changes.
+                Applying creates a work checkpoint. Stale proposals require a
+                fresh review and cannot overwrite a newer script.
               </li>
               <li>
                 <code>motion-studio</code>: save camera movement and duration,
@@ -190,6 +199,12 @@
               require explicit cancellation. Uninstalling does not delete
               candidates, QA records, variants or camera settings saved in the
               work.
+            </p>
+            <p>
+              After a panel request times out at 29 seconds, the host ends that
+              connection and frees its request slot. This does not roll back a
+              server-side write. Check the work or job result before manually
+              retrying; the panel does not automatically resubmit the request.
             </p>
             <h3 id="adapters-and-cli">Replaceable adapters and scripts</h3>
             <p>
