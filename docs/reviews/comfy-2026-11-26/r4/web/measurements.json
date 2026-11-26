@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-26",
+  "head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "verdict": "REQUEST CHANGES",
+  "severity_counts": {"Blocker": 0, "High": 0, "Medium": 1, "Low": 0},
+  "browser": {"product": "Chrome", "version": "158.0.8127.37", "existing_dedicated_cdp": true, "new_isolated_context": true, "single_page_serial": true, "context_closed": true, "exact_origin_guard_before_task_dom": true},
+  "automation_guard": {"cpu_affinity_mask": 1, "priority_class": 16384, "priority_label": "BelowNormal", "read_back_before_browser_import": true, "imported_mio": false},
+  "fixtures": {"independently_synthetic": true, "api_nodes": 200, "chain_loras": 32, "filename_stem_characters": 142, "long_node_title_characters": 149, "ui_nodes": 2, "ui_links": 1, "ui_formats": ["json", "png-workflow-text", "webp-exif-workflow"], "image_pixels": [8, 8]},
+  "matrices": [
+    {"viewport": [1440, 900], "theme": "light", "api_import": true, "ui_json": true, "ui_png": true, "ui_webp": true, "recognized_bindings": 12, "recognized_loras": 32, "last_lora_search_count": 1, "recommendation_adoption": true, "manual_last_node_keyboard_selection": true, "focus_restored": true, "document_horizontal_overflow_px": 0, "api_dialog_client_scroll_width_px": [970, 970], "saved_reloaded_reopened": true, "screenshots_visually_inspected": ["desktop-light-api.png", "desktop-light-mapping-search.png", "desktop-light-ui-webp.png"]},
+    {"viewport": [1440, 900], "theme": "dark", "api_import": true, "ui_json": true, "ui_png": true, "ui_webp": true, "recognized_bindings": 12, "recognized_loras": 32, "last_lora_search_count": 1, "recommendation_adoption": true, "manual_last_node_keyboard_selection": true, "focus_restored": true, "document_horizontal_overflow_px": 0, "api_dialog_client_scroll_width_px": [970, 970], "screenshots_visually_inspected": ["desktop-dark-api.png", "desktop-dark-mapping-search.png", "desktop-dark-ui-webp.png"]},
+    {"viewport": [390, 844], "theme": "light", "api_import": true, "ui_json": true, "ui_png": true, "ui_webp": true, "recognized_bindings": 12, "recognized_loras": 32, "last_lora_search_count": 1, "recommendation_adoption": true, "manual_last_node_keyboard_selection": true, "focus_restored": true, "tab_shift_tab_trap": true, "arrow_escape_popover": true, "document_horizontal_overflow_px": 0, "api_dialog_client_scroll_width_px": [348, 348], "ui_dialog_client_scroll_width_px": [356, 356], "screenshots_visually_inspected": ["mobile-light-api.png", "mobile-light-mapping-search.png", "mobile-light-ui-webp-stable.png"]},
+    {"viewport": [390, 844], "theme": "dark", "api_import": true, "ui_json": true, "ui_png": true, "ui_webp": true, "recognized_bindings": 12, "recognized_loras": 32, "last_lora_search_count": 1, "recommendation_adoption": true, "manual_last_node_keyboard_selection": true, "focus_restored": true, "tab_shift_tab_trap": true, "arrow_escape_popover": true, "document_horizontal_overflow_px": 0, "api_dialog_client_scroll_width_px": [348, 348], "ui_dialog_client_scroll_width_px": [356, 356], "screenshots_visually_inspected": ["mobile-dark-api.png", "mobile-dark-mapping-search.png", "mobile-dark-ui-webp.png"]}
+  ],
+  "ui_only_each_format_each_matrix": {"api_export_steps": 3, "save_disabled": true, "execution_not_claimed": true},
+  "save_readback": {"performed_once": true, "mapping_keys": 12, "prompt": "/200/inputs/text", "output": "/7", "width": "/4/inputs/width"},
+  "scroll_checks": [
+    {"viewport": [1440, 900], "theme": "light", "lora_client_height_px": 384, "lora_scroll_height_px": 1025, "observed_scroll_top_px": 641},
+    {"viewport": [390, 844], "theme": "light", "lora_client_height_px": 384, "lora_scroll_height_px": 1742, "observed_scroll_top_px": 1357.5}
+  ],
+  "performance_finding": {"id": "R4-WEB-01", "severity": "Medium", "route": "GET /api/workflows", "library_count": 49, "reload_resource_timing_ms": 21473, "single_authorized_confirmation_ms": 18772, "confirmation_status": 200, "confirmation_response_utf8_bytes": 13756, "individual_detail_resource_timing_ms": 14, "save_modal_still_busy_after_15_seconds": true, "baseline_comparison_performed": false, "clean_library_comparison_performed": false, "cpu_environment_limited": true, "regression_causality_claimed": false, "repeat_stress_test_performed": false},
+  "observation": {"console_errors": 0, "page_errors": 0, "failed_requests": 0, "all_observed_page_requests_same_test_origin": true, "request_headers_read_or_logged": false, "response_headers_read_or_logged": false, "credentials_read_or_logged": false, "generation_or_trial_or_diagnose_requests": 0, "system_wide_network_audit": false},
+  "routing_incident": {"stale_mcp_page_id_returned_non_task_a11y_content": true, "same_sequence_narrow_eval_detected_non_task_origin": true, "entrypoint_stopped_immediately": true, "non_task_page_clicked_or_modified": false, "non_task_screenshot_or_download": false, "non_task_content_written_to_local_or_publishable_files": false, "cookie_authorization_profile_read": false, "subsequent_dedicated_context_origin_guard": true, "non_task_origin_or_text_included_here": false},
+  "visual_qa": {"actual_screenshots_viewed": true, "transitional_mobile_ui_capture_excluded": true, "stable_mobile_ui_recaptured_and_viewed": true, "compact_selected_title_ellipsis_with_full_search_disclosure": true},
+  "not_tested": ["GPU execution", "real ComfyUI menus", "paid API", "touchscreen and soft keyboard", "screen reader", "other browsers", "system network or power", "baseline and clean-library timing comparison"]
+}

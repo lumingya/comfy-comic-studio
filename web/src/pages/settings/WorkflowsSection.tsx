@@ -188,6 +188,7 @@ export function WorkflowsSection() {
                     {t('settings.nodes', { count: w.nodes })} ·{' '}
                     {t(`config.workflow.sources.${w.source}`)}
                   </small>
+                  {w.lora_error ? <small>{t('config.workflow.loraUnavailable')}</small> : null}
                 </button>
               ))}
           </nav>

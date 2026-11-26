@@ -1,0 +1,1454 @@
+{
+  "revision": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "scope": "Saved-result attribution only; no new product call, source edit, oracle edit or baseline replay",
+  "corpus_eight_missing": [
+    {
+      "group": "initial75",
+      "public_sample": "2df6c0ad8d1a",
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_kontext_example_comic.webp",
+      "source_sha256": "d35c3cfd94b382e7a56b0be98e50a9a4680e9f4d13c7b3c7595cf82de9edfd5e",
+      "kind": "prompt",
+      "original_truth_mode": "automatic",
+      "original_expected_targets": [
+        "/6/inputs/text"
+      ],
+      "actual_frozen_compile_targets": [],
+      "strict_status": "missing",
+      "original_directed_whole_graph_exact": false,
+      "saved_evidence": {
+        "no_edit_retained_nodes_equal": true,
+        "no_edit_links_equal": true,
+        "whole_document_snapshot_equal_after_all_operations": true,
+        "source_graph_equal": true,
+        "source_file_bytes_unchanged": true,
+        "all_values_bound_target_mismatches": [],
+        "inspection_aggregate_issue_codes_before_request": [
+          "ambiguous",
+          "dependencies_unchecked",
+          "unbound"
+        ],
+        "explicit_mapping_operations_for_this_kind": []
+      },
+      "not_captured_in_original_probe": [
+        "request-specific actual graph delta versus no-edit compile",
+        "request-specific compiled warning messages or per-kind inspection warnings",
+        "request-specific resolved targets after the value is applied"
+      ],
+      "attribution": "MISSING_AGAINST_UNCHANGED_TRUTH; safety classification unresolved. The saved empty frozen target list does not prove the requested compile was only safely ignored. Source/document/no-edit checks passed at the recorded scope, but no request-specific unsafe-write or structural-change conclusion is made. Whole-document equality was recorded with Python equality, not a type-sensitive serialized hash."
+    },
+    {
+      "group": "initial75",
+      "public_sample": "2df6c0ad8d1a",
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_kontext_example_comic.webp",
+      "source_sha256": "d35c3cfd94b382e7a56b0be98e50a9a4680e9f4d13c7b3c7595cf82de9edfd5e",
+      "kind": "negative",
+      "original_truth_mode": "automatic",
+      "original_expected_targets": [
+        "/33/inputs/text"
+      ],
+      "actual_frozen_compile_targets": [],
+      "strict_status": "missing",
+      "original_directed_whole_graph_exact": false,
+      "saved_evidence": {
+        "no_edit_retained_nodes_equal": true,
+        "no_edit_links_equal": true,
+        "whole_document_snapshot_equal_after_all_operations": true,
+        "source_graph_equal": true,
+        "source_file_bytes_unchanged": true,
+        "all_values_bound_target_mismatches": [],
+        "inspection_aggregate_issue_codes_before_request": [
+          "ambiguous",
+          "dependencies_unchecked",
+          "unbound"
+        ],
+        "explicit_mapping_operations_for_this_kind": []
+      },
+      "not_captured_in_original_probe": [
+        "request-specific actual graph delta versus no-edit compile",
+        "request-specific compiled warning messages or per-kind inspection warnings",
+        "request-specific resolved targets after the value is applied"
+      ],
+      "attribution": "MISSING_AGAINST_UNCHANGED_TRUTH; safety classification unresolved. The saved empty frozen target list does not prove the requested compile was only safely ignored. Source/document/no-edit checks passed at the recorded scope, but no request-specific unsafe-write or structural-change conclusion is made. Whole-document equality was recorded with Python equality, not a type-sensitive serialized hash."
+    },
+    {
+      "group": "initial75",
+      "public_sample": "2df6c0ad8d1a",
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_kontext_example_comic.webp",
+      "source_sha256": "d35c3cfd94b382e7a56b0be98e50a9a4680e9f4d13c7b3c7595cf82de9edfd5e",
+      "kind": "width",
+      "original_truth_mode": "automatic",
+      "original_expected_targets": [
+        "/27/inputs/width"
+      ],
+      "actual_frozen_compile_targets": [],
+      "strict_status": "missing",
+      "original_directed_whole_graph_exact": false,
+      "saved_evidence": {
+        "no_edit_retained_nodes_equal": true,
+        "no_edit_links_equal": true,
+        "whole_document_snapshot_equal_after_all_operations": true,
+        "source_graph_equal": true,
+        "source_file_bytes_unchanged": true,
+        "all_values_bound_target_mismatches": [],
+        "inspection_aggregate_issue_codes_before_request": [
+          "ambiguous",
+          "dependencies_unchecked",
+          "unbound"
+        ],
+        "explicit_mapping_operations_for_this_kind": []
+      },
+      "not_captured_in_original_probe": [
+        "request-specific actual graph delta versus no-edit compile",
+        "request-specific compiled warning messages or per-kind inspection warnings",
+        "request-specific resolved targets after the value is applied"
+      ],
+      "attribution": "MISSING_AGAINST_UNCHANGED_TRUTH; safety classification unresolved. The saved empty frozen target list does not prove the requested compile was only safely ignored. Source/document/no-edit checks passed at the recorded scope, but no request-specific unsafe-write or structural-change conclusion is made. Whole-document equality was recorded with Python equality, not a type-sensitive serialized hash."
+    },
+    {
+      "group": "initial75",
+      "public_sample": "2df6c0ad8d1a",
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_kontext_example_comic.webp",
+      "source_sha256": "d35c3cfd94b382e7a56b0be98e50a9a4680e9f4d13c7b3c7595cf82de9edfd5e",
+      "kind": "height",
+      "original_truth_mode": "automatic",
+      "original_expected_targets": [
+        "/27/inputs/height"
+      ],
+      "actual_frozen_compile_targets": [],
+      "strict_status": "missing",
+      "original_directed_whole_graph_exact": false,
+      "saved_evidence": {
+        "no_edit_retained_nodes_equal": true,
+        "no_edit_links_equal": true,
+        "whole_document_snapshot_equal_after_all_operations": true,
+        "source_graph_equal": true,
+        "source_file_bytes_unchanged": true,
+        "all_values_bound_target_mismatches": [],
+        "inspection_aggregate_issue_codes_before_request": [
+          "ambiguous",
+          "dependencies_unchecked",
+          "unbound"
+        ],
+        "explicit_mapping_operations_for_this_kind": []
+      },
+      "not_captured_in_original_probe": [
+        "request-specific actual graph delta versus no-edit compile",
+        "request-specific compiled warning messages or per-kind inspection warnings",
+        "request-specific resolved targets after the value is applied"
+      ],
+      "attribution": "MISSING_AGAINST_UNCHANGED_TRUTH; safety classification unresolved. The saved empty frozen target list does not prove the requested compile was only safely ignored. Source/document/no-edit checks passed at the recorded scope, but no request-specific unsafe-write or structural-change conclusion is made. Whole-document equality was recorded with Python equality, not a type-sensitive serialized hash."
+    },
+    {
+      "group": "blind-r1",
+      "public_sample": "helper/hf-lora-stack.json",
+      "source_url": "https://huggingface.co/minhnhatdo/colab-notebook/resolve/ee749d145346cd4221107a1d22f5527e40f0f024/workflow/workflow_api.json",
+      "source_sha256": "62ba66cacec39bd0aa002af202129eb9caa23df1c8b15ae8aa386502571257fc",
+      "kind": "width",
+      "original_truth_mode": "automatic",
+      "original_expected_targets": [
+        "/134/inputs/width"
+      ],
+      "actual_frozen_compile_targets": [],
+      "strict_status": "missing",
+      "original_directed_whole_graph_exact": false,
+      "saved_evidence": {
+        "no_edit_retained_nodes_equal": true,
+        "no_edit_links_equal": true,
+        "whole_document_snapshot_equal_after_all_operations": true,
+        "source_graph_equal": true,
+        "source_file_bytes_unchanged": true,
+        "all_values_bound_target_mismatches": [],
+        "inspection_aggregate_issue_codes_before_request": [
+          "ambiguous",
+          "dependencies_unchecked",
+          "unbound"
+        ],
+        "explicit_mapping_operations_for_this_kind": []
+      },
+      "not_captured_in_original_probe": [
+        "request-specific actual graph delta versus no-edit compile",
+        "request-specific compiled warning messages or per-kind inspection warnings",
+        "request-specific resolved targets after the value is applied"
+      ],
+      "attribution": "MISSING_AGAINST_UNCHANGED_TRUTH; safety classification unresolved. The saved empty frozen target list does not prove the requested compile was only safely ignored. Source/document/no-edit checks passed at the recorded scope, but no request-specific unsafe-write or structural-change conclusion is made. Whole-document equality was recorded with Python equality, not a type-sensitive serialized hash."
+    },
+    {
+      "group": "blind-r1",
+      "public_sample": "helper/hf-lora-stack.json",
+      "source_url": "https://huggingface.co/minhnhatdo/colab-notebook/resolve/ee749d145346cd4221107a1d22f5527e40f0f024/workflow/workflow_api.json",
+      "source_sha256": "62ba66cacec39bd0aa002af202129eb9caa23df1c8b15ae8aa386502571257fc",
+      "kind": "height",
+      "original_truth_mode": "automatic",
+      "original_expected_targets": [
+        "/134/inputs/height"
+      ],
+      "actual_frozen_compile_targets": [],
+      "strict_status": "missing",
+      "original_directed_whole_graph_exact": false,
+      "saved_evidence": {
+        "no_edit_retained_nodes_equal": true,
+        "no_edit_links_equal": true,
+        "whole_document_snapshot_equal_after_all_operations": true,
+        "source_graph_equal": true,
+        "source_file_bytes_unchanged": true,
+        "all_values_bound_target_mismatches": [],
+        "inspection_aggregate_issue_codes_before_request": [
+          "ambiguous",
+          "dependencies_unchecked",
+          "unbound"
+        ],
+        "explicit_mapping_operations_for_this_kind": []
+      },
+      "not_captured_in_original_probe": [
+        "request-specific actual graph delta versus no-edit compile",
+        "request-specific compiled warning messages or per-kind inspection warnings",
+        "request-specific resolved targets after the value is applied"
+      ],
+      "attribution": "MISSING_AGAINST_UNCHANGED_TRUTH; safety classification unresolved. The saved empty frozen target list does not prove the requested compile was only safely ignored. Source/document/no-edit checks passed at the recorded scope, but no request-specific unsafe-write or structural-change conclusion is made. Whole-document equality was recorded with Python equality, not a type-sensitive serialized hash."
+    },
+    {
+      "group": "blind-r1",
+      "public_sample": "helper/cog-consistent-character.json",
+      "source_url": "https://raw.githubusercontent.com/fofr/cog-consistent-character/main/workflow_api.json",
+      "source_sha256": "d82a65a942358c737e754ca7f05450739bf1b4081da3329efe7500eafd19f1bf",
+      "kind": "width",
+      "original_truth_mode": "automatic",
+      "original_expected_targets": [
+        "/29/inputs/width"
+      ],
+      "actual_frozen_compile_targets": [],
+      "strict_status": "missing",
+      "original_directed_whole_graph_exact": false,
+      "saved_evidence": {
+        "no_edit_retained_nodes_equal": true,
+        "no_edit_links_equal": true,
+        "whole_document_snapshot_equal_after_all_operations": true,
+        "source_graph_equal": true,
+        "source_file_bytes_unchanged": true,
+        "all_values_bound_target_mismatches": [],
+        "inspection_aggregate_issue_codes_before_request": [
+          "ambiguous",
+          "dependencies_unchecked",
+          "unbound"
+        ],
+        "explicit_mapping_operations_for_this_kind": []
+      },
+      "not_captured_in_original_probe": [
+        "request-specific actual graph delta versus no-edit compile",
+        "request-specific compiled warning messages or per-kind inspection warnings",
+        "request-specific resolved targets after the value is applied"
+      ],
+      "attribution": "MISSING_AGAINST_UNCHANGED_TRUTH; safety classification unresolved. The saved empty frozen target list does not prove the requested compile was only safely ignored. Source/document/no-edit checks passed at the recorded scope, but no request-specific unsafe-write or structural-change conclusion is made. Whole-document equality was recorded with Python equality, not a type-sensitive serialized hash."
+    },
+    {
+      "group": "blind-r1",
+      "public_sample": "helper/cog-consistent-character.json",
+      "source_url": "https://raw.githubusercontent.com/fofr/cog-consistent-character/main/workflow_api.json",
+      "source_sha256": "d82a65a942358c737e754ca7f05450739bf1b4081da3329efe7500eafd19f1bf",
+      "kind": "height",
+      "original_truth_mode": "automatic",
+      "original_expected_targets": [
+        "/29/inputs/height"
+      ],
+      "actual_frozen_compile_targets": [],
+      "strict_status": "missing",
+      "original_directed_whole_graph_exact": false,
+      "saved_evidence": {
+        "no_edit_retained_nodes_equal": true,
+        "no_edit_links_equal": true,
+        "whole_document_snapshot_equal_after_all_operations": true,
+        "source_graph_equal": true,
+        "source_file_bytes_unchanged": true,
+        "all_values_bound_target_mismatches": [],
+        "inspection_aggregate_issue_codes_before_request": [
+          "ambiguous",
+          "dependencies_unchecked",
+          "unbound"
+        ],
+        "explicit_mapping_operations_for_this_kind": []
+      },
+      "not_captured_in_original_probe": [
+        "request-specific actual graph delta versus no-edit compile",
+        "request-specific compiled warning messages or per-kind inspection warnings",
+        "request-specific resolved targets after the value is applied"
+      ],
+      "attribution": "MISSING_AGAINST_UNCHANGED_TRUTH; safety classification unresolved. The saved empty frozen target list does not prove the requested compile was only safely ignored. Source/document/no-edit checks passed at the recorded scope, but no request-specific unsafe-write or structural-change conclusion is made. Whole-document equality was recorded with Python equality, not a type-sensitive serialized hash."
+    }
+  ],
+  "R2_sixteen_fixed_request_differences": [
+    {
+      "sample": 1,
+      "original_request_position": 9,
+      "kind": "steps",
+      "expected_targets": [
+        "/3/inputs/steps"
+      ],
+      "actual_targets": [
+        "/33/inputs/steps"
+      ],
+      "actual_changed_pointers": [
+        "/33/inputs/steps"
+      ],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 0,
+      "requested_kind_warning_observed": false,
+      "warning_hashes": [],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/3/inputs/steps",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/33/inputs/steps",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "WRITE_TO_DIFFERENT_STAGE_THAN_FIXED_ORACLE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 1,
+      "original_request_position": 12,
+      "kind": "cfg",
+      "expected_targets": [
+        "/3/inputs/cfg"
+      ],
+      "actual_targets": [
+        "/33/inputs/cfg"
+      ],
+      "actual_changed_pointers": [
+        "/33/inputs/cfg"
+      ],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 0,
+      "requested_kind_warning_observed": false,
+      "warning_hashes": [],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/3/inputs/cfg",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/33/inputs/cfg",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "WRITE_TO_DIFFERENT_STAGE_THAN_FIXED_ORACLE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 1,
+      "original_request_position": 15,
+      "kind": "sampler",
+      "expected_targets": [
+        "/3/inputs/sampler_name"
+      ],
+      "actual_targets": [
+        "/33/inputs/sampler_name"
+      ],
+      "actual_changed_pointers": [
+        "/33/inputs/sampler_name"
+      ],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 0,
+      "requested_kind_warning_observed": false,
+      "warning_hashes": [],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/3/inputs/sampler_name",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/33/inputs/sampler_name",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "WRITE_TO_DIFFERENT_STAGE_THAN_FIXED_ORACLE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 2,
+      "original_request_position": 5,
+      "kind": "width",
+      "expected_targets": [
+        "/34/inputs/width"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "906474136babae101f1b821b071313c3a9b9c186feb3b62354ab0cfd17dfe49f",
+          "character_count": 47
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/34/inputs/width",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 2,
+      "original_request_position": 6,
+      "kind": "height",
+      "expected_targets": [
+        "/34/inputs/height"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "4dcbe5575c6a432255db66398d04dd2870ea94ee59dd53edfeea7405c1f2a151",
+          "character_count": 48
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/34/inputs/height",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 2,
+      "original_request_position": 8,
+      "kind": "steps",
+      "expected_targets": [
+        "/3/inputs/steps"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "0314b74ccb81450008c65421220868a6f88bcf7cbddb4f7d32000fe178623408",
+          "character_count": 47
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/3/inputs/steps",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/33/inputs/steps",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 2,
+      "original_request_position": 11,
+      "kind": "cfg",
+      "expected_targets": [
+        "/3/inputs/cfg"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "7f88490863f1ece5f04c9047174a5be198d1c67d6249753b09a0138fab339b3f",
+          "character_count": 45
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/3/inputs/cfg",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/33/inputs/cfg",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 2,
+      "original_request_position": 14,
+      "kind": "sampler",
+      "expected_targets": [
+        "/3/inputs/sampler_name"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "8a4ee5252b58638579e3cf9ae37a6694c454e1a02180fb0148bcfd382acf884a",
+          "character_count": 49
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/3/inputs/sampler_name",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/33/inputs/sampler_name",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 14,
+      "original_request_position": 5,
+      "kind": "width",
+      "expected_targets": [
+        "/4/inputs/empty_latent_width"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "906474136babae101f1b821b071313c3a9b9c186feb3b62354ab0cfd17dfe49f",
+          "character_count": 47
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/4/inputs/empty_latent_width",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 14,
+      "original_request_position": 6,
+      "kind": "height",
+      "expected_targets": [
+        "/4/inputs/empty_latent_height"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "4dcbe5575c6a432255db66398d04dd2870ea94ee59dd53edfeea7405c1f2a151",
+          "character_count": 48
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/4/inputs/empty_latent_height",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 14,
+      "original_request_position": 10,
+      "kind": "steps",
+      "expected_targets": [
+        "/8/inputs/steps"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "0314b74ccb81450008c65421220868a6f88bcf7cbddb4f7d32000fe178623408",
+          "character_count": 47
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/8/inputs/steps",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/71/inputs/steps",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 14,
+      "original_request_position": 13,
+      "kind": "cfg",
+      "expected_targets": [
+        "/8/inputs/cfg"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "7f88490863f1ece5f04c9047174a5be198d1c67d6249753b09a0138fab339b3f",
+          "character_count": 45
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/8/inputs/cfg",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/71/inputs/cfg",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 14,
+      "original_request_position": 16,
+      "kind": "sampler",
+      "expected_targets": [
+        "/8/inputs/sampler_name"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "8a4ee5252b58638579e3cf9ae37a6694c454e1a02180fb0148bcfd382acf884a",
+          "character_count": 49
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/8/inputs/sampler_name",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        },
+        {
+          "pointer": "/71/inputs/sampler_name",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 15,
+      "original_request_position": 7,
+      "kind": "steps",
+      "expected_targets": [
+        "/10/inputs/steps"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "0314b74ccb81450008c65421220868a6f88bcf7cbddb4f7d32000fe178623408",
+          "character_count": 47
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/10/inputs/steps",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 15,
+      "original_request_position": 8,
+      "kind": "cfg",
+      "expected_targets": [
+        "/10/inputs/cfg"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "7f88490863f1ece5f04c9047174a5be198d1c67d6249753b09a0138fab339b3f",
+          "character_count": 45
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/10/inputs/cfg",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    },
+    {
+      "sample": 15,
+      "original_request_position": 9,
+      "kind": "sampler",
+      "expected_targets": [
+        "/10/inputs/sampler_name"
+      ],
+      "actual_targets": [],
+      "actual_changed_pointers": [],
+      "whole_graph_matches_original_request_oracle": false,
+      "all_connections_equal": true,
+      "recorded_graph_equals_doc_graph": true,
+      "warning_count": 1,
+      "requested_kind_warning_observed": true,
+      "warning_hashes": [
+        {
+          "sha256": "8a4ee5252b58638579e3cf9ae37a6694c454e1a02180fb0148bcfd382acf884a",
+          "character_count": 49
+        }
+      ],
+      "separate_main_probe_full_document_snapshot_equal": true,
+      "separate_main_probe_input_snapshot_equal": true,
+      "separate_main_probe_source_bytes_equal": true,
+      "separate_main_probe_explicit_mapping_operations": [
+        {
+          "pointer": "/10/inputs/sampler_name",
+          "whole_graph_exact": true,
+          "links_equal": true,
+          "error_type": null
+        }
+      ],
+      "observed_behavior": "TYPE_SENSITIVE_EMPTY_COMPILED_DELTA_WITH_MISSING_EXPECTED_WRITE",
+      "classification_limit": "This describes observed behavior, not an automatic safety PASS. The fixed replay compares graph with doc.graph for immutability; its independent per-request full-document typed hash was not captured. Independent deep snapshot evidence is from the separate main probe."
+    }
+  ],
+  "R2_strict_changes_against_50bb": [
+    {
+      "sample": 2,
+      "kind": "width",
+      "at_50bb_exact": true,
+      "current_exact": false,
+      "original_expected_targets": [
+        "/34/inputs/width"
+      ],
+      "at_50bb_actual": [
+        "/34/inputs/width"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 2,
+      "kind": "height",
+      "at_50bb_exact": true,
+      "current_exact": false,
+      "original_expected_targets": [
+        "/34/inputs/height"
+      ],
+      "at_50bb_actual": [
+        "/34/inputs/height"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 2,
+      "kind": "steps",
+      "at_50bb_exact": false,
+      "current_exact": true,
+      "original_expected_targets": [
+        "/3/inputs/steps",
+        "/33/inputs/steps"
+      ],
+      "at_50bb_actual": [
+        "/3/inputs/steps"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 2,
+      "kind": "cfg",
+      "at_50bb_exact": false,
+      "current_exact": true,
+      "original_expected_targets": [
+        "/3/inputs/cfg",
+        "/33/inputs/cfg"
+      ],
+      "at_50bb_actual": [
+        "/3/inputs/cfg"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 2,
+      "kind": "sampler",
+      "at_50bb_exact": false,
+      "current_exact": true,
+      "original_expected_targets": [
+        "/3/inputs/sampler_name",
+        "/33/inputs/sampler_name"
+      ],
+      "at_50bb_actual": [
+        "/3/inputs/sampler_name"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 14,
+      "kind": "width",
+      "at_50bb_exact": true,
+      "current_exact": false,
+      "original_expected_targets": [
+        "/4/inputs/empty_latent_width"
+      ],
+      "at_50bb_actual": [
+        "/4/inputs/empty_latent_width"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 14,
+      "kind": "height",
+      "at_50bb_exact": true,
+      "current_exact": false,
+      "original_expected_targets": [
+        "/4/inputs/empty_latent_height"
+      ],
+      "at_50bb_actual": [
+        "/4/inputs/empty_latent_height"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 14,
+      "kind": "steps",
+      "at_50bb_exact": false,
+      "current_exact": true,
+      "original_expected_targets": [
+        "/8/inputs/steps",
+        "/71/inputs/steps"
+      ],
+      "at_50bb_actual": [
+        "/8/inputs/steps"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 14,
+      "kind": "cfg",
+      "at_50bb_exact": false,
+      "current_exact": true,
+      "original_expected_targets": [
+        "/8/inputs/cfg",
+        "/71/inputs/cfg"
+      ],
+      "at_50bb_actual": [
+        "/8/inputs/cfg"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 14,
+      "kind": "sampler",
+      "at_50bb_exact": false,
+      "current_exact": true,
+      "original_expected_targets": [
+        "/8/inputs/sampler_name",
+        "/71/inputs/sampler_name"
+      ],
+      "at_50bb_actual": [
+        "/8/inputs/sampler_name"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 15,
+      "kind": "steps",
+      "at_50bb_exact": true,
+      "current_exact": false,
+      "original_expected_targets": [
+        "/10/inputs/steps"
+      ],
+      "at_50bb_actual": [
+        "/10/inputs/steps"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 15,
+      "kind": "cfg",
+      "at_50bb_exact": true,
+      "current_exact": false,
+      "original_expected_targets": [
+        "/10/inputs/cfg"
+      ],
+      "at_50bb_actual": [
+        "/10/inputs/cfg"
+      ],
+      "current_actual": []
+    },
+    {
+      "sample": 15,
+      "kind": "sampler",
+      "at_50bb_exact": true,
+      "current_exact": false,
+      "original_expected_targets": [
+        "/10/inputs/sampler_name"
+      ],
+      "at_50bb_actual": [
+        "/10/inputs/sampler_name"
+      ],
+      "current_actual": []
+    }
+  ],
+  "summary": {
+    "corpus_missing": 8,
+    "corpus_request_specific_write_safety_not_captured": 8,
+    "R2_different_stage_writes": 3,
+    "R2_empty_actual_deltas": 13,
+    "R2_empty_deltas_with_requested_kind_warning": 13,
+    "R2_fixed_connections_preserved": 16
+  },
+  "report_resource_guard": {
+    "pid": 11820,
+    "available_mask_before": "0xffff",
+    "system_mask": "0xffff",
+    "selected_lowest_cpu_mask": "0x1",
+    "affinity_mask_read_back": "0x1",
+    "priority_class": 16384,
+    "priority_name": "BelowNormal",
+    "verified_before_mio_import": true,
+    "python_processes": 1,
+    "child_processes_started": 0
+  },
+  "R2_sample1_stage_attribution": {
+    "source_revision": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+    "scope": "Saved-result and static-source attribution only; zero new product calls",
+    "public_sample": "stable_cascade__image_remixing_multiple.png",
+    "public_source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/stable_cascade/stable_cascade__image_remixing_multiple.png",
+    "source_file_sha256": "57196fa33edf8bc275b20b53f201cef20913e924911ae0fe0d646e73400d49cf",
+    "original_oracle_provenance": {
+      "kind": "original pre-engine expectation manifest fixed before the original product calls",
+      "sha256": "9293cecf0989a14d883eb839110f5302cb2b69f328bdc5ce56c13e98d01e4d55",
+      "current_replay_did_not_redefine_truth": true,
+      "before_after_immutable_artifact_snapshots": "original manifest included in the recorded 721-artifact pre/post invariant set"
+    },
+    "normalized_graph_sha256": "88396eb6efcb09a42bd2336917ebaf472e0dc167ff2780e86443084f62a2bb92",
+    "neutral_node_roles": {
+      "3": "earlier sampler",
+      "33": "later sampler",
+      "34": "two-output latent source",
+      "36": "earlier-stage conditioning adapter",
+      "8": "decoder",
+      "9": "image sink"
+    },
+    "observed_graph_edges": [
+      {
+        "source_node": "8",
+        "source_output": 0,
+        "consumer_node": "9",
+        "consumer_port": "images"
+      },
+      {
+        "source_node": "33",
+        "source_output": 0,
+        "consumer_node": "8",
+        "consumer_port": "samples"
+      },
+      {
+        "source_node": "34",
+        "source_output": 1,
+        "consumer_node": "33",
+        "consumer_port": "latent_image"
+      },
+      {
+        "source_node": "34",
+        "source_output": 0,
+        "consumer_node": "3",
+        "consumer_port": "latent_image"
+      },
+      {
+        "source_node": "3",
+        "source_output": 0,
+        "consumer_node": "36",
+        "consumer_port": "stage_c"
+      },
+      {
+        "source_node": "36",
+        "source_output": 0,
+        "consumer_node": "33",
+        "consumer_port": "positive"
+      }
+    ],
+    "selection_cause_static": {
+      "at_50bb_rule": "primary_sites excludes scalar-control ports, then follows all other execution dependencies. Sampler 33 reaches sampler 3 through positive -> adapter stage_c, so sampler 3 is primary.",
+      "current_rule": "binding_scope.primary_sites follows canvas roles only. The image sink reaches decoder, sampler 33, then latent source output 1. Positive is explicitly non-canvas, so sampler 3 is absent from the canvas-site set and sampler 33 is primary.",
+      "current_canvas_lineage_derived_from_source": [
+        "9",
+        "8",
+        "33",
+        "34"
+      ],
+      "current_primary_derived_from_source": [
+        "33"
+      ],
+      "derivation_limit": "primary and canvas-lineage sets are statically derived from frozen graph and source, not a new runtime measurement. The changed targets and deltas are existing runtime records.",
+      "source_locations": [
+        "server/mio_server/comfy/binding_scope.py:9",
+        "server/mio_server/comfy/binding_scope.py:27",
+        "server/mio_server/comfy/binding_scope.py:96",
+        "server/mio_server/comfy/binding_scope.py:125",
+        "server/mio_server/comfy/binding_inference.py:378"
+      ]
+    },
+    "request_records": [
+      {
+        "kind": "steps",
+        "original_truth_mode": "manual",
+        "original_truth_candidates": [
+          "/3/inputs/steps",
+          "/33/inputs/steps"
+        ],
+        "initial_observed_automatic_targets": [
+          "/3/inputs/steps"
+        ],
+        "at_50bb_observed_automatic_targets": [
+          "/3/inputs/steps"
+        ],
+        "current_observed_automatic_targets": [
+          "/33/inputs/steps"
+        ],
+        "fixed_original_request_targets": [
+          "/3/inputs/steps"
+        ],
+        "observed_changed_pointers": [
+          "/33/inputs/steps"
+        ],
+        "warning_count": 0,
+        "all_connections_equal": true,
+        "matches_fixed_original_request": false,
+        "current_manual_operations": [
+          {
+            "target": "/3/inputs/steps",
+            "changed_pointers": [
+              "/3/inputs/steps"
+            ],
+            "whole_graph_exact": true,
+            "all_connections_equal": true
+          },
+          {
+            "target": "/33/inputs/steps",
+            "changed_pointers": [
+              "/33/inputs/steps"
+            ],
+            "whole_graph_exact": true,
+            "all_connections_equal": true
+          }
+        ]
+      },
+      {
+        "kind": "cfg",
+        "original_truth_mode": "manual",
+        "original_truth_candidates": [
+          "/3/inputs/cfg",
+          "/33/inputs/cfg"
+        ],
+        "initial_observed_automatic_targets": [
+          "/3/inputs/cfg"
+        ],
+        "at_50bb_observed_automatic_targets": [
+          "/3/inputs/cfg"
+        ],
+        "current_observed_automatic_targets": [
+          "/33/inputs/cfg"
+        ],
+        "fixed_original_request_targets": [
+          "/3/inputs/cfg"
+        ],
+        "observed_changed_pointers": [
+          "/33/inputs/cfg"
+        ],
+        "warning_count": 0,
+        "all_connections_equal": true,
+        "matches_fixed_original_request": false,
+        "current_manual_operations": [
+          {
+            "target": "/3/inputs/cfg",
+            "changed_pointers": [
+              "/3/inputs/cfg"
+            ],
+            "whole_graph_exact": true,
+            "all_connections_equal": true
+          },
+          {
+            "target": "/33/inputs/cfg",
+            "changed_pointers": [
+              "/33/inputs/cfg"
+            ],
+            "whole_graph_exact": true,
+            "all_connections_equal": true
+          }
+        ]
+      },
+      {
+        "kind": "sampler",
+        "original_truth_mode": "manual",
+        "original_truth_candidates": [
+          "/3/inputs/sampler_name",
+          "/33/inputs/sampler_name"
+        ],
+        "initial_observed_automatic_targets": [
+          "/3/inputs/sampler_name"
+        ],
+        "at_50bb_observed_automatic_targets": [
+          "/3/inputs/sampler_name"
+        ],
+        "current_observed_automatic_targets": [
+          "/33/inputs/sampler_name"
+        ],
+        "fixed_original_request_targets": [
+          "/3/inputs/sampler_name"
+        ],
+        "observed_changed_pointers": [
+          "/33/inputs/sampler_name"
+        ],
+        "warning_count": 0,
+        "all_connections_equal": true,
+        "matches_fixed_original_request": false,
+        "current_manual_operations": [
+          {
+            "target": "/3/inputs/sampler_name",
+            "changed_pointers": [
+              "/3/inputs/sampler_name"
+            ],
+            "whole_graph_exact": true,
+            "all_connections_equal": true
+          },
+          {
+            "target": "/33/inputs/sampler_name",
+            "changed_pointers": [
+              "/33/inputs/sampler_name"
+            ],
+            "whole_graph_exact": true,
+            "all_connections_equal": true
+          }
+        ]
+      }
+    ],
+    "other_thirteen_empty_delta_warning_records": [
+      {
+        "sample": 2,
+        "original_request_position": 5,
+        "kind": "width",
+        "expected_targets": [
+          "/34/inputs/width"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 width 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 2,
+        "original_request_position": 6,
+        "kind": "height",
+        "expected_targets": [
+          "/34/inputs/height"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 height 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 2,
+        "original_request_position": 8,
+        "kind": "steps",
+        "expected_targets": [
+          "/3/inputs/steps"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 steps 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 2,
+        "original_request_position": 11,
+        "kind": "cfg",
+        "expected_targets": [
+          "/3/inputs/cfg"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 cfg 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 2,
+        "original_request_position": 14,
+        "kind": "sampler",
+        "expected_targets": [
+          "/3/inputs/sampler_name"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 sampler 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 14,
+        "original_request_position": 5,
+        "kind": "width",
+        "expected_targets": [
+          "/4/inputs/empty_latent_width"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 width 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 14,
+        "original_request_position": 6,
+        "kind": "height",
+        "expected_targets": [
+          "/4/inputs/empty_latent_height"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 height 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 14,
+        "original_request_position": 10,
+        "kind": "steps",
+        "expected_targets": [
+          "/8/inputs/steps"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 steps 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 14,
+        "original_request_position": 13,
+        "kind": "cfg",
+        "expected_targets": [
+          "/8/inputs/cfg"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 cfg 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 14,
+        "original_request_position": 16,
+        "kind": "sampler",
+        "expected_targets": [
+          "/8/inputs/sampler_name"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 sampler 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 15,
+        "original_request_position": 7,
+        "kind": "steps",
+        "expected_targets": [
+          "/10/inputs/steps"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 steps 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 15,
+        "original_request_position": 8,
+        "kind": "cfg",
+        "expected_targets": [
+          "/10/inputs/cfg"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 cfg 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      },
+      {
+        "sample": 15,
+        "original_request_position": 9,
+        "kind": "sampler",
+        "expected_targets": [
+          "/10/inputs/sampler_name"
+        ],
+        "actual_targets": [],
+        "observed_changed_pointers": [],
+        "observed_warning": "工作流没有 sampler 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "all_connections_equal": true
+      }
+    ],
+    "unchanged_evidence": {
+      "baseline_retained_node_count": 16,
+      "baseline_pruned_node_count": 0,
+      "baseline_original_node_values_equal": true,
+      "source_graph_snapshot_equal": true,
+      "source_document_deep_snapshot_equal": true,
+      "source_file_bytes_equal": true
+    },
+    "conclusion": "Observed automatic writes really retarget from the earlier sampler to a distinct later sampler. This is not merely an oracle-label difference. However, the original pre-engine oracle required manual selection of either stage, so the historical automatic earlier-stage write was not an approved automatic contract either. Both versions fail the unchanged manual oracle; the current three automatic writes have no warning. Preserve both the fixed-request failure and the manual-oracle failure for independent review, without treating this as a safe boundary or editing truth."
+  }
+}

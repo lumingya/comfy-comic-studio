@@ -121,6 +121,7 @@ export const configZh = {
     title: '工作流与参数映射',
     list: '工作流列表',
     search: '搜索工作流或模型',
+    loraUnavailable: 'LoRA 分析不可用',
     empty: '还没有工作流',
     emptyHint: '在 ComfyUI 中使用「导出 (API)」，再导入 JSON。普通的界面格式不能直接运行。',
     uiFormat: '这是 ComfyUI 界面格式，请在 ComfyUI 中使用「导出 (API)」后重新导入。',
@@ -497,6 +498,7 @@ export const configEn = {
     title: 'Workflows & parameter mapping',
     list: 'Workflow list',
     search: 'Search workflows or models',
+    loraUnavailable: 'LoRA analysis unavailable',
     empty: 'No workflows yet',
     emptyHint:
       'Use Export (API) in ComfyUI, then import that JSON. The regular editor format cannot run directly.',

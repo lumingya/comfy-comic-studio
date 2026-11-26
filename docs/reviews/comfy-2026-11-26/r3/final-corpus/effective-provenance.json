@@ -1,0 +1,172 @@
+{
+  "head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "start_utc": "2026-11-26T02:25:38.899949+00:00",
+  "end_utc": "2026-11-26T02:27:37.540130+00:00",
+  "resource_guard": {
+    "pid": 26212,
+    "available_mask_before": "0xffff",
+    "system_mask": "0xffff",
+    "selected_lowest_cpu_mask": "0x1",
+    "affinity_mask_read_back": "0x1",
+    "priority_class": 16384,
+    "priority_name": "BelowNormal",
+    "verified_before_mio_import": true,
+    "python_processes": 1,
+    "child_processes_started": 0
+  },
+  "runs": [
+    {
+      "entry": "corpus/reprobe.py",
+      "pid": 46476,
+      "start_utc": "2026-11-26T02:27:25.970271+00:00",
+      "end_utc": "2026-11-26T02:27:32.818590+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "corpus/retest138.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:39.615254+00:00",
+      "end_utc": "2026-11-26T02:25:39.965709+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "r2/probe.py",
+      "pid": 46476,
+      "start_utc": "2026-11-26T02:27:32.818659+00:00",
+      "end_utc": "2026-11-26T02:27:33.426738+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "r2/replay_fixed138.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:39.977592+00:00",
+      "end_utc": "2026-11-26T02:25:40.530856+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "r2/check_manual_boundaries.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:40.531391+00:00",
+      "end_utc": "2026-11-26T02:25:40.599735+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "r3/retest.py",
+      "pid": 46476,
+      "start_utc": "2026-11-26T02:27:33.426806+00:00",
+      "end_utc": "2026-11-26T02:27:35.729757+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "compile/probe_compile.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:40.610087+00:00",
+      "end_utc": "2026-11-26T02:25:40.679438+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "compile/lora/probe_retest.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:40.680003+00:00",
+      "end_utc": "2026-11-26T02:25:40.742933+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "compile/cross_checks.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:40.743408+00:00",
+      "end_utc": "2026-11-26T02:25:40.782380+00:00",
+      "completed": true,
+      "error_type": null
+    },
+    {
+      "entry": "compile/aspect_ratio_crosscheck.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:40.782878+00:00",
+      "end_utc": "2026-11-26T02:25:40.815994+00:00",
+      "completed": true,
+      "error_type": null
+    }
+  ],
+  "source": {
+    "revision": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+    "all_backend_python_file_count": 215,
+    "all_backend_python_sha256": "1c08bb82bdfa09aac17934d44e60786a48706f0696b31d9b3c38b5df096f2a16",
+    "all_server_python_file_count": 399,
+    "all_server_python_sha256": "dfe376e4347481d6de1e7eeb5c4151b8778bdb9526fc060af00bcd06c42a7a1e"
+  },
+  "preservation": {
+    "all_sources_unchanged": true,
+    "old_artifacts_unchanged": true,
+    "old_artifact_count": 721,
+    "database_file_unchanged": true,
+    "database_sha256_before": "fceaa5521c2b65969f1cbadc57ef676aa4e6fe847f31aa8b21e451f92d6f0e49",
+    "database_sha256_after": "fceaa5521c2b65969f1cbadc57ef676aa4e6fe847f31aa8b21e451f92d6f0e49"
+  },
+  "child_processes_started": 0,
+  "network_calls_permitted": false,
+  "preparation_failure_history": [
+    {
+      "entry": "corpus/reprobe.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:39.556164+00:00",
+      "end_utc": "2026-11-26T02:25:39.614379+00:00",
+      "completed": false,
+      "error_type": "TypeError"
+    },
+    {
+      "entry": "r2/probe.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:39.966176+00:00",
+      "end_utc": "2026-11-26T02:25:39.977042+00:00",
+      "completed": false,
+      "error_type": "NameError"
+    },
+    {
+      "entry": "r3/retest.py",
+      "pid": 26212,
+      "start_utc": "2026-11-26T02:25:40.600377+00:00",
+      "end_utc": "2026-11-26T02:25:40.609407+00:00",
+      "completed": false,
+      "error_type": "NameError"
+    }
+  ],
+  "sequential_process_guards": [
+    {
+      "pid": 26212,
+      "available_mask_before": "0xffff",
+      "system_mask": "0xffff",
+      "selected_lowest_cpu_mask": "0x1",
+      "affinity_mask_read_back": "0x1",
+      "priority_class": 16384,
+      "priority_name": "BelowNormal",
+      "verified_before_mio_import": true,
+      "python_processes": 1,
+      "child_processes_started": 0
+    },
+    {
+      "pid": 46476,
+      "available_mask_before": "0xffff",
+      "system_mask": "0xffff",
+      "selected_lowest_cpu_mask": "0x1",
+      "affinity_mask_read_back": "0x1",
+      "priority_class": 16384,
+      "priority_name": "BelowNormal",
+      "verified_before_mio_import": true,
+      "python_processes": 1,
+      "child_processes_started": 0
+    }
+  ],
+  "resume_preservation": {
+    "sources_unchanged": true,
+    "old_artifacts_unchanged": true
+  }
+}

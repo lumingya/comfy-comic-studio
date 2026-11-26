@@ -13796,6 +13796,29 @@
     "title": "WorkflowImport",
     "type": "object"
    },
+   "WorkflowLoraSummary": {
+    "properties": {
+     "enabled": {
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "groups": {
+      "title": "Groups",
+      "type": "integer"
+     },
+     "supports_independent_toggle": {
+      "title": "Supports Independent Toggle",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "enabled",
+     "groups",
+     "supports_independent_toggle"
+    ],
+    "title": "WorkflowLoraSummary",
+    "type": "object"
+   },
    "WorkflowPatch": {
     "properties": {
      "config": {
@@ -13843,6 +13866,111 @@
      }
     },
     "title": "WorkflowPatch",
+    "type": "object"
+   },
+   "WorkflowSummary": {
+    "properties": {
+     "checkpoint": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Checkpoint"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "image_inputs": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Image Inputs",
+      "type": "array"
+     },
+     "lora_error": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/WorkflowSummaryError"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "loras": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/WorkflowLoraSummary"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "nodes": {
+      "title": "Nodes",
+      "type": "integer"
+     },
+     "source": {
+      "enum": [
+       "import",
+       "builtin",
+       "legacy"
+      ],
+      "title": "Source",
+      "type": "string"
+     },
+     "updated_at": {
+      "title": "Updated At",
+      "type": "string"
+     },
+     "variants": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Variants",
+      "type": "array"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "source",
+     "nodes",
+     "variants",
+     "image_inputs",
+     "checkpoint",
+     "loras",
+     "updated_at"
+    ],
+    "title": "WorkflowSummary",
+    "type": "object"
+   },
+   "WorkflowSummaryError": {
+    "properties": {
+     "code": {
+      "title": "Code",
+      "type": "string"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     }
+    },
+    "required": [
+     "code",
+     "message"
+    ],
+    "title": "WorkflowSummaryError",
     "type": "object"
    },
    "WorkflowTrialRequest": {
@@ -25012,7 +25140,7 @@
        "application/json": {
         "schema": {
          "items": {
-          "type": "object"
+          "$ref": "#/components/schemas/WorkflowSummary"
          },
          "title": "Response List Workflows",
          "type": "array"

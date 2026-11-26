@@ -1,0 +1,2022 @@
+{
+  "schema": "mio.privacy.ci.audit.safe.v1",
+  "audit_date": "2026-11-26",
+  "result": "VERIFIED PASS",
+  "result_scope": "Fixed-commit repository privacy, hygiene, and existing remote CI evidence only; not the whole five-auditor round.",
+  "head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "finding_counts_open_in_fixed_commit": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "audit_execution": {
+    "repository_writes": false,
+    "git_mutations": false,
+    "original_user_workspace_access": false,
+    "local_tests_builds_services_or_product_probes": false,
+    "browser_or_profile_access_by_this_auditor": false,
+    "prior_report_conclusions_used": false,
+    "prior_reports_mechanical_content_scan_only": true,
+    "local_static_scans": "Sequential standard-library scripts with BelowNormal process priority; no parallel local gate.",
+    "temporary_cache_cleanup_performed": false
+  },
+  "repository_hygiene": {
+    "final_changed_file_count": 106,
+    "all_changed_files_utf8": true,
+    "changed_binary_or_image_candidates": 0,
+    "sensitive_candidate_count": 0,
+    "commit_count": 10,
+    "distinct_path_blob_versions": 167,
+    "history_sensitive_candidate_count": 0,
+    "history_binary_candidate_count": 0,
+    "paths_added_then_deleted_count": 0,
+    "working_tree_clean": true,
+    "nonignored_untracked_count": 0,
+    "changed_worktree_files_match_head": true,
+    "ignored_file_count": 15877,
+    "ignored_file_category_counts": {
+      ".ruff_cache": 26,
+      "__pycache__": 457,
+      "dist": 81,
+      "node_modules": 15313
+    },
+    "unclassified_ignored_file_count": 0,
+    "ignored_dependency_cache_internal_bytes_fully_audited": false,
+    "data_commit_changes": 0,
+    "data_tracked_count": 65,
+    "data_skip_worktree_count": 64,
+    "data_worktree_difference_count": 0
+  },
+  "publication_hygiene": {
+    "documentation_json_count": 19,
+    "documentation_markdown_count": 33,
+    "raw_graph_dictionary_candidate_count": 0,
+    "raw_graph_markdown_fragment_candidate_count": 0,
+    "long_or_nonpointer_prompt_candidate_count": 0,
+    "publish_allowlist": [
+      "report.md",
+      "privacy-ci.json"
+    ],
+    "raw_logs_published": false
+  },
+  "synthetic_fixture_review": {
+    "existing_fixture_case_count": 63,
+    "new_cases_in_existing_json_fixture": 0,
+    "existing_source_graph_case_changes": 0,
+    "preexisting_138_node_source_unchanged": true,
+    "changed_backend_test_file_count": 15,
+    "new_test_literal_review": "AST dictionary and keyword literals manually checked as neutral synthetic values.",
+    "embedded_media": "In-memory 2x2 white PNG/WebP fixtures; no third-party images.",
+    "large_graph": "200 nodes generated from a seven-node synthetic base and 193 Reroute operations.",
+    "source_references": [
+      "server/tests/test_workflow_import_media.py:29",
+      "server/tests/test_workflow_import_media.py:42",
+      "server/tests/test_workflow_import_media.py:260",
+      "server/tests/test_workflow_import_media.py:299",
+      "server/tests/test_workflow_import_media.py:308",
+      "server/tests/test_workflow_wild_contracts.py:55",
+      "server/tests/test_workflow_wild_contracts.py:58"
+    ]
+  },
+  "runtime_browser_event": {
+    "id": "PRIV-R4-01",
+    "severity": "Medium",
+    "status": "contained_process_event",
+    "non_task_surface_returned": true,
+    "source": "Current-run root notification and direct follow-up facts from the current Web auditor; no accidental content inspected by this auditor.",
+    "root_cause_verified": false,
+    "initial_session_record_impact_known": false,
+    "click_modify_download_screenshot_or_explicit_file_persistence_on_wrong_surface_reported": false,
+    "cookie_authorization_or_profile_read_reported": false,
+    "wrong_surface_content_copied_to_publication_files_reported": false,
+    "mcp_entrypoint_stopped": true,
+    "dedicated_cdp_new_isolated_context_and_page": true,
+    "exact_task_origin_guard_executed_before_dom_or_a11y_read": true,
+    "origin_guard_result": true,
+    "web_process_affinity_readback": 1,
+    "web_process_priority_readback": 16384,
+    "web_product_import": false,
+    "limitations": "This does not prove that accidental tool results left no session-system record. No wrong URL, account, or page content is included.",
+    "guard_measurement_pointer": "audits/r4/web/measurements.json"
+  },
+  "ci_evidence": {
+    "schema": "mio.ci.audit.safe.v1",
+    "audit_date": "2026-11-26",
+    "result": "VERIFIED PASS",
+    "scope": "Existing remote CI evidence for the fixed source HEAD and its PR merge; no local tests, builds, services, or product probes.",
+    "repository": "lumingya/comfy-comic-studio",
+    "fixed_head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+    "provenance": {
+      "required_source_documents_read": true,
+      "prior_audit_reports_read": false,
+      "repository_writes": false,
+      "git_mutations": false,
+      "local_test_or_build_execution": false,
+      "browser_profile_or_cookie_access": false,
+      "remote_metadata_method": "gh api",
+      "remote_log_method": "gh run view --log",
+      "all_repository_run_job_relationships_verified": true,
+      "complete_remote_job_step_lists_verified": true
+    },
+    "summary": {
+      "run_count": 2,
+      "successful_run_count": 2,
+      "job_count": 6,
+      "successful_job_count": 6,
+      "step_count": 68,
+      "successful_step_count": 68,
+      "covered_agents_rows_per_run": 10,
+      "coverage_rows_per_run": 26,
+      "all_agents_commands_covered": true,
+      "cross_platform_launcher_matrix_covered": true,
+      "generated_api_and_client_consistency_covered": true,
+      "extension_build_covered": true,
+      "release_package_build_smoke_covered": true
+    },
+    "workflow_evidence": {
+      "path": ".github/workflows/ci.yml",
+      "fixed_head_blob_sha": "b9ea6beb0eb0f2693672508264eff4e9d841699c",
+      "fixed_head_local_blob_matches_remote": true,
+      "pr_merge_blob_sha": "0a5aa700a3b93ab5713b38e4dd5725ea82eedc01",
+      "only_ci_workflow_difference": "launchers timeout-minutes: 30 -> 60, with a comment; test commands remain unchanged.",
+      "fixed_head_launchers_timeout_minutes": 30,
+      "pr_merge_launchers_timeout_minutes": 60
+    },
+    "pr_merge": {
+      "number": 1,
+      "sha": "e9f72beb7c7fd99875e7d19728673d2928485b16",
+      "parents": [
+        "d9cfa801c42f19db29788ea044d31eaf1c50c221",
+        "3e994bb80794dea7be9773f5cb9c47119bf34c27"
+      ],
+      "historical_base_parent": "d9cfa801c42f19db29788ea044d31eaf1c50c221",
+      "fixed_head_parent": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+      "parent_count": 2,
+      "fixed_head_is_second_parent": true,
+      "current_pr_merge_commit_sha_matches_checkout": true,
+      "current_api_base_sha": "98aefc051fb8a795f49528e9c70b5620dd90ae6d",
+      "current_api_base_equals_historical_first_parent": false,
+      "current_api_base_is_ancestor_of_historical_first_parent": true,
+      "ancestor_distance_commits": 12,
+      "metadata_warning": "The mutable PR/run base field is not the actual tested first parent. Preserve both hashes; the checkout log and git commit parents define the tested merge."
+    },
+    "runs": [
+      {
+        "id": 45670345960,
+        "repository": "lumingya/comfy-comic-studio",
+        "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45670345960",
+        "event": "push",
+        "run_number": 274,
+        "run_attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "api_head_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+        "workflow_path": ".github/workflows/ci.yml",
+        "job_count": 3,
+        "all_steps_success": true,
+        "step_count": 34,
+        "jobs": [
+          {
+            "id": 139403621047,
+            "run_id": 45670345960,
+            "repository": "lumingya/comfy-comic-studio",
+            "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45670345960/job/139403621047",
+            "check_run_url": "https://api.github.com/repos/lumingya/comfy-comic-studio/check-runs/139403621047",
+            "name": "launchers (windows-latest, Python 3.11)",
+            "platform": "windows-latest",
+            "python": "3.11",
+            "status": "completed",
+            "conclusion": "success",
+            "api_head_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_safe_line": 93,
+            "steps": [
+              {
+                "number": 1,
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 2,
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 3,
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 4,
+                "name": "Install server dependencies",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 5,
+                "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 6,
+                "name": "v4 server unit tests",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 11,
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 12,
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 13,
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 139403621465,
+            "run_id": 45670345960,
+            "repository": "lumingya/comfy-comic-studio",
+            "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45670345960/job/139403621465",
+            "check_run_url": "https://api.github.com/repos/lumingya/comfy-comic-studio/check-runs/139403621465",
+            "name": "gate",
+            "platform": "ubuntu-latest",
+            "python": "3.13",
+            "node": "20",
+            "status": "completed",
+            "conclusion": "success",
+            "api_head_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_safe_line": 605,
+            "steps": [
+              {
+                "number": 1,
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 2,
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 3,
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 4,
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 5,
+                "name": "Install Python dependencies",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 6,
+                "name": "Spike unit tests (next/)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 7,
+                "name": "v4 server (lint + unit tests)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 8,
+                "name": "API v2 clients and release tools (generated client current + lint)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 9,
+                "name": "v4 web (API types current + format + typecheck + tests + build)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 10,
+                "name": "Shipped data manifest",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 11,
+                "name": "Standalone assistant extension",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 12,
+                "name": "v4 release package smoke test",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 22,
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 23,
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 24,
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 25,
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 139403621573,
+            "run_id": 45670345960,
+            "repository": "lumingya/comfy-comic-studio",
+            "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45670345960/job/139403621573",
+            "check_run_url": "https://api.github.com/repos/lumingya/comfy-comic-studio/check-runs/139403621573",
+            "name": "launchers (ubuntu-latest, Python 3.11)",
+            "platform": "ubuntu-latest",
+            "python": "3.11",
+            "status": "completed",
+            "conclusion": "success",
+            "api_head_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_safe_line": 2045,
+            "steps": [
+              {
+                "number": 1,
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 2,
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 3,
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 4,
+                "name": "Install server dependencies",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 5,
+                "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 6,
+                "name": "v4 server unit tests",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 11,
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 12,
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 13,
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ],
+        "log": {
+          "basename": "raw-ci-45670345960.log",
+          "raw_sha256": "d017dbf7877b14c04b1b5cc85443be92bbc1d64936bac66103c383b345af8675",
+          "normalized_sha256": "f81639ff88365a7167fbf9f1b68f64a6071afc879c6277768c3415d1751b996a",
+          "normalization": "UTF-8 decoded lines joined with LF and no terminal LF",
+          "bytes": 339354,
+          "line_count": 2452,
+          "remote_log_fetched_again": true,
+          "cached_log_text_matches_remote": true
+        },
+        "observed_counts": {
+          "run_id": "45670345960",
+          "test_counts": [
+            {
+              "job": "launchers (windows-latest, Python 3.11)",
+              "line": 241,
+              "suite": "launchers",
+              "tests": 31,
+              "seconds": 39.016
+            },
+            {
+              "job": "launchers (windows-latest, Python 3.11)",
+              "line": 243,
+              "suite": "launchers",
+              "success": true,
+              "skipped": 0
+            },
+            {
+              "job": "launchers (windows-latest, Python 3.11)",
+              "line": 474,
+              "suite": "server_tests",
+              "tests": 1769,
+              "seconds": 1461.845
+            },
+            {
+              "job": "launchers (windows-latest, Python 3.11)",
+              "line": 476,
+              "suite": "server_tests",
+              "success": true,
+              "skipped": 0
+            },
+            {
+              "job": "gate",
+              "line": 752,
+              "suite": "spike",
+              "tests": 80,
+              "seconds": 19.43
+            },
+            {
+              "job": "gate",
+              "line": 754,
+              "suite": "spike",
+              "success": true,
+              "skipped": 0
+            },
+            {
+              "job": "gate",
+              "line": 1001,
+              "suite": "server_tests",
+              "tests": 1769,
+              "seconds": 922.492
+            },
+            {
+              "job": "gate",
+              "line": 1003,
+              "suite": "server_tests",
+              "success": true,
+              "skipped": 3
+            },
+            {
+              "job": "gate",
+              "line": 1055,
+              "suite": "ctk",
+              "checked": 25,
+              "invalid": 0
+            },
+            {
+              "job": "gate",
+              "line": 1691,
+              "suite": "web",
+              "metric": "test_files",
+              "passed": 118
+            },
+            {
+              "job": "gate",
+              "line": 1692,
+              "suite": "web",
+              "metric": "tests",
+              "passed": 964
+            },
+            {
+              "job": "gate",
+              "line": 1734,
+              "suite": "offline_panels",
+              "passed": 6
+            },
+            {
+              "job": "gate",
+              "line": 1882,
+              "suite": "assistant_extension",
+              "metric": "test_files",
+              "passed": 2
+            },
+            {
+              "job": "gate",
+              "line": 1883,
+              "suite": "assistant_extension",
+              "metric": "tests",
+              "passed": 34
+            },
+            {
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "line": 2200,
+              "suite": "launchers",
+              "tests": 31,
+              "seconds": 24.163
+            },
+            {
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "line": 2202,
+              "suite": "launchers",
+              "success": true,
+              "skipped": 0
+            },
+            {
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "line": 2428,
+              "suite": "server_tests",
+              "tests": 1769,
+              "seconds": 1126.784
+            },
+            {
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "line": 2430,
+              "suite": "server_tests",
+              "success": true,
+              "skipped": 3
+            }
+          ],
+          "release": [
+            {
+              "line": 1916,
+              "unsigned_manifest": true
+            },
+            {
+              "line": 1917,
+              "archive_bytes": 5121782,
+              "archive_sha256": "4aa7a253451979bef2ec6fbd984257db82af973e4ded74ba60dc238ab47e0a95"
+            }
+          ],
+          "bash_evidence_lines": [
+            648,
+            742,
+            759,
+            1019,
+            1074,
+            1834,
+            1851,
+            1907,
+            2062,
+            2156,
+            2205
+          ]
+        }
+      },
+      {
+        "id": 45670360530,
+        "repository": "lumingya/comfy-comic-studio",
+        "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45670360530",
+        "event": "pull_request",
+        "run_number": 275,
+        "run_attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "api_head_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+        "workflow_path": ".github/workflows/ci.yml",
+        "job_count": 3,
+        "all_steps_success": true,
+        "step_count": 34,
+        "jobs": [
+          {
+            "id": 139403666786,
+            "run_id": 45670360530,
+            "repository": "lumingya/comfy-comic-studio",
+            "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45670360530/job/139403666786",
+            "check_run_url": "https://api.github.com/repos/lumingya/comfy-comic-studio/check-runs/139403666786",
+            "name": "launchers (ubuntu-latest, Python 3.11)",
+            "platform": "ubuntu-latest",
+            "python": "3.11",
+            "status": "completed",
+            "conclusion": "success",
+            "api_head_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_sha": "e9f72beb7c7fd99875e7d19728673d2928485b16",
+            "checkout_safe_line": 122,
+            "steps": [
+              {
+                "number": 1,
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 2,
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 3,
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 4,
+                "name": "Install server dependencies",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 5,
+                "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 6,
+                "name": "v4 server unit tests",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 11,
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 12,
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 13,
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 139403667285,
+            "run_id": 45670360530,
+            "repository": "lumingya/comfy-comic-studio",
+            "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45670360530/job/139403667285",
+            "check_run_url": "https://api.github.com/repos/lumingya/comfy-comic-studio/check-runs/139403667285",
+            "name": "launchers (windows-latest, Python 3.11)",
+            "platform": "windows-latest",
+            "python": "3.11",
+            "status": "completed",
+            "conclusion": "success",
+            "api_head_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_sha": "e9f72beb7c7fd99875e7d19728673d2928485b16",
+            "checkout_safe_line": 638,
+            "steps": [
+              {
+                "number": 1,
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 2,
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 3,
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 4,
+                "name": "Install server dependencies",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 5,
+                "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 6,
+                "name": "v4 server unit tests",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 11,
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 12,
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 13,
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 139403667624,
+            "run_id": 45670360530,
+            "repository": "lumingya/comfy-comic-studio",
+            "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45670360530/job/139403667624",
+            "check_run_url": "https://api.github.com/repos/lumingya/comfy-comic-studio/check-runs/139403667624",
+            "name": "gate",
+            "platform": "ubuntu-latest",
+            "python": "3.13",
+            "node": "20",
+            "status": "completed",
+            "conclusion": "success",
+            "api_head_sha": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+            "checkout_sha": "e9f72beb7c7fd99875e7d19728673d2928485b16",
+            "checkout_safe_line": 1166,
+            "steps": [
+              {
+                "number": 1,
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 2,
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 3,
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 4,
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 5,
+                "name": "Install Python dependencies",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 6,
+                "name": "Spike unit tests (next/)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 7,
+                "name": "v4 server (lint + unit tests)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 8,
+                "name": "API v2 clients and release tools (generated client current + lint)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 9,
+                "name": "v4 web (API types current + format + typecheck + tests + build)",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 10,
+                "name": "Shipped data manifest",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 11,
+                "name": "Standalone assistant extension",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 12,
+                "name": "v4 release package smoke test",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 22,
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 23,
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 24,
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 25,
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ],
+        "log": {
+          "basename": "raw-ci-45670360530.log",
+          "raw_sha256": "71275a0291221591e16c214bc1d5a4eeb4a833bec4649b2e0716906436442e14",
+          "normalized_sha256": "d1020c915402e2d021cbd9c66b7e51fbd2707c423e82e729a05ec86eef2befe2",
+          "normalization": "UTF-8 decoded lines joined with LF and no terminal LF",
+          "bytes": 369635,
+          "line_count": 2695,
+          "remote_log_fetched_again": true,
+          "cached_log_text_matches_remote": true
+        },
+        "observed_counts": {
+          "run_id": "45670360530",
+          "test_counts": [
+            {
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "line": 277,
+              "suite": "launchers",
+              "tests": 31,
+              "seconds": 18.872
+            },
+            {
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "line": 279,
+              "suite": "launchers",
+              "success": true,
+              "skipped": 0
+            },
+            {
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "line": 505,
+              "suite": "server_tests",
+              "tests": 1880,
+              "seconds": 852.632
+            },
+            {
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "line": 507,
+              "suite": "server_tests",
+              "success": true,
+              "skipped": 3
+            },
+            {
+              "job": "launchers (windows-latest, Python 3.11)",
+              "line": 786,
+              "suite": "launchers",
+              "tests": 31,
+              "seconds": 31.962
+            },
+            {
+              "job": "launchers (windows-latest, Python 3.11)",
+              "line": 788,
+              "suite": "launchers",
+              "success": true,
+              "skipped": 0
+            },
+            {
+              "job": "launchers (windows-latest, Python 3.11)",
+              "line": 1019,
+              "suite": "server_tests",
+              "tests": 1880,
+              "seconds": 1282.685
+            },
+            {
+              "job": "launchers (windows-latest, Python 3.11)",
+              "line": 1021,
+              "suite": "server_tests",
+              "success": true,
+              "skipped": 0
+            },
+            {
+              "job": "gate",
+              "line": 1313,
+              "suite": "spike",
+              "tests": 80,
+              "seconds": 19.558
+            },
+            {
+              "job": "gate",
+              "line": 1315,
+              "suite": "spike",
+              "success": true,
+              "skipped": 0
+            },
+            {
+              "job": "gate",
+              "line": 1564,
+              "suite": "server_tests",
+              "tests": 1880,
+              "seconds": 1181.892
+            },
+            {
+              "job": "gate",
+              "line": 1566,
+              "suite": "server_tests",
+              "success": true,
+              "skipped": 3
+            },
+            {
+              "job": "gate",
+              "line": 1618,
+              "suite": "ctk",
+              "checked": 25,
+              "invalid": 0
+            },
+            {
+              "job": "gate",
+              "line": 2346,
+              "suite": "web",
+              "metric": "test_files",
+              "passed": 129
+            },
+            {
+              "job": "gate",
+              "line": 2347,
+              "suite": "web",
+              "metric": "tests",
+              "passed": 1067
+            },
+            {
+              "job": "gate",
+              "line": 2490,
+              "suite": "offline_panels",
+              "passed": 21
+            },
+            {
+              "job": "gate",
+              "line": 2638,
+              "suite": "assistant_extension",
+              "metric": "test_files",
+              "passed": 2
+            },
+            {
+              "job": "gate",
+              "line": 2639,
+              "suite": "assistant_extension",
+              "metric": "tests",
+              "passed": 34
+            }
+          ],
+          "release": [
+            {
+              "line": 2672,
+              "unsigned_manifest": true
+            },
+            {
+              "line": 2673,
+              "archive_bytes": 5164799,
+              "archive_sha256": "6ab9af8f38cea631b98d03177b183c823dd947247b276416bb50250c07ba6d8c"
+            }
+          ],
+          "bash_evidence_lines": [
+            139,
+            233,
+            282,
+            1209,
+            1303,
+            1320,
+            1582,
+            1638,
+            2590,
+            2607,
+            2663
+          ]
+        }
+      }
+    ],
+    "agents_command_mapping": [
+      {
+        "id": "backend",
+        "agents_command": "python -m unittest discover -s server/tests -t server -q",
+        "observed_command_ids": [
+          "server_tests"
+        ],
+        "push_covered": true,
+        "pr_covered": true
+      },
+      {
+        "id": "ruff",
+        "agents_command": "ruff check server clients tools && ruff format --check server clients tools",
+        "observed_command_ids": [
+          "ruff_server_check",
+          "ruff_server_format",
+          "ruff_clients_tools_check",
+          "ruff_clients_tools_format"
+        ],
+        "push_covered": true,
+        "pr_covered": true,
+        "equivalence": "Both lint and format cover server plus extensions, and clients plus tools in separate invocations."
+      },
+      {
+        "id": "python_client",
+        "agents_command": "python clients/python/generate.py --check",
+        "observed_command_ids": [
+          "client_consistency"
+        ],
+        "push_covered": true,
+        "pr_covered": true
+      },
+      {
+        "id": "spike",
+        "agents_command": "python -m unittest discover -s next/tests -t next -q",
+        "observed_command_ids": [
+          "spike"
+        ],
+        "push_covered": true,
+        "pr_covered": true
+      },
+      {
+        "id": "shipped_data",
+        "agents_command": "python tools/check_distribution.py",
+        "observed_command_ids": [
+          "distribution"
+        ],
+        "push_covered": true,
+        "pr_covered": true
+      },
+      {
+        "id": "web_format",
+        "agents_command": "npm --prefix web run format:check",
+        "observed_command_ids": [
+          "web_format"
+        ],
+        "push_covered": true,
+        "pr_covered": true
+      },
+      {
+        "id": "web_typecheck",
+        "agents_command": "npm --prefix web run typecheck",
+        "observed_command_ids": [
+          "web_typecheck"
+        ],
+        "push_covered": true,
+        "pr_covered": true
+      },
+      {
+        "id": "web_tests",
+        "agents_command": "npm --prefix web test",
+        "observed_command_ids": [
+          "web_tests"
+        ],
+        "push_covered": true,
+        "pr_covered": true
+      },
+      {
+        "id": "web_build",
+        "agents_command": "npm --prefix web run build",
+        "observed_command_ids": [
+          "web_build"
+        ],
+        "push_covered": true,
+        "pr_covered": true
+      },
+      {
+        "id": "web_api_generation",
+        "agents_command": "npm --prefix web run gen:api",
+        "observed_command_ids": [
+          "web_generate",
+          "web_generated_diff"
+        ],
+        "push_covered": true,
+        "pr_covered": true,
+        "generated_artifacts_unchanged": true
+      }
+    ],
+    "observed_commands": [
+      {
+        "id": "server_tests",
+        "command": "python -m unittest discover -s server/tests -t server -q",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 3,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 245,
+                "job_id": 139403621047,
+                "step_number": 6
+              },
+              {
+                "safe_line": 758,
+                "job_id": 139403621465,
+                "step_number": 7
+              },
+              {
+                "safe_line": 2204,
+                "job_id": 139403621573,
+                "step_number": 6
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 3,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 281,
+                "job_id": 139403666786,
+                "step_number": 6
+              },
+              {
+                "safe_line": 790,
+                "job_id": 139403667285,
+                "step_number": 6
+              },
+              {
+                "safe_line": 1319,
+                "job_id": 139403667624,
+                "step_number": 7
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ruff_server_check",
+        "command": "ruff check server extensions",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 756,
+                "job_id": 139403621465,
+                "step_number": 7
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1317,
+                "job_id": 139403667624,
+                "step_number": 7
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ruff_server_format",
+        "command": "ruff format --check server extensions",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 757,
+                "job_id": 139403621465,
+                "step_number": 7
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1318,
+                "job_id": 139403667624,
+                "step_number": 7
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ruff_clients_tools_check",
+        "command": "ruff check clients tools",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1015,
+                "job_id": 139403621465,
+                "step_number": 8
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1578,
+                "job_id": 139403667624,
+                "step_number": 8
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ruff_clients_tools_format",
+        "command": "ruff format --check clients tools",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1016,
+                "job_id": 139403621465,
+                "step_number": 8
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1579,
+                "job_id": 139403667624,
+                "step_number": 8
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "client_consistency",
+        "command": "python clients/python/generate.py --check",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1009,
+                "job_id": 139403621465,
+                "step_number": 8
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1572,
+                "job_id": 139403667624,
+                "step_number": 8
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "spike",
+        "command": "python -m unittest discover -s next/tests -t next -q",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 741,
+                "job_id": 139403621465,
+                "step_number": 6
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1302,
+                "job_id": 139403667624,
+                "step_number": 6
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "distribution",
+        "command": "python tools/check_distribution.py",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1832,
+                "job_id": 139403621465,
+                "step_number": 10
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 2588,
+                "job_id": 139403667624,
+                "step_number": 10
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "distribution_build_check",
+        "command": "python tools/build_distribution.py --check",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1833,
+                "job_id": 139403621465,
+                "step_number": 10
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 2589,
+                "job_id": 139403667624,
+                "step_number": 10
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "web_install",
+        "command": "npm ci --prefix web --no-audit --no-fund",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1066,
+                "job_id": 139403621465,
+                "step_number": 9
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1630,
+                "job_id": 139403667624,
+                "step_number": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "web_format",
+        "command": "npm --prefix web run format:check",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1069,
+                "job_id": 139403621465,
+                "step_number": 9
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1633,
+                "job_id": 139403667624,
+                "step_number": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "web_typecheck",
+        "command": "npm --prefix web run typecheck",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1070,
+                "job_id": 139403621465,
+                "step_number": 9
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1634,
+                "job_id": 139403667624,
+                "step_number": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "web_tests",
+        "command": "npm --prefix web test",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1071,
+                "job_id": 139403621465,
+                "step_number": 9
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1635,
+                "job_id": 139403667624,
+                "step_number": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "web_build",
+        "command": "npm --prefix web run build",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1073,
+                "job_id": 139403621465,
+                "step_number": 9
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1637,
+                "job_id": 139403667624,
+                "step_number": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "web_generate",
+        "command": "npm --prefix web run gen:api",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1067,
+                "job_id": 139403621465,
+                "step_number": 9
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1631,
+                "job_id": 139403667624,
+                "step_number": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "web_generated_diff",
+        "command": "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1068,
+                "job_id": 139403621465,
+                "step_number": 9
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1632,
+                "job_id": 139403667624,
+                "step_number": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "extension_contracts",
+        "command": "python tools/generate_extension_contracts.py --check",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1008,
+                "job_id": 139403621465,
+                "step_number": 8
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1571,
+                "job_id": 139403667624,
+                "step_number": 8
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "extension_packages",
+        "command": "python tools/check_extension_examples.py",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1010,
+                "job_id": 139403621465,
+                "step_number": 8
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1573,
+                "job_id": 139403667624,
+                "step_number": 8
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "extension_panels",
+        "command": "python tools/check_extension_examples.py --panel-tests",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1072,
+                "job_id": 139403621465,
+                "step_number": 9
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1636,
+                "job_id": 139403667624,
+                "step_number": 9
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "extension_install",
+        "command": "npm ci --no-audit --no-fund",
+        "working_directory": "extensions/ai-assist/page",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1846,
+                "job_id": 139403621465,
+                "step_number": 11
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 2602,
+                "job_id": 139403667624,
+                "step_number": 11
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "extension_format",
+        "command": "npx prettier --check .",
+        "working_directory": "extensions/ai-assist/page",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1847,
+                "job_id": 139403621465,
+                "step_number": 11
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 2603,
+                "job_id": 139403667624,
+                "step_number": 11
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "extension_tests",
+        "command": "npm test",
+        "working_directory": "extensions/ai-assist/page",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1848,
+                "job_id": 139403621465,
+                "step_number": 11
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 2604,
+                "job_id": 139403667624,
+                "step_number": 11
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "extension_build",
+        "command": "npm run build",
+        "working_directory": "extensions/ai-assist/page",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1849,
+                "job_id": 139403621465,
+                "step_number": 11
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 2605,
+                "job_id": 139403667624,
+                "step_number": 11
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "extension_dist_diff",
+        "command": "git diff --exit-code -- dist",
+        "working_directory": "extensions/ai-assist/page",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1850,
+                "job_id": 139403621465,
+                "step_number": 11
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 2606,
+                "job_id": 139403667624,
+                "step_number": 11
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "release",
+        "command": "python tools/build_release.py --out \"$RUNNER_TEMP/mio-release-smoke\"",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 1906,
+                "job_id": 139403621465,
+                "step_number": 12
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 1,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 2662,
+                "job_id": 139403667624,
+                "step_number": 12
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "launchers",
+        "command": "python -m unittest tests.test_launchers -v",
+        "runs": [
+          {
+            "run_id": 45670345960,
+            "executed": true,
+            "command_count": 2,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 197,
+                "job_id": 139403621047,
+                "step_number": 5
+              },
+              {
+                "safe_line": 2155,
+                "job_id": 139403621573,
+                "step_number": 5
+              }
+            ]
+          },
+          {
+            "run_id": 45670360530,
+            "executed": true,
+            "command_count": 2,
+            "all_containing_steps_success": true,
+            "occurrences": [
+              {
+                "safe_line": 232,
+                "job_id": 139403666786,
+                "step_number": 5
+              },
+              {
+                "safe_line": 742,
+                "job_id": 139403667285,
+                "step_number": 5
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "limits": [
+      "The PR merge contains additional base-side changes, so its 1880 backend tests and 1067 web tests are not counts for the fixed push tree.",
+      "Linux backend suites each report 3 conditional skips; Windows reports 0. All remote jobs and steps conclude success.",
+      "The step named release package smoke test runs release packaging. It does not establish installer launch, signed update installation, live GPU rendering, or paid provider execution.",
+      "The release manifest is unsigned as expected in these non-release-key CI runs."
+    ],
+    "findings": []
+  },
+  "remaining_boundaries": [
+    "Other four auditor scopes are independent.",
+    "Authorized external temporary corpus remains until root cleanup after five audits and safe publication.",
+    "Future final cleanup, publication, clean status, and push are not certified as already completed.",
+    "No assertion of historical absence of real graphs, full dependency-cache byte audit, GPU execution, paid-service execution, installer startup, or signed-update installation."
+  ]
+}

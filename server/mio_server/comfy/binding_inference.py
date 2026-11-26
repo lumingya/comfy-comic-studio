@@ -10,6 +10,7 @@ import re
 
 from .binding_dimensions import infer_dimension_bindings
 from .binding_scope import BindingScope
+from .binding_stage_scope import STAGE_CONTROL_KINDS, ambiguous_conditioning_stage
 from .workflow_graph import SemanticGraph
 
 TEXT_PORTS = (
@@ -396,6 +397,11 @@ def infer_bindings(graph: dict, missing: set[str], roots=()) -> list[tuple[str, 
                     if target:
                         found.append((kind, *target))
                     break
+    # Canvas ownership does not prove which conditioning-connected generation stage
+    # should receive generic controls. Filter providers too, without changing explicit
+    # mappings, canvas dimensions, prompt ownership, or execution seed fan-out.
+    if missing & STAGE_CONTROL_KINDS and ambiguous_conditioning_stage(engine.binding_scope, sites):
+        found = [item for item in found if item[0] not in STAGE_CONTROL_KINDS]
     claims = {}
     for kind, nid, field in found:
         if field is not None:

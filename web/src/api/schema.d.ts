@@ -8066,6 +8066,15 @@ export interface components {
              */
             notes?: string;
         };
+        /** WorkflowLoraSummary */
+        WorkflowLoraSummary: {
+            /** Enabled */
+            enabled: boolean;
+            /** Groups */
+            groups: number;
+            /** Supports Independent Toggle */
+            supports_independent_toggle: boolean;
+        };
         /** WorkflowPatch */
         WorkflowPatch: {
             /** Name */
@@ -8075,6 +8084,37 @@ export interface components {
             config?: components["schemas"]["WorkflowConfig"] | null;
             /** Notes */
             notes?: string | null;
+        };
+        /** WorkflowSummary */
+        WorkflowSummary: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "import" | "builtin" | "legacy";
+            /** Nodes */
+            nodes: number;
+            /** Variants */
+            variants: string[];
+            /** Image Inputs */
+            image_inputs: string[];
+            /** Checkpoint */
+            checkpoint: string | null;
+            loras: components["schemas"]["WorkflowLoraSummary"] | null;
+            lora_error?: components["schemas"]["WorkflowSummaryError"] | null;
+            /** Updated At */
+            updated_at: string;
+        };
+        /** WorkflowSummaryError */
+        WorkflowSummaryError: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
         };
         /** WorkflowTrialRequest */
         WorkflowTrialRequest: {
@@ -10923,7 +10963,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, unknown>[];
+                    "application/json": components["schemas"]["WorkflowSummary"][];
                 };
             };
         };

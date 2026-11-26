@@ -163,6 +163,14 @@ def _migrate(plan, legacy):
                 )
 
 
+def refresh_pinned_values(plan, workflow):
+    for group in plan.get("lora", {}).get("groups", []):
+        if group["kind"] in ("stack", "object"):
+            group["pinned"] = _pinned(group["writer"], workflow, include_disabled=True)
+        group["pinned"] = keyed_loras(group["key"], group.get("pinned", []))
+    return plan
+
+
 def ensure_plan(workflow, slots=None, object_info=None, *, adapters=()):
     slots = slots or {}
     plan = slots.get("plan", slots if slots.get("version") == 3 else {})
@@ -178,8 +186,4 @@ def ensure_plan(workflow, slots=None, object_info=None, *, adapters=()):
         plan = analyze(workflow, object_info, plan.get("manual"), legacy, adapters=adapters)
     else:
         plan = copy.deepcopy(plan)
-    for group in plan.get("lora", {}).get("groups", []):
-        if group["kind"] in ("stack", "object"):
-            group["pinned"] = _pinned(group["writer"], workflow, include_disabled=True)
-        group["pinned"] = keyed_loras(group["key"], group.get("pinned", []))
-    return plan
+    return refresh_pinned_values(plan, workflow)

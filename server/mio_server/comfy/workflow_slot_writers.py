@@ -12,7 +12,7 @@ from .workflow_slot_common import (
     _write_field,
 )
 from .workflow_slot_syntax import _num, format_tag
-from .workflow_slot_values import _chain_value, _is_empty_name, _name_key, _switch_enabled
+from .workflow_slot_values import _chain_value, _is_empty_name, _name_key, _stack_value
 
 
 def _apply_chain(workflow, lora, loras, notices):
@@ -152,35 +152,6 @@ def _switch_value(previous, enabled):
     if _is_number(previous):
         return type(previous)(enabled)
     return "On" if enabled else "Off"
-
-
-def _stack_value(inputs, slot):
-    raw = inputs[slot["namePath"]]
-    if slot["objectStyle"]:
-        name = raw.get("lora") if raw.get("lora") is not None else raw.get("name")
-        if _is_empty_name(name):
-            return None
-        item = {
-            "name": str(name),
-            "strength": raw["strength"] if _is_number(raw.get("strength")) else 1,
-            "enabled": raw.get("on") is not False,
-        }
-        if _is_number(raw.get("strengthTwo")):
-            item["clip"] = raw["strengthTwo"]
-        return item
-    if _is_empty_name(raw):
-        return None
-    switch = inputs[slot["switchPath"]] if slot["switchPath"] else True
-    strength = inputs.get(slot["strengthPath"])
-    clip = inputs.get(slot["clipPath"])
-    item = {
-        "name": str(raw),
-        "strength": strength if _is_number(strength) else 1,
-        "enabled": _switch_enabled(switch),
-    }
-    if _is_number(clip):
-        item["clip"] = clip
-    return item
 
 
 def _apply_stack(workflow, lora, loras):

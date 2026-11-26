@@ -1,0 +1,187 @@
+{
+  "audit": "r4-compile-independent",
+  "head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "verdict": "REQUEST CHANGES",
+  "review_phase": "independent_initial",
+  "severity_counts": {"Blocker": 0, "High": 0, "Medium": 1, "Low": 0},
+  "compile_attempts": 15,
+  "findings": [
+    {
+      "id": "R4-COMPILE-01",
+      "severity": "Medium",
+      "title": "数字字符串 LoRA 默认值误读，导致明确的权重覆写被静默忽略",
+      "case_ids": ["C07", "C08"],
+      "source_evidence": [
+        "server/mio_server/comfy/workflow_slot_values.py:53-58",
+        "server/mio_server/comfy/workflow_slot_values.py:66-72",
+        "server/mio_server/comfy/workflow_slot_writers.py:163-182",
+        "server/mio_server/comfy/workflow_slot_apply.py:124-127"
+      ],
+      "flat_original_model_weight": "0.375",
+      "flat_original_clip_weight": "-0.25",
+      "power_original_model_weight": "-0.375",
+      "power_original_clip_weight": "0.25",
+      "discovered_model_weight": 1,
+      "discovered_clip_weight": null,
+      "explicit_requested_model_weight": 1,
+      "actual_flat_compiled_model_weight": "0.375",
+      "actual_power_compiled_model_weight": "-0.375",
+      "warnings_per_failed_case": 0,
+      "source_documents_unchanged": true,
+      "fix_direction": "统一解析有限数字与数字字符串，发现阶段与写入前快照使用同一规范化值；仅在值实际变化时修改原生表示。无法解析时明确只读或拒绝，禁止静默回退为1。",
+      "attribution_limit": "当前契约缺口；未声称该问题由本范围新引入。"
+    }
+  ],
+  "limits": [
+    "仅静态源码与14个中性合成定向案例，未执行ComfyUI节点或实际出图。",
+    "未运行全套单测、Vitest、构建、GPU、付费API、网络采集或浏览器；未把未执行路径当作实测。",
+    "未读取历史或其他审计报告，尚未进行交叉互核。",
+    "拒绝案例只确认本次触发的三个错误路径及具体提示，不代表所有诊断均可行动。"
+  ],
+  "process_guard": {
+    "cpu_mask": 1,
+    "priority_class": 16384,
+    "verified_before_mio_import": true,
+    "python_processes": 1,
+    "subprocesses": 0
+  },
+  "case_count": 14,
+  "pass_count": 12,
+  "fail_count": 2,
+  "probe_sha256": "783d97be7558080c7b14349f75fb12cab189746e117e82dc1de379e4d425bb99",
+  "oracle_sha256": "db8a6b944e64d7d020e6d41e3d3f35bd37d15a7eb9aa265efa587738dfa3fa96",
+  "cases": [
+    {
+      "id": "C01",
+      "status": "PASS",
+      "observed": {
+        "exact_graph_equal": true,
+        "source_unchanged": true
+      }
+    },
+    {
+      "id": "C02",
+      "status": "PASS",
+      "observed": {
+        "selected_branch_only": true,
+        "execution_dependencies_retained": true
+      }
+    },
+    {
+      "id": "C03",
+      "status": "PASS",
+      "observed": {
+        "no_auxiliary_payload_guess": true,
+        "manual_rescue": true,
+        "warning_count": 2
+      }
+    },
+    {
+      "id": "C04",
+      "status": "PASS",
+      "observed": {
+        "incomplete_lineage_safe": true,
+        "warning_count": 2
+      }
+    },
+    {
+      "id": "C05",
+      "status": "PASS",
+      "observed": {
+        "primary_owned_only": true,
+        "refinement_reference_preserved": true
+      }
+    },
+    {
+      "id": "C06",
+      "status": "PASS",
+      "observed": {
+        "explicit_targets_and_pointer_priority": true,
+        "variant_closure": true
+      }
+    },
+    {
+      "id": "C07",
+      "status": "FAIL",
+      "exception_type": "AssertionError",
+      "detail": "numeric-string defaults replaced by fallback values",
+      "observed": {
+        "discovered_strength": 1,
+        "discovered_clip": null,
+        "requested_strength": 1,
+        "compiled_strength": "0.375",
+        "compiled_strength_type": "str",
+        "source_unchanged": true,
+        "warning_count": 0
+      }
+    },
+    {
+      "id": "C08",
+      "status": "FAIL",
+      "exception_type": "AssertionError",
+      "detail": "numeric-string defaults replaced by fallback values",
+      "observed": {
+        "discovered_strength": 1,
+        "discovered_clip": null,
+        "requested_strength": 1,
+        "compiled_strength": "-0.375",
+        "compiled_strength_type": "str",
+        "source_unchanged": true,
+        "warning_count": 0
+      }
+    },
+    {
+      "id": "C09",
+      "status": "PASS",
+      "observed": {
+        "stable_occurrence": true,
+        "surplus_tag_untouched": true,
+        "wrapper_metadata_unchanged": true
+      }
+    },
+    {
+      "id": "C10",
+      "status": "PASS",
+      "observed": {
+        "rejected": true,
+        "actionable": true,
+        "message": "此 LoRA 位置共用模型与 CLIP 强度，请使用相同权重或切换高级模式"
+      }
+    },
+    {
+      "id": "C11",
+      "status": "PASS",
+      "observed": {
+        "sparse_slot_only": true,
+        "inactive_mode_count_preserved": true
+      }
+    },
+    {
+      "id": "C12",
+      "status": "PASS",
+      "observed": {
+        "untouched_numeric_string_preserved": true,
+        "negative_clip_applied": true
+      }
+    },
+    {
+      "id": "C13",
+      "status": "PASS",
+      "observed": {
+        "rejected": true,
+        "actionable": true,
+        "message": "分支参数覆盖改变了所选 LoRA 的活动路径，无法安全冻结该 LoRA 覆盖。请先在工作流中固定分支，重新导入并选择 LoRA 槽位；或保留当前分支后再调整 LoRA。"
+      }
+    },
+    {
+      "id": "C14",
+      "status": "PASS",
+      "observed": {
+        "rejected": true,
+        "actionable": true,
+        "message": "节点 l 的 strength_model 已连线，不能写入"
+      }
+    }
+  ]
+}

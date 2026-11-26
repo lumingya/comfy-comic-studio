@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import Request, Response, status
 from pydantic import BaseModel, Field
@@ -55,6 +55,30 @@ BINARY_BODY = {
 }
 
 
+class WorkflowLoraSummary(BaseModel):
+    enabled: bool
+    groups: int
+    supports_independent_toggle: bool
+
+
+class WorkflowSummaryError(BaseModel):
+    code: str
+    message: str
+
+
+class WorkflowSummary(BaseModel):
+    id: str
+    name: str
+    source: Literal["import", "builtin", "legacy"]
+    nodes: int
+    variants: list[str]
+    image_inputs: list[str]
+    checkpoint: str | None
+    loras: WorkflowLoraSummary | None
+    lora_error: WorkflowSummaryError | None = None
+    updated_at: str
+
+
 class WorkflowImport(BaseModel):
     name: str
     graph: dict[str, Any]
@@ -103,33 +127,9 @@ def _rules(ctx):
 
 
 # --------------------------------------------------------------- workflows
-@router.get("/workflows")
+@router.get("/workflows", response_model=list[WorkflowSummary], response_model_exclude_unset=True)
 def list_workflows(ctx: Ctx) -> list[dict]:
-    out = []
-    for doc in ctx.store.list_docs("workflow"):
-        info = C.describe(doc, rules=_rules(ctx))
-        plan = slots.ensure_plan(doc.graph, doc.slots, adapters=SA.installed(ctx.registry))
-        lora_groups = plan.get("lora", {}).get("groups", [])
-        out.append(
-            {
-                "id": doc.id,
-                "name": doc.name,
-                "source": doc.source,
-                "nodes": info["nodes"],
-                "variants": info["variants"],
-                "image_inputs": info["image_inputs"],
-                "checkpoint": info["checkpoint"],
-                "loras": {
-                    "enabled": bool(plan.get("lora", {}).get("enabled")),
-                    "groups": len(lora_groups),
-                    "supports_independent_toggle": any(
-                        SA.can_toggle(group) for group in lora_groups
-                    ),
-                },
-                "updated_at": doc.updated_at,
-            }
-        )
-    return out
+    return ctx.workflow_catalog.summaries(ctx.store.list_docs("workflow"))
 
 
 @router.post("/workflows/inspect", response_model=I.Inspection)
@@ -166,12 +166,13 @@ def import_workflow(ctx: Ctx, body: WorkflowImport) -> dict:
         notes=body.notes,
         slots=_analyze(graph),
     )
-    C.describe(doc, rules=_rules(ctx))  # raises on broken manual mappings
+    info = C.describe(doc, rules=_rules(ctx))  # raises on broken manual mappings
+    controls = SA.describe(doc, ctx.registry)
     ctx.store.put_doc(doc)
     return {
         **doc.model_dump(),
-        "describe": C.describe(doc, rules=_rules(ctx)),
-        "lora_controls": SA.describe(doc, ctx.registry),
+        "describe": info,
+        "lora_controls": controls,
     }
 
 
@@ -206,12 +207,13 @@ def patch_workflow(ctx: Ctx, workflow_id: str, body: WorkflowPatch) -> dict:
     if body.config is not None:
         changes["config"] = body.config
     doc = WorkflowDoc.model_validate({**doc.model_dump(), **changes})
-    C.describe(doc, rules=_rules(ctx))
+    info = C.describe(doc, rules=_rules(ctx))
+    controls = SA.describe(doc, ctx.registry)
     ctx.store.put_doc(doc)
     return {
         **doc.model_dump(),
-        "describe": C.describe(doc, rules=_rules(ctx)),
-        "lora_controls": SA.describe(doc, ctx.registry),
+        "describe": info,
+        "lora_controls": controls,
     }
 
 

@@ -53,6 +53,13 @@ jobs:
           npm --prefix web test
           python tools/check_extension_examples.py --panel-tests
           npm --prefix web run build
+      - name: Preserve built web for isolated browser verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-preview-${{ github.sha }}
+          path: web/dist
+          retention-days: 2
+          if-no-files-found: error
       - name: Shipped data manifest
         run: |
           python tools/check_distribution.py

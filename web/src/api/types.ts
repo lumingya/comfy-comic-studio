@@ -173,6 +173,12 @@ export interface WorkflowSummary {
   variants: string[];
   image_inputs: string[];
   checkpoint: string | null;
+  loras?: {
+    enabled: boolean;
+    groups: number;
+    supports_independent_toggle: boolean;
+  } | null;
+  lora_error?: { code: string; message: string } | null;
   updated_at: string;
 }
 

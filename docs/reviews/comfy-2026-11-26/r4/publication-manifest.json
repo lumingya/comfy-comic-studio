@@ -1,0 +1,464 @@
+{
+  "schema": "mio.safe-evidence-publication.v2",
+  "archive_date": "2026-11-26",
+  "fixed_head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "source_root_label": "external-temp-evidence",
+  "read_scope": "explicit individual-file allowlist only",
+  "source_files_modified": false,
+  "original_and_published_hashes_separately_recorded": true,
+  "copied_file_count": 25,
+  "optional_not_yet_present": [],
+  "normalization_policy": {
+    "encoding": "UTF-8 without BOM",
+    "line_endings": "LF",
+    "end_of_file": "exactly one terminal LF; extra terminal blank lines removed",
+    "other_content_changes": false,
+    "original_internal_hash_references": "unchanged; continue to identify sealed TEMP originals",
+    "published_sha256_scope": "actual normalized LF/EOF publication bytes",
+    "expected_git_blob_sha1_scope": "Git blob object hash computed from actual normalized publication bytes; not an observation of staged index"
+  },
+  "original_byte_identical_copy_count": 11,
+  "format_normalized_copy_count": 14,
+  "files": [
+    {
+      "source": "audits/r4/generality/report.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/generality/report.md",
+      "original_sha256": "726d88e07ac6ab3c3ca5e44c4ba1c2966308398b5ad012b153934da8d2f64b40",
+      "published_sha256": "726d88e07ac6ab3c3ca5e44c4ba1c2966308398b5ad012b153934da8d2f64b40",
+      "expected_git_blob_sha1": "b7a72d9aacb15303a6cdaf4f642806ad272c4205",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/generality/cross-evidence.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/generality/cross-evidence.md",
+      "original_sha256": "d988f2759416e799a9db87e4eafdb46382744f3366188b8cdc9a20de5639c2a4",
+      "published_sha256": "d988f2759416e799a9db87e4eafdb46382744f3366188b8cdc9a20de5639c2a4",
+      "expected_git_blob_sha1": "c51976acc013120e71088a41f7c9cf88c8f5dc92",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/generality/cross-web.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/generality/cross-web.md",
+      "original_sha256": "892848fce1801e40934763499d1ad24a6f18411083cfff92693a195103aceacd",
+      "published_sha256": "892848fce1801e40934763499d1ad24a6f18411083cfff92693a195103aceacd",
+      "expected_git_blob_sha1": "865fc111f496df6ffa32ecc03c2633059f6c8129",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/compile/report.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/compile/report.md",
+      "original_sha256": "0214dd764ad35a564979d3ba731c8e9fd0c030774f86cb319f4e2260f0b4966b",
+      "published_sha256": "0214dd764ad35a564979d3ba731c8e9fd0c030774f86cb319f4e2260f0b4966b",
+      "expected_git_blob_sha1": "a95e1e07e0e81515d71bdad952be339bc5fa947f",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/compile/results.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/compile/results.json",
+      "original_sha256": "df53d6f800ceba3df358813b27e521820e1df977dc72d5bf4ee3ada5b56ebd4c",
+      "published_sha256": "89c0e2b3f40bfa565a79d1d7e88504e6defa3f4ed65e62842224962196d4b9a5",
+      "expected_git_blob_sha1": "61358717a68b5a1f4f81d5a43b379bdb1c22142d",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (187 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 187,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/compile/initial-seal.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/compile/initial-seal.json",
+      "original_sha256": "ce2a7e9d619e3bf5b4da9509d34b72d2b4b2d507a37b7aed2c80de1864ca8449",
+      "published_sha256": "ce2a7e9d619e3bf5b4da9509d34b72d2b4b2d507a37b7aed2c80de1864ca8449",
+      "expected_git_blob_sha1": "a7702e3c7d39b20935e4227c73dba5927dd459f2",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/compile/cross-evidence.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/compile/cross-evidence.md",
+      "original_sha256": "00da6a04b05a6b01760ca81c85110e197c7d435795e3e68662b67b791ea5475f",
+      "published_sha256": "00da6a04b05a6b01760ca81c85110e197c7d435795e3e68662b67b791ea5475f",
+      "expected_git_blob_sha1": "f8d8ab25ad916b61f14f66eca4bb04f57e66dbdb",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/blind/report.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/blind/report.md",
+      "original_sha256": "41979cdca47b04e00dced9fec00306e5d5dab4fed8c4dac9074102d4330d1600",
+      "published_sha256": "41979cdca47b04e00dced9fec00306e5d5dab4fed8c4dac9074102d4330d1600",
+      "expected_git_blob_sha1": "8994a9bbd2b37f83980f2b5b8f7e2f2069bfc0f3",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/blind/results.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/blind/results.json",
+      "original_sha256": "f40df7671925b157f1c0dbe41a5f133e513e80eaa218a91bb1a0ceabde05580a",
+      "published_sha256": "875063e0fbffc9db62a5f7cc17facfd6d2647a175dacae1b5526412dd782fb44",
+      "expected_git_blob_sha1": "8cb329a478e259c4d693ece0875ac11ffe5428f8",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (1435 line endings); added terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 1435,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": true
+      }
+    },
+    {
+      "source": "audits/r4/blind/initial-conclusion.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/blind/initial-conclusion.json",
+      "original_sha256": "f77c4bd084a0704cd153d828aa3a2db9f675af9268e254e2f40a1d75b361632e",
+      "published_sha256": "b8645643c420213e212c82f5c015141b509c6e7129386ce690fcfaae3a27e964",
+      "expected_git_blob_sha1": "21feb991ed9aca7ff129f98bbd33e27f537f9cd2",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (56 line endings); added terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 56,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": true
+      }
+    },
+    {
+      "source": "audits/r4/blind/cohort-freeze.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/blind/cohort-freeze.json",
+      "original_sha256": "25f44a971c8a9cf91a8aa6b7e18a52d6fe4b2877ae6ba819d95cec89a20744af",
+      "published_sha256": "3cdc420ac96b42a58e5254ddd6e612b6c74e534953b65e214ac0d3b3f081881f",
+      "expected_git_blob_sha1": "78e45e01f20f590d5897cea76a69854cb4606dcb",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (360 line endings); added terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 360,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": true
+      }
+    },
+    {
+      "source": "audits/r4/blind/cross-evidence.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/blind/cross-evidence.md",
+      "original_sha256": "5aac021b19fdaa8a02c3580f92eeca6649365062b88eb3185e7aad07dd6f0c58",
+      "published_sha256": "5aac021b19fdaa8a02c3580f92eeca6649365062b88eb3185e7aad07dd6f0c58",
+      "expected_git_blob_sha1": "6841ab83d5641733d39293d0b8eefeeba5ad965d",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/web/report.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/web/report.md",
+      "original_sha256": "2341e901a843a7e393516b20766bd3416ce4e61c640ae23fa121218d670a0d15",
+      "published_sha256": "2341e901a843a7e393516b20766bd3416ce4e61c640ae23fa121218d670a0d15",
+      "expected_git_blob_sha1": "4515ec81b472030a3cf7019fb8eed80fb175d3c7",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/web/measurements.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/web/measurements.json",
+      "original_sha256": "902266e338ee48c51d6db19c7cd2620f2721d3bf7661bd4612b665a53fb286e4",
+      "published_sha256": "902266e338ee48c51d6db19c7cd2620f2721d3bf7661bd4612b665a53fb286e4",
+      "expected_git_blob_sha1": "b049237e7e3bd211c1e4e1163e8b53b0249518ba",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/privacy/report.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/privacy/report.md",
+      "original_sha256": "9ee5705d315c1a439c29700b879f22ae042e64a52195eb083772233ec7a1656e",
+      "published_sha256": "9ee5705d315c1a439c29700b879f22ae042e64a52195eb083772233ec7a1656e",
+      "expected_git_blob_sha1": "a8ee0aa96b70eae70a05da8d1bba0bc9ecaaac41",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "audits/r4/privacy/privacy-ci.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r4/privacy/privacy-ci.json",
+      "original_sha256": "ad31fe75868c7381b0def7256832bacc4215c4072822f7be30500d801b39e771",
+      "published_sha256": "92f463e4c0e26332c878b1de1572fe3eaddc20b0cd5d0a3eb9fa05729b274412",
+      "expected_git_blob_sha1": "013f27d00557f4ae99b416759ad605b082cda980",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (2022 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 2022,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-ci/report.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-ci/report.md",
+      "original_sha256": "b9c3b487ae773096aed0f1575182b5b826527e0dfedd61096d5b68fd77c7f12f",
+      "published_sha256": "c116c94ca8ff1286b79a2d6de968d11d729c816b101617ce6313d7051598ad90",
+      "expected_git_blob_sha1": "b7f05b0391068783b167487436de259edecab118",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "removed 1 extra terminal blank line(s)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 1,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-ci/ci-verified.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-ci/ci-verified.json",
+      "original_sha256": "659240528c46e83f01b8e2efab3b7023fb5ba35d2bb8677b9810af4b93410f27",
+      "published_sha256": "617c1247e90b07a66b89195ccefadcc110c820f2d3a5cc6cd65d867bc7718f5e",
+      "expected_git_blob_sha1": "31bfe1dcf42339e8242ab03c5bd59a9d3586268b",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "removed 1 extra terminal blank line(s)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 0,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 1,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-corpus/report.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-corpus/report.md",
+      "original_sha256": "cbba7509ebc082385950c5326ec1a523833a51d88f442417c7648da52e4962d6",
+      "published_sha256": "4de27fa402f6a98143b820a10a10b4976946a92c639b02a64c9f87f14afb610a",
+      "expected_git_blob_sha1": "78a9fa2341adcf46867b73e91751b247a18ab348",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (70 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 70,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-corpus/publish.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-corpus/publish.json",
+      "original_sha256": "206ce08c4bf03433262ae01c44572aef316a74f973c0a75c9269f2efe7697bd6",
+      "published_sha256": "6ff50af54ff1e56925a09afd3399484a6b7a4f5fffc574fd0ede8c9659a296d3",
+      "expected_git_blob_sha1": "281788f5a546983583103951800312663a7de504",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (13201 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 13201,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-corpus/delta-attribution.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-corpus/delta-attribution.md",
+      "original_sha256": "5bf1fa27e49685fc9a969215c2b13970f91bc6bb080491634ea2c68ba1704d83",
+      "published_sha256": "ef7616e823138e6b27dd250f7e9dddcb9ccedf85cab107aac09b59e0bd5bcc00",
+      "expected_git_blob_sha1": "89133d2b9420487279b232174cb6bdd3bf112815",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (77 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 77,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-corpus/delta-attribution.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-corpus/delta-attribution.json",
+      "original_sha256": "9d11de2b6693044c1e6684ce4f4c9e873f657df776fe0cdf8b10399558c3f147",
+      "published_sha256": "4dac35d279ad5dd42ef66c84e8906c4c904c4dd3a293d79ddeaa202c2e873521",
+      "expected_git_blob_sha1": "757d17f02314086cd1085e602d0e2a853605573b",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (1454 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 1454,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-corpus/sample1-stage-attribution.md",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-corpus/sample1-stage-attribution.md",
+      "original_sha256": "7df0d0deb00ce47505fe4b57e2a8b2d506175062162c9866e6403732a6e28d32",
+      "published_sha256": "73443534759a9340fb3da12f6f1273eb52b4775a621d83372318eb51cc45189e",
+      "expected_git_blob_sha1": "214fd10ce4b154ada6464d61dd1fd9c73adf2802",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (33 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 33,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-corpus/sample1-stage-attribution.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-corpus/sample1-stage-attribution.json",
+      "original_sha256": "d663e3b19aedb62884b3c745587b5e65ae9bc4d761c52affaf42482434f2e35a",
+      "published_sha256": "ec8c2dbee819638efaea495358a7e956d6e4650e4595c04ce8b313bb852242ad",
+      "expected_git_blob_sha1": "8d6d9484b9453a3240d8fb30d05c2e067ddb8e98",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (382 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 382,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    },
+    {
+      "source": "repairs/r3-final-corpus/effective-provenance.json",
+      "source_root_label": "external-temp-evidence",
+      "published": "r3/final-corpus/effective-provenance.json",
+      "original_sha256": "b48ceb0e44830f0aada1441f3a35a043dd90830b8579fd979bfd51488ffe808e",
+      "published_sha256": "f95da07e2ca52b1b026a6007181270dc0f2faa03237ac42e52f7d5ab14f47209",
+      "expected_git_blob_sha1": "22860157ec5cdb348ed54d3fdc4b2534fa528ed2",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (172 line endings)",
+      "mechanical_format_changes": {
+        "original_crlf_count": 172,
+        "original_bare_cr_count": 0,
+        "extra_terminal_blank_lines_removed": 0,
+        "terminal_lf_added": false
+      }
+    }
+  ],
+  "generated_files": [
+    "r4/index.md",
+    "r4/publication-manifest.json",
+    "r4/publication-check.json"
+  ],
+  "git_staged_blob_verification": {
+    "status": "pending_parent_restage_and_verify",
+    "performed_by_this_archival_task": false,
+    "required_action": "Parent must explicitly restage these 28 archive files and compare actual Git blob bytes/hash with the normalized publication files."
+  },
+  "limits": [
+    "Archival text/JSON/hash validation only; no Mio import, tests, builds, profiling, HTTP or browser calls.",
+    "No raw graph, image, private oracle, probe or raw log was read or copied.",
+    "Historical audit signatures and measurements describe only their fixed source revision."
+  ]
+}

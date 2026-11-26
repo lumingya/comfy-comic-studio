@@ -20,7 +20,7 @@ CANVAS_PORTS = {
 CANVAS_SIZE = re.compile(
     r"^(?:(?:empty_)?(?:latent|canvas|image|pixels)_)?(width|height|batch_size)$"
 )
-_NON_CANVAS_PORTS = {
+NON_CANVAS_PORTS = {
     "model",
     "clip",
     "vae",
@@ -100,7 +100,7 @@ class BindingScope:
         unresolved = canvas and any(
             _link(value, self.graph)
             and key not in CANVAS_PORTS
-            and key not in _NON_CANVAS_PORTS
+            and key not in NON_CANVAS_PORTS
             and not CANVAS_SIZE.fullmatch(key)
             for key, value in inputs.items()
         )
@@ -122,13 +122,14 @@ class BindingScope:
             pending.extend((value[0], value[1]) for _, value in inputs if _link(value, self.graph))
         return found, complete
 
+    def canvas_sites(self, sites):
+        """Return sampling sites on a complete, output-port-aware canvas lineage."""
+        lineage, complete = self._walk([(nid, None) for nid in self.roots], canvas=True)
+        return lineage.intersection(sites) if complete else set()
+
     def primary_sites(self, sites):
         """Select first stages only among samplers proven on the output canvas path."""
-        site_ids = set(sites)
-        lineage, complete = self._walk([(nid, None) for nid in self.roots], canvas=True)
-        if not complete:
-            return set()
-        pipeline = lineage & site_ids
+        pipeline = self.canvas_sites(sites)
         primary = set()
         for nid in pipeline:
             inputs, _ = self._inputs(nid, None, True)

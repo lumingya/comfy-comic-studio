@@ -1,0 +1,18 @@
+{
+  "phase": "independent_initial",
+  "head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "verdict": "REQUEST CHANGES",
+  "finding_id": "R4-COMPILE-01",
+  "finding_severity": "Medium",
+  "case_count": 14,
+  "pass_count": 12,
+  "fail_count": 2,
+  "report_sha256": "0214dd764ad35a564979d3ba731c8e9fd0c030774f86cb319f4e2260f0b4966b",
+  "results_sha256": "df53d6f800ceba3df358813b27e521820e1df977dc72d5bf4ee3ada5b56ebd4c",
+  "oracle_sha256": "db8a6b944e64d7d020e6d41e3d3f35bd37d15a7eb9aa265efa587738dfa3fa96",
+  "probe_sha256": "783d97be7558080c7b14349f75fb12cab189746e117e82dc1de379e4d425bb99",
+  "json_forbidden_dictionary_key_count": 0,
+  "utf8_bom_file_count": 0,
+  "product_lease_released": true,
+  "other_review_reports_read": false
+}

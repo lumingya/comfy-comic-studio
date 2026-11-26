@@ -37,40 +37,50 @@ def _chain_value(inputs, descriptor):
     return result
 
 
+def _finite_weight(value):
+    message = "LoRA 强度必须是有限数字，请修正工作流权重后重新分析"
+    if not (_is_number(value) or isinstance(value, str)):
+        raise LibraryError(message)
+    try:
+        parsed = _num(value)
+    except (LibraryError, OverflowError):
+        raise LibraryError(message) from None
+    return value if _is_number(value) else parsed
+
+
+def _stack_value(inputs, slot, *, include_disabled=True):
+    """Read one semantic snapshot without normalizing its native representation."""
+    raw = inputs[slot["namePath"]]
+    if slot["objectStyle"]:
+        name = raw.get("lora") if raw.get("lora") is not None else raw.get("name")
+        enabled = raw.get("on") is not False
+        strength, clip = raw.get("strength", 1), raw.get("strengthTwo")
+    else:
+        name = raw
+        switch = inputs[slot["switchPath"]] if slot["switchPath"] else True
+        enabled = _switch_enabled(switch)
+        strength = inputs[slot["strengthPath"]] if slot["strengthPath"] else 1
+        clip = inputs[slot["clipPath"]] if slot["clipPath"] else None
+    if _is_empty_name(name) or not include_disabled and not enabled:
+        return None
+    item = {"name": str(name), "strength": _finite_weight(strength), "enabled": enabled}
+    if clip not in (None, ""):
+        item["clip"] = _finite_weight(clip)
+    return item
+
+
 def _stack_current_loras(workflow, lora, include_disabled=False):
     node = (workflow or {}).get(lora.get("nodeId"))
     if not isinstance(node, dict):
         return []
     out = []
     for slot in stack_slots(node, workflow):
-        raw = node["inputs"][slot["namePath"]]
-        if slot["objectStyle"]:
-            name = raw.get("lora") if raw.get("lora") is not None else raw.get("name")
-            if (raw.get("on") is False and not include_disabled) or _is_empty_name(name):
-                continue
-            entry = {
-                "name": str(name),
-                "strength": raw["strength"] if _is_number(raw.get("strength")) else 1,
-            }
-            if include_disabled:
-                entry["enabled"] = raw.get("on") is not False
-            if _is_number(raw.get("strengthTwo")):
-                entry["clip"] = raw["strengthTwo"]
-            out.append(entry)
-        else:
-            if _is_empty_name(raw):
-                continue
-            switch = node["inputs"][slot["switchPath"]] if slot["switchPath"] else True
-            if not _switch_enabled(switch) and not include_disabled:
-                continue
-            strength = node["inputs"][slot["strengthPath"]] if slot["strengthPath"] else 1
-            clip = node["inputs"][slot["clipPath"]] if slot["clipPath"] else None
-            entry = {"name": str(raw), "strength": strength if _is_number(strength) else 1}
-            if include_disabled:
-                entry["enabled"] = _switch_enabled(switch)
-            if _is_number(clip):
-                entry["clip"] = clip
-            out.append(entry)
+        entry = _stack_value(node["inputs"], slot, include_disabled=include_disabled)
+        if entry is None:
+            continue
+        if not include_disabled:
+            entry.pop("enabled")
+        out.append(entry)
     return out
 
 
