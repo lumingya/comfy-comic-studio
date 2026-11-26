@@ -1,0 +1,41 @@
+{
+  "schema": "mio.workflow.delivery.protected-workspaces.v1",
+  "checked_at_utc": "2026-11-26T11:15:53.939430+00:00",
+  "scope": "Data bytes, skip-worktree counts and original staged/unstaged digests; original HEAD/untracked drift retained without actor attribution. No unknown untracked content was read.",
+  "workspaces": [
+    {
+      "workspace_label": "task",
+      "data_file_count": 65,
+      "all_data_raw_hashes_unchanged": true,
+      "data_aggregate_sha256": "cdc076452f498d236e1ed5f701e965137eed16b4538247003cdcf67744e99421",
+      "tracked_data_count": 65,
+      "skip_worktree_count": 64,
+      "baseline_skip_worktree_count": 64,
+      "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "baseline_head": "fa6308384826fad7629b2c727d70230cc7951d05",
+      "status_sha256": "5cc1447d6a5b6d38fa3dd4d872521c6e9dc20500c0fa5f9e20a47027713f6853",
+      "unstaged_diff_sha256": "883131391d32da03768cba69b949d22487caebe907bce283cbbf47ea624b8800",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "workspace_label": "original",
+      "data_file_count": 65,
+      "all_data_raw_hashes_unchanged": true,
+      "data_aggregate_sha256": "5e1a152a4a665a5006479b3beceb097775709137b1e821cfaf63754d1b2d2e4f",
+      "tracked_data_count": 65,
+      "skip_worktree_count": 64,
+      "baseline_skip_worktree_count": 64,
+      "head": "b78de840044750fd29a214fcdba51ad130f4c925",
+      "baseline_head": "e7a4eac44bacb64f6d74dd5a028d0380b0aa69f8",
+      "status_sha256": "d2a1cba163a4e1d66ee81e9038be8a967ee526d51ba5d5bb5057e643884d0941",
+      "unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unstaged_digest_matches_baseline": true,
+      "staged_digest_matches_baseline": true,
+      "head_forward_reverse": "0\t3",
+      "untracked_count": 3,
+      "head_matches_local_origin_main": true,
+      "baseline_untracked_path_list_available": false
+    }
+  ]
+}

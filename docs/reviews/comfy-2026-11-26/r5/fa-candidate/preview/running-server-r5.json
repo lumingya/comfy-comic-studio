@@ -1,0 +1,18 @@
+{
+  "pid": 47224,
+  "backend_head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "backend_module_count": 217,
+  "backend_module_sha256": "5a5ee950ae0c972791ae17fab92978579adec7d6d419133e6eaf9eb9e649377d",
+  "verified_before_mio_import": true,
+  "affinity": "0x1",
+  "priority_class": 16384,
+  "origin": "http://127.0.0.1:8797",
+  "api_only": false,
+  "artifact_id": 15093284680,
+  "artifact_run_id": 45768262520,
+  "frontend_head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "index_sha256": "76e359396b1a4a06ff72e21bef3d48c81c82d75ea1115a09755d546aa8373a3a",
+  "asset_file_count": 81,
+  "all_asset_files_verified_before_import": true,
+  "catalog_entries_after_app_creation": 0
+}

@@ -1,0 +1,1093 @@
+{
+  "compile": {
+    "main_counts": {
+      "total": 70,
+      "pass": 69,
+      "fail": 1,
+      "neutral_total": 47,
+      "neutral_pass": 46,
+      "manual_initial_selected": 23,
+      "manual_initial_unproved": 6,
+      "own_input_error": 1
+    },
+    "manual29_scalar_summary": {
+      "actual_compiled": 29,
+      "actual_selected": 29,
+      "actual_single_field_delta": 29,
+      "all_outputs_and_closure_exact": true,
+      "all_source_preserved": true,
+      "all_surviving_links_preserved": true,
+      "change_bearing": 29,
+      "denominator": 29,
+      "negative": 11,
+      "prompt": 18,
+      "typed_binding_exact": 29,
+      "typed_full_graph_exact": 29,
+      "unproved": 0
+    },
+    "manual29_recount": {
+      "cases": 29,
+      "passed": 29,
+      "targets_equal": 29,
+      "binding_delta_single": 29
+    },
+    "manual29_execution_recount": {
+      "compile_ok": 29,
+      "typed_binding_exact": 29,
+      "typed_full_graph_exact": 29,
+      "closure_exact": 29,
+      "outputs_exact": 29,
+      "source_graph_unchanged": 29,
+      "source_document_unchanged": 29,
+      "source_file_unchanged": 29,
+      "surviving_links_preserved": 29,
+      "expected_actual_graph_hash_equal": 29
+    },
+    "manual29_cases": [
+      {
+        "case_id": "manual-01",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-02",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-03",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-04",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-05",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-06",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-07",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-08",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-09",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-10",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-11",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-12",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-13",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 2,
+        "passed": true
+      },
+      {
+        "case_id": "manual-14",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 2,
+        "passed": true
+      },
+      {
+        "case_id": "manual-15",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-22",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 3,
+        "passed": true
+      },
+      {
+        "case_id": "manual-23",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 3,
+        "passed": true
+      },
+      {
+        "case_id": "manual-24",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-25",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-26",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-27",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-28",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-29",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-16-explicit-mode-owner",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-17-explicit-mode-owner",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-18-explicit-mode-owner",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-19-explicit-mode-owner",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-20-explicit-mode-owner",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      },
+      {
+        "case_id": "manual-21-explicit-mode-owner",
+        "target_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "passed": true
+      }
+    ],
+    "supplement_counts": {
+      "corrected_input_pass": 1,
+      "fail": 0,
+      "manual29_fresh_pass": 6,
+      "manual29_fresh_selected": 6,
+      "old_four_automatic_pass": 4,
+      "old_four_explicit_pass": 4,
+      "pass": 15,
+      "total": 15
+    },
+    "supplement_case_flags": [
+      {
+        "case_id": "manual-16-explicit-mode-owner",
+        "cohort": "manual29-supplement",
+        "expected_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "actual_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "manual-17-explicit-mode-owner",
+        "cohort": "manual29-supplement",
+        "expected_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "actual_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "manual-18-explicit-mode-owner",
+        "cohort": "manual29-supplement",
+        "expected_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "actual_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "manual-19-explicit-mode-owner",
+        "cohort": "manual29-supplement",
+        "expected_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "actual_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "manual-20-explicit-mode-owner",
+        "cohort": "manual29-supplement",
+        "expected_target_pointers": [
+          "/107/inputs/populated_text"
+        ],
+        "actual_target_pointers": [
+          "/107/inputs/populated_text"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "manual-21-explicit-mode-owner",
+        "cohort": "manual29-supplement",
+        "expected_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "actual_target_pointers": [
+          "/107/inputs/wildcard_text"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "five-image-role-correct-input",
+        "cohort": "corrected-input",
+        "expected_target_pointers": [
+          "/control/inputs/image",
+          "/init/inputs/image",
+          "/mask/inputs/image",
+          "/ref1/inputs/image",
+          "/ref2/inputs/image"
+        ],
+        "actual_target_pointers": [
+          "/control/inputs/image",
+          "/init/inputs/image",
+          "/mask/inputs/image",
+          "/ref1/inputs/image",
+          "/ref2/inputs/image"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 5,
+        "full_delta_count": 6,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "old-four-prompt-automatic",
+        "cohort": "old-four-automatic",
+        "expected_target_pointers": [],
+        "actual_target_pointers": [],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 0,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "old-four-prompt-explicit",
+        "cohort": "old-four-explicit",
+        "expected_target_pointers": [
+          "/6/inputs/text"
+        ],
+        "actual_target_pointers": [
+          "/6/inputs/text"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 2,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "old-four-negative-automatic",
+        "cohort": "old-four-automatic",
+        "expected_target_pointers": [],
+        "actual_target_pointers": [],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 0,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "old-four-negative-explicit",
+        "cohort": "old-four-explicit",
+        "expected_target_pointers": [
+          "/33/inputs/text"
+        ],
+        "actual_target_pointers": [
+          "/33/inputs/text"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 2,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "old-four-width-automatic",
+        "cohort": "old-four-automatic",
+        "expected_target_pointers": [],
+        "actual_target_pointers": [],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 0,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "old-four-width-explicit",
+        "cohort": "old-four-explicit",
+        "expected_target_pointers": [
+          "/27/inputs/width"
+        ],
+        "actual_target_pointers": [
+          "/27/inputs/width"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 2,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "old-four-height-automatic",
+        "cohort": "old-four-automatic",
+        "expected_target_pointers": [],
+        "actual_target_pointers": [],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 0,
+        "full_delta_count": 1,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      },
+      {
+        "case_id": "old-four-height-explicit",
+        "cohort": "old-four-explicit",
+        "expected_target_pointers": [
+          "/27/inputs/height"
+        ],
+        "actual_target_pointers": [
+          "/27/inputs/height"
+        ],
+        "expected_graph_hash_equal": true,
+        "binding_delta_count": 1,
+        "full_delta_count": 2,
+        "compile_ok": true,
+        "typed_binding_exact": true,
+        "typed_full_graph_exact": true,
+        "closure_exact": true,
+        "outputs_exact": true,
+        "source_graph_unchanged": true,
+        "source_document_unchanged": true,
+        "source_file_unchanged": true,
+        "surviving_links_preserved": true,
+        "uploads_exact": true
+      }
+    ],
+    "historical_four": [
+      {
+        "kind": "prompt",
+        "actual_target_pointers": [],
+        "expected_target_pointers": [
+          "/6/inputs/text"
+        ],
+        "compile_ok": true,
+        "old_python_compile_exact": false,
+        "source_id": "2df6c0ad8d1a",
+        "source_sha256": "d35c3cfd94b382e7a56b0be98e50a9a4680e9f4d13c7b3c7595cf82de9edfd5e"
+      },
+      {
+        "kind": "negative",
+        "actual_target_pointers": [],
+        "expected_target_pointers": [
+          "/33/inputs/text"
+        ],
+        "compile_ok": true,
+        "old_python_compile_exact": false,
+        "source_id": "2df6c0ad8d1a",
+        "source_sha256": "d35c3cfd94b382e7a56b0be98e50a9a4680e9f4d13c7b3c7595cf82de9edfd5e"
+      },
+      {
+        "kind": "width",
+        "actual_target_pointers": [],
+        "expected_target_pointers": [
+          "/27/inputs/width"
+        ],
+        "compile_ok": true,
+        "old_python_compile_exact": false,
+        "source_id": "2df6c0ad8d1a",
+        "source_sha256": "d35c3cfd94b382e7a56b0be98e50a9a4680e9f4d13c7b3c7595cf82de9edfd5e"
+      },
+      {
+        "kind": "height",
+        "actual_target_pointers": [],
+        "expected_target_pointers": [
+          "/27/inputs/height"
+        ],
+        "compile_ok": true,
+        "old_python_compile_exact": false,
+        "source_id": "2df6c0ad8d1a",
+        "source_sha256": "d35c3cfd94b382e7a56b0be98e50a9a4680e9f4d13c7b3c7595cf82de9edfd5e"
+      }
+    ],
+    "historical75": {
+      "absent": 41,
+      "api_graphs": 46,
+      "automatic_truth": 160,
+      "manual_required_unmapped": 29,
+      "new_automatic_abstention_exact": 4,
+      "new_automatic_is_old_truth_pass": false,
+      "new_explicit_single_field_exact": 4,
+      "old_explicit_operations": 0,
+      "old_false_preserved": 4,
+      "old_false_source_count": 1,
+      "requests": 230
+    },
+    "private138": {
+      "explicit_tags": 0,
+      "historical_full_compile_ok": false,
+      "loras": 43,
+      "missing_frontend_state": true,
+      "new_private_full_compile_tested": false,
+      "nodes": 138,
+      "separate_regressions_are_private_graph_runs": false,
+      "separate_tag_mapping_regression_count": 29
+    },
+    "boundaries": {
+      "all_r6_or_final_delivery_signed": false,
+      "browser_ui_tested_by_compile_role": false,
+      "installed_plugin_version_certified": false,
+      "local_full_suite_or_build": false,
+      "model_or_gpu_run": false,
+      "network_during_product_run": false,
+      "new_private138_compile_proven": false,
+      "plugin_executed": false,
+      "user_lora_loaded": false
+    },
+    "original_results_preserved": true,
+    "initial_input_error_result_rewritten": false
+  },
+  "web": {
+    "mapping": {
+      "large_manual_exact": 4,
+      "candidate_manual_exact": 4,
+      "large_documents": 4,
+      "candidate_documents": 4
+    },
+    "post_wire_saved_graph": {
+      "documents": 12,
+      "strict_graph_exact": 12,
+      "detail_200_unique_documents": 12,
+      "wire_method_recorded": false
+    },
+    "exports_count": 12,
+    "exports_saved_graph_config_exact": 12,
+    "mapping_records": [
+      {
+        "kind": "api200",
+        "status": 201,
+        "mapping": {
+          "prompt": "/3/inputs/text",
+          "negative": "/3/inputs/text",
+          "steps": "/5/inputs/steps",
+          "ref": "/200/inputs/image"
+        }
+      },
+      {
+        "kind": "api200",
+        "status": 200,
+        "mapping": {
+          "prompt": "/3/inputs/text",
+          "negative": "/3/inputs/text",
+          "steps": "/5/inputs/steps",
+          "ref": "/200/inputs/image"
+        }
+      },
+      {
+        "kind": "candidate",
+        "status": 201,
+        "mapping": {
+          "prompt": "/20/inputs/value",
+          "negative": "/21/inputs/value",
+          "init": "/30/inputs/image",
+          "control": "/40/inputs/image",
+          "mask": "/50/inputs/image"
+        }
+      },
+      {
+        "kind": "candidate",
+        "status": 200,
+        "mapping": {
+          "prompt": "/20/inputs/value",
+          "negative": "/21/inputs/value",
+          "init": "/30/inputs/image",
+          "control": "/40/inputs/image",
+          "mask": "/50/inputs/image"
+        }
+      },
+      {
+        "kind": "lora32",
+        "status": 201,
+        "mapping": {}
+      },
+      {
+        "kind": "lora32",
+        "status": 200,
+        "mapping": {}
+      },
+      {
+        "kind": "lora32",
+        "status": 200,
+        "mapping": {}
+      },
+      {
+        "kind": "api200",
+        "status": 201,
+        "mapping": {
+          "prompt": "/3/inputs/text",
+          "negative": "/3/inputs/text",
+          "steps": "/5/inputs/steps",
+          "ref": "/200/inputs/image"
+        }
+      },
+      {
+        "kind": "api200",
+        "status": 200,
+        "mapping": {
+          "prompt": "/3/inputs/text",
+          "negative": "/3/inputs/text",
+          "steps": "/5/inputs/steps",
+          "ref": "/200/inputs/image"
+        }
+      },
+      {
+        "kind": "candidate",
+        "status": 201,
+        "mapping": {
+          "prompt": "/20/inputs/value",
+          "negative": "/21/inputs/value",
+          "init": "/30/inputs/image",
+          "control": "/40/inputs/image",
+          "mask": "/50/inputs/image"
+        }
+      },
+      {
+        "kind": "candidate",
+        "status": 200,
+        "mapping": {
+          "prompt": "/20/inputs/value",
+          "negative": "/21/inputs/value",
+          "init": "/30/inputs/image",
+          "control": "/40/inputs/image",
+          "mask": "/50/inputs/image"
+        }
+      },
+      {
+        "kind": "lora32",
+        "status": 201,
+        "mapping": {}
+      },
+      {
+        "kind": "lora32",
+        "status": 200,
+        "mapping": {}
+      },
+      {
+        "kind": "lora32",
+        "status": 200,
+        "mapping": {}
+      },
+      {
+        "kind": "api200",
+        "status": 201,
+        "mapping": {
+          "prompt": "/3/inputs/text",
+          "negative": "/3/inputs/text",
+          "steps": "/5/inputs/steps",
+          "ref": "/200/inputs/image"
+        }
+      },
+      {
+        "kind": "api200",
+        "status": 200,
+        "mapping": {
+          "prompt": "/3/inputs/text",
+          "negative": "/3/inputs/text",
+          "steps": "/5/inputs/steps",
+          "ref": "/200/inputs/image"
+        }
+      },
+      {
+        "kind": "candidate",
+        "status": 201,
+        "mapping": {
+          "prompt": "/20/inputs/value",
+          "negative": "/21/inputs/value",
+          "init": "/30/inputs/image",
+          "control": "/40/inputs/image",
+          "mask": "/50/inputs/image"
+        }
+      },
+      {
+        "kind": "candidate",
+        "status": 200,
+        "mapping": {
+          "prompt": "/20/inputs/value",
+          "negative": "/21/inputs/value",
+          "init": "/30/inputs/image",
+          "control": "/40/inputs/image",
+          "mask": "/50/inputs/image"
+        }
+      },
+      {
+        "kind": "lora32",
+        "status": 201,
+        "mapping": {}
+      },
+      {
+        "kind": "lora32",
+        "status": 200,
+        "mapping": {}
+      },
+      {
+        "kind": "lora32",
+        "status": 200,
+        "mapping": {}
+      },
+      {
+        "kind": "api200",
+        "status": 201,
+        "mapping": {
+          "prompt": "/3/inputs/text",
+          "negative": "/3/inputs/text",
+          "steps": "/5/inputs/steps",
+          "ref": "/200/inputs/image"
+        }
+      },
+      {
+        "kind": "api200",
+        "status": 200,
+        "mapping": {
+          "prompt": "/3/inputs/text",
+          "negative": "/3/inputs/text",
+          "steps": "/5/inputs/steps",
+          "ref": "/200/inputs/image"
+        }
+      },
+      {
+        "kind": "candidate",
+        "status": 201,
+        "mapping": {
+          "prompt": "/20/inputs/value",
+          "negative": "/21/inputs/value",
+          "init": "/30/inputs/image",
+          "control": "/40/inputs/image",
+          "mask": "/50/inputs/image"
+        }
+      },
+      {
+        "kind": "candidate",
+        "status": 200,
+        "mapping": {
+          "prompt": "/20/inputs/value",
+          "negative": "/21/inputs/value",
+          "init": "/30/inputs/image",
+          "control": "/40/inputs/image",
+          "mask": "/50/inputs/image"
+        }
+      },
+      {
+        "kind": "lora32",
+        "status": 201,
+        "mapping": {}
+      },
+      {
+        "kind": "lora32",
+        "status": 200,
+        "mapping": {}
+      },
+      {
+        "kind": "lora32",
+        "status": 200,
+        "mapping": {}
+      }
+    ],
+    "wire_scalar_facts": {
+      "document_responses": 28,
+      "numeric_equal": 28,
+      "strict_typed_equal": 0,
+      "raw_canonical_hash_equal": 0,
+      "exports": 12,
+      "exports_numeric_equal": 12,
+      "exports_strict_typed_equal": 0,
+      "exports_raw_canonical_hash_equal": 0,
+      "all_deltas_float_to_int_numeric_equal": true,
+      "original_false_preserved": true
+    },
+    "denominators": {
+      "original_file_previews": 16,
+      "original_API_previews": 12,
+      "original_UI_only_previews": 4,
+      "extra_candidate_readonly_preview": 1,
+      "total_previews_with_separate_supplement": 17,
+      "saved_API_documents": 12,
+      "additional_LoRA_PATCH_saves": 4,
+      "UI_only_cancels": 4,
+      "exports": 12,
+      "main_UI_actions": 234,
+      "coarse_tab_supplement_actions": 3,
+      "focus_002_actions": 9,
+      "candidate_003_actions": 6,
+      "actual_UI_actions_total": 252,
+      "main_screenshots_personally_viewed": 28,
+      "focus_supplement_screenshots_personally_viewed": 1,
+      "candidate_supplement_screenshots_personally_viewed": 1,
+      "total_screenshots_personally_viewed": 30
+    },
+    "network_boundaries": {
+      "initial_checkpoint_API_responses": 145,
+      "initial_all_network_count_proven": false,
+      "all_main_API_responses": 166,
+      "available_JSON_bodies": 152,
+      "body_unavailable": 14,
+      "claim_full_session_requests_le_180": false,
+      "response_and_request_denominators_not_summed": true
+    },
+    "original_candidate_facts": {
+      "expected_rows_per_input": 12,
+      "surviving_actual_rows_per_input": 10,
+      "original_exact": false,
+      "original_oracle_edited": false,
+      "original_full_role_expansion_grids": 3,
+      "full_role_expansion_grids_after_separate_supplement": 4,
+      "supplement_selected_closure_exact": true
+    },
+    "candidate_supplement_facts": {
+      "navigation_count": 1,
+      "previous_false_preserved": true,
+      "prompt_rows": 2,
+      "negative_rows": 2,
+      "expected_surviving_rows": 10,
+      "original_orphan_expectations_preserved": 2,
+      "pass": true,
+      "screenshots": 1,
+      "closed_dialog": true,
+      "own_context_disposed": true,
+      "actions": 6,
+      "all_own_origin_requests": 47,
+      "api_requests": 13,
+      "foreign_requests": 0,
+      "mutation_requests": 0,
+      "readonly_inspect_post_requests": 1,
+      "breach": false,
+      "browser_closed": false,
+      "pid": 36348
+    }
+  },
+  "privacy": {
+    "product_medium_or_higher_count": 0,
+    "process_deviation_count": 1,
+    "process_clean_pass": false,
+    "actual_git_blobs_scanned": 224,
+    "archive_files": 71,
+    "archive_actual_sha256_all_match": true,
+    "archive_actual_git_blob_all_match": true,
+    "manifest_source_rows": 62,
+    "manifest_source_rows_resolved": 62,
+    "ledger_requirement_count": 53,
+    "ledger_unique_requirement_count": 53,
+    "ledger_all_rows_not_final_acceptance": true,
+    "workspace_all_data_hashes_preserved": true,
+    "workspace_all_skip_counts_preserved": true,
+    "original_workspace_head_changed": true,
+    "original_workspace_status_changed": true,
+    "original_workspace_change_attribution_proven": false,
+    "final_publication_signed": false,
+    "root_delivery_signed": false
+  },
+  "privacy_original_current_boundary_scalars": {
+    "original_missing": 25,
+    "current_recovered": 50,
+    "current_supplements": 25,
+    "current75_size": 75,
+    "request_denominator": 230
+  },
+  "privacy_pending": {
+    "final_cleanup_document_commit_push_pending": true,
+    "role_verdicts_pending": true,
+    "root_delivery_not_signed": true
+  },
+  "root_process": [
+    {
+      "file": "root-process-events.json",
+      "sha256": "e4767cffe8b836d492c4ea51f38cf7b11b05ea9fa3863a0a9c6bd5b7902d7e37",
+      "events": 1,
+      "scalar_flags": [
+        {
+          "mio_imports": 0,
+          "product_calls": 0,
+          "repository_writes": 0,
+          "uncertain_identity_file_write": false,
+          "initial_output_not_rewritten": true
+        }
+      ]
+    },
+    {
+      "file": "root-post-initial-process-events.json",
+      "sha256": "4680c26017c9e09dc4912da251a6add2ef87e7964e53f14e40371480bcb56a68",
+      "events": 2,
+      "scalar_flags": [
+        {
+          "uncaught": true,
+          "product_calls": 0,
+          "repo_changes": 0,
+          "graph_prompt_asset_credential_echo": false
+        },
+        {
+          "uncaught": false,
+          "product_calls": 0,
+          "repo_changes": 0,
+          "graph_prompt_asset_credential_echo": false
+        }
+      ]
+    },
+    {
+      "file": "root-post-initial-process-events-v2.json",
+      "sha256": "f7b984583000984ac44ac5cbcf6071391324d5fc8f178cac2d6848d97b6f29c7",
+      "events": 2,
+      "scalar_flags": [
+        {
+          "uncaught": true
+        },
+        {
+          "uncaught": false
+        }
+      ]
+    },
+    {
+      "file": "root-post-initial-process-events-v3.json",
+      "sha256": "f71007eba77bd421cc3665447afaa9a728ffc0812155b269811253aca032c705",
+      "events": 1,
+      "scalar_flags": [
+        {
+          "graph_prompt_asset_credential_echo": false,
+          "user_original_or_user_browser_identifiers_observed": false,
+          "unknown_truncated_output_cleared": false
+        }
+      ]
+    }
+  ]
+}

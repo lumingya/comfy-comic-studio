@@ -1,0 +1,92 @@
+{
+  "schema": "mio.r6-generality-publication-allowlist.v1",
+  "role": "generality",
+  "task_base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "authorization_scope": "Exact listed generality evidence bytes may be copied into the root documentation publication. No other file is implicitly authorized.",
+  "source_directory_pointer": "audits/r6/generality/",
+  "publication_allowlist": [
+    {
+      "path": "report.md",
+      "sha256": "d49bc1a837c3ce75b480038b8b3065ca6fce795519abdd835e16ab75df936dcc",
+      "safe_content": "Independent initial report; neutral audit analysis, source pointers, counts and hashes."
+    },
+    {
+      "path": "static-inventory.json",
+      "sha256": "38bcf8f2fe6430756d323858fcbad311589afcf681e2c8e138b4181fcb76e167",
+      "safe_content": "Frozen source identity, changed source pointers and static counts."
+    },
+    {
+      "path": "static-checks.json",
+      "sha256": "beac6adb9a814ba2477986bdc2a6b6abd1c9909630012cb2085d6d5657bbca2b",
+      "safe_content": "Static source and test-contract pointers, counts and boolean checks; not test execution."
+    },
+    {
+      "path": "runtime-manifest.json",
+      "sha256": "8e1108afa9b69c09504fa69b38803bf16ea06df7044f63573cc6d352e7bbf7ef",
+      "safe_content": "Public repository runtime source pointers and SHA256 values."
+    },
+    {
+      "path": "initial-seal.json",
+      "sha256": "9d671ba5a30e5c0bed79e43fd56648812970c207de55f922ef74e2f074212ee1",
+      "safe_content": "Immutable initial identity, scope, evidence hashes and limitations. Hash references to scripts do not authorize publication of those scripts."
+    },
+    {
+      "path": "cross-review-structure.json",
+      "sha256": "770602d4f9020bb577ac2086543d7e739209a621d8ef1cd2206584059265129e",
+      "safe_content": "Bounded 16-edge pointer, output-slot and boolean projection for detailer image/mask and global-base/regional conditioning; not a full workflow graph."
+    },
+    {
+      "path": "cross-review-facts.json",
+      "sha256": "22a037cc9098dcae707bd99f98e878b5704f4155c01f1e30c80d26d57fdef994",
+      "safe_content": "Whitelisted numeric and boolean peer summaries and bounded JSON pointers; preserves false results and separate denominators."
+    },
+    {
+      "path": "cross-review-inputs.json",
+      "sha256": "0033643519fa4ae04f2e065f497413fa3bc45fb1b32f9bba31ebf2219e1b7aad",
+      "safe_content": "Peer evidence file pointers, byte lengths, SHA256 identities and known-field type/length metadata; no raw peer objects."
+    },
+    {
+      "path": "cross-review-sources.json",
+      "sha256": "2cd52fd21e09ed476c65da6c8bd9f59c4fefb5407945be250442d6a6f42c4ed1",
+      "safe_content": "Frozen source identities, source function pointers, static integrity and zero-execution facts."
+    },
+    {
+      "path": "cross-review.md",
+      "sha256": "cd5884fcde82842f92927834aa525707b99a07bff6bdbd005745486e8eaaae50",
+      "safe_content": "Substantive cross review with peer hashes, precise source pointers, two Low findings, retained failures, process and delivery boundaries."
+    },
+    {
+      "path": "final.md",
+      "sha256": "5791ecfe0cae0dde736c1ee8b20f160a47880682e47197c8fc96af7e57d80a2f",
+      "safe_content": "Final generality product-role signature and explicit remaining boundaries."
+    },
+    {
+      "path": "final-seal.json",
+      "sha256": "dd92bd9aa732fb8cb4401a36c8f952124ea35d2070636062ae2b12cd4c2cb4ab",
+      "safe_content": "Immutable final identity, evidence hashes, scope and limitations. Hash references to scripts or peer files do not expand this publication allowlist."
+    }
+  ],
+  "self_publication": {
+    "path": "publication-allowlist.json",
+    "allowed": true,
+    "self_sha256_location": "Communicated separately to root after this file is written; root should record the raw-byte SHA256 in its publication manifest. No recursive embedded self-hash is claimed."
+  },
+  "excluded_by_default": [
+    "All files not explicitly listed above, other than this allowlist itself",
+    "Python scripts and execution helpers",
+    "Private identities, raw process-event content, original workflow inputs, images, prompts, asset names, credentials and user-data paths",
+    "Private oracle files, full workflow graphs and arbitrary unprojected peer dictionaries",
+    "Other role evidence merely named or hashed by the listed seals and reports"
+  ],
+  "publication_constraints": {
+    "initial_and_final_seals_unchanged": true,
+    "sealed_artifacts_unchanged": true,
+    "no_blanket_directory_publication": true,
+    "do_not_resolve_seal_references_as_publication_permission": true,
+    "copy_exact_authorized_bytes": true,
+    "new_product_execution_for_this_supplement": false,
+    "source_user_data_git_browser_network_test_changes": false,
+    "root_final_publication_cleanup_and_ci_still_owned_by_root": true
+  }
+}

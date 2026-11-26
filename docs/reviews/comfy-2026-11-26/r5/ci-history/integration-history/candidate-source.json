@@ -1,0 +1,18 @@
+{
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "git_status": "",
+  "tested_source_hashes_match": true,
+  "modules": {
+    "count": 217,
+    "sha256": "5a5ee950ae0c972791ae17fab92978579adec7d6d419133e6eaf9eb9e649377d"
+  },
+  "all_server": {
+    "count": 405,
+    "sha256": "7a8dec42eb98849d6eff92dfeb84dd9b329136ee7e16a754b367bb7dda60da17"
+  },
+  "changed_from_ed45509": [
+    "examples/extensions/standard-image-channels/transport.py",
+    "server/tests/test_cloud_timeout_classification.py",
+    "web/src/components/ui.tsx"
+  ]
+}

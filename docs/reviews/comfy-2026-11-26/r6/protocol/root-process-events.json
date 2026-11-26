@@ -1,0 +1,23 @@
+{
+  "schema": "mio.r6-root-process-events.v1",
+  "scope": "root operations during the R6 independent review; not product findings",
+  "events": [
+    {
+      "id": "root-source-identity-locator-uncaught-assertion",
+      "evidence_pointer": "preflight/authorize_old_false.py",
+      "phase": "pure-file source identity authorization; no product import",
+      "exception_type": "AssertionError",
+      "cause": "Initial resolver admitted JSON files only; the frozen original container was PNG.",
+      "known_output": "One traceback printed the already-authorized owned script path and a fixed count assertion. No workflow body, request, prompt, asset filename or credential appeared in this observed output.",
+      "mio_imports": 0,
+      "product_calls": 0,
+      "repository_writes": 0,
+      "uncertain_identity_file_write": false,
+      "recovery": "Confirmed the private identity file was absent, installed a bounded exception projection, inspected explicit frozen metadata, and admitted JSON/PNG/WebP containers. The final sole source path and full raw SHA were verified before writing a new private identity grant.",
+      "initial_output_not_rewritten": true,
+      "subsequent_identity_grant_sha256": "a779d74c3c20f5d01f166d7aee683eb360a0bd09c175e9be11ad17ae6ed4fc96"
+    }
+  ],
+  "all_process_output_clean_claimed": false,
+  "credential_or_user_graph_leak_claimed": false
+}

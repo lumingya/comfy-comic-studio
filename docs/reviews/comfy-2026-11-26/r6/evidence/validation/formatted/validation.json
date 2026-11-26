@@ -1,0 +1,93 @@
+{
+  "schema": "mio.r6-targeted-validation.v1",
+  "started_utc": "2026-11-26T08:00:11.252252+00:00",
+  "head": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+  "cpu_guard": {
+    "pid": 40332,
+    "affinity_mask": 1,
+    "priority_class": 16384,
+    "readback_utc": "2026-11-26T08:00:11.172005+00:00",
+    "verified_before_product_import": true
+  },
+  "source_freeze": "frozen-source.json",
+  "checks": [
+    {
+      "name": "ruff_check",
+      "arguments_after_python": [
+        "-B",
+        "-m",
+        "ruff",
+        "check",
+        "server/mio_server/comfy/inspection_candidates.py",
+        "server/tests/test_workflow_inspection_candidates.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.09336800000164658
+    },
+    {
+      "name": "ruff_format_check",
+      "arguments_after_python": [
+        "-B",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "server/mio_server/comfy/inspection_candidates.py",
+        "server/tests/test_workflow_inspection_candidates.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.08379689999856055
+    }
+  ],
+  "scope": "Only three changed files and the listed related unit test classes; no full suite, browser, GPU, or model execution.",
+  "unit_tests_executed": true,
+  "test_names": [
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests",
+    "tests.test_workflow_import_media.WorkflowDecodeTests.test_image_candidates_keep_reference_control_init_and_mask_manual",
+    "tests.test_workflow_inspection.InspectionTests",
+    "tests.test_workflow_graph_routes.SemanticGraphTests"
+  ],
+  "loaded_test_ids": [
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests.test_cyclic_payload_dependencies_are_bounded_and_leave_graph_unchanged",
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests.test_empty_literal_text_chains_need_payload_context_not_just_string_values",
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests.test_empty_paired_and_typed_text_fields_are_manual_candidates",
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests.test_image_roles_cross_payload_steps_without_merging_independent_sources",
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests.test_invalid_ports_and_inactive_or_ambiguous_bypasses_do_not_gain_roles",
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests.test_manual_mapping_and_explicit_tags_only_write_the_selected_source",
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests.test_selectors_keep_static_branches_and_auxiliary_outputs_separate",
+    "tests.test_workflow_inspection_candidates.WorkflowInspectionCandidateTests.test_typed_payloads_exclude_scalar_outputs_and_control_dependencies",
+    "tests.test_workflow_import_media.WorkflowDecodeTests.test_image_candidates_keep_reference_control_init_and_mask_manual",
+    "tests.test_workflow_inspection.InspectionTests.test_custom_output_mapping_selects_node_without_replacing_image_link",
+    "tests.test_workflow_inspection.InspectionTests.test_rule_validation_isolated_and_explicit_bindings_win",
+    "tests.test_workflow_inspection.InspectionTests.test_split_noise_guider_and_unique_text_chain_are_bound",
+    "tests.test_workflow_inspection.InspectionTests.test_standard_graph_and_package_leave_inputs_unchanged",
+    "tests.test_workflow_inspection.InspectionTests.test_two_encoder_text_fields_are_not_silently_reduced_to_one",
+    "tests.test_workflow_inspection.InspectionTests.test_ui_and_invalid_formats_are_actionable_not_imported",
+    "tests.test_workflow_inspection.InspectionTests.test_unbound_request_parameters_are_reported",
+    "tests.test_workflow_inspection.InspectionTests.test_unresolved_text_chain_reports_candidates_not_guessed_writes",
+    "tests.test_workflow_inspection.InspectionTests.test_variant_checks_only_actual_dependencies",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_boolean_selector_with_linked_boolean_literal",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_deep_reroutes_find_single_literal_without_mutating_edges",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_distinct_bus_types_follow_requested_output_slot",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_dynamic_selector_is_explicitly_unresolved",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_invalid_cycles_ports_and_non_scalar_origins_are_readonly",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_literal_selector_through_deep_primitive_chain",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_modes_never_expose_inactive_widgets_as_writable_origins",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_nested_selector_controls_are_iterative_and_cycle_safe",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_public_compile_rejects_guessed_auxiliary_and_transformed_controls",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_repeated_bus_types_require_named_output_ports",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_selector_auxiliary_outputs_never_inherit_the_payload_route",
+    "tests.test_workflow_graph_routes.SemanticGraphTests.test_unknown_unary_transform_does_not_declare_identity"
+  ],
+  "tests_run": 30,
+  "failure_count": 0,
+  "error_count": 0,
+  "skipped_count": 0,
+  "failure_ids": [],
+  "error_ids": [],
+  "unit_elapsed_seconds": 0.07075790001545101,
+  "source_hashes_unchanged": true,
+  "successful": true,
+  "finished_utc": "2026-11-26T08:00:13.253246+00:00",
+  "elapsed_seconds": 2.2118770999950357
+}

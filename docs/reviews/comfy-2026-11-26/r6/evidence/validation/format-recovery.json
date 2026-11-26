@@ -1,0 +1,19 @@
+{
+  "affinity_mask": 1,
+  "priority_class": 16384,
+  "first_attempt_unit_tests_executed": false,
+  "files": [
+    {
+      "path": "server/mio_server/comfy/inspection_candidates.py",
+      "before_sha256": "2d94090da7c0445108de6af456735af80640ffe5c392dee7a49b028973d68503",
+      "after_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+      "ast_unchanged": true
+    },
+    {
+      "path": "server/tests/test_workflow_inspection_candidates.py",
+      "before_sha256": "5f9f1ffe21bdf24242a2764d98d721ec0f706185e81a9e42d2c65a80b69e3aee",
+      "after_sha256": "1cd613abbae1be087b4464e189bc4c86851d31227db5038ce4690789450f40fd",
+      "ast_unchanged": true
+    }
+  ]
+}

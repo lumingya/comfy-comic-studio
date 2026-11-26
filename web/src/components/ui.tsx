@@ -9,6 +9,7 @@ import {
   type ComponentProps,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
   type SelectHTMLAttributes,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -317,16 +318,27 @@ export function Progress({ value, className }: { value: number; className?: stri
 
 /** Hidden file input behind a button. */
 export function FilePick(props: {
+  ref?: Ref<HTMLButtonElement>;
   accept?: string;
   onFile: (file: File) => void;
   children: ReactNode;
   className?: string;
   disabled?: boolean;
 }) {
+  const input = useRef<HTMLInputElement>(null);
   return (
-    <label className={props.className ?? 'btn'} aria-disabled={props.disabled}>
-      {props.children}
+    <>
+      <button
+        ref={props.ref}
+        type="button"
+        className={`file-pick ${props.className ?? 'btn'}`}
+        disabled={props.disabled}
+        onClick={() => input.current?.click()}
+      >
+        {props.children}
+      </button>
       <input
+        ref={input}
         type="file"
         hidden
         accept={props.accept}
@@ -337,7 +349,7 @@ export function FilePick(props: {
           e.target.value = '';
         }}
       />
-    </label>
+    </>
   );
 }
 

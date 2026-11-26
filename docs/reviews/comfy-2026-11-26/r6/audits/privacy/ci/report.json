@@ -1,0 +1,1161 @@
+{
+  "type": "independent_scoped_ci_sub_audit",
+  "candidate_sha": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "base_sha": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "formal_inputs": [
+    {
+      "pointer": "audits/r6/brief-common.md",
+      "sha256": "c095091d0fffc89e9a689b7ecb32760a74f2710d66835d25ed730b4dc47714da",
+      "frozen_hash_matches": true
+    },
+    {
+      "pointer": "audits/r6/role-acceptance.md",
+      "sha256": "e58528285495a5008a18a9bb8d51ab4b3e931e1b672bfa01d2fc54facd04c563",
+      "frozen_hash_matches": true
+    },
+    {
+      "pointer": "audits/r6/root-authorization.json",
+      "sha256": "00b9e61b4cb50cee222cfaf0beeaecf3dc19e3351ed3552e583747f9b8ea14d9",
+      "frozen_hash_matches": true
+    }
+  ],
+  "input_ci_summary_pointer": "repairs/r6-candidate-ci/ci-verified.json",
+  "input_ci_summary_sha256": "6ad3b99652352e7819fa4d513de03e0f6c16f98c41a478baee2bdaa5a9150d11",
+  "ci_summary_only_proof": false,
+  "runs": [
+    {
+      "run_id": 45779838148,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148",
+      "pointer": "repairs/r6-candidate-ci/raw/run-45779838148.json",
+      "sha256": "69f1aa865a91dbc100906359511f5940f86a2843c5e5f3c6edf07af072c33707",
+      "success": true,
+      "candidate_metadata_head_matches": true,
+      "attempt": 1,
+      "jobs_count": 3,
+      "event_push": true,
+      "event_pr": false,
+      "terminal_utc_pointer": "repairs/r6-candidate-ci/raw/run-45779838148.json#/updated_at",
+      "terminal_utc_sha256": "6e533b1ea68859468d3549dd911f768cb63848737a74f4cce0e7b445fe181600"
+    },
+    {
+      "run_id": 45779847204,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204",
+      "pointer": "repairs/r6-candidate-ci/raw/run-45779847204.json",
+      "sha256": "bd2e0c8902123d4c4eaa5314556c82b897ea1549039c8bfccf9f4e25ddb881b7",
+      "success": true,
+      "candidate_metadata_head_matches": true,
+      "attempt": 1,
+      "jobs_count": 3,
+      "event_push": false,
+      "event_pr": true,
+      "terminal_utc_pointer": "repairs/r6-candidate-ci/raw/run-45779847204.json#/updated_at",
+      "terminal_utc_sha256": "74d13d00314e2d30949c7ec0c5858ed70e6e8dce66c04ef815385a72e60cd348"
+    }
+  ],
+  "jobs": [
+    {
+      "run_id": 45779838148,
+      "job_id": 139772444799,
+      "type": "launchers",
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148/job/139772444799",
+      "metadata_pointer": "repairs/r6-candidate-ci/raw/jobs-45779838148.json#/jobs/0",
+      "metadata_success": true,
+      "all_steps_success": true,
+      "steps_count": 9,
+      "log_sha256": "7b61f4828a7b5848862dab05bbb5e16ac40b73f4507223cc30627e9e8ac7fb6a",
+      "summary_log_hash_matches": true,
+      "checkout_count": 1,
+      "checkout_exact": true,
+      "checkout_sha": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "checkout_pointer": "repairs/r6-candidate-ci/raw/job-139772444799.log#L106",
+      "issued_command_line_count": 3,
+      "shell_group_count": 3,
+      "source_commands_exact_log_match": true,
+      "windows": false,
+      "linux": true,
+      "suites": [
+        {
+          "tests": 31,
+          "seconds": 23.784,
+          "success": true,
+          "skipped": 0,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772444799.log#L261",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772444799.log#L263"
+        },
+        {
+          "tests": 1831,
+          "seconds": 1228.023,
+          "success": true,
+          "skipped": 3,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772444799.log#L488",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772444799.log#L493"
+        }
+      ],
+      "tls_method_name_log_anchor_count": 0,
+      "full_mode_env_anchor_count": 1
+    },
+    {
+      "run_id": 45779838148,
+      "job_id": 139772445054,
+      "type": "launchers",
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148/job/139772445054",
+      "metadata_pointer": "repairs/r6-candidate-ci/raw/jobs-45779838148.json#/jobs/1",
+      "metadata_success": true,
+      "all_steps_success": true,
+      "steps_count": 9,
+      "log_sha256": "adcd29e0452e2386124c2348c30ab82b577964c926118d7349fb51ebea3fdd8d",
+      "summary_log_hash_matches": true,
+      "checkout_count": 1,
+      "checkout_exact": true,
+      "checkout_sha": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "checkout_pointer": "repairs/r6-candidate-ci/raw/job-139772445054.log#L93",
+      "issued_command_line_count": 3,
+      "shell_group_count": 3,
+      "source_commands_exact_log_match": true,
+      "windows": true,
+      "linux": false,
+      "suites": [
+        {
+          "tests": 31,
+          "seconds": 33.367,
+          "success": true,
+          "skipped": 0,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772445054.log#L241",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772445054.log#L243"
+        },
+        {
+          "tests": 1831,
+          "seconds": 1402.771,
+          "success": true,
+          "skipped": 0,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772445054.log#L474",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772445054.log#L476"
+        }
+      ],
+      "tls_method_name_log_anchor_count": 0,
+      "full_mode_env_anchor_count": 1
+    },
+    {
+      "run_id": 45779838148,
+      "job_id": 139772445202,
+      "type": "gate",
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148/job/139772445202",
+      "metadata_pointer": "repairs/r6-candidate-ci/raw/jobs-45779838148.json#/jobs/2",
+      "metadata_success": true,
+      "all_steps_success": true,
+      "steps_count": 17,
+      "log_sha256": "2b1f15121d2e51d66d8c217871fc2b5ac02f9dc1300b271478cc3d87f28df38a",
+      "summary_log_hash_matches": true,
+      "checkout_count": 1,
+      "checkout_exact": true,
+      "checkout_sha": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "checkout_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L108",
+      "issued_command_line_count": 32,
+      "shell_group_count": 8,
+      "source_commands_exact_log_match": true,
+      "windows": false,
+      "linux": true,
+      "suites": [
+        {
+          "tests": 80,
+          "seconds": 19.387,
+          "success": true,
+          "skipped": 0,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L255",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L257"
+        },
+        {
+          "tests": 1831,
+          "seconds": 973.788,
+          "success": true,
+          "skipped": 3,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L504",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L506"
+        }
+      ],
+      "tls_method_name_log_anchor_count": 0,
+      "full_mode_env_anchor_count": 0
+    },
+    {
+      "run_id": 45779847204,
+      "job_id": 139772479333,
+      "type": "gate",
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204/job/139772479333",
+      "metadata_pointer": "repairs/r6-candidate-ci/raw/jobs-45779847204.json#/jobs/0",
+      "metadata_success": true,
+      "all_steps_success": true,
+      "steps_count": 17,
+      "log_sha256": "852d955675208f9fe2c078c33d2df9a4cdc7d153be118dfcfc966334b45dd9aa",
+      "summary_log_hash_matches": true,
+      "checkout_count": 1,
+      "checkout_exact": true,
+      "checkout_sha": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "checkout_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L124",
+      "issued_command_line_count": 32,
+      "shell_group_count": 8,
+      "source_commands_exact_log_match": true,
+      "windows": false,
+      "linux": true,
+      "suites": [
+        {
+          "tests": 80,
+          "seconds": 19.38,
+          "success": true,
+          "skipped": 0,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L271",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L273"
+        },
+        {
+          "tests": 1977,
+          "seconds": 939.812,
+          "success": true,
+          "skipped": 3,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L521",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L523"
+        }
+      ],
+      "tls_method_name_log_anchor_count": 0,
+      "full_mode_env_anchor_count": 0
+    },
+    {
+      "run_id": 45779847204,
+      "job_id": 139772479613,
+      "type": "launchers",
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204/job/139772479613",
+      "metadata_pointer": "repairs/r6-candidate-ci/raw/jobs-45779847204.json#/jobs/1",
+      "metadata_success": true,
+      "all_steps_success": true,
+      "steps_count": 9,
+      "log_sha256": "bd059c14350abe46e734c3a6bc1683badcb84b7c9d2d673cd7cee71637b9a3ab",
+      "summary_log_hash_matches": true,
+      "checkout_count": 1,
+      "checkout_exact": true,
+      "checkout_sha": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "checkout_pointer": "repairs/r6-candidate-ci/raw/job-139772479613.log#L122",
+      "issued_command_line_count": 3,
+      "shell_group_count": 3,
+      "source_commands_exact_log_match": true,
+      "windows": false,
+      "linux": true,
+      "suites": [
+        {
+          "tests": 31,
+          "seconds": 23.477,
+          "success": true,
+          "skipped": 0,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772479613.log#L277",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772479613.log#L279"
+        },
+        {
+          "tests": 1977,
+          "seconds": 1195.789,
+          "success": true,
+          "skipped": 3,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772479613.log#L505",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772479613.log#L509"
+        }
+      ],
+      "tls_method_name_log_anchor_count": 0,
+      "full_mode_env_anchor_count": 1
+    },
+    {
+      "run_id": 45779847204,
+      "job_id": 139772479662,
+      "type": "launchers",
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204/job/139772479662",
+      "metadata_pointer": "repairs/r6-candidate-ci/raw/jobs-45779847204.json#/jobs/2",
+      "metadata_success": true,
+      "all_steps_success": true,
+      "steps_count": 9,
+      "log_sha256": "494b89adff06f23cb3ede417d47de46cde90248725fc68baecd1c105ebce0ca6",
+      "summary_log_hash_matches": true,
+      "checkout_count": 1,
+      "checkout_exact": true,
+      "checkout_sha": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "checkout_pointer": "repairs/r6-candidate-ci/raw/job-139772479662.log#L109",
+      "issued_command_line_count": 3,
+      "shell_group_count": 3,
+      "source_commands_exact_log_match": true,
+      "windows": true,
+      "linux": false,
+      "suites": [
+        {
+          "tests": 31,
+          "seconds": 42.306,
+          "success": true,
+          "skipped": 0,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772479662.log#L257",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772479662.log#L259"
+        },
+        {
+          "tests": 1977,
+          "seconds": 1875.03,
+          "success": true,
+          "skipped": 0,
+          "count_pointer": "repairs/r6-candidate-ci/raw/job-139772479662.log#L491",
+          "result_pointer": "repairs/r6-candidate-ci/raw/job-139772479662.log#L493"
+        }
+      ],
+      "tls_method_name_log_anchor_count": 0,
+      "full_mode_env_anchor_count": 1
+    }
+  ],
+  "counts": {
+    "runs": 2,
+    "jobs": 6,
+    "steps": 70,
+    "step_skips": 0,
+    "actual_issued_command_lines": 76,
+    "required_command_groups": 14,
+    "required_command_occurrences": 32,
+    "product_findings": 0,
+    "process_deviations": 1
+  },
+  "command_count_boundary": {
+    "type": "nonblank_echoed_shell_script_lines",
+    "action_configuration_excluded": true,
+    "runtime_subprocess_invocation_count_proven": false
+  },
+  "required_command_groups": [
+    {
+      "type": "spike_suite",
+      "source_pointer": ".github/workflows/ci.yml#L27",
+      "command_sha256": "18ef45b0f04727a2eb79aebaa4fc6b538564b61691c9944911faa0752cc779be",
+      "command_length": 52,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L244",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L243"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L260",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L259"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "ruff_lint",
+      "source_pointer": ".github/workflows/ci.yml#L29",
+      "command_sha256": "8a7742074c3244c1084a93df92ff2edb66d0ca382804ba504cd9c4699176dfa2",
+      "command_length": 28,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L259",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L258"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L275",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L274"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "ruff_format_check",
+      "source_pointer": ".github/workflows/ci.yml#L29",
+      "command_sha256": "4f814ae0cf49e465081b7a919921896ddf6fc486bc68620e6a223e7e69816235",
+      "command_length": 37,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L260",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L258"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L276",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L274"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "server_suite",
+      "source_pointer": ".github/workflows/ci.yml#L29",
+      "command_sha256": "0b4426c5dc9b57c46e6b2ba075c3e4d06a643d53761333dff421218deafeb7cc",
+      "command_length": 56,
+      "occurrence_count": 6,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772444799,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772444799.log#L265",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772444799.log#L264"
+        },
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445054,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445054.log#L245",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445054.log#L244"
+        },
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L261",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L258"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L277",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L274"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479613,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479613.log#L281",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479613.log#L280"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479662,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479662.log#L261",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479662.log#L260"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "client_generation_check",
+      "source_pointer": ".github/workflows/ci.yml#L34",
+      "command_sha256": "d6a7c36790cc620ef62196807b74e1c1bae4da66ea562c680489e494ab4d6962",
+      "command_length": 41,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L512",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L510"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L529",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L527"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "ruff_lint",
+      "source_pointer": ".github/workflows/ci.yml#L34",
+      "command_sha256": "9107e2f88d454f5991069ffb73d7bc33bb50b6949f05a10241673e1b18338393",
+      "command_length": 24,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L518",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L510"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L535",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L527"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "ruff_format_check",
+      "source_pointer": ".github/workflows/ci.yml#L34",
+      "command_sha256": "9bb6aedf4318a0d96dcaaf167e2829ca5c71daee4c951b3a2e5d7978d044ab68",
+      "command_length": 33,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L519",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L510"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L536",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L527"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "web_install",
+      "source_pointer": ".github/workflows/ci.yml#L47",
+      "command_sha256": "91dbcf6bec299f4b75dc957a6be589692413683e89937c4ccd77e223ae6d74f2",
+      "command_length": 40,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L569",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L568"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L587",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L586"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "web_generation",
+      "source_pointer": ".github/workflows/ci.yml#L47",
+      "command_sha256": "2519a96fc29a213dae5da5c24f85d57b8860727dab5ea7bfc301d4ab899b4ec6",
+      "command_length": 28,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L570",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L568"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L588",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L586"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "web_format_check",
+      "source_pointer": ".github/workflows/ci.yml#L47",
+      "command_sha256": "6a51c599983cf5f76e945f41c883463e4bea1e1b3e8ff8d88a33e8359d758f8e",
+      "command_length": 33,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L572",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L568"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L590",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L586"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "web_typecheck",
+      "source_pointer": ".github/workflows/ci.yml#L47",
+      "command_sha256": "79ff6b616671ccf283307f00afc7f076a57d15813b9bed3ac5a0bc3effb23613",
+      "command_length": 30,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L573",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L568"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L591",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L586"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "web_tests",
+      "source_pointer": ".github/workflows/ci.yml#L47",
+      "command_sha256": "48d4f0cdcc2b6a84ae21204c604426ffd820f2e61b92978d6f7e0c61d215b67d",
+      "command_length": 21,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L574",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L568"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L592",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L586"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "web_build",
+      "source_pointer": ".github/workflows/ci.yml#L47",
+      "command_sha256": "8dc2c26594aa4d3b3428683a7408350a01143c02f24446e3251787174e9f1999",
+      "command_length": 26,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L576",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L568"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L594",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L586"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    },
+    {
+      "type": "distribution_check",
+      "source_pointer": ".github/workflows/ci.yml#L64",
+      "command_sha256": "f8a49ccca97453618075eff42e8ee3aceb84b487f370d4b4449748366a19a6eb",
+      "command_length": 34,
+      "occurrence_count": 2,
+      "occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L1347",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772445202.log#L1346"
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L1543",
+          "group_pointer": "repairs/r6-candidate-ci/raw/job-139772479333.log#L1542"
+        }
+      ],
+      "summary_occurrence_count_matches": true
+    }
+  ],
+  "required_set_equals_summary": true,
+  "all_required_occurrences_match_summary": true,
+  "all_source_commands_match_logs": true,
+  "actual_checkout_all_exact": true,
+  "ordered_merge": {
+    "sha": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+    "ordered_parent_shas": [
+      "6ed78255bca6487ce874946118f26a26ec22c3dc",
+      "fe914065c7aafb0672bfe10274361f83179ce7f1"
+    ],
+    "ordered_parents_exact": true,
+    "pointer": "repairs/r6-candidate-ci/raw/actual-merge-commit.json",
+    "sha256": "5239393f794eceb4075f3c487ddbad4fbc3c8d891a3dbb9045399846a8e1ca53",
+    "public_url": "https://github.com/lumingya/comfy-comic-studio/commit/c59eaf873ce98d0940a08ee70c0a1991475e5139",
+    "local_merge_git_object_available": false
+  },
+  "source_documents": [
+    {
+      "pointer": "AGENTS.md",
+      "git_sha256": "f654c20d02acc42bfed0c4f646fded595ef9c41d7125a0c607855344b5ed956c",
+      "saved_bytes_match_git": true,
+      "length": 5533
+    },
+    {
+      "pointer": "README.md",
+      "git_sha256": "a67df2e6818182face3922824ada84542e31e162983ee20401f2967e5d0e7954",
+      "saved_bytes_match_git": true,
+      "length": 10458
+    },
+    {
+      "pointer": "docs/ROADMAP.md",
+      "git_sha256": "3d5174f520dc26f184a45406bc5cfa2852a3c0d65e02e7b880e7188ba0c063e6",
+      "saved_bytes_match_git": true,
+      "length": 71274
+    }
+  ],
+  "source_identity": [
+    {
+      "pointer": "server/tests/test_review_cloud_deadline.py",
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "git_object_available": true,
+      "git_matches_raw": true,
+      "sha256": "44ead6ec575660bde8dbcd5f87a342d13c014cdc2ac7f7dae2e19be9fc217706",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": "server/tests/test_windows_path_aliases.py",
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "git_object_available": true,
+      "git_matches_raw": true,
+      "sha256": "3d616d8dddcd51e1be50fa478b4b0808b1c0e9d76ed17cf8ddd10e6cd729a308",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": "server/tests/test_launchers.py",
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "git_object_available": true,
+      "git_matches_raw": true,
+      "sha256": "97f4d7a51c90eaf8526852597a65f51b55f9777efeb4fab9e7a1256fd4bbc11a",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": "server/tests/test_api_v2.py",
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "git_object_available": true,
+      "git_matches_raw": true,
+      "sha256": "163456069e065ed25a347829818164c4b5a63b00e8acee82bd7ab530dd3e633d",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": ".github/workflows/ci.yml",
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "git_object_available": true,
+      "git_matches_raw": true,
+      "sha256": "7495468da2c2eb9636edba2eeac6264da899bb3efcea0cddfefea4e434978e7e",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": "server/tests/test_review_cloud_deadline.py",
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "git_object_available": false,
+      "git_matches_raw": false,
+      "sha256": "44ead6ec575660bde8dbcd5f87a342d13c014cdc2ac7f7dae2e19be9fc217706",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": "server/tests/test_windows_path_aliases.py",
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "git_object_available": false,
+      "git_matches_raw": false,
+      "sha256": "3d616d8dddcd51e1be50fa478b4b0808b1c0e9d76ed17cf8ddd10e6cd729a308",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": "server/tests/test_launchers.py",
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "git_object_available": false,
+      "git_matches_raw": false,
+      "sha256": "97f4d7a51c90eaf8526852597a65f51b55f9777efeb4fab9e7a1256fd4bbc11a",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": "server/tests/test_api_v2.py",
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "git_object_available": false,
+      "git_matches_raw": false,
+      "sha256": "163456069e065ed25a347829818164c4b5a63b00e8acee82bd7ab530dd3e633d",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    },
+    {
+      "pointer": ".github/workflows/ci.yml",
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "git_object_available": false,
+      "git_matches_raw": false,
+      "sha256": "0af485985e3abcc92f4595f56c96fd526e0950143a2ec53305e6dbe4bca8fb8e",
+      "ci_sha256_match": true,
+      "blob_sha_match": true
+    }
+  ],
+  "exact_ref_source_envelopes": [
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/fe914065-contents-server_tests_test_review_cloud_deadline.py.json",
+      "sha256": "20faf1b72b4647a06e8bb566968ac00ca0ad48e15fe4ef70c65b037324371637",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_review_cloud_deadline.py"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/fe914065-contents-server_tests_test_windows_path_aliases.py.json",
+      "sha256": "f8074af41fa0e30711fa58d2af080cc798ab57691c3c076a8e804430f1286998",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_windows_path_aliases.py"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/fe914065-contents-server_tests_test_launchers.py.json",
+      "sha256": "d4e026ff639793cdea151a97b7413c187d66ce8c7cecc455760ddee097b0dc22",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_launchers.py"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/fe914065-contents-server_tests_test_api_v2.py.json",
+      "sha256": "95a48eda8059301fc83ebb83dfdbc13ecd1dc925daf9e8a8b79fe7e4780d9d27",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_api_v2.py"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/fe914065-contents-.github_workflows_ci.yml.json",
+      "sha256": "83ede2e0951941ab79caf5793f11dd100206e6bdff1f140b6efb50d726714013",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/.github/workflows/ci.yml"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/c59eaf87-contents-server_tests_test_review_cloud_deadline.py.json",
+      "sha256": "84a4948257d6b9d8ec31435b11b1322aba3b1c8f1e17febcdba838574af07912",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_review_cloud_deadline.py"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/c59eaf87-contents-server_tests_test_windows_path_aliases.py.json",
+      "sha256": "7839417d88432102ef4e9fefb7fbe569b21dbb33f5470bd367b28fe289492bde",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_windows_path_aliases.py"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/c59eaf87-contents-server_tests_test_launchers.py.json",
+      "sha256": "e545831037a15c9523eb20e459191436d18c2e45f45bd201665406d508c2da3d",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_launchers.py"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/c59eaf87-contents-server_tests_test_api_v2.py.json",
+      "sha256": "feb58319aa91457dca8124de02c5d9aec4474dfa7b552ce83a72d14fd898fd60",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_api_v2.py"
+    },
+    {
+      "pointer": "repairs/r6-candidate-ci/raw/c59eaf87-contents-.github_workflows_ci.yml.json",
+      "sha256": "e6d44faac982fd800e4503361afbae658ccb48d2144bd127ce7229cc09170483",
+      "content_matches_saved_source": true,
+      "path_matches": true,
+      "blob_matches": true,
+      "size_matches": true,
+      "url_exact_ref": true,
+      "public_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/.github/workflows/ci.yml"
+    }
+  ],
+  "workflow": {
+    "commands_identical_between_checkouts": true,
+    "identical_except_timeout_values": false,
+    "conditions": [
+      {
+        "ref": "fe914065",
+        "job_or_step_if_count": 0,
+        "full_mode_env_count": 1,
+        "timeout_values": [
+          30,
+          30
+        ],
+        "matrix_os_values": [
+          {
+            "pointer": ".github/workflows/ci.yml#L85",
+            "contains_linux": true,
+            "contains_windows": true
+          }
+        ]
+      },
+      {
+        "ref": "c59eaf87",
+        "job_or_step_if_count": 0,
+        "full_mode_env_count": 1,
+        "timeout_values": [
+          30,
+          60
+        ],
+        "matrix_os_values": [
+          {
+            "pointer": ".github/workflows/ci.yml#L85",
+            "contains_linux": true,
+            "contains_windows": true
+          }
+        ]
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "artifact_id": 15098114848,
+      "run_id": 45779838148,
+      "pointer": "repairs/r6-candidate-ci/raw/artifacts-45779838148.json",
+      "metadata_sha256": "071a901d97f670df441e1043fabe129bd7398016d84c3d59fdc8546e2aae3111",
+      "archive_sha256": "d6a13e6d7c10125e2c96e62253bf90309bede137e41847fbb68e630bcee7d1dd",
+      "size": 758554,
+      "expired": false,
+      "run_metadata_match": true,
+      "build_checkout_sha": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "digest_log_anchor_count": 1,
+      "digest_log_pointers": [
+        "repairs/r6-candidate-ci/raw/job-139772445202.log#L1341"
+      ],
+      "id_log_anchor_count": 3,
+      "archive_bytes_independently_read": false
+    },
+    {
+      "artifact_id": 15098358802,
+      "run_id": 45779847204,
+      "pointer": "repairs/r6-candidate-ci/raw/artifacts-45779847204.json",
+      "metadata_sha256": "6f44d1a4903820329bd89cdab1e56dc54cdfe14f339eef6ac408c7463f9cb4b9",
+      "archive_sha256": "41091c188ad17bf794513f3e58596b5e6c42f8b1ed3b953e6aac41ea9dcb22bc",
+      "size": 766799,
+      "expired": false,
+      "run_metadata_match": true,
+      "build_checkout_sha": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "digest_log_anchor_count": 1,
+      "digest_log_pointers": [
+        "repairs/r6-candidate-ci/raw/job-139772479333.log#L1537"
+      ],
+      "id_log_anchor_count": 3,
+      "archive_bytes_independently_read": false
+    }
+  ],
+  "tls_proof": {
+    "type": "source_anchored_inference",
+    "suite_observations": [
+      {
+        "job_id": 139772444799,
+        "full_suite_success": true,
+        "observed_skips": 3,
+        "source_mandatory_platform_skips": 3,
+        "no_extra_skips_in_aggregate": true,
+        "tls_methods_inferred_executed": true,
+        "direct_method_name_log_proof": false,
+        "method_elapsed_time_claimed": false
+      },
+      {
+        "job_id": 139772445054,
+        "full_suite_success": true,
+        "observed_skips": 0,
+        "source_mandatory_platform_skips": 0,
+        "no_extra_skips_in_aggregate": true,
+        "tls_methods_inferred_executed": true,
+        "direct_method_name_log_proof": false,
+        "method_elapsed_time_claimed": false
+      },
+      {
+        "job_id": 139772445202,
+        "full_suite_success": true,
+        "observed_skips": 3,
+        "source_mandatory_platform_skips": 3,
+        "no_extra_skips_in_aggregate": true,
+        "tls_methods_inferred_executed": true,
+        "direct_method_name_log_proof": false,
+        "method_elapsed_time_claimed": false
+      },
+      {
+        "job_id": 139772479333,
+        "full_suite_success": true,
+        "observed_skips": 3,
+        "source_mandatory_platform_skips": 3,
+        "no_extra_skips_in_aggregate": true,
+        "tls_methods_inferred_executed": true,
+        "direct_method_name_log_proof": false,
+        "method_elapsed_time_claimed": false
+      },
+      {
+        "job_id": 139772479613,
+        "full_suite_success": true,
+        "observed_skips": 3,
+        "source_mandatory_platform_skips": 3,
+        "no_extra_skips_in_aggregate": true,
+        "tls_methods_inferred_executed": true,
+        "direct_method_name_log_proof": false,
+        "method_elapsed_time_claimed": false
+      },
+      {
+        "job_id": 139772479662,
+        "full_suite_success": true,
+        "observed_skips": 0,
+        "source_mandatory_platform_skips": 0,
+        "no_extra_skips_in_aggregate": true,
+        "tls_methods_inferred_executed": true,
+        "direct_method_name_log_proof": false,
+        "method_elapsed_time_claimed": false
+      }
+    ],
+    "mandatory_linux_skips": [
+      {
+        "pointer": "server/tests/test_windows_path_aliases.py#L39",
+        "test_pointer": "/test_ordinary_short_path_is_accepted_by_package_and_resource_checks",
+        "mandatory_linux_skip": true
+      },
+      {
+        "pointer": "server/tests/test_windows_path_aliases.py#L46",
+        "test_pointer": "/test_missing_child_below_ordinary_short_path_is_allowed",
+        "mandatory_linux_skip": true
+      },
+      {
+        "pointer": "server/tests/test_windows_path_aliases.py#L81",
+        "test_pointer": "/test_real_junction_ancestor_is_rejected",
+        "mandatory_linux_skip": true
+      }
+    ],
+    "source": {
+      "fixture_pointer": "server/tests/test_review_cloud_deadline.py#L43",
+      "openssl_binary_guard": true,
+      "openssl_fixture_has_skip_call": true,
+      "fixture_has_checked_subprocess": true,
+      "fixture_creates_ssl_context": true,
+      "fixture_loads_certificate": true,
+      "fixture_client_trust_context": true,
+      "loopback_pointer": "server/tests/test_review_cloud_deadline.py#L84",
+      "loopback_threading_http_server": true,
+      "loopback_wrap_socket": true,
+      "loopback_ssl_context": true,
+      "module_load_tests_override_count": 0,
+      "test_classes": [
+        {
+          "pointer": "server/tests/test_review_cloud_deadline.py#L231",
+          "testcase": true,
+          "skip_decorator_count": 0
+        }
+      ],
+      "tls_methods": [
+        {
+          "pointer": "server/tests/test_review_cloud_deadline.py#L244",
+          "method_pointer": "/test_https_json_and_download_stalls_obey_absolute_deadline",
+          "skip_decorator_count": 0,
+          "skip_call_count": 0,
+          "loopback_call_count": 0,
+          "assert_stall_deadline_call_count": 1,
+          "assert_less_call_count": 0,
+          "cancel_call_count": 0,
+          "scope_close_call_count": 0
+        },
+        {
+          "pointer": "server/tests/test_review_cloud_deadline.py#L321",
+          "method_pointer": "/test_tls_handshake_stall_obeys_deadline",
+          "skip_decorator_count": 0,
+          "skip_call_count": 0,
+          "loopback_call_count": 1,
+          "assert_stall_deadline_call_count": 0,
+          "assert_less_call_count": 1,
+          "cancel_call_count": 0,
+          "scope_close_call_count": 0
+        },
+        {
+          "pointer": "server/tests/test_review_cloud_deadline.py#L339",
+          "method_pointer": "/test_tls_peer_close_is_not_classified_as_deadline",
+          "skip_decorator_count": 0,
+          "skip_call_count": 0,
+          "loopback_call_count": 1,
+          "assert_stall_deadline_call_count": 0,
+          "assert_less_call_count": 0,
+          "cancel_call_count": 0,
+          "scope_close_call_count": 0
+        },
+        {
+          "pointer": "server/tests/test_review_cloud_deadline.py#L349",
+          "method_pointer": "/test_tls_handshake_stall_is_interrupted_by_cancel_and_scope_close",
+          "skip_decorator_count": 0,
+          "skip_call_count": 0,
+          "loopback_call_count": 1,
+          "assert_stall_deadline_call_count": 0,
+          "assert_less_call_count": 0,
+          "cancel_call_count": 1,
+          "scope_close_call_count": 1
+        },
+        {
+          "pointer": "server/tests/test_review_cloud_deadline.py#L374",
+          "method_pointer": "/test_https_body_stall_is_interrupted_by_cancel_and_scope_close",
+          "skip_decorator_count": 0,
+          "skip_call_count": 0,
+          "loopback_call_count": 1,
+          "assert_stall_deadline_call_count": 0,
+          "assert_less_call_count": 0,
+          "cancel_call_count": 1,
+          "scope_close_call_count": 1
+        }
+      ]
+    },
+    "quiet_suite_method_names_observed": false,
+    "method_duration_proven": false,
+    "no_local_tls_suite_executed": true,
+    "test_package_pointer": "server/tests/__init__.py",
+    "test_package_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test_package_load_tests_override_count": 0,
+    "windows_module_load_tests_override_count": 0
+  },
+  "product_findings": [],
+  "process_deviations": [
+    {
+      "type": "output_policy_process_deviation",
+      "source_document_count": 3,
+      "source_pointers": [
+        "audits/r6/brief-common.md",
+        "audits/r6/role-acceptance.md",
+        "audits/r6/root-authorization.json"
+      ],
+      "source_sha256": [
+        "c095091d0fffc89e9a689b7ecb32760a74f2710d66835d25ed730b4dc47714da",
+        "e58528285495a5008a18a9bb8d51ab4b3e931e1b672bfa01d2fc54facd04c563",
+        "00b9e61b4cb50cee222cfaf0beeaecf3dc19e3351ed3552e583747f9b8ea14d9"
+      ],
+      "raw_formal_text_projected": true,
+      "identity_private_filename_projected": true,
+      "raw_ci_log_projected": false,
+      "graph_request_asset_structure_projected": false,
+      "credential_exposure_asserted": false,
+      "product_finding": false,
+      "parent_notified": true,
+      "raw_projection_stopped": true,
+      "later_schema_whitelist_used": true
+    }
+  ],
+  "scope_controls": {
+    "repository_written": false,
+    "commit_or_push_run": false,
+    "new_logs_downloaded": false,
+    "mio_import_count": 0,
+    "product_or_full_gate_build_run": false,
+    "browser_or_e2e_run": false,
+    "other_r6_roles_inspected": false,
+    "artifact_archive_bytes_reverified": false
+  },
+  "scoped_ci_claims_verified": true
+}

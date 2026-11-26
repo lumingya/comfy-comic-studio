@@ -10,6 +10,8 @@ from .workflow_slot_plan_groups import _plan_groups
 from .workflow_slot_plan_models import _manual_sites, _model_targets
 from .workflow_slot_values import _pinned, keyed_loras
 
+ANALYSIS_REVISION = 3
+
 
 def _plan_output(wf, g, targets, groups, object_info):
     def drives_sampler(target):
@@ -91,6 +93,7 @@ def analyze(workflow, object_info=None, manual=None, legacy=None, *, adapters=()
         issue("no-lora-site", "", reason)
     plan = {
         "version": 3,
+        "analysisRevision": ANALYSIS_REVISION,
         "analyzedAt": datetime.now(timezone.utc).isoformat(),
         "objectInfoHash": info_hash(object_info),
         "workflowHash": info_hash(wf),
@@ -160,6 +163,14 @@ def _migrate(plan, legacy):
                 )
 
 
+def refresh_pinned_values(plan, workflow):
+    for group in plan.get("lora", {}).get("groups", []):
+        if group["kind"] in ("stack", "object"):
+            group["pinned"] = _pinned(group["writer"], workflow, include_disabled=True)
+        group["pinned"] = keyed_loras(group["key"], group.get("pinned", []))
+    return plan
+
+
 def ensure_plan(workflow, slots=None, object_info=None, *, adapters=()):
     slots = slots or {}
     plan = slots.get("plan", slots if slots.get("version") == 3 else {})
@@ -167,6 +178,7 @@ def ensure_plan(workflow, slots=None, object_info=None, *, adapters=()):
         adapters
         or any(g["kind"] == "extension" for g in plan.get("lora", {}).get("groups", []))
         or plan.get("version") != 3
+        or plan.get("analysisRevision") != ANALYSIS_REVISION
         or plan.get("objectInfoHash") != info_hash(object_info)
         or plan.get("workflowHash") != info_hash(workflow)
     ):
@@ -174,8 +186,4 @@ def ensure_plan(workflow, slots=None, object_info=None, *, adapters=()):
         plan = analyze(workflow, object_info, plan.get("manual"), legacy, adapters=adapters)
     else:
         plan = copy.deepcopy(plan)
-    for group in plan.get("lora", {}).get("groups", []):
-        if group["kind"] in ("stack", "object"):
-            group["pinned"] = _pinned(group["writer"], workflow, include_disabled=True)
-        group["pinned"] = keyed_loras(group["key"], group.get("pinned", []))
-    return plan
+    return refresh_pinned_values(plan, workflow)

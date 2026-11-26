@@ -1,0 +1,231 @@
+{
+  "relative_link_count": 69,
+  "all_relative_links_resolve": true,
+  "unresolved_relative_links": [],
+  "name_field_checks": [
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json",
+      "original_sha256": "efba4d0ce2765db38377027b2ac135804c6cdbc93a4226c595c24753a53dfa1b",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/effective-provenance.json",
+      "original_sha256": "662d8d829e1cf6b77425137545af53f0b2656be383b8850ebcf77f120f020370",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/performance/performance.json",
+      "original_sha256": "fdd35b67fc99390c5328a1f0c78e3cbe330560168576c885a68155569fe56df0",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/integration-ci-failed/ci-verified.json",
+      "original_sha256": "46946a6c5c925f9e486a9dc980b726fea038ee70b24435b0a2b8efc11dfe6e2c",
+      "original_sensitive_name_fields": 77,
+      "unchanged_exact_string_value_count": 77
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/integration-ci-failed/merge-type-fix.json",
+      "original_sha256": "b70b9511c79f6973fdea5459042f172d4ce20a87e8999e79ca38bada26b01cef",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/timeout-fix/validation.json",
+      "original_sha256": "9a35b6bec39c5e66543727957dfa0e956d84b231c07a3d412c9aa361441f360d",
+      "original_sensitive_name_fields": 2,
+      "unchanged_exact_string_value_count": 2
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/timeout-fix/validation.json",
+      "original_sha256": "f96e99a5e74799e4adfeafa3f595e936b4fd7613a2d770975b54ceb00e741f3e",
+      "original_sensitive_name_fields": 3,
+      "unchanged_exact_string_value_count": 3
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/ci-before-fix/ci-verified.json",
+      "original_sha256": "7865cc0ea19bfdbdf217c035d712927fa8f88b99820b15f31de1a62766b186c8",
+      "original_sensitive_name_fields": 78,
+      "unchanged_exact_string_value_count": 78
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/validation.json",
+      "original_sha256": "99be20b29101133a3b9893bf5afeaea69e51fb3d835f6d45badae282116406ee",
+      "original_sensitive_name_fields": 1,
+      "unchanged_exact_string_value_count": 1
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/validation.json",
+      "original_sha256": "07e006fa9325550c3e6131c62a0aa45214fc00ab1ad3899331377aad71ecf1ba",
+      "original_sensitive_name_fields": 4,
+      "unchanged_exact_string_value_count": 4
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/validation.json",
+      "original_sha256": "99be20b29101133a3b9893bf5afeaea69e51fb3d835f6d45badae282116406ee",
+      "original_sensitive_name_fields": 1,
+      "unchanged_exact_string_value_count": 1
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/validation.json",
+      "original_sha256": "07e006fa9325550c3e6131c62a0aa45214fc00ab1ad3899331377aad71ecf1ba",
+      "original_sensitive_name_fields": 4,
+      "unchanged_exact_string_value_count": 4
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/budget-regression/ci-verified.json",
+      "original_sha256": "2c9c0ab19f36a9008f2a1fb48f2c59965643b4c61a9cc7e0d2a412ecb6f8deb9",
+      "original_sensitive_name_fields": 76,
+      "unchanged_exact_string_value_count": 76
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/validation.json",
+      "original_sha256": "a30e2e2022d0319edd18ec121a9bb0f3247bf179144f46e2fb854c2453bcfcb9",
+      "original_sensitive_name_fields": 5,
+      "unchanged_exact_string_value_count": 5
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/manifest.json",
+      "original_sha256": "e76d7ca6db0a16b7d50a379cfa627f93d9f9f021e9ad22c50c323cd1351c25c8",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/candidate-source.json",
+      "original_sha256": "d00f18119075e566b88daaf8a999fb9a729e5277812e5b589c2405a18c09082c",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/civitai-source-limitations/results.json",
+      "original_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/civitai-source-limitations/provenance-safe.json",
+      "original_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "original_sensitive_name_fields": 1,
+      "unchanged_exact_string_value_count": 1
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/r4-reference-attribution/results.json",
+      "original_sha256": "fad648d7294317999f4696b5c3e44206d4f3daca66ac657a98be582558901c5f",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/r4-reference-attribution/provenance-safe.json",
+      "original_sha256": "26c8198dc816c85c93bff42e749699a8effcdf346195cecb1ab7096f83d1ccf5",
+      "original_sensitive_name_fields": 8,
+      "unchanged_exact_string_value_count": 8
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/coverage/coverage-map.json",
+      "original_sha256": "bdea244dbdba3527bc0bb6af8c3736a1a87e914ad704d74685122968aa6416ed",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/ci/ci-verified.json",
+      "original_sha256": "9838372d4d9a5f0861d97f760044717c915ec8bf34180f76b92d98fd8bb864c9",
+      "original_sensitive_name_fields": 78,
+      "unchanged_exact_string_value_count": 78
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/running-server-r5.json",
+      "original_sha256": "06364781624adb1b9d318ed6db350dee9bdfb397da97ee73d90d0bc4d531fd7a",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/artifact-fa63083-provenance.json",
+      "original_sha256": "11170fe2449163f0e3deada1babca04ef71b9b267211ca1d5eff7dff209ba024",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/connection-headless.json",
+      "original_sha256": "011812dd105c726aad9b570854e2a83f89cf06ed126235925b90131f12f279c3",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/generality/initial-seal.json",
+      "original_sha256": "89aef13a2d4d9ec08ead1dbd99dd3a1dccc2f7c275af4924fcd024736f3b12bb",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/generality/final.json",
+      "original_sha256": "ed8bb1b0aabdc1ed0eda71778bae89ac2e17a64066de7eff70aba555a06bb3ca",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/initial-seal.json",
+      "original_sha256": "5d021c2a5270f63ce1244ea08432e9c49032515a37da13375d41525713910519",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/cross-seal.json",
+      "original_sha256": "067beb05d510612ee7085fae0f27a88f911ac3c6b9fa1e1453b00966901e8af1",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/initial-seal.json",
+      "original_sha256": "1417d3f811d003251784623bd2cccde73da096b415f35287095b33d422e9c5eb",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/cross-final-seal.json",
+      "original_sha256": "7ea3241bbe87428b96994f00455f738bea0dc6760ce511610fc7c39f93de4bf5",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/initial-seal.json",
+      "original_sha256": "3862e6e66130137f9a073fdfef8089ca44c492d7d206e4073bb0f23a09b454a7",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/cross-seal.json",
+      "original_sha256": "43b64f86f8a128f8d4c5fbd7cf4b3942af19c9c2f81ba5d926e87dedd003e0c9",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/initial-seal.json",
+      "original_sha256": "1c38012030107269cbc92d1cb636b6f0450a45ce653ce58dfbbb0bb0fa24e2bc",
+      "original_sensitive_name_fields": 20,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-seal.json",
+      "original_sha256": "c50b2944e1b2872ba708d950e45a964eacc4da9cbb22505365fd6716fe049c3a",
+      "original_sensitive_name_fields": 10,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-process-supplement.json",
+      "original_sha256": "e383b0a06773fa6858eacdcea9b93f783be36cec30fda06ba03bc09cdc7b71ce",
+      "original_sensitive_name_fields": 0,
+      "unchanged_exact_string_value_count": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-process-supplement-seal.json",
+      "original_sha256": "b93296ba0b6bbf1a9832f2f9684dbd06885534ca2383d9ca172e4afb8a8b22fa",
+      "original_sensitive_name_fields": 1,
+      "unchanged_exact_string_value_count": 0
+    }
+  ],
+  "name_field_count": 369,
+  "unchanged_name_field_count": 338
+}

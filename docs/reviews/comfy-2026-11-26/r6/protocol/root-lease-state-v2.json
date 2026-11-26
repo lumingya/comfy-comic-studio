@@ -1,0 +1,40 @@
+{
+  "schema": "mio.r6.root-lease-state.v2",
+  "utc": "2026-11-26T10:19:15.175666+00:00",
+  "supersedes": "root-leases.private.json",
+  "source_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "exclusive_current_holder": null,
+  "released": [
+    "r6-compile-001",
+    "r6-web-001",
+    "r6-compile-002",
+    "r6-blind-001",
+    "r6-web-focus-002",
+    "r6-web-candidate-003"
+  ],
+  "current_frozen_sha256": "485f8a902b0f65df5afaf39899ccab029c769c2b94cd05656e7b7af241351d53",
+  "parallel_active_product_work_allowed": false,
+  "ungranted_roles_may_import_mio": false,
+  "limits": {
+    "actions": 10,
+    "screenshots": 1,
+    "api_requests": 15,
+    "all_own_origin_requests": 50,
+    "seconds": 180,
+    "readonly_inspect_posts": 1,
+    "persistent_mutations": 0
+  },
+  "last_release": {
+    "lease": "r6-web-candidate-003",
+    "actions": 6,
+    "screenshots": 1,
+    "readonly_inspect_posts": 1,
+    "persistent_mutations": 0,
+    "all_own_origin_requests": 47,
+    "api_requests": 13,
+    "foreign_requests": 0,
+    "own_context_disposed": true,
+    "browser_closed": false,
+    "root_received_actual_release": true
+  }
+}

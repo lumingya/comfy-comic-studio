@@ -1,19 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   inspectWorkflow,
   type WorkflowDiagnostic,
   type WorkflowInspection,
 } from '../../api/system';
+import type { WorkflowConfig } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { Field, Loading, Modal, Select } from '../../components/ui';
 import { Advanced } from './ConfigurationParts';
 import { WorkflowLoraSummary } from './WorkflowLoraSummary';
+import { WorkflowMappings } from './WorkflowMappings';
 import './WorkflowInspection.css';
 
 const display = (value: unknown): string =>
   typeof value === 'string' ? value : (JSON.stringify(value) ?? '');
+
+function bindingSummary(bindings: NonNullable<WorkflowInspection['bindings']>) {
+  const summary: Record<string, string[]> = {};
+  for (const binding of bindings) {
+    const key = `${binding.kind}${binding.qualifier ? `:${binding.qualifier}` : ''}`;
+    (summary[key] ??= []).push(
+      `${binding.node}${binding.field ? `.${binding.field}` : ''} (${binding.source})`,
+    );
+  }
+  return summary;
+}
 
 export function DiagnosisView({ d }: { d: WorkflowDiagnostic }) {
   const { t } = useTranslation();
@@ -80,11 +93,27 @@ export function DiagnosisView({ d }: { d: WorkflowDiagnostic }) {
   );
 }
 
-function InspectionView({ report }: { report: WorkflowInspection }) {
+function InspectionView({
+  report,
+  imageMetadata,
+}: {
+  report: WorkflowInspection;
+  imageMetadata: boolean;
+}) {
   const { t } = useTranslation();
   const bindings = report.bindings ?? [];
   const candidates = report.candidates ?? [];
   const missing = report.missing ?? [];
+  const grouped = useMemo(() => {
+    const groups = new Map<string, typeof bindings>();
+    for (const binding of report.bindings ?? []) {
+      const key = `${binding.kind}${binding.qualifier ? `:${binding.qualifier}` : ''}`;
+      const group = groups.get(key) ?? [];
+      group.push(binding);
+      groups.set(key, group);
+    }
+    return groups;
+  }, [report.bindings]);
   const field = (kind: string) => t(`config.workflow.fields.${kind}`, { defaultValue: kind });
   const targets = (items: typeof bindings) => (
     <dl className="config-facts workflow-inspection-targets">
@@ -110,7 +139,17 @@ function InspectionView({ report }: { report: WorkflowInspection }) {
       <dl className="workflow-inspection-summary">
         <div>
           <dt>{t('config.workflow.inspection.format')}</dt>
-          <dd>{t(`config.workflow.inspection.formats.${report.format}`)}</dd>
+          <dd>
+            {t(
+              `config.workflow.inspection.formats.${
+                imageMetadata &&
+                report.importable &&
+                (report.format === 'api' || report.format === 'mio')
+                  ? 'image'
+                  : report.format
+              }`,
+            )}
+          </dd>
         </div>
         <div>
           <dt>{t('config.workflow.inspection.recognized')}</dt>
@@ -121,9 +160,31 @@ function InspectionView({ report }: { report: WorkflowInspection }) {
           <dd>{(report.output_nodes ?? []).map((n) => `#${n}`).join(', ') || '—'}</dd>
         </div>
       </dl>
+      {bindings.length ? (
+        <dl className="workflow-binding-summary">
+          {[...grouped].map(([key, items]) => (
+            <div key={key}>
+              <dt>
+                {field(items[0].kind)}
+                {items[0].qualifier ? ` · ${items[0].qualifier}` : ''}
+              </dt>
+              <dd className="mono">
+                {items
+                  .map((binding) => `#${binding.node}${binding.field ? ` → ${binding.field}` : ''}`)
+                  .join(' · ')}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
       {report.format === 'ui' ? (
         <div className="notice warn" role="alert">
-          {t('config.workflow.uiFormat')}
+          <p>{t('config.workflow.uiFormat')}</p>
+          <ol>
+            <li>{t('config.workflow.uiOpen')}</li>
+            <li>{t('config.workflow.uiExport')}</li>
+            <li>{t('config.workflow.uiReimport')}</li>
+          </ol>
         </div>
       ) : null}
       {missing.length ? (
@@ -198,25 +259,43 @@ function InspectionView({ report }: { report: WorkflowInspection }) {
 
 export function WorkflowImportPreview({
   workflow,
+  graph,
+  config,
+  initialInspection,
+  imageMetadata = false,
   name,
   saving,
   saveError,
   onSave,
   onClose,
+  onCloseAutoFocus,
 }: {
-  workflow: Record<string, unknown>;
+  workflow: Record<string, unknown> | null;
+  graph: Record<string, unknown>;
+  config?: WorkflowConfig;
+  initialInspection?: WorkflowInspection;
+  imageMetadata?: boolean;
   name: string;
   saving: boolean;
   saveError: unknown;
-  onSave: () => void;
+  onSave: (config?: WorkflowConfig) => void;
   onClose: () => void;
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const { t } = useTranslation();
   const id = useId();
   const [variant, setVariant] = useState('');
+  const [draftConfig, setDraftConfig] = useState<WorkflowConfig | null>(null);
+  const inspectedWorkflow = useMemo(
+    () => (draftConfig ? { ...workflow, graph, config: draftConfig } : workflow),
+    [workflow, graph, draftConfig],
+  );
   const query = useQuery({
-    queryKey: ['workflow-import-inspection', id, variant],
-    queryFn: () => inspectWorkflow({ workflow, variant: variant || null }),
+    queryKey: ['workflow-import-inspection', id, variant, draftConfig],
+    queryFn: () => inspectWorkflow({ workflow: inspectedWorkflow!, variant: variant || null }),
+    enabled: !!inspectedWorkflow,
+    initialData: !variant && !draftConfig ? initialInspection : undefined,
+    placeholderData: (previous) => previous,
     retry: false,
     staleTime: Infinity,
     gcTime: 0,
@@ -227,6 +306,7 @@ export function WorkflowImportPreview({
   return (
     <Modal
       open
+      onCloseAutoFocus={onCloseAutoFocus}
       size="lg"
       onOpenChange={(open) => {
         if (!open && !saving) onClose();
@@ -242,14 +322,14 @@ export function WorkflowImportPreview({
             type="button"
             className="btn primary"
             disabled={saving || !query.data?.importable || query.isFetching || query.isError}
-            onClick={onSave}
+            onClick={() => onSave(draftConfig ?? undefined)}
           >
             {saving ? t('config.saving') : t('config.workflow.inspection.save')}
           </button>
         </>
       }
     >
-      <div className="workflow-inspection">
+      <div className="workflow-inspection" aria-busy={query.isFetching}>
         {availableVariants.length ? (
           <Field label={t('config.workflow.variant')}>
             <Select
@@ -266,25 +346,49 @@ export function WorkflowImportPreview({
             />
           </Field>
         ) : null}
+        {query.isFetching && !query.isPending ? (
+          <p role="status" className="small muted">
+            {t('common.loading')}
+          </p>
+        ) : null}
         {query.isPending ? (
           <Loading />
         ) : query.isError ? (
           <QueryError error={query.error} onRetry={query.refetch} />
         ) : (
-          <InspectionView report={query.data} />
+          <InspectionView report={query.data} imageMetadata={imageMetadata} />
         )}
+        {query.data?.importable && workflow ? (
+          <Advanced lazy title={t('config.workflow.adjustMapping')}>
+            <fieldset
+              className="workflow-import-mappings"
+              disabled={saving || query.isFetching || query.isPlaceholderData || query.isError}
+            >
+              <WorkflowMappings
+                disabled={saving || query.isFetching || query.isPlaceholderData || query.isError}
+                graph={graph}
+                config={draftConfig ?? config ?? {}}
+                bindings={bindingSummary(query.data.bindings ?? [])}
+                recommendations={query.data.bindings}
+                onChange={setDraftConfig}
+              />
+            </fieldset>
+          </Advanced>
+        ) : null}
         {saveError ? <QueryError error={saveError} /> : null}
-        <Advanced
-          lazy
-          title={t('config.workflow.graphJson')}
-          hint={t('config.workflow.inspection.rawHint')}
-        >
-          {() => (
-            <pre className="config-code" tabIndex={0}>
-              {JSON.stringify(workflow, null, 2)}
-            </pre>
-          )}
-        </Advanced>
+        {workflow ? (
+          <Advanced
+            lazy
+            title={t('config.workflow.graphJson')}
+            hint={t('config.workflow.inspection.rawHint')}
+          >
+            {() => (
+              <pre className="config-code" tabIndex={0}>
+                {JSON.stringify(workflow, null, 2)}
+              </pre>
+            )}
+          </Advanced>
+        ) : null}
       </div>
     </Modal>
   );

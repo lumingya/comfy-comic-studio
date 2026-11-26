@@ -1,0 +1,58 @@
+# R6 privacy cross-review
+
+This cross-review is authorized by `audits/r6/cross-authorization.json`, SHA256 `c57861556e6e7214ca75902cea363c4c9620edbd3ae3d0c4ae830de7fc8561d6`. All 65 explicitly allowed cross-file SHA256/byte pairs match. This count includes own initial evidence and the permitted root event/lease records; it does not claim this role independently reread all 196 underlying files checked by the root. No private peer graph, private oracle, raw result, image, prompt, browser profile or cache was opened. The initial privacy report/seal remain unchanged. No product, test, build, browser, network or repository mutation was performed during cross-review.
+
+The four peer report identities are:
+
+- Generality `audits/r6/generality/report.md`: `d49bc1a837c3ce75b480038b8b3065ca6fce795519abdd835e16ab75df936dcc`.
+- Compile `audits/r6/compile/report.md`: `b5ea489e8e0aff3e3939fffb220b7ab1274e56fddaaeb422cae95ff74de74ca6`.
+- Blind `audits/r6/blind/report.md`: `5e1c575aa22fc3d6dcd19d5efffc4f33810ddc64e3447a2b1ca8ccc31ecc21c6`.
+- Web `audits/r6/web/report.md`: `cc4c156e13710d56214965dfba46842ec8bd883a947374c8bfdbe15ad36d161e`.
+
+This role cross-checked the following facts and boundaries, rather than adopting the peers' verdict strings.
+
+## Compile
+
+`consolidated-results.json` SHA256 `2a2fc0573086eb9ecb633c3f9af3e4322f723368db96347a3c59d85554b145c9` records 29 selected, compiled, change-bearing manual binding operations. The safe per-case facts independently reconcile: 29 passed cases, one actual binding delta and one expected/actual target in every case, with exact target equality. The binding delta is contained in every full delta. Full-delta lengths are 25 cases of one, two cases of two and two cases of three; the six extra changes are root-node `dict`→`missing` removals. They are the declared pruning boundary, with full typed graph, outputs and closure exact. The defensible statement is **29 single bound-field typed operations plus expected pruning**, not 29 full graphs differing at only one path.
+
+A temporary privacy cross-check incorrectly required every full delta to have length one. Its false result was an overstrict audit interpretation, not a frozen product result or an oracle failure. The full-delta distribution and correction are retained in `cross-machinechecks.json`.
+
+`historical-four-safe.json` SHA256 `ddf3d76d84412541227d81317650008d697384509b7d03dcc4d36fdca92470eb` retains all four old Python-value false results, the 230 denominator, zero old explicit manual operations and `strict_typed_230=false`. The new 29 are a separate denominator; four separate explicit/abstention follow-ups do not rewrite the old four false results. The private138 record retains 138 nodes, 43 LoRAs, zero explicit tags, missing frontend state, historical full-compile false and no newly proven private full-graph compile. The separate 29 tag-mapping regressions are not 29 runs of that private graph.
+
+The compile main result also retains its one own input error/failed record; later recovery is separate. The role does not certify installed plugin versions or run a model. These retained boundaries agree with the privacy ledger checks.
+
+## Blind cohort and failures
+
+The safe final candidate list SHA256 is `e47ec79e4bd2ff9af84c3ffc5afb61f0e7c18ac73dbb99602c68ff102c8ac218`; the selected manifest SHA256 is `02f5f3463945d8cd5d43fa2ba226a423164f26e1c941f92dc6adbc85dce8c7f3`. All 62 candidate IDs are unique. The 13 unique selected IDs exactly match the selected subset; all 49 excluded records retain a disposition: 15 seen-identity matches, 19 not selected for coverage, eight without a graph, two failed acquisitions and five excluded modalities. All 13 selected records have fresh available identity layers and empty seen-identity hits. This is freshness against available layers, not proof that the missing historical 25 were recovered or universally deduplicated.
+
+`assessment.json` SHA256 `174cdaeec33d2cd620f8e533f446f64f067858e582a297048da89236a1f82815` and `attribution.json` SHA256 `148d1ea8e58118480bd078de6037adb79980b20629a3527a9ca55da9de32f15b` reconcile exactly: 16 retained request-contract false records comprise 14 typed false results and two typed-exact/warning false results. Their categories remain 13 automatic, one conservative, one LoRA-negative and one LoRA-disabled. Two candidate-role pair assertions remain false in **one** candidate row, with two missing roles. They are not two failed samples. The frozen assertions remain unchanged.
+
+Attribution retains the two Low findings: `BL-L1` conservative automatic coverage for 13 requests, supported by the scope/inference/dimension/compile source pointers; and `BL-L2` image-role guidance, where `ref` is offered while frozen `init`/`mask` expectations remain absent. The 13 automatic cases are not reclassified as strict passes. The two LoRA warning false records retain their original warning mismatch despite typed graph success and explicit write-notice attribution. Closure/output/original-document preservation and the 76/76 explicit manual facts support this bounded safety attribution; they do not erase automatic coverage limitations or any original false result.
+
+## Web and transport boundaries
+
+`results.json` SHA256 `3b5ff36f4a69d761ad7c0c2f3a7d83a7fac0717b25d14427794394cf36852841` reconciles the UI counts: 234 main actions plus three coarse Tab actions, nine exact focus actions and six candidate supplement actions equal 252. Twenty-eight main personally viewed screenshots plus one focus and one candidate view equal 30. The original file-preview denominator remains 16 (12 API and four UI-only); the separate read-only candidate preview adds one, for 17 total with the supplement. Neither supplement retroactively changes the original grid's missing Tab/candidate evidence or the original candidate oracle's 12 expected versus 10 actual rows.
+
+`roundtrip-summary.json` SHA256 `618e02b6a790d1029ebe05b3255afca8fc76aa9d2884b807e19bbd7fae59e48a` retains original source→browser-wire strict typed/hash equality at zero, despite numerical equality for 28 document responses and 12 exports. The deltas are recorded as numerically equal float→int representation changes. At the later wire boundary, 12 saved documents and 12 exports are strictly graph/config exact. These observation points are compatible and cannot be collapsed into original source typed/hash success. The Web role separately records a Low for numeric representation; this cross-review does not sum role Low counts as a deduplicated project total.
+
+The initial metric proves 145 API responses, not all network requests. The record expressly leaves initial all-network count unproven and does not claim a full-session request ceiling of 180. The later counters, requests, responses and two supplements retain separate denominators; they are not summed into a fabricated historical network bound. The 14 unavailable response bodies remain disclosed. Exact focus and candidate supplements preserve prior false records and their own bounded action/request budgets.
+
+## Generality and process
+
+`bounded-questions.json` SHA256 `4c9ae2b89b656947c46cc083ec8703631dbc4ab6fe375022969a8aa3702adbeb` contains seven bounded static questions. The generality report's no-new-whitelist conclusion is consistent with the approved static source evidence and the independent finite compile/blind/Web facts above. Its runtime questions cannot turn historical missing data or finite samples into universal compatibility. No runtime execution was added by this privacy cross-review.
+
+The root's explicitly authorized process records are retained by their exact hashes in `cross-inputs.json`. They describe the old-PNG identity locator assertion output, later schema/inline error outputs, and the v3 private Web-manifest key projection containing 12 neutral audit-download UUID identifiers. The v3 record does not clear unknown/truncated output, and none of these events is evidence by itself of an original image, prompt, asset or credential leak. The blind process register contains six disclosed events; these are preserved without asserting all unknown scopes were cleared. Historical R5's three events remain separate historical records.
+
+This privacy role additionally corrects its initial process accounting: besides the CI sub-auditor's raw formal-document projection, an initial privacy schema projection enumerated a private identity-artifact pointer key from the authorization map. No private identity file content was opened by that action, and no user original filename, graph, request, asset or credential value was projected. It is a separate schema-map output deviation. The immutable initial report's count of one is therefore supplemented to **two privacy-role output deviations known after cross self-check**. No clean-process or zero-output claim is made. Audit-harness shape/path/condition failures remain disclosed as bounded operational errors, not product Medium findings.
+
+The original workspace boundary remains unchanged from the initial evidence: 65 data hashes, 64 skip flags and staged/unstaged digests match, but HEAD advanced three descendant commits and untracked record count changed five→one. Attribution is unproven and no restoration/reset was attempted. The root accepted that known/unknown boundary; acceptance does not prove who caused the change.
+
+This role found no new product Medium or higher issue in its assigned privacy/hygiene/CI scope after the substantive cross-check. Scope verification is separate from process cleanliness, original-task acceptance, publication, cleanup, push and final CI. Those later actions are not signed here.
+
+## Prepared public package review
+
+The root additionally authorized the three prepared package manifests, plus their exact listed sanitized outputs and the known writer's source for schema interpretation. Manifest SHA256 values are `182118112d481e40b8b1fdb8d9c308d919847d3366c323faa71afca4a4a9ab04`, `7d937e5f2ed93972fdcd7cf8f2555d9e66b72f1808ab08c2a8e3773c3b18dcd8` and `c6187903aeba3d98b14ca7da6a54e409b2dcef3f3b72940ad3b5ada055d9517f`, respectively for validation, safe evidence and metadata supplement. The writer was parsed statically, never executed. Unknown manifest fields were not enumerated; the `records` map is interpreted by its authorized writer contract as package-relative output paths. A first list-shape assumption caused only an assertion trace and was corrected before any map-key projection.
+
+The prepared sets are exact: 9 + 33 + 7 = **49** files, with zero unlisted files. Every declared published hash matches actual prepared bytes; all 46 package-relative Markdown links resolve. Static checks found zero private-path/strong-secret patterns, zero graph-shaped containers, zero asset-filename scalar fields and zero excluded file kinds. Forty-two source-map references are retained. Twenty-two match source hashes already authorized and checked during this review; the other twenty source originals were not opened, so their original-source hash statements remain manifest provenance rather than an independent original-byte reread by privacy. This does not weaken the actual 49 published-byte hashes or authorize opening raw caches.
+
+The precise 49-file prepared whitelist, including per-file SHA256 and byte size, is `audits/r6/privacy/public-safe-files.json`. It is a prepared-source whitelist, not evidence that the files are committed or published. `publication-machinechecks.json` preserves the full bounded checks. Scripts, raw caches, private manifests, private oracles, unlisted files and images are not additions to that whitelist. No cleanup, repository publication, push or final CI is claimed by this review.

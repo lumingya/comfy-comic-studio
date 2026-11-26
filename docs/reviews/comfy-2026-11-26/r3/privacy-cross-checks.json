@@ -1,0 +1,59 @@
+[
+  {
+    "case": "independent_generated_control",
+    "deltas": [
+      "/guide_canvas/inputs/height",
+      "/guide_canvas/inputs/width",
+      "/guide_sample/inputs/steps",
+      "/guide_text/inputs/text"
+    ],
+    "warnings": [],
+    "compilable": true,
+    "source_immutable": true,
+    "claim_reproduced": true
+  },
+  {
+    "case": "independent_generated_style",
+    "deltas": [
+      "/guide_canvas/inputs/height",
+      "/guide_canvas/inputs/width",
+      "/guide_sample/inputs/steps",
+      "/guide_text/inputs/text"
+    ],
+    "warnings": [],
+    "compilable": true,
+    "source_immutable": true,
+    "claim_reproduced": true
+  },
+  {
+    "case": "independent_auxiliary_output",
+    "route_reason": "undeclared-output-port",
+    "deltas": [
+      "/one_canvas/inputs/width",
+      "/one_text/inputs/text"
+    ],
+    "warnings": [],
+    "source_immutable": true,
+    "claim_reproduced": true
+  },
+  {
+    "case": "independent_partial_mirror",
+    "deltas": [
+      "/stack/inputs/loras",
+      "/stack/inputs/text"
+    ],
+    "source_immutable": true,
+    "claim_reproduced": true
+  },
+  {
+    "case": "independent_numeric_chain",
+    "deltas": [
+      "/lora/inputs/strength_clip",
+      "/lora/inputs/strength_model"
+    ],
+    "source_immutable": true,
+    "unrequested_model_before": "0.7",
+    "unrequested_model_after": 1,
+    "claim_reproduced": true
+  }
+]

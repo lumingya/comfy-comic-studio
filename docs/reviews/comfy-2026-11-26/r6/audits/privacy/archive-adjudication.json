@@ -1,0 +1,477 @@
+{
+  "projection_adjudication": [
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/timeout-fix/validation.json",
+      "original_sha256": "9a35b6bec39c5e66543727957dfa0e956d84b231c07a3d412c9aa361441f360d",
+      "publication_field_pointer": null,
+      "shared_nonstring_count": 0,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 10,
+      "published_nonstring_count": 51,
+      "old_top_level_types": {
+        "local_full_suite": "bool",
+        "network_transport": "str",
+        "serial": "bool",
+        "source_before": "dict",
+        "runs": "list",
+        "source_after": "dict",
+        "source_unchanged": "bool",
+        "guards": "list"
+      },
+      "new_top_level_types": {
+        "schema": "str",
+        "publication_state": "str",
+        "controller_supplied_context": "dict",
+        "source_evidence": "list",
+        "initial_result": "dict",
+        "resume_result": "dict",
+        "interpretation": "dict"
+      }
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/timeout-fix/validation.json",
+      "original_sha256": "f96e99a5e74799e4adfeafa3f595e936b4fd7613a2d770975b54ceb00e741f3e",
+      "publication_field_pointer": null,
+      "shared_nonstring_count": 0,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 20,
+      "published_nonstring_count": 51,
+      "old_top_level_types": {
+        "initial_result_preserved": "bool",
+        "lint_already_passed_not_repeated": "bool",
+        "local_full_suite": "bool",
+        "serial": "bool",
+        "source_before": "dict",
+        "runs": "list",
+        "source_after": "dict",
+        "source_unchanged": "bool",
+        "guards": "list"
+      },
+      "new_top_level_types": {
+        "schema": "str",
+        "publication_state": "str",
+        "controller_supplied_context": "dict",
+        "source_evidence": "list",
+        "initial_result": "dict",
+        "resume_result": "dict",
+        "interpretation": "dict"
+      }
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/validation.json",
+      "original_sha256": "99be20b29101133a3b9893bf5afeaea69e51fb3d835f6d45badae282116406ee",
+      "publication_field_pointer": "initial_result",
+      "shared_nonstring_count": 0,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 12,
+      "published_nonstring_count": 67,
+      "old_top_level_types": {
+        "local_full_suite": "bool",
+        "network": "bool",
+        "native_io": "str",
+        "serial": "bool",
+        "new_test_methods": "int",
+        "new_deterministic_subscenarios": "int",
+        "old_regression_methods": "int",
+        "selected_tests": "list",
+        "source_before": "dict",
+        "runs": "list",
+        "source_after": "dict",
+        "source_unchanged": "bool",
+        "guards": "list"
+      },
+      "new_top_level_types": {
+        "schema": "str",
+        "publication_state": "str",
+        "patch_reference": "dict",
+        "controller_supplied_context": "dict",
+        "source_evidence": "list",
+        "initial_result": "dict",
+        "resume_result": "dict",
+        "offline_unit_summary": "dict",
+        "derived_checks": "dict"
+      }
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/validation.json",
+      "original_sha256": "07e006fa9325550c3e6131c62a0aa45214fc00ab1ad3899331377aad71ecf1ba",
+      "publication_field_pointer": "resume_result",
+      "shared_nonstring_count": 0,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 25,
+      "published_nonstring_count": 67,
+      "old_top_level_types": {
+        "initial_result_preserved": "bool",
+        "initial_lint_failure": "str",
+        "local_full_suite": "bool",
+        "network": "bool",
+        "serial": "bool",
+        "new_test_methods": "int",
+        "new_subscenarios": "int",
+        "old_methods": "int",
+        "source_before": "dict",
+        "runs": "list",
+        "source_after": "dict",
+        "source_unchanged": "bool",
+        "guards": "list"
+      },
+      "new_top_level_types": {
+        "schema": "str",
+        "publication_state": "str",
+        "patch_reference": "dict",
+        "controller_supplied_context": "dict",
+        "source_evidence": "list",
+        "initial_result": "dict",
+        "resume_result": "dict",
+        "offline_unit_summary": "dict",
+        "derived_checks": "dict"
+      }
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/validation.json",
+      "original_sha256": "99be20b29101133a3b9893bf5afeaea69e51fb3d835f6d45badae282116406ee",
+      "publication_field_pointer": "initial_result",
+      "shared_nonstring_count": 0,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 12,
+      "published_nonstring_count": 67,
+      "old_top_level_types": {
+        "local_full_suite": "bool",
+        "network": "bool",
+        "native_io": "str",
+        "serial": "bool",
+        "new_test_methods": "int",
+        "new_deterministic_subscenarios": "int",
+        "old_regression_methods": "int",
+        "selected_tests": "list",
+        "source_before": "dict",
+        "runs": "list",
+        "source_after": "dict",
+        "source_unchanged": "bool",
+        "guards": "list"
+      },
+      "new_top_level_types": {
+        "schema": "str",
+        "publication_state": "str",
+        "patch_reference": "dict",
+        "controller_supplied_context": "dict",
+        "source_evidence": "list",
+        "initial_result": "dict",
+        "resume_result": "dict",
+        "offline_unit_summary": "dict",
+        "derived_checks": "dict"
+      }
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/validation.json",
+      "original_sha256": "07e006fa9325550c3e6131c62a0aa45214fc00ab1ad3899331377aad71ecf1ba",
+      "publication_field_pointer": "resume_result",
+      "shared_nonstring_count": 0,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 25,
+      "published_nonstring_count": 67,
+      "old_top_level_types": {
+        "initial_result_preserved": "bool",
+        "initial_lint_failure": "str",
+        "local_full_suite": "bool",
+        "network": "bool",
+        "serial": "bool",
+        "new_test_methods": "int",
+        "new_subscenarios": "int",
+        "old_methods": "int",
+        "source_before": "dict",
+        "runs": "list",
+        "source_after": "dict",
+        "source_unchanged": "bool",
+        "guards": "list"
+      },
+      "new_top_level_types": {
+        "schema": "str",
+        "publication_state": "str",
+        "patch_reference": "dict",
+        "controller_supplied_context": "dict",
+        "source_evidence": "list",
+        "initial_result": "dict",
+        "resume_result": "dict",
+        "offline_unit_summary": "dict",
+        "derived_checks": "dict"
+      }
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/coverage/coverage-map.json",
+      "original_sha256": "bdea244dbdba3527bc0bb6af8c3736a1a87e914ad704d74685122968aa6416ed",
+      "publication_field_pointer": null,
+      "shared_nonstring_count": 6016,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 6159,
+      "published_nonstring_count": 6159,
+      "old_top_level_types": {
+        "state": "str",
+        "product_measurement_revision": "str",
+        "candidate_integration_state": "str",
+        "fresh_R5": "str",
+        "scope": "str",
+        "prohibited_inferences": "list",
+        "sources": "list",
+        "real_source_registry": "dict",
+        "registry_count_semantics": "str",
+        "saved_request_bank": "list",
+        "topology_rows": "list",
+        "field_rows": "list",
+        "permanent_test_text_index": "dict",
+        "supplemental_evidence_for_existing_requests_not_new_denominators": "dict",
+        "r3_advanced_derived_unjoined_records": "dict",
+        "r4_synthetic_compile_cases": "dict",
+        "civitai_curation_evidence": "dict",
+        "missing_original25_prefix_only": "list",
+        "private138_before_after_and_separate_regressions": "dict",
+        "remaining_evidence_rows": "list",
+        "execution_by_this_task": "dict",
+        "not_a_final_review_signature": "bool",
+        "r2_manual_policy_false_request_refs": "dict"
+      },
+      "new_top_level_types": {
+        "state": "str",
+        "product_measurement_revision": "str",
+        "candidate_integration_state": "str",
+        "fresh_R5": "str",
+        "scope": "str",
+        "prohibited_inferences": "list",
+        "sources": "list",
+        "real_source_registry": "dict",
+        "registry_count_semantics": "str",
+        "saved_request_bank": "list",
+        "topology_rows": "list",
+        "field_rows": "list",
+        "permanent_test_text_index": "dict",
+        "supplemental_evidence_for_existing_requests_not_new_denominators": "dict",
+        "r3_advanced_derived_unjoined_records": "dict",
+        "r4_synthetic_compile_cases": "dict",
+        "civitai_curation_evidence": "dict",
+        "missing_original25_prefix_only": "list",
+        "private138_before_after_and_separate_regressions": "dict",
+        "remaining_evidence_rows": "list",
+        "execution_by_this_task": "dict",
+        "not_a_final_review_signature": "bool",
+        "r2_manual_policy_false_request_refs": "dict"
+      }
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/artifact-fa63083-provenance.json",
+      "original_sha256": "11170fe2449163f0e3deada1babca04ef71b9b267211ca1d5eff7dff209ba024",
+      "publication_field_pointer": null,
+      "shared_nonstring_count": 5,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 86,
+      "published_nonstring_count": 6,
+      "old_top_level_types": {
+        "source_head": "str",
+        "artifact_id": "int",
+        "artifact_name": "str",
+        "run_id": "int",
+        "artifact_created_at": "str",
+        "artifact_digest": "str",
+        "archive_digest_verified": "bool",
+        "archive_bytes": "int",
+        "local_build_run": "bool",
+        "index_sha256": "str",
+        "files": "list"
+      },
+      "new_top_level_types": {
+        "source_head": "str",
+        "artifact_id": "int",
+        "artifact_name": "str",
+        "run_id": "int",
+        "artifact_created_at": "str",
+        "artifact_digest": "str",
+        "archive_digest_verified": "bool",
+        "archive_bytes": "int",
+        "local_build_run": "bool",
+        "index_sha256": "str",
+        "file_inventory_count": "int"
+      }
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/connection-headless.json",
+      "original_sha256": "011812dd105c726aad9b570854e2a83f89cf06ed126235925b90131f12f279c3",
+      "publication_field_pointer": null,
+      "shared_nonstring_count": 8,
+      "shared_nonstring_modified_count": 0,
+      "original_nonstring_count": 9,
+      "published_nonstring_count": 9,
+      "old_top_level_types": {
+        "verified_at_utc": "str",
+        "direct_cdp_connected": "bool",
+        "browser_pid": "int",
+        "browser_version": "str",
+        "browser_mode": "str",
+        "task_exclusive_browser": "bool",
+        "fresh_blank_context_created_and_closed": "bool",
+        "existing_contexts_tabs_profiles_not_enumerated": "bool",
+        "product_navigation_performed": "bool",
+        "required_product_origin": "str",
+        "candidate_head": "str",
+        "candidate_preview_ready": "bool",
+        "affinity": "str",
+        "priority_class": "int",
+        "manual_user_approval_needed": "bool"
+      },
+      "new_top_level_types": {
+        "verified_at_utc": "str",
+        "direct_cdp_connected": "bool",
+        "browser_pid": "int",
+        "browser_version": "str",
+        "browser_mode": "str",
+        "task_exclusive_browser": "bool",
+        "fresh_blank_context_created_and_closed": "bool",
+        "existing_contexts_tabs_profiles_not_enumerated": "bool",
+        "product_navigation_performed": "bool",
+        "required_product_origin": "str",
+        "candidate_head": "str",
+        "candidate_preview_ready": "bool",
+        "affinity": "str",
+        "priority_class": "int",
+        "cdp_port": "NoneType",
+        "cdp_port_status": "str"
+      }
+    }
+  ],
+  "historical_exact_removed_token_hits": {
+    "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json",
+    "hits": [
+      {
+        "token_sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+        "length": 30,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "8d92f0ed782fe1994f71feff17941035c1acbc95cd970b71e1749516ee0e81c5",
+          "7c3f43b819b78ab814d841928a7a25c4babb2abda324beb17e4f30beaa9a47d4"
+        ]
+      },
+      {
+        "token_sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+        "length": 28,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "ac526a60d8f23a6df0e0b30ce825d27feae64ea96c7633f4fbf92b9d36c9eb78",
+          "67c4bdd84b1a0374ed086f976db300856144060d788a34b14d2ca87d6d9be13a"
+        ]
+      },
+      {
+        "token_sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+        "length": 27,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "ea87817025d74950c7124d541a6bcbc9fc45a55313533d3b81c7e65b0dd05edc",
+          "92e579c38092f1de77d5765d2bea3dfe546606ee6cc98c99f7ec4a217183c511"
+        ]
+      },
+      {
+        "token_sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+        "length": 30,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "a92f115f4283fe4acf02a4122569cb9e3c4b45eeccc0bec1d678e5ad1292debf",
+          "1c48fc9fa8149d93157c184b36c57c21d2766f3b204c4043832a5a0420d75855"
+        ]
+      },
+      {
+        "token_sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+        "length": 29,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "86b9f6bcdd51dfae3c4917aa7aaa20dde2498e7116aff2f0abae243eaf00d8db",
+          "9d38c11d71732d03529abd563cdcf756968de89a434f545c4815f57d31603c69"
+        ]
+      },
+      {
+        "token_sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+        "length": 17,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "44167fa0025a7b687a4ff5154c1b88671051ca86bf2003d97db6495157d02613",
+          "bae5f2496beb265f3258e98daac39f5aac99a85aaed8ffcbed32e5912e310eb6"
+        ]
+      },
+      {
+        "token_sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+        "length": 37,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "8c01eb4946159c6893e04779c8faa76bc0967514f4c37c68dc5a2a9874e7d754",
+          "efcc79eb3e9e4ed83ea11a9b0a86b148a83949345fd1656accfd41c6dc40da6d"
+        ]
+      },
+      {
+        "token_sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+        "length": 23,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "bde00c934bc2b87bc02ba9e2fc08adb3a6834745845cd88287ca0bbcdc4c8d2e",
+          "909518827d8165299d6be0b1f87e0569b9414a68b6790d90c395d79317e21ef4"
+        ]
+      },
+      {
+        "token_sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+        "length": 8,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "cbd35bb00192f71fe6a12b9cbe931c4fc0eb3000088683077accd66d174378dd",
+          "aac069c92156f2d2ab5b8b9a6df1e086b6f42898b08b7bf7f680565b7c794b62",
+          "29ff04b1433b0a973d3830b8eafee722af1a700fc293651cae3c3c2d447d50d7"
+        ]
+      },
+      {
+        "token_sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+        "length": 20,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "a80909d9e49371314c2cf376d98d1b87d51cb82fce0e0a771cf1a2edf615a197",
+          "6d288a2a1277a5f9c3b239f6e124318f0a164a614e09800102660ab59f675023"
+        ]
+      },
+      {
+        "token_sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+        "length": 31,
+        "is_public_https_url": false,
+        "contains_asset_extension": true,
+        "contains_private_path": false,
+        "whole_field_match_count": 1,
+        "field_pointer_hashes": [
+          "6e048f79ccbbe000c8e0d555b3ca6abebacfba5673c78fecf952382ffe86a21b",
+          "a27ec73a3e067c98778e690b0015902851ba79f0ea52d1c6b08c0a4b927bf267"
+        ]
+      }
+    ]
+  }
+}

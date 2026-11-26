@@ -1,0 +1,269 @@
+{
+  "schema": "mio.after-repair.safe-publication-draft.v2",
+  "prepared_date": "2026-11-26",
+  "fixed_head": "ed45509456b14006161d829666c466789e6a9e37",
+  "publication_state": "RESULTS_RECORDED_REVIEW_REQUIRED",
+  "role": "pure publication staging; not a new five-role reviewer",
+  "intended_repository_root": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair",
+  "source_allowlist": [
+    "r4-final-corpus/report.md",
+    "r4-final-corpus/publish.json",
+    "r4-final-corpus/effective-provenance.json",
+    "r4-preview/performance.json",
+    "r4-final-ci/report.md",
+    "r4-final-ci/ci-verified.json",
+    "r4-preview/merge-type-fix.json"
+  ],
+  "files": [
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-final-corpus/report.md",
+      "destination": "final-corpus/report.md",
+      "original_sha256": "8d6504e97c79f42fa59499289eff9b910fa76d9c6e14c3d2dbdcc223dacf99c9",
+      "published_sha256": "8d6504e97c79f42fa59499289eff9b910fa76d9c6e14c3d2dbdcc223dacf99c9",
+      "expected_git_blob_sha1": "0a09f656382b74a5266d9b6fce4a5ef79d7f4ec9",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-final-corpus/publish.json",
+      "destination": "final-corpus/publish.json",
+      "original_sha256": "efba4d0ce2765db38377027b2ac135804c6cdbc93a4226c595c24753a53dfa1b",
+      "published_sha256": "efba4d0ce2765db38377027b2ac135804c6cdbc93a4226c595c24753a53dfa1b",
+      "expected_git_blob_sha1": "b33237ccb988733ceb680b408e6d979b6e9013bc",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-final-corpus/effective-provenance.json",
+      "destination": "final-corpus/effective-provenance.json",
+      "original_sha256": "662d8d829e1cf6b77425137545af53f0b2656be383b8850ebcf77f120f020370",
+      "published_sha256": "c0fc5d54a37d9ca994b835f06ad245b7657a3b6b0a6347e09998db6b40814748",
+      "expected_git_blob_sha1": "77b27906b97ca7d4f67ad3e2947fab0a9f39b3f5",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (166 line endings)"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-preview/performance.json",
+      "destination": "performance/performance.json",
+      "original_sha256": "fdd35b67fc99390c5328a1f0c78e3cbe330560168576c885a68155569fe56df0",
+      "published_sha256": "4313838ca6d783a44c45af58f0679e4f42d88a1be38cd29dd87d965c37b79481",
+      "expected_git_blob_sha1": "f187dfe5c2f16e4b92984e3cebd9b8ad265063f8",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (48 line endings)"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-final-ci/report.md",
+      "destination": "integration-ci-failed/report.md",
+      "original_sha256": "410f1e7282b7b237197be4ecc606d22609824fb1ad1145ee3306a591033721c4",
+      "published_sha256": "410f1e7282b7b237197be4ecc606d22609824fb1ad1145ee3306a591033721c4",
+      "expected_git_blob_sha1": "01b64c6249fef02fee24740028133aed098bce99",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-final-ci/ci-verified.json",
+      "destination": "integration-ci-failed/ci-verified.json",
+      "original_sha256": "46946a6c5c925f9e486a9dc980b726fea038ee70b24435b0a2b8efc11dfe6e2c",
+      "published_sha256": "f0db07274273c79c24b2438d0f06a57ac9f1cf5f6836de1c3b407b28747c7866",
+      "expected_git_blob_sha1": "c1bd9052565e98a652138f3f9b5b58049b211996",
+      "original_byte_identical": false,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "CRLF to LF (2244 line endings)"
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-preview/merge-type-fix.json",
+      "destination": "integration-ci-failed/merge-type-fix.json",
+      "original_sha256": "b70b9511c79f6973fdea5459042f172d4ce20a87e8999e79ca38bada26b01cef",
+      "published_sha256": "b70b9511c79f6973fdea5459042f172d4ce20a87e8999e79ca38bada26b01cef",
+      "expected_git_blob_sha1": "ed9b37e98defcf7b59a2c710b5dcc0795ef9b301",
+      "original_byte_identical": true,
+      "content_preserved_after_lf_eof_normalization": true,
+      "changes": "none; already LF with one terminal LF"
+    }
+  ],
+  "generated_drafts": [
+    {
+      "destination": "index.md",
+      "published_sha256": "56cdc8862a0fe4f02a0de827d740435ead1f5fdfcd659b963b85cbd5368ca906",
+      "expected_git_blob_sha1": "42ed82eb4c8867bbf94f518bd87e17e7a27cc871"
+    },
+    {
+      "destination": "manifest.json",
+      "self_hash_recorded_in_handoff": true
+    }
+  ],
+  "normalization": {
+    "encoding": "UTF-8 without BOM",
+    "line_endings": "LF",
+    "terminal_newline": "exactly one LF",
+    "other_content_changes": false,
+    "original_sources_modified": false,
+    "original_internal_hash_references": "preserved; identify sealed originals, not normalized publication copies"
+  },
+  "recorded_counts": {
+    "current75_strict": {
+      "exact": 226,
+      "total": 230
+    },
+    "R1_strict": {
+      "exact": 66,
+      "total": 70
+    },
+    "R2_strict": {
+      "exact": 104,
+      "total": 130
+    },
+    "R2_fixed_requests": {
+      "exact": 122,
+      "total": 138
+    },
+    "R4_blind_automatic": {
+      "exact": 36,
+      "total": 47
+    },
+    "R4_compile": {
+      "exact": 14,
+      "total": 14
+    },
+    "missing_evidence": {
+      "automatic_requests": 8,
+      "explicit_mapping_requests": 8,
+      "automatic_original_truth_failures_preserved": true
+    },
+    "phase_evidence": {
+      "automatic_requests": 3,
+      "explicit_single_field_requests": 6
+    }
+  },
+  "performance_measurements": {
+    "affinity": "0x1",
+    "priority_class": 16384,
+    "segments": [
+      {
+        "segment": "cold_catalog",
+        "http_status": 200,
+        "elapsed_ms": 2516.515,
+        "row_count": 49
+      },
+      {
+        "segment": "warm_catalog",
+        "http_status": 200,
+        "elapsed_ms": 126.084,
+        "row_count": 49
+      },
+      {
+        "segment": "import_one_distinct_200_node_graph",
+        "http_status": 201,
+        "elapsed_ms": 445.527,
+        "row_count": null
+      },
+      {
+        "segment": "refresh_after_one_distinct_import",
+        "http_status": 200,
+        "elapsed_ms": 639.258,
+        "row_count": 50
+      }
+    ],
+    "fresh_process_cold_read": true,
+    "same_owned_synthetic_library_as_r4_web": true,
+    "temporary_import_removed": true,
+    "original_49_summaries_restored": true
+  },
+  "publication_checks": {
+    "result": "NO_FINDINGS_WITHIN_PUBLICATION_SCOPE",
+    "strict_utf8_without_bom": true,
+    "recursive_forbidden_dictionary_keys": [
+      "class_type",
+      "inputs",
+      "links",
+      "widgets_values",
+      "extra_pnginfo"
+    ],
+    "forbidden_dictionary_key_count": 0,
+    "private_path_credential_account_prompt_model_candidates": 0,
+    "all_source_hashes_preserved": true,
+    "all_copies_match_lf_eof_normalized_originals": true,
+    "all_sources_byte_identical_after_publication": false,
+    "relative_links_valid_in_intended_layout": true,
+    "markdown_relative_link_count": 10,
+    "source_files_read": 7,
+    "source_files_copied": 7,
+    "staged_files_total": 9,
+    "no_raw_scripts_or_logs_read_or_copied": true,
+    "repo_files_modified": false,
+    "git_index_or_commits_modified": false,
+    "product_calls": false,
+    "python_processes_started": 0,
+    "network_or_browser_calls": false,
+    "actual_repository_git_blob_check": "not performed; drafts remain outside repository",
+    "existing_four_published_copy_hashes_preserved": true,
+    "initial_manifest_preserved_outside_publication_allowlist": true,
+    "no_CI_or_Git_queries": true,
+    "no_new_CI_success_claim": true
+  },
+  "fixed_head_scope": "fixed corpus, performance and original failed/cancelled CI; subsequent type-only integration repair is recorded separately",
+  "preserved_initial_manifest": {
+    "source_root_label": "external-temp-evidence/repairs",
+    "relative_backup": "r4-publication-ready-initial-manifest.json",
+    "sha256": "6f793fb68f262330b06de5d35c8cbbe94d916e906cf18cf80783ea45d2429f07",
+    "outside_publication_directory": true,
+    "excluded_from_expected_publication_allowlist": true
+  },
+  "integration_ci": {
+    "conclusion": "REQUEST CHANGES",
+    "original_fixed_head": "ed45509456b14006161d829666c466789e6a9e37",
+    "original_push_run": 45750256236,
+    "original_pr_run": 45750263955,
+    "original_run_conclusions": {
+      "push": "cancelled",
+      "pull_request": "cancelled"
+    },
+    "original_gate_conclusions": {
+      "push": "success",
+      "pull_request": "failure"
+    },
+    "pr_failure": "tsc --noEmit: TS2300 duplicate onCloseAutoFocus identifier in ui.tsx",
+    "pr_actual_checkout_merge": "53f891a74aec61e724495762c436e2a1f8bf2cfc",
+    "cancelled_run_does_not_erase_gate_failure": true,
+    "summary": {
+      "run_count": 2,
+      "successful_runs": 0,
+      "job_count": 6,
+      "successful_jobs": 3,
+      "step_count": 70,
+      "successful_steps": 59,
+      "all_agents_ten_command_rows_covered_each_run": false,
+      "all_declared_command_classes_covered_each_run": false
+    }
+  },
+  "integration_type_fix": {
+    "previous_head": "ed45509456b14006161d829666c466789e6a9e37",
+    "current_head": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+    "changed_files": [
+      "web/src/components/ui.tsx"
+    ],
+    "runtime_behavior_changed": false,
+    "backend_files_changed": false,
+    "backend_replay_not_repeated": true,
+    "original_replay_head_and_hashes_preserved": true,
+    "whole_upstream_branch_merged_into_worktree": false,
+    "new_remote_runs": {
+      "push": 45752905758,
+      "pull_request": 45752911753
+    },
+    "new_remote_results": "PENDING; must be verified separately",
+    "new_terminal_ci_report_available_in_this_allowlist": false
+  }
+}

@@ -1,0 +1,4503 @@
+{
+  "audit": "Wave4 fresh blind audit2",
+  "head": "71457f6",
+  "verdict": "NOT VERIFIED PASS",
+  "scope": "Independent read-only product audit. No product edits, commits, model downloads, GPU execution, cloud jobs, credentials or browser profiles.",
+  "sample_count": 15,
+  "source_containers": {
+    "PNG": 11,
+    "JSON": 4
+  },
+  "actual_formats": {
+    "api": 14,
+    "ui": 1
+  },
+  "total_nodes": 337,
+  "largest_api_nodes": 34,
+  "largest_ui_nodes": 59,
+  "deduplication": "Exact source URL and independently recomputed class/link/field-type topology hash compared against initial75 final75.json. Excluded sdxl_simple_example.png topology duplicate of refiner sample. Initial75 mappings were not used as truth. Final15 are source/topology new; nested node classes recursively filtered.",
+  "recursive_exclusion_findings": [],
+  "after": {
+    "api_samples": 14,
+    "compile_ok": 14,
+    "automatic_semantic_correct": 50,
+    "automatic_semantic_total": 50,
+    "manual_abstention_safe": 18,
+    "manual_required_total": 20,
+    "compile_target_checks_pass": 68,
+    "compile_target_checks_total": 70
+  },
+  "before": {
+    "api_samples": 14,
+    "compile_ok": 14,
+    "automatic_semantic_correct": 38,
+    "automatic_semantic_total": 50,
+    "manual_abstention_safe": 14,
+    "manual_required_total": 20,
+    "compile_target_checks_pass": 52,
+    "compile_target_checks_total": 70
+  },
+  "baseline_limit": "aa06d0a baseline has no file decoder; compare14 independently extracted API graphs using original source payloads. Baseline file import/PNG decode is not claimed.",
+  "file_decode_matches_independent": 15,
+  "actual_route_checks": {
+    "inspect_file": 15,
+    "api_import_get_loras": 14,
+    "ui_guidance": 1,
+    "persisted_graph_equal": 14,
+    "method": "Call actual async inspect-file and synchronous import/get/loras route functions in process with a minimal empty registry and a memory store; no HTTP socket, SQL runtime, browser or Comfy instance."
+  },
+  "immutability": {
+    "source_files": 15,
+    "source_graphs": 15,
+    "unmodified_surviving_nodes_on_noedit_compile": 14,
+    "note": "Noedit compile intentionally prunes unreachable nodes/previews outside chosen output closure in4 samples. Every surviving node and input stays byte-value equivalent; source documents stay unchanged."
+  },
+  "loras": {
+    "manual_active_items": 5,
+    "detected_items": 3,
+    "source_samples_with_active_lora": 4,
+    "detected_native_items_tested": 3,
+    "native_negative_weight_and_toggle_operations": 6,
+    "native_operations_exact_and_links_preserved": 6,
+    "manual_pointer_fallback_operations": 4,
+    "inactive_rgthree_slots": 4,
+    "inactive_rgthree_note": "All four native slots are None in real source;0 active items is expected and is not counted as live dictionary/stack edit coverage."
+  },
+  "manual_mapping": {
+    "checks": 20,
+    "exact": 20
+  },
+  "diagnosis": "All14 API inspect calls declare dependencies unchecked without object_info. Empty instance schema correctly returns missing classes, never an execution pass. Original disconnected ConditioningCombine10 missingconditioning_2 was independently labeled and detected when its declared schema was supplied; selected-output pruning removes this dead node. No live instance runnable claim.",
+  "findings": [
+    {
+      "id": "BLIND-M01",
+      "severity": "Medium",
+      "title": "Independent latent composition canvases are overwritten together",
+      "sample": "noisy_latents_3_subjects.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/noisy_latent_composition/noisy_latents_3_subjects.png",
+      "expected": "Choose the declared background destination canvas only, or abstain and request a manual mapping. Preserve independent subject patch sizes.",
+      "actual": "width binds5.width,62.width,65.width and height binds5.height,62.height,65.height. Requests768x960 replace384x768 subjects and1920x1088 background with the same size. Composite offsets656/1368/1016 and288 remain fixed.",
+      "impact": "Changing a global canvas parameter silently changes independent composition operands and destroys the authored layout.",
+      "reproduction": "Decode untouched PNG; WorkflowDoc(graph=decoded graph); compile_workflow(doc,{width:768,height:960}).",
+      "independent_confirmation": "CompileCorrectness auditor reproduced original and compiled dimensions in audits/r1-compile/probe_results.json.",
+      "proposed_fix": "Respect independent dimension domains at multi-input composition. A generic explicit port contract may identify destination; otherwise require manual mapping for unequal parallel canvas sources."
+    },
+    {
+      "id": "BLIND-M02",
+      "severity": "Medium",
+      "title": "Active upstream Efficiency LoRA stacks are omitted from controls",
+      "samples": [
+        "helper/cog-face-to-many.json",
+        "helper/cog-face-to-sticker.json"
+      ],
+      "source_urls": [
+        "https://raw.githubusercontent.com/fofr/cog-face-to-many/main/face-to-many-api.json",
+        "https://raw.githubusercontent.com/fofr/cog-face-to-sticker/main/face-to-sticker-api.json"
+      ],
+      "expected": "Discover active node3 slot1 through Efficient Loader.lora_stack and expose independent weight/toggle. Simple mode effective model and CLIP weight is3.lora_wt_1; count3 and empty slots2/3 remain unchanged.",
+      "actual": "Both actual import and loras handlers report zero LoRA items. The only group is the loader empty embedded lora_name; the named upstream stack slot is silently absent.",
+      "impact": "Creators cannot see, change or independently disable an already active LoRA through its automatic controls. Arbitrary JSON Pointer overrides are available and passed4 exact-write tests, but do not replace requested automatic stack controls.",
+      "publisher_contract": "https://raw.githubusercontent.com/jags111/efficiency-nodes-comfyui/main/efficiency_nodes.py",
+      "proposed_fix": "Traverse model-consuming loader stack data inputs and use structural stack codecs with explicit effective-weight/count/mode contracts. Avoid treating model_str/clip_str as effective in simple mode."
+    }
+  ],
+  "limits": [
+    "14 real API graphs range8–34 nodes; the UI-only graph has59. This round does not add a120–300+ executable API workflow.",
+    "No new WebP prompt sample;11 PNG originals plus4 API JSON.",
+    "50 auto-determinable combinations and20 manual-required combinations are separate denominators. Safe abstention is not automatic semantic identification.",
+    "Source graph syntax and declared object_info constraints are checked statically. Custom VALIDATE_INPUTS, node code execution and image quality are not exercised.",
+    "No live browser UX validation in this ownership boundary."
+  ],
+  "samples": [
+    {
+      "file": "lora.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/lora/lora.png",
+      "sha256": "2b8520b0a44f60dd427d053f4ff7318a44278f31ecc065a9a3e82d1b9b8fbff1",
+      "format": "api",
+      "node_count": 8,
+      "classes": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptyLatentImage",
+        "KSampler",
+        "LoraLoader",
+        "SaveImage",
+        "VAEDecode"
+      ],
+      "topology_hash": "b3b05adb02d15d1c9d26f122f7b1e729b61c6825573e544215e9576769d972a9",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "prompt",
+          "node": "6",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "3",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "3",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "3",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "3",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "3",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "3",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [],
+      "expected": {
+        "prompt": [
+          "6.text"
+        ],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "3.seed"
+        ],
+        "width": [
+          "5.width"
+        ],
+        "height": [
+          "5.height"
+        ],
+        "lora_weights": [
+          [
+            "10.strength_model",
+            "10.strength_clip"
+          ]
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [
+            "6.text"
+          ],
+          "actual": [
+            "6.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "3.seed"
+          ],
+          "actual": [
+            "3.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "5.width"
+          ],
+          "actual": [
+            "5.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "5.height"
+          ],
+          "actual": [
+            "5.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [
+            "6.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "3.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "5.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "5.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [],
+      "lora_groups": 1,
+      "lora_items": 1,
+      "expected_active_lora_items": 1,
+      "lora_checks": [
+        {
+          "sites": [
+            "10"
+          ],
+          "independent_toggle": true,
+          "negative_weight": {
+            "diff_from_expected": [],
+            "links_preserved": true
+          },
+          "disable": {
+            "diff_from_expected": [],
+            "links_preserved": true
+          }
+        }
+      ],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 7,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "lora_multiple.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/lora/lora_multiple.png",
+      "sha256": "204678664ad2aa9776fc0a5ffc9b8b58bcae287ff0b950b919f77d3699885cb3",
+      "format": "api",
+      "node_count": 9,
+      "classes": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptyLatentImage",
+        "KSampler",
+        "LoraLoader",
+        "SaveImage",
+        "VAEDecode"
+      ],
+      "topology_hash": "b977f6049196af9fb670ef2d9ddc76429365791fc99536201f58dbe323994aab",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "prompt",
+          "node": "6",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "3",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "3",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "3",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "3",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "3",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "3",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [],
+      "expected": {
+        "prompt": [
+          "6.text"
+        ],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "3.seed"
+        ],
+        "width": [
+          "5.width"
+        ],
+        "height": [
+          "5.height"
+        ],
+        "lora_weights": [
+          [
+            "10.strength_model",
+            "10.strength_clip"
+          ],
+          [
+            "11.strength_model",
+            "11.strength_clip"
+          ]
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [
+            "6.text"
+          ],
+          "actual": [
+            "6.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "3.seed"
+          ],
+          "actual": [
+            "3.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "5.width"
+          ],
+          "actual": [
+            "5.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "5.height"
+          ],
+          "actual": [
+            "5.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [
+            "6.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "3.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "5.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "5.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [],
+      "lora_groups": 2,
+      "lora_items": 2,
+      "expected_active_lora_items": 2,
+      "lora_checks": [
+        {
+          "sites": [
+            "10"
+          ],
+          "independent_toggle": true,
+          "negative_weight": {
+            "diff_from_expected": [],
+            "links_preserved": true
+          },
+          "disable": {
+            "diff_from_expected": [],
+            "links_preserved": true
+          }
+        },
+        {
+          "sites": [
+            "11"
+          ],
+          "independent_toggle": true,
+          "negative_weight": {
+            "diff_from_expected": [],
+            "links_preserved": true
+          },
+          "disable": {
+            "diff_from_expected": [],
+            "links_preserved": true
+          }
+        }
+      ],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 7,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "sdxl_refiner_prompt_example.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/sdxl/sdxl_refiner_prompt_example.png",
+      "sha256": "6860997bed840ddd2d2a67b5c329c9d5e097b0a68b5de31ed91225da12535aaf",
+      "format": "api",
+      "node_count": 11,
+      "classes": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptyLatentImage",
+        "KSamplerAdvanced",
+        "SaveImage",
+        "VAEDecode"
+      ],
+      "topology_hash": "b8cc4a747b2df21982b7fe4db030afd194645d008792d4f8cc9e002f18e107e3",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "19",
+          "source": "heuristic"
+        },
+        {
+          "kind": "prompt",
+          "node": "6",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "10",
+          "field": "noise_seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "10",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "10",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "10",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "10",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "11",
+          "field": "noise_seed",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [],
+      "expected": {
+        "prompt": [
+          "6.text"
+        ],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "10.noise_seed",
+          "11.noise_seed"
+        ],
+        "width": [
+          "5.width"
+        ],
+        "height": [
+          "5.height"
+        ],
+        "preserve": [
+          "15.text",
+          "16.text"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [
+            "6.text"
+          ],
+          "actual": [
+            "6.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "10.noise_seed",
+            "11.noise_seed"
+          ],
+          "actual": [
+            "10.noise_seed",
+            "11.noise_seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "5.width"
+          ],
+          "actual": [
+            "5.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "5.height"
+          ],
+          "actual": [
+            "5.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "19"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [
+            "6.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "10.noise_seed",
+            "11.noise_seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "5.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "5.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 6,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "night_evening_day_morning.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/area_composition/night_evening_day_morning.png",
+      "sha256": "e9b5753f69bdc910d5fbd02d1ff4a7fc61da9d71d684fc6c1bc7969436190f19",
+      "format": "api",
+      "node_count": 29,
+      "classes": [
+        "CLIPSetLastLayer",
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "ConditioningCombine",
+        "ConditioningSetArea",
+        "EmptyLatentImage",
+        "KSampler",
+        "LatentUpscale",
+        "SaveImage",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "topology_hash": "388e1f5888624dc166ce39358f77b8f23b6ae6d08c1c32f0a6be82753b93589a",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "output",
+          "node": "32",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "3",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "3",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "3",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "3",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "3",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "3",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "24",
+          "field": "seed",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "prompt",
+          "node": "13",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "14",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "17",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "26",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "27",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "33",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "6",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "7",
+          "field": "text",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "prompt": [],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "3.seed",
+          "24.seed"
+        ],
+        "width": [
+          "5.width"
+        ],
+        "height": [
+          "5.height"
+        ],
+        "manual": [
+          "prompt"
+        ],
+        "prompt_origins": [
+          "6.text",
+          "13.text",
+          "14.text",
+          "17.text",
+          "33.text"
+        ],
+        "preserve": [
+          "26.text",
+          "27.text",
+          "22.width",
+          "22.height"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "24.seed",
+            "3.seed"
+          ],
+          "actual": [
+            "24.seed",
+            "3.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "5.width"
+          ],
+          "actual": [
+            "5.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "5.height"
+          ],
+          "actual": [
+            "5.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "32",
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "3.seed",
+            "24.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "5.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "5.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "6.text",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 11,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "night_evening_day_morning_subject.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/area_composition/night_evening_day_morning_subject.png",
+      "sha256": "1973a0be9c12b5e2ed501e0f1a37c5332319b92d30becc56a001b57f46396263",
+      "format": "api",
+      "node_count": 32,
+      "classes": [
+        "CLIPSetLastLayer",
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "ConditioningCombine",
+        "ConditioningSetArea",
+        "EmptyLatentImage",
+        "KSampler",
+        "LatentUpscale",
+        "SaveImage",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "topology_hash": "f7c58f4d70afb62de45833a74ba24e1032a0dd938239f9b26de5bc93f483e387",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "output",
+          "node": "32",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "3",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "3",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "3",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "3",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "3",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "3",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "24",
+          "field": "seed",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "prompt",
+          "node": "13",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "14",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "17",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "26",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "27",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "38",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "6",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "7",
+          "field": "text",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "prompt": [],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "3.seed",
+          "24.seed"
+        ],
+        "width": [
+          "5.width"
+        ],
+        "height": [
+          "5.height"
+        ],
+        "manual": [
+          "prompt"
+        ],
+        "prompt_origins": [
+          "6.text",
+          "13.text",
+          "14.text",
+          "17.text",
+          "33.text",
+          "38.text"
+        ],
+        "preserve": [
+          "26.text",
+          "27.text",
+          "22.width",
+          "22.height"
+        ],
+        "source_missing_required": [
+          "10.conditioning_2"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "24.seed",
+            "3.seed"
+          ],
+          "actual": [
+            "24.seed",
+            "3.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "5.width"
+          ],
+          "actual": [
+            "5.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "5.height"
+          ],
+          "actual": [
+            "5.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [
+        "/33",
+        "/15",
+        "/10"
+      ],
+      "outputs": [
+        "32",
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [
+        "10",
+        "15",
+        "33"
+      ],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "3.seed",
+            "24.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "5.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "5.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "6.text",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 11,
+        "invalid_links": [],
+        "ok": false
+      },
+      "source_missing_required_detected": [
+        "10.conditioning_2"
+      ],
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "square_area_for_2_subjects.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/area_composition/square_area_for_2_subjects.png",
+      "sha256": "114d344974bf01ad583acb2a2dfb62ac4166e96016c1386095c1a30f2c62f792",
+      "format": "api",
+      "node_count": 21,
+      "classes": [
+        "CLIPSetLastLayer",
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "ConditioningCombine",
+        "ConditioningSetArea",
+        "EmptyLatentImage",
+        "KSampler",
+        "LatentUpscale",
+        "SaveImage",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "topology_hash": "4a7c1fa873bf1802f87094e382f81ce74693e4e9a3aecf41d90628c0cab64753",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "output",
+          "node": "32",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "3",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "3",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "3",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "3",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "3",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "3",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "24",
+          "field": "seed",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "prompt",
+          "node": "26",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "27",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "45",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "48",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "6",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "7",
+          "field": "text",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "prompt": [],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "3.seed",
+          "24.seed"
+        ],
+        "width": [
+          "5.width"
+        ],
+        "height": [
+          "5.height"
+        ],
+        "manual": [
+          "prompt"
+        ],
+        "prompt_origins": [
+          "6.text",
+          "45.text",
+          "48.text"
+        ],
+        "preserve": [
+          "26.text",
+          "27.text",
+          "22.width",
+          "22.height"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "24.seed",
+            "3.seed"
+          ],
+          "actual": [
+            "24.seed",
+            "3.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "5.width"
+          ],
+          "actual": [
+            "5.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "5.height"
+          ],
+          "actual": [
+            "5.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "32",
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "3.seed",
+            "24.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "5.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "5.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "6.text",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 11,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "2_pass_pose_worship.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/controlnet/2_pass_pose_worship.png",
+      "sha256": "5f441526aceb49ddf51804fb8db0cec467dfac49568e3a0b116a5ab81bd7434b",
+      "format": "api",
+      "node_count": 20,
+      "classes": [
+        "CLIPSetLastLayer",
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "ControlNetApply",
+        "ControlNetLoader",
+        "EmptyLatentImage",
+        "KSampler",
+        "LatentUpscale",
+        "LoadImage",
+        "SaveImage",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "topology_hash": "380f561d5de1a1ac3b719621fb9654c3b3f0541b7b6353522d2a496cce82e5e7",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "output",
+          "node": "18",
+          "source": "heuristic"
+        },
+        {
+          "kind": "prompt",
+          "node": "6",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "3",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "3",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "3",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "3",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "3",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "3",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "16",
+          "field": "seed",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "control",
+          "node": "12",
+          "field": "image",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "12",
+          "field": "image",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "prompt": [
+          "6.text"
+        ],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "3.seed",
+          "16.seed"
+        ],
+        "width": [
+          "5.width"
+        ],
+        "height": [
+          "5.height"
+        ],
+        "preserve": [
+          "15.text",
+          "35.text",
+          "14.width",
+          "14.height"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [
+            "6.text"
+          ],
+          "actual": [
+            "6.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "16.seed",
+            "3.seed"
+          ],
+          "actual": [
+            "16.seed",
+            "3.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "5.width"
+          ],
+          "actual": [
+            "5.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "5.height"
+          ],
+          "actual": [
+            "5.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "18",
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [
+            "6.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "3.seed",
+            "16.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "5.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "5.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 12,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "depth_controlnet.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/controlnet/depth_controlnet.png",
+      "sha256": "b4887eda5e278b274322e51c1b3ecc7e6bb82c077b3f9cdef271e764b27857a4",
+      "format": "api",
+      "node_count": 10,
+      "classes": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "ControlNetApply",
+        "DiffControlNetLoader",
+        "EmptyLatentImage",
+        "KSampler",
+        "LoadImage",
+        "SaveImage",
+        "VAEDecode"
+      ],
+      "topology_hash": "01bf396f8fae90399d6f79afef82cc1b932dc8b2d9fe5c99dc252471519fc201",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "prompt",
+          "node": "24",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "3",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "3",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "3",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "3",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "3",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "3",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "control",
+          "node": "20",
+          "field": "image",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "20",
+          "field": "image",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "prompt": [
+          "24.text"
+        ],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "3.seed"
+        ],
+        "width": [
+          "5.width"
+        ],
+        "height": [
+          "5.height"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [
+            "24.text"
+          ],
+          "actual": [
+            "24.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "3.seed"
+          ],
+          "actual": [
+            "3.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "5.width"
+          ],
+          "actual": [
+            "5.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "5.height"
+          ],
+          "actual": [
+            "5.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [
+            "24.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "3.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "5.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "5.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 9,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "noisy_latents_3_subjects.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/noisy_latent_composition/noisy_latents_3_subjects.png",
+      "sha256": "48b60f8e0109527eeaadfb56e8ed2830c9b08e4de6ab722423f4daac06791a9a",
+      "format": "api",
+      "node_count": 20,
+      "classes": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptyLatentImage",
+        "KSamplerAdvanced",
+        "LatentComposite",
+        "SaveImage",
+        "VAEDecode"
+      ],
+      "topology_hash": "924594e166dbc066695df953007478b5beabc033143ce0e148ee9b12f8b806cc",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "negative",
+          "node": "7",
+          "field": "text",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "5",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "5",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "5",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "57",
+          "field": "noise_seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "57",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "57",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "57",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "57",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "58",
+          "field": "noise_seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "60",
+          "field": "noise_seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "60",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "60",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "60",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "60",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "62",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "62",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "62",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "64",
+          "field": "noise_seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "64",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "64",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "64",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "64",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "65",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "65",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "65",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "73",
+          "field": "noise_seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "73",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "73",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "73",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "73",
+          "field": "scheduler",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "prompt",
+          "node": "52",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "63",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "66",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "7",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "71",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "74",
+          "field": "text",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "prompt": [],
+        "negative": [
+          "7.text"
+        ],
+        "seed": [
+          "57.noise_seed",
+          "58.noise_seed",
+          "60.noise_seed",
+          "64.noise_seed",
+          "73.noise_seed"
+        ],
+        "width": [],
+        "height": [],
+        "manual": [
+          "prompt",
+          "width",
+          "height"
+        ],
+        "prompt_origins": [
+          "52.text",
+          "63.text",
+          "66.text",
+          "74.text"
+        ],
+        "size_origins": [
+          "5.width",
+          "5.height",
+          "62.width",
+          "62.height",
+          "65.width",
+          "65.height"
+        ],
+        "preserve": [
+          "71.text"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [
+            "7.text"
+          ],
+          "actual": [
+            "7.text"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "seed": {
+          "expected": [
+            "57.noise_seed",
+            "58.noise_seed",
+            "60.noise_seed",
+            "64.noise_seed",
+            "73.noise_seed"
+          ],
+          "actual": [
+            "57.noise_seed",
+            "58.noise_seed",
+            "60.noise_seed",
+            "64.noise_seed",
+            "73.noise_seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [],
+          "actual": [
+            "5.width",
+            "62.width",
+            "65.width"
+          ],
+          "status": "mismatch",
+          "manual": true
+        },
+        "height": {
+          "expected": [],
+          "actual": [
+            "5.height",
+            "62.height",
+            "65.height"
+          ],
+          "status": "mismatch",
+          "manual": true
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [
+            "7.text"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "57.noise_seed",
+            "58.noise_seed",
+            "60.noise_seed",
+            "64.noise_seed",
+            "73.noise_seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [],
+          "diff_from_expected": [
+            "/65/inputs/width",
+            "/62/inputs/width",
+            "/5/inputs/width"
+          ],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [],
+          "diff_from_expected": [
+            "/65/inputs/height",
+            "/62/inputs/height",
+            "/5/inputs/height"
+          ],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "52.text",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "width",
+          "chosen": "5.width",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "height",
+          "chosen": "5.height",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 7,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "flux_controlnet_example.png",
+      "source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/flux/flux_controlnet_example.png",
+      "sha256": "6732fabba62f7971b7d2d59369bd137245f80ea90523c88b7000d665998b4ea9",
+      "format": "api",
+      "node_count": 13,
+      "classes": [
+        "CLIPTextEncode",
+        "Canny",
+        "CheckpointLoaderSimple",
+        "ControlNetApplySD3",
+        "ControlNetLoader",
+        "EmptySD3LatentImage",
+        "FluxGuidance",
+        "KSampler",
+        "LoadImage",
+        "PreviewImage",
+        "SaveImage",
+        "VAEDecode"
+      ],
+      "topology_hash": "a5457a5b8a2382ec3700c7a00f51d407474393dbfe28c188a3db1f01d9eac10d",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "9",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "3",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "3",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "3",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "3",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "3",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "3",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "28",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "28",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "28",
+          "field": "batch_size",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "prompt",
+          "node": "23",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "23",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "17",
+          "field": "image",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "prompt": [],
+        "negative": [],
+        "seed": [
+          "3.seed"
+        ],
+        "width": [
+          "28.width"
+        ],
+        "height": [
+          "28.height"
+        ],
+        "manual": [
+          "prompt",
+          "negative"
+        ],
+        "prompt_origins": [
+          "23.text"
+        ],
+        "negative_origins": [
+          "7.text"
+        ],
+        "reason": "ControlNetApplySD3 has paired conditioning outputs; no object_info or adapter declaring output order supplied."
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "seed": {
+          "expected": [
+            "3.seed"
+          ],
+          "actual": [
+            "3.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "28.width"
+          ],
+          "actual": [
+            "28.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "28.height"
+          ],
+          "actual": [
+            "28.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [
+        "/19"
+      ],
+      "outputs": [
+        "9"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [
+        "19"
+      ],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "3.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "28.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "28.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "23.text",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "negative",
+          "chosen": "7.text",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 11,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "SD15_LCM_IPAdapter_Facefix.png",
+      "source_url": "https://raw.githubusercontent.com/nerdyrodent/AVeryComfyNerd/main/workflows/SD15/SD15_LCM_IPAdapter_Facefix.png",
+      "sha256": "249d42a2bddd3c273ef85b1e7593877d4f5bba20077f98f623d5cee0ba4d1d9e",
+      "format": "ui",
+      "node_count": 59,
+      "classes": [
+        "Anything Everywhere",
+        "Anything Everywhere?",
+        "BboxDetectorSEGS",
+        "CLIPTextEncode",
+        "CLIPVisionLoader",
+        "CheckpointLoaderSimple",
+        "ConditioningCombine",
+        "DetailerForEachDebug",
+        "DynamicThresholdingFull",
+        "EmptyLatentImage",
+        "FeatherMask",
+        "FreeU_V2",
+        "Get latent size",
+        "IPAdapterApply",
+        "IPAdapterModelLoader",
+        "ImpactSegsAndMask",
+        "KSampler",
+        "LoadImage",
+        "LoraLoader",
+        "MaskComposite",
+        "MaskToImage",
+        "ModelSamplingDiscrete",
+        "NNLatentUpscale",
+        "PrepImageForClipVision",
+        "PreviewImage",
+        "Prompts Everywhere",
+        "SAMDetectorCombined",
+        "SAMLoader",
+        "SaveImage",
+        "Seed Everywhere",
+        "SolidMask",
+        "UltralyticsDetectorProvider",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "topology_hash": "f444380b8b7db44de9522b4d6e5d4eb0870e8ea01a4e2494213eca96385c55cb",
+      "decode_matches_independent": true,
+      "importable": false,
+      "compilable": false,
+      "issue_codes": [
+        "ui_format",
+        "ui_overview",
+        "frontend_graph"
+      ],
+      "bindings": [],
+      "candidates": [],
+      "ui_guidance": true,
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "helper/hf-lora-stack.json",
+      "source_url": "https://huggingface.co/minhnhatdo/colab-notebook/resolve/ee749d145346cd4221107a1d22f5527e40f0f024/workflow/workflow_api.json",
+      "sha256": "62ba66cacec39bd0aa002af202129eb9caa23df1c8b15ae8aa386502571257fc",
+      "format": "api",
+      "node_count": 34,
+      "classes": [
+        "ACN_AdvancedControlNetApply",
+        "AIO_Preprocessor",
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "ControlNetApplyAdvanced",
+        "ControlNetLoader",
+        "ControlNetLoaderAdvanced",
+        "ELLALoader",
+        "EllaTextEncode",
+        "EmptyLatentImage",
+        "FreeU_V2",
+        "ImageSharpen",
+        "KSamplerAdvanced",
+        "LoadImage",
+        "Lora Loader Stack (rgthree)",
+        "MMakerColorEnhance",
+        "PreviewImage",
+        "Runtime44ColorMatch",
+        "SaveImageWebsocket",
+        "ScaledSoftControlNetWeights",
+        "SetEllaTimesteps",
+        "SoftControlNetWeights",
+        "T5TextEncoderLoader #ELLA",
+        "UltimateSDUpscale",
+        "UpscaleModelLoader",
+        "VAEDecode"
+      ],
+      "topology_hash": "d72a3f5b09d82da231559c6fb8f0cb4d60c584f0bec64b6facc86156c302abdd",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "ambiguous",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "229",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "134",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "134",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "134",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "135",
+          "field": "noise_seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "135",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "135",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "135",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "135",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "200",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "210",
+          "field": "seed",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "prompt",
+          "node": "137",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "137",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "140",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "140",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "143",
+          "field": "image",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "seed": [
+          "135.noise_seed",
+          "200.seed",
+          "210.seed"
+        ],
+        "width": [
+          "134.width"
+        ],
+        "height": [
+          "134.height"
+        ],
+        "prompt": [],
+        "negative": [],
+        "manual": [
+          "prompt",
+          "negative"
+        ],
+        "prompt_origins": [
+          "137.text",
+          "137.text_clip"
+        ],
+        "negative_origins": [
+          "140.text",
+          "140.text_clip"
+        ],
+        "lora_source_labels": [
+          {
+            "node": "159",
+            "slot": 1,
+            "class": "Lora Loader Stack (rgthree)",
+            "active": false,
+            "name": "159.lora_01",
+            "model_weight": "159.strength_01",
+            "clip_weight": "159.strength_01",
+            "disable": "159.strength_01=0"
+          },
+          {
+            "node": "159",
+            "slot": 2,
+            "class": "Lora Loader Stack (rgthree)",
+            "active": false,
+            "name": "159.lora_02",
+            "model_weight": "159.strength_02",
+            "clip_weight": "159.strength_02",
+            "disable": "159.strength_02=0"
+          },
+          {
+            "node": "159",
+            "slot": 3,
+            "class": "Lora Loader Stack (rgthree)",
+            "active": false,
+            "name": "159.lora_03",
+            "model_weight": "159.strength_03",
+            "clip_weight": "159.strength_03",
+            "disable": "159.strength_03=0"
+          },
+          {
+            "node": "159",
+            "slot": 4,
+            "class": "Lora Loader Stack (rgthree)",
+            "active": false,
+            "name": "159.lora_04",
+            "model_weight": "159.strength_04",
+            "clip_weight": "159.strength_04",
+            "disable": "159.strength_04=0"
+          }
+        ],
+        "reason": "Custom paired-output conditioning node has no declared object_info/adapter, manual role mapping remains available."
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "seed": {
+          "expected": [
+            "135.noise_seed",
+            "200.seed",
+            "210.seed"
+          ],
+          "actual": [
+            "135.noise_seed",
+            "200.seed",
+            "210.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "134.width"
+          ],
+          "actual": [
+            "134.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "134.height"
+          ],
+          "actual": [
+            "134.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [
+        "/186",
+        "/147",
+        "/141",
+        "/212",
+        "/211",
+        "/220",
+        "/146",
+        "/209",
+        "/142",
+        "/202"
+      ],
+      "outputs": [
+        "229"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [
+        "141",
+        "142",
+        "146",
+        "147",
+        "186",
+        "202",
+        "209",
+        "211",
+        "212",
+        "220"
+      ],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "135.noise_seed",
+            "200.seed",
+            "210.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "134.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "134.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "137.text",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "negative",
+          "chosen": "140.text",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 1,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 21,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "helper/cog-consistent-character.json",
+      "source_url": "https://raw.githubusercontent.com/fofr/cog-consistent-character/main/workflow_api.json",
+      "sha256": "d82a65a942358c737e754ca7f05450739bf1b4081da3329efe7500eafd19f1bf",
+      "format": "api",
+      "node_count": 29,
+      "classes": [
+        "ApplyInstantID",
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "ControlNetApply",
+        "ControlNetLoader",
+        "EmptyLatentImage",
+        "FaceDetailer",
+        "IPAdapterAdvanced",
+        "IPAdapterUnifiedLoader",
+        "Image Filter Adjustments",
+        "ImageScaleBy",
+        "InstantIDFaceAnalysis",
+        "InstantIDModelLoader",
+        "KSampler",
+        "LoadImage",
+        "SaveImage",
+        "UltralyticsDetectorProvider",
+        "VAEDecode",
+        "VAEEncode"
+      ],
+      "topology_hash": "b41a09d545efa74abcecf61936aff17e2f5bb300e1f175d0e0b9e83b67aee471",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "ambiguous",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "116",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "11",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "11",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "11",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "11",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "11",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "11",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "width",
+          "node": "29",
+          "field": "width",
+          "source": "heuristic"
+        },
+        {
+          "kind": "height",
+          "node": "29",
+          "field": "height",
+          "source": "heuristic"
+        },
+        {
+          "kind": "batch",
+          "node": "29",
+          "field": "batch_size",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "98",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "105",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "115",
+          "field": "seed",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "prompt",
+          "node": "10",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "10",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "113",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "113",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "114",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "114",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "9",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "9",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "control",
+          "node": "7",
+          "field": "image",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "7",
+          "field": "image",
+          "source": "candidate"
+        },
+        {
+          "kind": "control",
+          "node": "94",
+          "field": "image",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "94",
+          "field": "image",
+          "source": "candidate"
+        },
+        {
+          "kind": "control",
+          "node": "95",
+          "field": "image",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "95",
+          "field": "image",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "seed": [
+          "11.seed",
+          "98.seed",
+          "105.seed",
+          "115.seed"
+        ],
+        "width": [
+          "29.width"
+        ],
+        "height": [
+          "29.height"
+        ],
+        "prompt": [],
+        "negative": [],
+        "manual": [
+          "prompt",
+          "negative"
+        ],
+        "prompt_origins": [
+          "9.text"
+        ],
+        "negative_origins": [
+          "10.text"
+        ],
+        "lora_source_labels": [],
+        "reason": "Custom paired-output conditioning node has no declared object_info/adapter, manual role mapping remains available."
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "seed": {
+          "expected": [
+            "105.seed",
+            "11.seed",
+            "115.seed",
+            "98.seed"
+          ],
+          "actual": [
+            "105.seed",
+            "11.seed",
+            "115.seed",
+            "98.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [
+            "29.width"
+          ],
+          "actual": [
+            "29.width"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "height": {
+          "expected": [
+            "29.height"
+          ],
+          "actual": [
+            "29.height"
+          ],
+          "status": "correct",
+          "manual": false
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "116"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "11.seed",
+            "98.seed",
+            "105.seed",
+            "115.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [
+            "29.width"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [
+            "29.height"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "9.text",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "negative",
+          "chosen": "10.text",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 0,
+      "lora_items": 0,
+      "expected_active_lora_items": 0,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 19,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "helper/cog-face-to-many.json",
+      "source_url": "https://raw.githubusercontent.com/fofr/cog-face-to-many/main/face-to-many-api.json",
+      "sha256": "a38dd6cedfad9c07177330c1a9f381641bcfa69e348b5ba051adfbc3a48cece3",
+      "format": "api",
+      "node_count": 14,
+      "classes": [
+        "AIO_Preprocessor",
+        "ApplyInstantID",
+        "Control Net Stacker",
+        "ControlNetLoader",
+        "Efficient Loader",
+        "ImageResize+",
+        "InstantIDFaceAnalysis",
+        "InstantIDModelLoader",
+        "KSampler (Efficient)",
+        "LoRA Stacker",
+        "LoadImage",
+        "SaveImage",
+        "VAEEncode"
+      ],
+      "topology_hash": "56d34fb17b99acc3ed3a69e5ae3c490a9cea986db737f66a15d387892d414b59",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "unbound",
+        "unbound",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "5",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "4",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "4",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "4",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "4",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "4",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "4",
+          "field": "scheduler",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "width",
+          "node": "67",
+          "field": "width",
+          "source": "candidate"
+        },
+        {
+          "kind": "height",
+          "node": "67",
+          "field": "height",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "22",
+          "field": "image",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "seed": [
+          "4.seed"
+        ],
+        "width": [],
+        "height": [],
+        "prompt": [],
+        "negative": [],
+        "manual": [
+          "prompt",
+          "negative",
+          "width",
+          "height"
+        ],
+        "prompt_origins": [
+          "2.positive"
+        ],
+        "negative_origins": [
+          "2.negative"
+        ],
+        "lora_source_labels": [
+          {
+            "node": "3",
+            "slot": 1,
+            "class": "LoRA Stacker",
+            "active": true,
+            "name": "3.lora_name_1",
+            "model_weight": "3.lora_wt_1",
+            "clip_weight": "3.lora_wt_1",
+            "ignored_weights": [
+              "3.model_str_1",
+              "3.clip_str_1"
+            ],
+            "disable": "3.lora_wt_1=0"
+          }
+        ],
+        "reason": "Custom paired-output conditioning node has no declared object_info/adapter, manual role mapping remains available.",
+        "size_origins": [
+          "67.width",
+          "67.height"
+        ],
+        "preserve": [
+          "2.empty_latent_width",
+          "2.empty_latent_height"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "seed": {
+          "expected": [
+            "4.seed"
+          ],
+          "actual": [
+            "4.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "height": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [],
+      "outputs": [
+        "5"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "4.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "2.positive",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "negative",
+          "chosen": "2.negative",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "width",
+          "chosen": "67.width",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "height",
+          "chosen": "67.height",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 1,
+      "lora_items": 0,
+      "expected_active_lora_items": 1,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [
+        {
+          "operation": "negative_weight",
+          "target": "3.lora_wt_1",
+          "diff_from_expected": []
+        },
+        {
+          "operation": "disable",
+          "target": "3.lora_wt_1",
+          "diff_from_expected": []
+        }
+      ],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 13,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    },
+    {
+      "file": "helper/cog-face-to-sticker.json",
+      "source_url": "https://raw.githubusercontent.com/fofr/cog-face-to-sticker/main/face-to-sticker-api.json",
+      "sha256": "128d8e421bc9c30fb13aba296aa42f8e70d07b476e9fef0eed604e795cf33075",
+      "format": "api",
+      "node_count": 28,
+      "classes": [
+        "AIO_Preprocessor",
+        "ApplyInstantID",
+        "BRIA_RMBG_ModelLoader_Zho",
+        "BRIA_RMBG_Zho",
+        "CLIPTextEncode",
+        "CLIPVisionLoader",
+        "CheckpointLoaderSimple",
+        "Control Net Stacker",
+        "ControlNetLoader",
+        "Efficient Loader",
+        "IPAdapterApplyFaceID",
+        "IPAdapterModelLoader",
+        "InsightFaceLoader",
+        "InstantIDFaceAnalysis",
+        "InstantIDModelLoader",
+        "KSampler (Efficient)",
+        "LoRA Stacker",
+        "LoadImage",
+        "PreviewImage",
+        "SaveImage",
+        "UltimateSDUpscale",
+        "UpscaleModelLoader"
+      ],
+      "topology_hash": "dbf8f512f1658fba80c071dfb55349a8c0f677543a084eef0014891be872a585",
+      "decode_matches_independent": true,
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "unbound",
+        "unbound",
+        "ambiguous",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "bindings": [
+        {
+          "kind": "output",
+          "node": "5",
+          "source": "heuristic"
+        },
+        {
+          "kind": "output",
+          "node": "10",
+          "source": "heuristic"
+        },
+        {
+          "kind": "output",
+          "node": "16",
+          "source": "heuristic"
+        },
+        {
+          "kind": "output",
+          "node": "18",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "4",
+          "field": "seed",
+          "source": "heuristic"
+        },
+        {
+          "kind": "steps",
+          "node": "4",
+          "field": "steps",
+          "source": "heuristic"
+        },
+        {
+          "kind": "cfg",
+          "node": "4",
+          "field": "cfg",
+          "source": "heuristic"
+        },
+        {
+          "kind": "denoise",
+          "node": "4",
+          "field": "denoise",
+          "source": "heuristic"
+        },
+        {
+          "kind": "sampler",
+          "node": "4",
+          "field": "sampler_name",
+          "source": "heuristic"
+        },
+        {
+          "kind": "scheduler",
+          "node": "4",
+          "field": "scheduler",
+          "source": "heuristic"
+        },
+        {
+          "kind": "seed",
+          "node": "11",
+          "field": "seed",
+          "source": "heuristic"
+        }
+      ],
+      "candidates": [
+        {
+          "kind": "prompt",
+          "node": "13",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "13",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "prompt",
+          "node": "14",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "negative",
+          "node": "14",
+          "field": "text",
+          "source": "candidate"
+        },
+        {
+          "kind": "control",
+          "node": "22",
+          "field": "image",
+          "source": "candidate"
+        },
+        {
+          "kind": "ref",
+          "node": "22",
+          "field": "image",
+          "source": "candidate"
+        }
+      ],
+      "expected": {
+        "seed": [
+          "4.seed",
+          "11.seed"
+        ],
+        "width": [],
+        "height": [],
+        "prompt": [],
+        "negative": [],
+        "manual": [
+          "prompt",
+          "negative",
+          "width",
+          "height"
+        ],
+        "prompt_origins": [
+          "2.positive",
+          "13.text"
+        ],
+        "negative_origins": [
+          "2.negative",
+          "14.text"
+        ],
+        "lora_source_labels": [
+          {
+            "node": "3",
+            "slot": 1,
+            "class": "LoRA Stacker",
+            "active": true,
+            "name": "3.lora_name_1",
+            "model_weight": "3.lora_wt_1",
+            "clip_weight": "3.lora_wt_1",
+            "ignored_weights": [
+              "3.model_str_1",
+              "3.clip_str_1"
+            ],
+            "disable": "3.lora_wt_1=0"
+          }
+        ],
+        "reason": "Custom paired-output conditioning node has no declared object_info/adapter, manual role mapping remains available.",
+        "size_origins": [
+          "2.empty_latent_width",
+          "2.empty_latent_height"
+        ],
+        "preserve": [
+          "13.text",
+          "14.text"
+        ]
+      },
+      "semantic": {
+        "prompt": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "negative": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "seed": {
+          "expected": [
+            "11.seed",
+            "4.seed"
+          ],
+          "actual": [
+            "11.seed",
+            "4.seed"
+          ],
+          "status": "correct",
+          "manual": false
+        },
+        "width": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        },
+        "height": {
+          "expected": [],
+          "actual": [],
+          "status": "correct",
+          "manual": true
+        }
+      },
+      "compile_ok": true,
+      "noedit_graph_diffs": [
+        "/47"
+      ],
+      "outputs": [
+        "10",
+        "16",
+        "18",
+        "5"
+      ],
+      "noedit_surviving_nodes_unchanged": true,
+      "pruned_nodes": [
+        "47"
+      ],
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "negative",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "seed",
+          "expected_targets": [
+            "4.seed",
+            "11.seed"
+          ],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "width",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        },
+        {
+          "kind": "height",
+          "expected_targets": [],
+          "diff_from_expected": [],
+          "preserve_ok": true
+        }
+      ],
+      "manual_mapping_checks": [
+        {
+          "kind": "prompt",
+          "chosen": "2.positive",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "negative",
+          "chosen": "2.negative",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "width",
+          "chosen": "2.empty_latent_width",
+          "diff_from_expected": []
+        },
+        {
+          "kind": "height",
+          "chosen": "2.empty_latent_height",
+          "diff_from_expected": []
+        }
+      ],
+      "lora_groups": 1,
+      "lora_items": 0,
+      "expected_active_lora_items": 1,
+      "lora_checks": [],
+      "manual_lora_pointer_checks": [
+        {
+          "operation": "negative_weight",
+          "target": "3.lora_wt_1",
+          "diff_from_expected": []
+        },
+        {
+          "operation": "disable",
+          "target": "3.lora_wt_1",
+          "diff_from_expected": []
+        }
+      ],
+      "diagnostics_no_instance": {
+        "scope": "Static graph and declared object_info constraints only; custom VALIDATE_INPUTS is not executed.",
+        "missing_classes": 21,
+        "invalid_links": [],
+        "ok": false
+      },
+      "input_immutable": true,
+      "file_immutable": true
+    }
+  ],
+  "route_results": [
+    {
+      "file": "lora.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 1
+    },
+    {
+      "file": "lora_multiple.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 2
+    },
+    {
+      "file": "sdxl_refiner_prompt_example.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "night_evening_day_morning.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "night_evening_day_morning_subject.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "square_area_for_2_subjects.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "2_pass_pose_worship.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "depth_controlnet.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "noisy_latents_3_subjects.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "flux_controlnet_example.png",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "SD15_LCM_IPAdapter_Facefix.png",
+      "inspect_file_format": "ui",
+      "inspect_file_importable": false,
+      "response_has_workflow": false,
+      "ui_api_guide": true
+    },
+    {
+      "file": "helper/hf-lora-stack.json",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "helper/cog-consistent-character.json",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "helper/cog-face-to-many.json",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    },
+    {
+      "file": "helper/cog-face-to-sticker.json",
+      "inspect_file_format": "mio",
+      "inspect_file_importable": true,
+      "response_has_workflow": true,
+      "import_route_pass": true,
+      "persisted_graph_equal": true,
+      "payload_immutable": true,
+      "lora_route_item_count": 0
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "mio.r6.web.publication-safe-allowlist.v1",
+  "root_may_read_all_own_evidence": true,
+  "safe_files_exact": [
+    "report.md",
+    "results.json",
+    "roundtrip-summary.json",
+    "visual-review.json",
+    "final-integrity.json",
+    "artifact-final-guard.json",
+    "execution-guard.json",
+    "focus-process-guard.json",
+    "candidate-process-guard.json",
+    "post-checkpoint-counts.json",
+    "cleanup.json",
+    "tab-supplement.json",
+    "focus-result.json",
+    "candidate-result.json",
+    "focus-freeze.json",
+    "candidate-freeze.json",
+    "comparisons-safe.json",
+    "initial-seal.json",
+    "publication-safe-allowlist.json"
+  ],
+  "meaning": "Only explicitly listed count/type/pointer/hash reports. No raw graphs, request bodies, document IDs or assets.",
+  "not_public": [
+    "events.private.json",
+    "browser.private.json",
+    "focus-input.private.json",
+    "candidate-doc-identities.private.json",
+    "comparisons.json",
+    "seal-manifest.private.json",
+    "fixtures/",
+    "downloads/",
+    "all screenshots unless root separately confirms crop/content review",
+    "offline-summary.json because it retains neutral audit document IDs and detailed transient metadata",
+    "all harness/source/generator scripts unless separately reviewed for publication"
+  ],
+  "screenshots": "All are neutral and personally viewed; keep external by default. Do not publish automatically."
+}

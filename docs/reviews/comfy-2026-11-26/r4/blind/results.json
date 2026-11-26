@@ -1,0 +1,1436 @@
+{
+  "head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "policy": {
+    "process_count": 1,
+    "child_process_count": 0,
+    "affinity": 1,
+    "priority_class": 16384,
+    "verified_before_product_import": true
+  },
+  "oracle_sha256": "f8a436e5c8ab19d4da8cf01cce12b7a032d2c0d9d08d7073f293e69f1215b0bf",
+  "manifest_sha256": "cf599827ec5b85caa7ac63f6fad4ff57de7091bd9d8cbd6eda7facc767c60a61",
+  "samples": [
+    {
+      "id": "r4b-01",
+      "source_url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/0727370b9202bcba7a790466d2d0fa51cc7156bd/example-workflows/flux/img2img.json",
+      "source_sha256": "49d7a0b9dbcb55ba763afe5b827bd8a23f19a5b9a8d01857affee304ae385c88",
+      "format": "api",
+      "node_count": 10,
+      "types": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptySD3LatentImage",
+        "ImageResize+",
+        "KSampler",
+        "LoadImage",
+        "SaveImage",
+        "VAEDecode",
+        "VAEEncode"
+      ],
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "output_nodes": [
+        "9"
+      ],
+      "diagnose_missing_type_count": 9,
+      "diagnose_all_types_accounted": true,
+      "diagnose_scope_declared": true,
+      "effective_lora_count": 0,
+      "lora_group_count": 0,
+      "baseline_fullgraph_exact": true,
+      "baseline_delta_pointers": [],
+      "outputs_exact": true,
+      "auto_checks": [
+        {
+          "kind": "prompt",
+          "expected_target_pointers": [
+            "/6/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/6/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/6/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "negative",
+          "expected_target_pointers": [
+            "/33/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/33/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/33/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "seed",
+          "expected_target_pointers": [
+            "/31/inputs/seed"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/31/inputs/seed"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/31/inputs/seed"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "width",
+          "expected_target_pointers": [
+            "/40/inputs/width"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": false,
+          "actual_target_pointers": [],
+          "delta_pointers": [
+            "/40/inputs/width"
+          ],
+          "actual_changed_pointers": [],
+          "warning_count": 1,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "height",
+          "expected_target_pointers": [
+            "/40/inputs/height"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": false,
+          "actual_target_pointers": [],
+          "delta_pointers": [
+            "/40/inputs/height"
+          ],
+          "actual_changed_pointers": [],
+          "warning_count": 1,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "init",
+          "expected_target_pointers": [
+            "/37/inputs/image"
+          ],
+          "manual_boundary": false,
+          "error_type": "BindingError",
+          "error_hash": "67d1aeaf22889a2699a6b95725bf0c12e015829206596e95245c92c47dec2223",
+          "fullgraph_exact": false,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "steps",
+          "expected_target_pointers": [
+            "/31/inputs/steps"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/31/inputs/steps"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/31/inputs/steps"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "cfg",
+          "expected_target_pointers": [
+            "/31/inputs/cfg"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/31/inputs/cfg"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/31/inputs/cfg"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        }
+      ],
+      "manual_fullgraph_exact": true,
+      "manual_delta_pointers": [],
+      "manual_document_unchanged": true,
+      "lora_checks": [],
+      "document_unchanged": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-02",
+      "source_url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/0727370b9202bcba7a790466d2d0fa51cc7156bd/example-workflows/sdxl/img2img.json",
+      "source_sha256": "6dd77b121a39f3522cd787426366a1076a39a38cb706c07185441e65b1b9bfad",
+      "format": "api",
+      "node_count": 9,
+      "types": [
+        "CLIPTextEncodeSDXL",
+        "CheckpointLoaderSimple",
+        "ImageScale",
+        "KSampler",
+        "LoadImage",
+        "SaveImage",
+        "VAEDecode",
+        "VAEEncode"
+      ],
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "ambiguous",
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "output_nodes": [
+        "9"
+      ],
+      "diagnose_missing_type_count": 8,
+      "diagnose_all_types_accounted": true,
+      "diagnose_scope_declared": true,
+      "effective_lora_count": 0,
+      "lora_group_count": 0,
+      "baseline_fullgraph_exact": true,
+      "baseline_delta_pointers": [],
+      "outputs_exact": true,
+      "auto_checks": [
+        {
+          "kind": "prompt",
+          "expected_target_pointers": [
+            "/16/inputs/text_g",
+            "/16/inputs/text_l"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/16/inputs/text_g",
+            "/16/inputs/text_l"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/16/inputs/text_g",
+            "/16/inputs/text_l"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "negative",
+          "expected_target_pointers": [
+            "/19/inputs/text_g",
+            "/19/inputs/text_l"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/19/inputs/text_g",
+            "/19/inputs/text_l"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/19/inputs/text_g",
+            "/19/inputs/text_l"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "seed",
+          "expected_target_pointers": [
+            "/36/inputs/seed"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/36/inputs/seed"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/36/inputs/seed"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "width",
+          "expected_target_pointers": [
+            "/40/inputs/width"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": false,
+          "actual_target_pointers": [],
+          "delta_pointers": [
+            "/40/inputs/width"
+          ],
+          "actual_changed_pointers": [],
+          "warning_count": 1,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "height",
+          "expected_target_pointers": [
+            "/40/inputs/height"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": false,
+          "actual_target_pointers": [],
+          "delta_pointers": [
+            "/40/inputs/height"
+          ],
+          "actual_changed_pointers": [],
+          "warning_count": 1,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "init",
+          "expected_target_pointers": [
+            "/38/inputs/image"
+          ],
+          "manual_boundary": false,
+          "error_type": "BindingError",
+          "error_hash": "67d1aeaf22889a2699a6b95725bf0c12e015829206596e95245c92c47dec2223",
+          "fullgraph_exact": false,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        }
+      ],
+      "manual_fullgraph_exact": true,
+      "manual_delta_pointers": [],
+      "manual_document_unchanged": true,
+      "lora_checks": [],
+      "document_unchanged": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-03",
+      "source_url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/0727370b9202bcba7a790466d2d0fa51cc7156bd/example-workflows/sdxl/txt2img-with-refiner.json",
+      "source_sha256": "0c4c34b4606cc17f23ec06a63c303dc34bdd6cfa186fdd1130926bb8182e5920",
+      "format": "api",
+      "node_count": 11,
+      "types": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptyLatentImage",
+        "KSamplerAdvanced",
+        "SaveImage",
+        "VAEDecode"
+      ],
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "output_nodes": [
+        "19"
+      ],
+      "diagnose_missing_type_count": 6,
+      "diagnose_all_types_accounted": true,
+      "diagnose_scope_declared": true,
+      "effective_lora_count": 0,
+      "lora_group_count": 0,
+      "baseline_fullgraph_exact": true,
+      "baseline_delta_pointers": [],
+      "outputs_exact": true,
+      "auto_checks": [
+        {
+          "kind": "prompt",
+          "expected_target_pointers": [
+            "/6/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/6/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/6/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "negative",
+          "expected_target_pointers": [
+            "/7/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/7/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/7/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "seed",
+          "expected_target_pointers": [
+            "/10/inputs/noise_seed"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": false,
+          "actual_target_pointers": [
+            "/10/inputs/noise_seed",
+            "/11/inputs/noise_seed"
+          ],
+          "delta_pointers": [
+            "/11/inputs/noise_seed"
+          ],
+          "actual_changed_pointers": [
+            "/10/inputs/noise_seed",
+            "/11/inputs/noise_seed"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": true
+        },
+        {
+          "kind": "width",
+          "expected_target_pointers": [
+            "/5/inputs/width"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/5/inputs/width"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/5/inputs/width"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "height",
+          "expected_target_pointers": [
+            "/5/inputs/height"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/5/inputs/height"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/5/inputs/height"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        }
+      ],
+      "manual_fullgraph_exact": true,
+      "manual_delta_pointers": [],
+      "manual_document_unchanged": true,
+      "lora_checks": [],
+      "document_unchanged": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-04",
+      "source_url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/0727370b9202bcba7a790466d2d0fa51cc7156bd/test/workflows/sd1.5-multi-output.json",
+      "source_sha256": "b346257778a79fcc3c798376e72a3d76c91601f1b65a55b0f72cf4271b73f9b4",
+      "format": "api",
+      "node_count": 11,
+      "types": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptyLatentImage",
+        "KSampler",
+        "SaveImage",
+        "VAEDecode",
+        "VAEEncode"
+      ],
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "output_nodes": [
+        "11",
+        "16"
+      ],
+      "diagnose_missing_type_count": 7,
+      "diagnose_all_types_accounted": true,
+      "diagnose_scope_declared": true,
+      "effective_lora_count": 0,
+      "lora_group_count": 0,
+      "baseline_fullgraph_exact": true,
+      "baseline_delta_pointers": [],
+      "outputs_exact": true,
+      "auto_checks": [
+        {
+          "kind": "prompt",
+          "expected_target_pointers": [
+            "/6/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/6/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/6/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "negative",
+          "expected_target_pointers": [
+            "/7/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/7/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/7/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "seed",
+          "expected_target_pointers": [
+            "/3/inputs/seed"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": false,
+          "actual_target_pointers": [
+            "/14/inputs/seed",
+            "/3/inputs/seed"
+          ],
+          "delta_pointers": [
+            "/14/inputs/seed"
+          ],
+          "actual_changed_pointers": [
+            "/14/inputs/seed",
+            "/3/inputs/seed"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": true
+        },
+        {
+          "kind": "width",
+          "expected_target_pointers": [
+            "/5/inputs/width"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/5/inputs/width"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/5/inputs/width"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "height",
+          "expected_target_pointers": [
+            "/5/inputs/height"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/5/inputs/height"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/5/inputs/height"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        }
+      ],
+      "manual_fullgraph_exact": true,
+      "manual_delta_pointers": [],
+      "manual_document_unchanged": true,
+      "lora_checks": [],
+      "document_unchanged": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-05",
+      "source_url": "https://raw.githubusercontent.com/SaladTechnologies/comfyui-api/0727370b9202bcba7a790466d2d0fa51cc7156bd/test/workflows/sd1.5-parallel-3.json",
+      "source_sha256": "8ce08e0d28f421621c24cd45bbacbdf6fe1e2880a1dc1e770ea674413acb2888",
+      "format": "api",
+      "node_count": 21,
+      "types": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptyLatentImage",
+        "KSampler",
+        "SaveImage",
+        "VAEDecode"
+      ],
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "output_nodes": [
+        "26",
+        "33",
+        "40"
+      ],
+      "diagnose_missing_type_count": 6,
+      "diagnose_all_types_accounted": true,
+      "diagnose_scope_declared": true,
+      "effective_lora_count": 0,
+      "lora_group_count": 0,
+      "baseline_fullgraph_exact": true,
+      "baseline_delta_pointers": [],
+      "outputs_exact": true,
+      "auto_checks": [
+        {
+          "kind": "prompt",
+          "expected_target_pointers": [
+            "/22/inputs/text",
+            "/30/inputs/text",
+            "/37/inputs/text"
+          ],
+          "manual_boundary": true,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/22/inputs/text",
+            "/30/inputs/text",
+            "/37/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/22/inputs/text",
+            "/30/inputs/text",
+            "/37/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "negative",
+          "expected_target_pointers": [
+            "/23/inputs/text",
+            "/31/inputs/text",
+            "/38/inputs/text"
+          ],
+          "manual_boundary": true,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/23/inputs/text",
+            "/31/inputs/text",
+            "/38/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/23/inputs/text",
+            "/31/inputs/text",
+            "/38/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "seed",
+          "expected_target_pointers": [
+            "/24/inputs/seed",
+            "/27/inputs/seed",
+            "/34/inputs/seed"
+          ],
+          "manual_boundary": true,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/24/inputs/seed",
+            "/27/inputs/seed",
+            "/34/inputs/seed"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/24/inputs/seed",
+            "/27/inputs/seed",
+            "/34/inputs/seed"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "width",
+          "expected_target_pointers": [
+            "/21/inputs/width",
+            "/29/inputs/width",
+            "/36/inputs/width"
+          ],
+          "manual_boundary": true,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/21/inputs/width",
+            "/29/inputs/width",
+            "/36/inputs/width"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/21/inputs/width",
+            "/29/inputs/width",
+            "/36/inputs/width"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "height",
+          "expected_target_pointers": [
+            "/21/inputs/height",
+            "/29/inputs/height",
+            "/36/inputs/height"
+          ],
+          "manual_boundary": true,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/21/inputs/height",
+            "/29/inputs/height",
+            "/36/inputs/height"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/21/inputs/height",
+            "/29/inputs/height",
+            "/36/inputs/height"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        }
+      ],
+      "manual_fullgraph_exact": true,
+      "manual_delta_pointers": [],
+      "manual_document_unchanged": true,
+      "lora_checks": [],
+      "document_unchanged": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-06",
+      "source_url": "https://raw.githubusercontent.com/comfy-deploy/comfyui-workflows/ffcfe2fb29f7e6792b19430754fd749f062478a7/workflows/flux/GhibliStyleGenerator%28flux%29.json",
+      "source_sha256": "86b97b9b82e3c1f410ac492fe34bd46638b1e19a104696c2c7af95660e35aaed",
+      "format": "ui",
+      "node_count": 29,
+      "types": [
+        "Anything Everywhere3",
+        "BasicScheduler",
+        "CLIPTextEncode",
+        "CLIPVisionEncode",
+        "CLIPVisionLoader",
+        "CheckpointLoaderSimple",
+        "ComfyUIDeployExternalImage",
+        "ComfyUIDeployExternalText",
+        "ConditioningConcat",
+        "ConfigureModifiedFlux",
+        "DisableNoise",
+        "DualCLIPLoaderGGUF",
+        "FlowEditGuider",
+        "FlowEditSampler",
+        "FluxGuidance",
+        "Image Comparer (rgthree)",
+        "JWImageResizeToClosestSDXLResolution",
+        "LoadImage",
+        "LoraLoaderModelOnly",
+        "OutFluxModelSamplingPred",
+        "SamplerCustomAdvanced",
+        "SaveImage",
+        "StyleModelApply",
+        "StyleModelLoader",
+        "VAEDecode",
+        "VAEEncode",
+        "VAELoader"
+      ],
+      "importable": false,
+      "compilable": false,
+      "issue_codes": [
+        "frontend_graph",
+        "ui_format",
+        "ui_overview"
+      ],
+      "output_nodes": [],
+      "export_guidance": true,
+      "ui_boundary_pass": true,
+      "ui_rejected_by_doc": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-07",
+      "source_url": "https://raw.githubusercontent.com/comfy-deploy/comfyui-workflows/ffcfe2fb29f7e6792b19430754fd749f062478a7/workflows/flux/PixelArtGenerator%28flux%29.json",
+      "source_sha256": "ce30a80f9e814028cc317cdb3a903c25844737b8a6a40b5140085a78d002c5d2",
+      "format": "ui",
+      "node_count": 18,
+      "types": [
+        "BasicGuider",
+        "BasicScheduler",
+        "CLIPTextEncode",
+        "ComfyUIDeployExternalNumberInt",
+        "ComfyUIDeployExternalText",
+        "DualCLIPLoader",
+        "EmptyLatentImage",
+        "JWStringConcat",
+        "KSamplerSelect",
+        "LoraLoaderModelOnly",
+        "RandomNoise",
+        "SamplerCustomAdvanced",
+        "SaveImage",
+        "UNETLoader",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "importable": false,
+      "compilable": false,
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "output_nodes": [],
+      "export_guidance": true,
+      "ui_boundary_pass": true,
+      "ui_rejected_by_doc": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-08",
+      "source_url": "https://raw.githubusercontent.com/comfy-deploy/comfyui-workflows/ffcfe2fb29f7e6792b19430754fd749f062478a7/workflows/flux/flux_stickers_cartoon_portraits.json",
+      "source_sha256": "c5618e7c961f9ad1942e1fb6c2052ef82e9a3932d7970bea7cc33ac621b89fa2",
+      "format": "ui",
+      "node_count": 53,
+      "types": [
+        "ApplyPulidFlux",
+        "BNK_Unsampler",
+        "BasicGuider",
+        "BasicScheduler",
+        "CLIPTextEncodeFlux",
+        "ComfyUIDeployExternalImage",
+        "ComfyUIDeployExternalNumberInt",
+        "ConditioningZeroOut",
+        "Display Int (rgthree)",
+        "DualCLIPLoader",
+        "EmptyLatentImage",
+        "Florence2ModelLoader",
+        "Florence2Run",
+        "IF_LLM",
+        "IF_LLM_DisplayOmni",
+        "IF_LLM_DisplayText",
+        "IF_LLM_JoinText",
+        "IF_LLM_TextTyper",
+        "Image Comparer (rgthree)",
+        "ImageResizeKJ",
+        "KSamplerSelect",
+        "LatentInterpolate",
+        "LatentUpscaleBy",
+        "LoraLoader",
+        "MaskToSEGS",
+        "ModelSamplingFlux",
+        "PreviewImage",
+        "PulidFluxEvaClipLoader",
+        "PulidFluxInsightFaceLoader",
+        "PulidFluxModelLoader",
+        "RandomNoise",
+        "SDXLAspectRatioSelector",
+        "SEGSPreview",
+        "SamplerCustomAdvanced",
+        "SaveImage",
+        "UNETLoader",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "importable": false,
+      "compilable": false,
+      "issue_codes": [
+        "frontend_graph",
+        "ui_format",
+        "ui_overview"
+      ],
+      "output_nodes": [],
+      "export_guidance": true,
+      "ui_boundary_pass": true,
+      "ui_rejected_by_doc": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-09",
+      "source_url": "https://raw.githubusercontent.com/fofr/cog-comfyui-kolors-with-ipadapter/main/workflow_api.json",
+      "source_sha256": "33eedb5024b12ea431f51ea317d5351a70c16a9588b0ae4e46da8ae187bcaee9",
+      "format": "api",
+      "node_count": 12,
+      "types": [
+        "EmptyLatentImage",
+        "IPAdapterAdvanced",
+        "IPAdapterUnifiedLoaderCommunity",
+        "KSampler",
+        "LoadImage",
+        "MZ_ChatGLM3",
+        "MZ_ChatGLM3Loader",
+        "MZ_KolorsUNETLoader",
+        "SaveImage",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "output_nodes": [
+        "89"
+      ],
+      "diagnose_missing_type_count": 11,
+      "diagnose_all_types_accounted": true,
+      "diagnose_scope_declared": true,
+      "effective_lora_count": 0,
+      "lora_group_count": 0,
+      "baseline_fullgraph_exact": true,
+      "baseline_delta_pointers": [],
+      "outputs_exact": true,
+      "auto_checks": [
+        {
+          "kind": "prompt",
+          "expected_target_pointers": [
+            "/67/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": false,
+          "actual_target_pointers": [],
+          "delta_pointers": [
+            "/67/inputs/text"
+          ],
+          "actual_changed_pointers": [],
+          "warning_count": 1,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "negative",
+          "expected_target_pointers": [
+            "/62/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": false,
+          "actual_target_pointers": [],
+          "delta_pointers": [
+            "/62/inputs/text"
+          ],
+          "actual_changed_pointers": [],
+          "warning_count": 1,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "seed",
+          "expected_target_pointers": [
+            "/79/inputs/seed"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/79/inputs/seed"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/79/inputs/seed"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "width",
+          "expected_target_pointers": [
+            "/9/inputs/width"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/9/inputs/width"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/9/inputs/width"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "height",
+          "expected_target_pointers": [
+            "/9/inputs/height"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/9/inputs/height"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/9/inputs/height"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "ref",
+          "expected_target_pointers": [
+            "/95/inputs/image"
+          ],
+          "manual_boundary": false,
+          "error_type": "BindingError",
+          "error_hash": "dc6a2656a19f863f3f88dc8729f8caaa2e166ed3cca68f361dd885f1920a560c",
+          "fullgraph_exact": false,
+          "boundary_visible": true,
+          "has_unexpected_write": false
+        }
+      ],
+      "manual_fullgraph_exact": true,
+      "manual_delta_pointers": [],
+      "manual_document_unchanged": true,
+      "lora_checks": [],
+      "document_unchanged": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-10",
+      "source_url": "https://huggingface.co/kirusanth08/art-lora-flux1-dev/resolve/main/workflow_api.json",
+      "source_sha256": "1998323e956f9183249b2b5081b20f9e69ae56151278d5bc2c5158846c007c0f",
+      "format": "api",
+      "node_count": 11,
+      "types": [
+        "CLIPTextEncode",
+        "ConditioningZeroOut",
+        "DualCLIPLoader",
+        "EmptySD3LatentImage",
+        "FluxGuidance",
+        "KSampler",
+        "LoraLoaderModelOnly",
+        "SaveImage",
+        "UNETLoader",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "output_nodes": [
+        "11"
+      ],
+      "diagnose_missing_type_count": 11,
+      "diagnose_all_types_accounted": true,
+      "diagnose_scope_declared": true,
+      "effective_lora_count": 1,
+      "lora_group_count": 1,
+      "baseline_fullgraph_exact": true,
+      "baseline_delta_pointers": [],
+      "outputs_exact": true,
+      "auto_checks": [
+        {
+          "kind": "prompt",
+          "expected_target_pointers": [
+            "/5/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/5/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/5/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "seed",
+          "expected_target_pointers": [
+            "/9/inputs/seed"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/9/inputs/seed"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/9/inputs/seed"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "width",
+          "expected_target_pointers": [
+            "/8/inputs/width"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/8/inputs/width"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/8/inputs/width"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "height",
+          "expected_target_pointers": [
+            "/8/inputs/height"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/8/inputs/height"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/8/inputs/height"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "negative",
+          "independent_control_absent": true,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [],
+          "boundary_visible": true,
+          "delta_pointers": []
+        }
+      ],
+      "manual_fullgraph_exact": true,
+      "manual_delta_pointers": [],
+      "manual_document_unchanged": true,
+      "lora_checks": [
+        {
+          "node": "2",
+          "matching_controls": 1,
+          "negative": {
+            "raw_fullgraph_exact": true,
+            "compile_fullgraph_exact": true,
+            "raw_delta_pointers": [],
+            "compile_delta_pointers": [],
+            "actual_changed_pointers": [
+              "/2/inputs/strength_model"
+            ],
+            "enabled_seen": true
+          },
+          "disabled": {
+            "raw_fullgraph_exact": true,
+            "compile_fullgraph_exact": true,
+            "raw_delta_pointers": [],
+            "compile_delta_pointers": [],
+            "actual_changed_pointers": [
+              "/2/inputs/strength_model"
+            ],
+            "enabled_seen": false
+          }
+        }
+      ],
+      "document_unchanged": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-11",
+      "source_url": "https://huggingface.co/spaces/gokaygokay/Chroma/resolve/main/chroma_api.json",
+      "source_sha256": "b0ab13afaf7a883f9b7c521e0d8e6f99e8b227aebca16fe5b5ed2bbc467cffa5",
+      "format": "api",
+      "node_count": 14,
+      "types": [
+        "BasicScheduler",
+        "CFGGuider",
+        "CLIPLoader",
+        "CLIPTextEncode",
+        "EmptySD3LatentImage",
+        "KSamplerSelect",
+        "RandomNoise",
+        "SamplerCustomAdvanced",
+        "SaveImage",
+        "T5TokenizerOptions",
+        "UNETLoader",
+        "VAEDecode",
+        "VAELoader"
+      ],
+      "importable": true,
+      "compilable": true,
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "output_nodes": [
+        "81"
+      ],
+      "diagnose_missing_type_count": 13,
+      "diagnose_all_types_accounted": true,
+      "diagnose_scope_declared": true,
+      "effective_lora_count": 0,
+      "lora_group_count": 0,
+      "baseline_fullgraph_exact": true,
+      "baseline_delta_pointers": [],
+      "outputs_exact": true,
+      "auto_checks": [
+        {
+          "kind": "prompt",
+          "expected_target_pointers": [
+            "/74/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/74/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/74/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "negative",
+          "expected_target_pointers": [
+            "/75/inputs/text"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/75/inputs/text"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/75/inputs/text"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "seed",
+          "expected_target_pointers": [
+            "/68/inputs/noise_seed"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/68/inputs/noise_seed"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/68/inputs/noise_seed"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "width",
+          "expected_target_pointers": [
+            "/69/inputs/width"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/69/inputs/width"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/69/inputs/width"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "height",
+          "expected_target_pointers": [
+            "/69/inputs/height"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/69/inputs/height"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/69/inputs/height"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "steps",
+          "expected_target_pointers": [
+            "/84/inputs/steps"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/84/inputs/steps"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/84/inputs/steps"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        },
+        {
+          "kind": "cfg",
+          "expected_target_pointers": [
+            "/73/inputs/cfg"
+          ],
+          "manual_boundary": false,
+          "fullgraph_exact": true,
+          "actual_target_pointers": [
+            "/73/inputs/cfg"
+          ],
+          "delta_pointers": [],
+          "actual_changed_pointers": [
+            "/73/inputs/cfg"
+          ],
+          "warning_count": 0,
+          "boundary_visible": false,
+          "has_unexpected_write": false
+        }
+      ],
+      "manual_fullgraph_exact": true,
+      "manual_delta_pointers": [],
+      "manual_document_unchanged": true,
+      "lora_checks": [],
+      "document_unchanged": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    },
+    {
+      "id": "r4b-12",
+      "source_url": "https://raw.githubusercontent.com/huchenlei/ComfyUI_omost/main/examples/omost_ipa.json",
+      "source_sha256": "361e3fda0ae9f55fed1e87015d931551d9160cc8a621f21d961569dab745e49f",
+      "format": "ui",
+      "node_count": 20,
+      "types": [
+        "CLIPTextEncode",
+        "CheckpointLoaderSimple",
+        "EmptyLatentImage",
+        "IPAdapter",
+        "IPAdapterUnifiedLoader",
+        "ImageFromBatch+",
+        "ImageToMask",
+        "KSampler",
+        "LoadImage",
+        "MaskToImage",
+        "OmostLayoutCondNode",
+        "OmostLoadCanvasConditioningNode",
+        "OmostRenderCanvasConditioningNode",
+        "PreviewImage",
+        "SaveImage",
+        "ToBinaryMask",
+        "VAEDecode"
+      ],
+      "importable": false,
+      "compilable": false,
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "output_nodes": [],
+      "export_guidance": true,
+      "ui_boundary_pass": true,
+      "ui_rejected_by_doc": true,
+      "source_graph_unchanged": true,
+      "raw_payload_unchanged": true,
+      "file_hash_unchanged": true
+    }
+  ]
+}

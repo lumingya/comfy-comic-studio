@@ -1,0 +1,1275 @@
+{
+  "schema_version": 1,
+  "fixed_head_sha": "6e302081e650210202b232990ab05bbd6961e149",
+  "terminal": true,
+  "ci_all_green": false,
+  "acceptance": "FAILED; full gate coverage was not reached.",
+  "verified_at_utc": "2026-11-26T06:26:45.307905+00:00",
+  "method": "Read-only gh API metadata and completed job logs. No rerun or local product execution.",
+  "provenance": {
+    "head_parent_shas": [
+      "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c"
+    ],
+    "pr_number": 1,
+    "pr_api_head_sha": "6e302081e650210202b232990ab05bbd6961e149",
+    "pr_checkout_merge_sha": "f8f2bf71d2541e57bb3d37471f720b20323585aa",
+    "pr_merge_parent_shas": [
+      "196660f19041802ae8e3b271ac6260b719e94e29",
+      "6e302081e650210202b232990ab05bbd6961e149"
+    ],
+    "pr_api_base_sha_note": "The PR API base value is not treated as the actual merge checkout parent."
+  },
+  "workflow_versions": [
+    {
+      "ref_sha": "6e302081e650210202b232990ab05bbd6961e149",
+      "private_file": "workflow-head.yml",
+      "sha256": "7495468da2c2eb9636edba2eeac6264da899bb3efcea0cddfefea4e434978e7e",
+      "gate_timeout_minutes": 30,
+      "launcher_timeout_minutes": 30
+    },
+    {
+      "ref_sha": "f8f2bf71d2541e57bb3d37471f720b20323585aa",
+      "private_file": "workflow-pr-merge.yml",
+      "sha256": "0af485985e3abcc92f4595f56c96fd526e0950143a2ec53305e6dbe4bca8fb8e",
+      "gate_timeout_minutes": 30,
+      "launcher_timeout_minutes": 60
+    }
+  ],
+  "runs": [
+    {
+      "run_id": 45764508808,
+      "event": "push",
+      "api_head_sha": "6e302081e650210202b232990ab05bbd6961e149",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45764508808",
+      "started_at_utc": "2026-11-26T05:53:29Z",
+      "updated_at_utc": "2026-11-26T06:20:59Z",
+      "jobs": [
+        {
+          "job_id": 139722065903,
+          "name": "launchers (windows-latest, Python 3.11)",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at_utc": "2026-11-26T05:53:32Z",
+          "completed_at_utc": "2026-11-26T06:20:58Z",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45764508808/job/139722065903",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ],
+          "private_log_file": "job-139722065903.log",
+          "private_log_sha256": "441f3a5c0d5dc2d78246202196c2fff8f6001f280c2b8febb4ea2d4c45fb4236",
+          "checkout": {
+            "sha": "6e302081e650210202b232990ab05bbd6961e149",
+            "private_log_line": 93
+          },
+          "logged_command_groups": [
+            {
+              "private_log_line": 108,
+              "commands": [
+                {
+                  "command": "python -m pip install -r server/requirements-dev.txt",
+                  "private_log_line": 109
+                }
+              ]
+            },
+            {
+              "private_log_line": 196,
+              "commands": [
+                {
+                  "command": "python -m unittest tests.test_launchers -v",
+                  "private_log_line": 197
+                }
+              ]
+            },
+            {
+              "private_log_line": 244,
+              "commands": [
+                {
+                  "command": "python -m unittest discover -s server/tests -t server -q",
+                  "private_log_line": 245
+                }
+              ]
+            }
+          ],
+          "test_summaries": [
+            {
+              "test_count": 31,
+              "seconds": 42.246,
+              "outcome": "OK",
+              "private_log_line": 241
+            },
+            {
+              "test_count": 1822,
+              "seconds": 1569.373,
+              "outcome": "FAILED (failures=1, errors=1)",
+              "private_log_line": 502
+            }
+          ],
+          "failure_details": [
+            {
+              "kind": "ERROR",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_poll_get_faults_retry_with_a_finite_budget_and_one_post",
+              "terminal_exception": "mio_server.llm.LLMError: Image request deadline exceeded; submitted work was not repeated",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 332,
+                  "function": "test_poll_get_faults_retry_with_a_finite_budget_and_one_post"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 43,
+                  "function": "generate_image"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 70,
+                  "function": "_run"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 373,
+                  "function": "perform"
+                },
+                {
+                  "file_basename": "transport.py",
+                  "line": 286,
+                  "function": "request"
+                }
+              ],
+              "private_log_line": 474,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "earlier_exception_chain": "No earlier chained exception is shown; raised from None."
+            },
+            {
+              "kind": "FAIL",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_post_fault_matrix_never_repeats_or_echoes_credentials",
+              "terminal_exception": "AssertionError: True != False",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 221,
+                  "function": "test_post_fault_matrix_never_repeats_or_echoes_credentials"
+                }
+              ],
+              "private_log_line": 494,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "assertion": "self.assertEqual(caught.exception.sent, sent)"
+            }
+          ],
+          "lint_output": []
+        },
+        {
+          "job_id": 139722066175,
+          "name": "gate",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at_utc": "2026-11-26T05:53:32Z",
+          "completed_at_utc": "2026-11-26T06:10:58Z",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45764508808/job/139722066175",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 4,
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 5,
+              "name": "Install Python dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 6,
+              "name": "Spike unit tests (next/)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 7,
+              "name": "v4 server (lint + unit tests)",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 8,
+              "name": "API v2 clients and release tools (generated client current + lint)",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 9,
+              "name": "v4 web (API types current + format + typecheck + tests + build)",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 10,
+              "name": "Preserve built web for isolated browser verification",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 11,
+              "name": "Shipped data manifest",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 12,
+              "name": "Standalone assistant extension",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 13,
+              "name": "v4 release package smoke test",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 24,
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 25,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 26,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 27,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ],
+          "private_log_file": "job-139722066175.log",
+          "private_log_sha256": "eadb9356784c13238157d6217ff642cf95a3b4905e872c17bb9b8319f0b92606",
+          "checkout": {
+            "sha": "6e302081e650210202b232990ab05bbd6961e149",
+            "private_log_line": 108
+          },
+          "logged_command_groups": [
+            {
+              "private_log_line": 149,
+              "commands": [
+                {
+                  "command": "python -m pip install -r server/requirements-dev.txt",
+                  "private_log_line": 150
+                }
+              ]
+            },
+            {
+              "private_log_line": 243,
+              "commands": [
+                {
+                  "command": "python -m unittest discover -s next/tests -t next -q",
+                  "private_log_line": 244
+                }
+              ]
+            },
+            {
+              "private_log_line": 258,
+              "commands": [
+                {
+                  "command": "ruff check server extensions",
+                  "private_log_line": 259
+                },
+                {
+                  "command": "ruff format --check server extensions",
+                  "private_log_line": 260
+                },
+                {
+                  "command": "python -m unittest discover -s server/tests -t server -q",
+                  "private_log_line": 261
+                }
+              ]
+            }
+          ],
+          "test_summaries": [
+            {
+              "test_count": 80,
+              "seconds": 19.547,
+              "outcome": "OK",
+              "private_log_line": 255
+            },
+            {
+              "test_count": 1822,
+              "seconds": 1008.148,
+              "outcome": "FAILED (failures=1, errors=1, skipped=3)",
+              "private_log_line": 548
+            }
+          ],
+          "failure_details": [
+            {
+              "kind": "ERROR",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_poll_get_faults_retry_with_a_finite_budget_and_one_post",
+              "terminal_exception": "mio_server.llm.LLMError: Image request deadline exceeded; submitted work was not repeated",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 332,
+                  "function": "test_poll_get_faults_retry_with_a_finite_budget_and_one_post"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 43,
+                  "function": "generate_image"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 70,
+                  "function": "_run"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 373,
+                  "function": "perform"
+                },
+                {
+                  "file_basename": "transport.py",
+                  "line": 286,
+                  "function": "request"
+                }
+              ],
+              "private_log_line": 505,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "earlier_exception_chain": "No earlier chained exception is shown; raised from None."
+            },
+            {
+              "kind": "FAIL",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_post_fault_matrix_never_repeats_or_echoes_credentials",
+              "terminal_exception": "AssertionError: True != False",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 221,
+                  "function": "test_post_fault_matrix_never_repeats_or_echoes_credentials"
+                }
+              ],
+              "private_log_line": 539,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "assertion": "self.assertEqual(caught.exception.sent, sent)"
+            }
+          ],
+          "lint_output": [
+            {
+              "text": "All checks passed!",
+              "private_log_line": 271
+            },
+            {
+              "text": "429 files already formatted",
+              "private_log_line": 272
+            }
+          ]
+        },
+        {
+          "job_id": 139722066192,
+          "name": "launchers (ubuntu-latest, Python 3.11)",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at_utc": "2026-11-26T05:53:32Z",
+          "completed_at_utc": "2026-11-26T06:07:58Z",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45764508808/job/139722066192",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ],
+          "private_log_file": "job-139722066192.log",
+          "private_log_sha256": "e6b090211291d101ec62532375a8a6a910f4bdbfa95683c63c18b915cf55fc04",
+          "checkout": {
+            "sha": "6e302081e650210202b232990ab05bbd6961e149",
+            "private_log_line": 106
+          },
+          "logged_command_groups": [
+            {
+              "private_log_line": 121,
+              "commands": [
+                {
+                  "command": "python -m pip install -r server/requirements-dev.txt",
+                  "private_log_line": 122
+                }
+              ]
+            },
+            {
+              "private_log_line": 215,
+              "commands": [
+                {
+                  "command": "python -m unittest tests.test_launchers -v",
+                  "private_log_line": 216
+                }
+              ]
+            },
+            {
+              "private_log_line": 264,
+              "commands": [
+                {
+                  "command": "python -m unittest discover -s server/tests -t server -q",
+                  "private_log_line": 265
+                }
+              ]
+            }
+          ],
+          "test_summaries": [
+            {
+              "test_count": 31,
+              "seconds": 18.223,
+              "outcome": "OK",
+              "private_log_line": 261
+            },
+            {
+              "test_count": 1822,
+              "seconds": 830.769,
+              "outcome": "FAILED (failures=1, errors=1, skipped=3)",
+              "private_log_line": 516
+            }
+          ],
+          "failure_details": [
+            {
+              "kind": "ERROR",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_poll_get_faults_retry_with_a_finite_budget_and_one_post",
+              "terminal_exception": "mio_server.llm.LLMError: Image request deadline exceeded; submitted work was not repeated",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 332,
+                  "function": "test_poll_get_faults_retry_with_a_finite_budget_and_one_post"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 43,
+                  "function": "generate_image"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 70,
+                  "function": "_run"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 373,
+                  "function": "perform"
+                },
+                {
+                  "file_basename": "transport.py",
+                  "line": 286,
+                  "function": "request"
+                }
+              ],
+              "private_log_line": 488,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "earlier_exception_chain": "No earlier chained exception is shown; raised from None."
+            },
+            {
+              "kind": "FAIL",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_post_fault_matrix_never_repeats_or_echoes_credentials",
+              "terminal_exception": "AssertionError: True != False",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 221,
+                  "function": "test_post_fault_matrix_never_repeats_or_echoes_credentials"
+                }
+              ],
+              "private_log_line": 508,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "assertion": "self.assertEqual(caught.exception.sent, sent)"
+            }
+          ],
+          "lint_output": []
+        }
+      ],
+      "artifacts": []
+    },
+    {
+      "run_id": 45764513053,
+      "event": "pull_request",
+      "api_head_sha": "6e302081e650210202b232990ab05bbd6961e149",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45764513053",
+      "started_at_utc": "2026-11-26T05:53:32Z",
+      "updated_at_utc": "2026-11-26T06:25:16Z",
+      "jobs": [
+        {
+          "job_id": 139722081023,
+          "name": "launchers (windows-latest, Python 3.11)",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at_utc": "2026-11-26T05:53:35Z",
+          "completed_at_utc": "2026-11-26T06:25:16Z",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45764513053/job/139722081023",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ],
+          "private_log_file": "job-139722081023.log",
+          "private_log_sha256": "097d85f911e7a760104b54da4a9d09f18ba5892afe6e0d83f091f20c91246183",
+          "checkout": {
+            "sha": "f8f2bf71d2541e57bb3d37471f720b20323585aa",
+            "private_log_line": 109
+          },
+          "logged_command_groups": [
+            {
+              "private_log_line": 124,
+              "commands": [
+                {
+                  "command": "python -m pip install -r server/requirements-dev.txt",
+                  "private_log_line": 125
+                }
+              ]
+            },
+            {
+              "private_log_line": 212,
+              "commands": [
+                {
+                  "command": "python -m unittest tests.test_launchers -v",
+                  "private_log_line": 213
+                }
+              ]
+            },
+            {
+              "private_log_line": 260,
+              "commands": [
+                {
+                  "command": "python -m unittest discover -s server/tests -t server -q",
+                  "private_log_line": 261
+                }
+              ]
+            }
+          ],
+          "test_summaries": [
+            {
+              "test_count": 31,
+              "seconds": 42.423,
+              "outcome": "OK",
+              "private_log_line": 257
+            },
+            {
+              "test_count": 1952,
+              "seconds": 1823.257,
+              "outcome": "FAILED (failures=1, errors=1)",
+              "private_log_line": 519
+            }
+          ],
+          "failure_details": [
+            {
+              "kind": "ERROR",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_poll_get_faults_retry_with_a_finite_budget_and_one_post",
+              "terminal_exception": "mio_server.llm.LLMError: Image request deadline exceeded; submitted work was not repeated",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 332,
+                  "function": "test_poll_get_faults_retry_with_a_finite_budget_and_one_post"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 43,
+                  "function": "generate_image"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 70,
+                  "function": "_run"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 373,
+                  "function": "perform"
+                },
+                {
+                  "file_basename": "transport.py",
+                  "line": 286,
+                  "function": "request"
+                }
+              ],
+              "private_log_line": 491,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "earlier_exception_chain": "No earlier chained exception is shown; raised from None."
+            },
+            {
+              "kind": "FAIL",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_post_fault_matrix_never_repeats_or_echoes_credentials",
+              "terminal_exception": "AssertionError: True != False",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 221,
+                  "function": "test_post_fault_matrix_never_repeats_or_echoes_credentials"
+                }
+              ],
+              "private_log_line": 511,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "assertion": "self.assertEqual(caught.exception.sent, sent)"
+            }
+          ],
+          "lint_output": []
+        },
+        {
+          "job_id": 139722081248,
+          "name": "gate",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at_utc": "2026-11-26T05:53:35Z",
+          "completed_at_utc": "2026-11-26T06:08:06Z",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45764513053/job/139722081248",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 4,
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 5,
+              "name": "Install Python dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 6,
+              "name": "Spike unit tests (next/)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 7,
+              "name": "v4 server (lint + unit tests)",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 8,
+              "name": "API v2 clients and release tools (generated client current + lint)",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 9,
+              "name": "v4 web (API types current + format + typecheck + tests + build)",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 10,
+              "name": "Preserve built web for isolated browser verification",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 11,
+              "name": "Shipped data manifest",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 12,
+              "name": "Standalone assistant extension",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 13,
+              "name": "v4 release package smoke test",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 24,
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 25,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 26,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 27,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ],
+          "private_log_file": "job-139722081248.log",
+          "private_log_sha256": "e6cb408bd9cbb2197e943f5b3c84bedd58e39ecddd1cff4afb6955ac8747d071",
+          "checkout": {
+            "sha": "f8f2bf71d2541e57bb3d37471f720b20323585aa",
+            "private_log_line": 124
+          },
+          "logged_command_groups": [
+            {
+              "private_log_line": 165,
+              "commands": [
+                {
+                  "command": "python -m pip install -r server/requirements-dev.txt",
+                  "private_log_line": 166
+                }
+              ]
+            },
+            {
+              "private_log_line": 259,
+              "commands": [
+                {
+                  "command": "python -m unittest discover -s next/tests -t next -q",
+                  "private_log_line": 260
+                }
+              ]
+            },
+            {
+              "private_log_line": 274,
+              "commands": [
+                {
+                  "command": "ruff check server extensions",
+                  "private_log_line": 275
+                },
+                {
+                  "command": "ruff format --check server extensions",
+                  "private_log_line": 276
+                },
+                {
+                  "command": "python -m unittest discover -s server/tests -t server -q",
+                  "private_log_line": 277
+                }
+              ]
+            }
+          ],
+          "test_summaries": [
+            {
+              "test_count": 80,
+              "seconds": 18.685,
+              "outcome": "OK",
+              "private_log_line": 271
+            },
+            {
+              "test_count": 1952,
+              "seconds": 826.608,
+              "outcome": "FAILED (failures=1, errors=1, skipped=3)",
+              "private_log_line": 564
+            }
+          ],
+          "failure_details": [
+            {
+              "kind": "ERROR",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_poll_get_faults_retry_with_a_finite_budget_and_one_post",
+              "terminal_exception": "mio_server.llm.LLMError: Image request deadline exceeded; submitted work was not repeated",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 332,
+                  "function": "test_poll_get_faults_retry_with_a_finite_budget_and_one_post"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 43,
+                  "function": "generate_image"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 70,
+                  "function": "_run"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 373,
+                  "function": "perform"
+                },
+                {
+                  "file_basename": "transport.py",
+                  "line": 286,
+                  "function": "request"
+                }
+              ],
+              "private_log_line": 521,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "earlier_exception_chain": "No earlier chained exception is shown; raised from None."
+            },
+            {
+              "kind": "FAIL",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_post_fault_matrix_never_repeats_or_echoes_credentials",
+              "terminal_exception": "AssertionError: True != False",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 221,
+                  "function": "test_post_fault_matrix_never_repeats_or_echoes_credentials"
+                }
+              ],
+              "private_log_line": 555,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "assertion": "self.assertEqual(caught.exception.sent, sent)"
+            }
+          ],
+          "lint_output": [
+            {
+              "text": "All checks passed!",
+              "private_log_line": 287
+            },
+            {
+              "text": "445 files already formatted",
+              "private_log_line": 288
+            }
+          ]
+        },
+        {
+          "job_id": 139722081410,
+          "name": "launchers (ubuntu-latest, Python 3.11)",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at_utc": "2026-11-26T05:53:35Z",
+          "completed_at_utc": "2026-11-26T06:08:43Z",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45764513053/job/139722081410",
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ],
+          "private_log_file": "job-139722081410.log",
+          "private_log_sha256": "bebaa5366abfe0552d9e1f6e76dcd6f48110fc3c1740dd92b15f33e719c0927a",
+          "checkout": {
+            "sha": "f8f2bf71d2541e57bb3d37471f720b20323585aa",
+            "private_log_line": 122
+          },
+          "logged_command_groups": [
+            {
+              "private_log_line": 137,
+              "commands": [
+                {
+                  "command": "python -m pip install -r server/requirements-dev.txt",
+                  "private_log_line": 138
+                }
+              ]
+            },
+            {
+              "private_log_line": 231,
+              "commands": [
+                {
+                  "command": "python -m unittest tests.test_launchers -v",
+                  "private_log_line": 232
+                }
+              ]
+            },
+            {
+              "private_log_line": 280,
+              "commands": [
+                {
+                  "command": "python -m unittest discover -s server/tests -t server -q",
+                  "private_log_line": 281
+                }
+              ]
+            }
+          ],
+          "test_summaries": [
+            {
+              "test_count": 31,
+              "seconds": 18.35,
+              "outcome": "OK",
+              "private_log_line": 277
+            },
+            {
+              "test_count": 1952,
+              "seconds": 866.717,
+              "outcome": "FAILED (failures=1, errors=1, skipped=3)",
+              "private_log_line": 534
+            }
+          ],
+          "failure_details": [
+            {
+              "kind": "ERROR",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_poll_get_faults_retry_with_a_finite_budget_and_one_post",
+              "terminal_exception": "mio_server.llm.LLMError: Image request deadline exceeded; submitted work was not repeated",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 332,
+                  "function": "test_poll_get_faults_retry_with_a_finite_budget_and_one_post"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 43,
+                  "function": "generate_image"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 70,
+                  "function": "_run"
+                },
+                {
+                  "file_basename": "channels.py",
+                  "line": 373,
+                  "function": "perform"
+                },
+                {
+                  "file_basename": "transport.py",
+                  "line": 286,
+                  "function": "request"
+                }
+              ],
+              "private_log_line": 506,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "earlier_exception_chain": "No earlier chained exception is shown; raised from None."
+            },
+            {
+              "kind": "FAIL",
+              "test": "tests.test_cloud_channel_packages.ChannelPackageTests.test_post_fault_matrix_never_repeats_or_echoes_credentials",
+              "terminal_exception": "AssertionError: True != False",
+              "trace_sites": [
+                {
+                  "file_basename": "test_cloud_channel_packages.py",
+                  "line": 221,
+                  "function": "test_post_fault_matrix_never_repeats_or_echoes_credentials"
+                }
+              ],
+              "private_log_line": 526,
+              "individual_duration_available": false,
+              "remaining_budget_available": false,
+              "assertion": "self.assertEqual(caught.exception.sent, sent)"
+            }
+          ],
+          "lint_output": []
+        }
+      ],
+      "artifacts": []
+    }
+  ],
+  "required_gate_coverage": [
+    {
+      "gate": "Backend unit suite",
+      "command": "python -m unittest discover -s server/tests -t server -q",
+      "result": "executed_failed"
+    },
+    {
+      "gate": "Python lint and format across server, clients, tools",
+      "command": "ruff check server clients tools && ruff format --check server clients tools",
+      "result": "partial_only_server_and_extensions_executed_successfully; clients_and_tools_skipped"
+    },
+    {
+      "gate": "Generated API v2 client current",
+      "command": "python clients/python/generate.py --check",
+      "result": "skipped_after_backend_failure"
+    },
+    {
+      "gate": "Spike unit suite",
+      "command": "python -m unittest discover -s next/tests -t next -q",
+      "result": "executed_success_in_both_gate_jobs"
+    },
+    {
+      "gate": "Shipped distribution manifest",
+      "command": "python tools/check_distribution.py",
+      "result": "skipped_after_backend_failure"
+    },
+    {
+      "gate": "Web formatting",
+      "command": "npm --prefix web run format:check",
+      "result": "skipped_after_backend_failure"
+    },
+    {
+      "gate": "Web typecheck",
+      "command": "npm --prefix web run typecheck",
+      "result": "skipped_after_backend_failure"
+    },
+    {
+      "gate": "Web unit tests",
+      "command": "npm --prefix web test",
+      "result": "skipped_after_backend_failure"
+    },
+    {
+      "gate": "Web production build",
+      "command": "npm --prefix web run build",
+      "result": "skipped_after_backend_failure"
+    },
+    {
+      "gate": "Regenerated web API types",
+      "command": "npm --prefix web run gen:api",
+      "result": "skipped_after_backend_failure"
+    }
+  ],
+  "additional_ci_coverage": {
+    "real_launcher_suites": "See each job test summary and successful launcher step.",
+    "extension_contracts_examples_doc_checks_and_additional_lint": "skipped_after_backend_failure",
+    "standalone_assistant_extension": "skipped_after_backend_failure",
+    "release_package_smoke": "skipped_after_backend_failure",
+    "built_web_artifacts": "none_available"
+  },
+  "limits": [
+    "A logged run block alone is not evidence of successful completion; API step conclusions and command results were checked.",
+    "Expected-error logging inside successful tests was not counted as a failure.",
+    "The two failing methods have no separately logged duration or remaining deadline value.",
+    "No old run was substituted, and no CI rerun was requested."
+  ]
+}

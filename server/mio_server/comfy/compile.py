@@ -3,9 +3,9 @@
 Order of operations, each step keeping the user's structure intact (ROADMAP §2.1 "ComfyUI 不做减法"):
 
 1. model / LoRA slot overrides (legacy ``workflow_slots`` plan),
-2. bind values: ``[mio:*]`` tags → manual JSON Pointer mapping → heuristics,
-3. keep only the chosen output variant and its ancestors,
-4. JSON Pointer overrides (workflow config → variant → stage → panel),
+2. resolve explicit bindings and keep the chosen output's actual dependency closure,
+3. stabilize inferred bindings after all bound values and pointer overrides,
+4. validate slot routes against that final effective graph,
 5. content guard on every literal string (negative fields excluded).
 
 Image inputs are written as ``{"$asset": <sha256>}`` placeholders; the executor uploads the files
@@ -26,6 +26,7 @@ from . import contracts as AC
 from . import slot_adapters as SA
 from . import workflow_slots as slots
 from .client import ComfyError
+from .workflow_slot_graph import Graph
 
 BUILTIN_DIR = Path(__file__).resolve().parent.parent / "workflows"
 BUILTINS = {
@@ -53,6 +54,7 @@ class Compiled:
     checkpoint: str = ""
     frontend_state: dict = field(default_factory=dict)
     output_adapters: dict = field(default_factory=dict)
+    resolved_bindings: list[B.Binding] = field(default_factory=list, repr=False)
 
     def to_json(self) -> dict:
         return {
@@ -213,6 +215,81 @@ def validate_outputs(graph: dict, plans: dict, registry=None) -> None:
             raise B.BindingError(f"输出节点 {node_id} 的解析计划与编译快照不一致")
 
 
+def _effective_bindings(
+    graph, mapping, merged, pointers, variant, rules, syntax_targets, *, prune=True
+):
+    """Infer writable targets from the same selector state that will be submitted.
+
+    Bindings can themselves change selectors, so infer again after each complete write.
+    Each pass starts from the same base to avoid leaving writes in obsolete branches.
+    Output selection uses actual links, retaining inactive switch inputs and ignoring
+    overrides in other variants. Extension rules run once against the original graph.
+    """
+    tags, problems = B.tag_bindings(graph)
+    maps = B.mapping_bindings(graph, mapping)
+    have = {binding.kind for binding in tags + maps}
+    extra, rule_problems = B.rule_bindings(graph, rules, have)
+    explicit = tags + maps + extra
+    if "output" not in have:
+        explicit += B.heuristic_bindings(graph, {"output"})
+    effective = B.apply_values(graph, explicit, merged)
+    SA.preserve_bound_tags(graph, effective, syntax_targets)
+    if prune:
+        graph, outputs = B.select_variant(effective, explicit, variant)
+    else:
+        graph = effective
+        outputs = sorted({binding.node for binding in explicit if binding.kind == "output"})
+    effective = B.apply_overrides(graph, pointers)
+    explicit = [binding for binding in explicit if binding.node in graph]
+    have = {binding.kind for binding in explicit}
+    missing = (
+        set(B.CORE_KINDS) | {"batch", "steps", "cfg", "denoise", "sampler", "scheduler"}
+    ) - have
+    occupied = {(binding.node, binding.field): binding.kind for binding in explicit}
+    syntax_targets = {target for target in syntax_targets if target[0] in graph}
+    seen = set()
+    previous = None
+    for _ in range(64):
+        inferred = tuple(
+            binding
+            for binding in B.heuristic_bindings(effective, missing, roots=outputs)
+            if (binding.node, binding.field) not in occupied
+            or occupied[binding.node, binding.field] == binding.kind
+        )
+        if inferred == previous:
+            return effective, explicit + list(inferred), outputs, problems + rule_problems
+        if inferred in seen:
+            break
+        seen.add(inferred)
+        previous = inferred
+        effective = B.apply_values(graph, explicit + list(inferred), merged)
+        SA.preserve_bound_tags(graph, effective, syntax_targets)
+        effective = B.apply_overrides(effective, pointers)
+    raise B.BindingError(
+        "参数写入后自动绑定的分支无法稳定，无法安全确定提示词或尺寸的写入目标。"
+        "请将分支选择与生成参数拆为独立节点，或固定分支并显式映射参数后重试。"
+    )
+
+
+def _validate_slot_routes(plan, changes, effective):
+    """Do not silently apply a frozen LoRA request to an obsolete selected branch."""
+    all_groups = "loras" in changes or bool(changes.get("unpin"))
+    requested = {group["key"] for group in changes.get("groups", [])}
+    routes = Graph(effective, None)
+    for group in plan["lora"]["groups"]:
+        if not all_groups and group["key"] not in requested:
+            continue
+        for site in group["sites"]:
+            if site["nodeId"] not in effective:
+                continue
+            if site.get("active", group["active"]) != routes.active(site["nodeId"])[0]:
+                raise B.BindingError(
+                    "分支参数覆盖改变了所选 LoRA 的活动路径，无法安全冻结该 LoRA 覆盖。"
+                    "请先在工作流中固定分支，重新导入并选择 LoRA 槽位；"
+                    "或保留当前分支后再调整 LoRA。"
+                )
+
+
 def compile_workflow(
     doc: WorkflowDoc,
     values: dict,
@@ -238,10 +315,15 @@ def compile_workflow(
         graph = applied["workflow"]
         warnings.extend(applied["notices"])
         syntax_targets = SA.syntax_targets(applied["plan"])
-    bound, problems = B.resolve(graph, config.mapping or None, rules=rules)
-    warnings.extend(problems)
     merged = _merge(config.values, var_cfg.get("values"), stage_values, values)
-    for kind in ("prompt", "negative", "seed", "width", "height", "region") + IMAGE_KINDS:
+    pointers = _merge(config.overrides, var_cfg.get("overrides"), overrides)
+    graph, bound, outputs, problems = _effective_bindings(
+        graph, config.mapping or None, merged, pointers, variant, rules, syntax_targets
+    )
+    if merged_slot_overrides:
+        _validate_slot_routes(applied["plan"], merged_slot_overrides, graph)
+    warnings.extend(problems)
+    for kind in sorted(B.VALUE_KINDS):
         wanted = [k for k in merged if k == kind or k.startswith(kind + ":")]
         for key in wanted:
             base, _, qual = key.partition(":")
@@ -258,12 +340,9 @@ def compile_workflow(
             ):
                 if base in IMAGE_KINDS:
                     raise B.BindingError(f"工作流里没有 [mio:{key}] 输入节点，无法接收图片")
-                warnings.append(f"工作流没有 {key} 的绑定，值被忽略")
-    before_bindings = graph
-    graph = B.apply_values(graph, bound, merged)
-    SA.preserve_bound_tags(before_bindings, graph, syntax_targets)
-    graph, outputs = B.select_variant(graph, bound, variant)
-    graph = B.apply_overrides(graph, _merge(config.overrides, var_cfg.get("overrides"), overrides))
+                warnings.append(
+                    f"工作流没有 {key} 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。"
+                )
     frontend_state = _frontend_plan(doc, graph, var_cfg, registry)
     output_adapters = {}
     selected_adapters = {node_id: OutputAdapterConfig(id="history-images") for node_id in outputs}
@@ -307,12 +386,22 @@ def compile_workflow(
         checkpoint=primary_checkpoint(graph, bound),
         frontend_state=frontend_state,
         output_adapters=output_adapters,
+        resolved_bindings=[binding for binding in bound if binding.node in graph],
     )
 
 
 def describe(doc: WorkflowDoc, *, rules: B.BindingRules = ()) -> dict:
     """Binding report for the UI: which Mio values land where, and which variants exist."""
-    bound, problems = B.resolve(doc.graph, doc.config.mapping or None, rules=rules)
+    graph, bound, _, problems = _effective_bindings(
+        doc.graph,
+        doc.config.mapping or None,
+        doc.config.values,
+        doc.config.overrides,
+        None,
+        rules,
+        set(),
+        prune=False,
+    )
     variants = sorted({b.qualifier for b in bound if b.kind == "output" and b.qualifier})
     image_inputs = sorted(
         {
@@ -329,5 +418,5 @@ def describe(doc: WorkflowDoc, *, rules: B.BindingRules = ()) -> dict:
         "image_inputs": image_inputs,
         "regions": regions,
         "nodes": len(doc.graph),
-        "checkpoint": primary_checkpoint(doc.graph, bound),
+        "checkpoint": primary_checkpoint(graph, bound),
     }

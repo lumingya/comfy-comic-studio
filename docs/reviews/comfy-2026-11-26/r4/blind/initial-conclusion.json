@@ -1,0 +1,57 @@
+{
+  "verdict": "VERIFIED PASS",
+  "scope": "Static import/inspection/slots/compile/diagnose only; not runtime GPU execution",
+  "head": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "oracle_sha256": "f8a436e5c8ab19d4da8cf01cce12b7a032d2c0d9d08d7073f293e69f1215b0bf",
+  "manifest_sha256": "cf599827ec5b85caa7ac63f6fad4ff57de7091bd9d8cbd6eda7facc767c60a61",
+  "measurement_sha256": "f40df7671925b157f1c0dbe41a5f133e513e80eaa218a91bb1a0ceabde05580a",
+  "sample_count": 12,
+  "api_count": 8,
+  "ui_only_count": 4,
+  "api_baseline_fullgraph_pass": 8,
+  "manual_fullgraph_pass": 8,
+  "api_output_set_pass": 8,
+  "ui_boundary_pass": 4,
+  "source_and_payload_immutability_pass": 12,
+  "full_api_document_immutability_pass": 8,
+  "diagnostic_missing_type_coverage_pass": 8,
+  "auto_control_checks": 47,
+  "auto_control_exact": 36,
+  "auto_explicit_manual_boundaries": 9,
+  "auto_seed_policy_differences": 2,
+  "real_effective_api_lora_count": 1,
+  "lora_negative_and_disable_cases": 2,
+  "severity_counts": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "policy_observations": [
+    {
+      "id": "R4B-SEED-POLICY",
+      "severity": "observation",
+      "samples": [
+        "r4b-03",
+        "r4b-04"
+      ],
+      "oracle_expectation": "Primary-stage seed only; retain downstream stage seeds",
+      "actual_behavior": "Seed writes fan out to all executable sampler sites",
+      "adjudication": "Keep both failed preregistered checks unchanged. Current explicit code/test contract deliberately fans seeds across stages, manual primary-only mapping is exact. This is a policy difference, not evidence of wrong route or lost value.",
+      "source_pointers": [
+        "server/mio_server/comfy/binding_inference.py:380",
+        "server/tests/test_workflow_canvas_scope.py:111",
+        "server/tests/test_workflow_canvas_scope.py:216"
+      ]
+    }
+  ],
+  "limitations": [
+    "No GPU, ComfyUI service, paid API, browser account or credentials accessed",
+    "Four UI-only files are not executable successes",
+    "Only one real effective API LoRA; no broad LoRA stack success-rate claim",
+    "Empty object_info diagnostics prove missing-type bookkeeping and declared static scope, not installed dependency compatibility or custom VALIDATE_INPUTS",
+    "Prior URL/file/canonical hashes and available topology digests checked; topology digest algorithms are not uniformly reconstructible; 25 unavailable historical UI originals prevent complete historical topology equivalence deduplication",
+    "No sample or original oracle was changed after product observation",
+    "No old reviewer report or conclusion was read before this independent conclusion"
+  ]
+}

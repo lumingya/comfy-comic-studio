@@ -133,6 +133,10 @@ class InspectionTests(unittest.TestCase):
         graph = plain_sdxl()
         graph["3"]["class_type"] = "UnknownSampler"
         graph["5"]["class_type"] = "UnknownLatent"
+        # Unfamiliar classes with standard ports are inferable; opaque ports require mapping.
+        graph["3"]["inputs"]["random_state"] = graph["3"]["inputs"].pop("seed")
+        graph["5"]["inputs"]["horizontal_extent"] = graph["5"]["inputs"].pop("width")
+        graph["5"]["inputs"]["vertical_extent"] = graph["5"]["inputs"].pop("height")
         report = self.inspect(graph, values={"seed": 22, "width": 512, "height": 768})
         self.assertTrue({"seed", "width", "height"} <= set(report.missing))
         self.assertTrue(

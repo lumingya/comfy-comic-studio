@@ -1,0 +1,257 @@
+{
+  "schema": "r4-reference-existing-evidence-v1",
+  "state": "STATIC_ATTRIBUTION_NO_PRODUCT_REPLAY",
+  "historical_replay_head": "ed45509456b14006161d829666c466789e6a9e37",
+  "cases": [
+    {
+      "case": "r4b-01",
+      "kind": "init",
+      "original_expected_target": "/37/inputs/image",
+      "original_manual_boundary": false,
+      "request_value": {
+        "json_type": "dict",
+        "sha256": "5d80d49bd221d9cfe92dcd91685f2bb9b5667d2f0164e6b7e8e0ab9e48449a77",
+        "string_length": null,
+        "is_exact_single_key_asset_placeholder": true,
+        "placeholder_asset_id_is_string": true,
+        "ordinary_compile_literal_accepted_by_mapping": true
+      },
+      "automatic_saved_observation": {
+        "error_type": "BindingError",
+        "error_sha256": "67d1aeaf22889a2699a6b95725bf0c12e015829206596e95245c92c47dec2223",
+        "exact_known_missing_image_binding_message": true,
+        "matches_saved_error_sha256": true,
+        "structured_error_code": null,
+        "returned_compiled_result": false,
+        "effective_targets_from_failed_call": null,
+        "warning_list_from_failed_call": null,
+        "full_typed_delta_from_failed_call": null,
+        "baseline_had_matching_kind_binding": false,
+        "legacy_boundary_visible_was_harness_constant": true,
+        "legacy_has_unexpected_write_false_was_harness_constant": true
+      },
+      "saved_combined_explicit_mapping_observation": {
+        "same_original_payload_at_target": true,
+        "requested_asset_id_in_saved_uploads": true,
+        "image_binding_exactly_original_pointer": true,
+        "image_target": "/37/inputs/image",
+        "target_before_type": "str",
+        "target_after_type": "dict",
+        "target_is_in_actual_typed_delta": true,
+        "actual_combined_request_delta_pointers": [
+          "/31/inputs/cfg",
+          "/31/inputs/seed",
+          "/31/inputs/steps",
+          "/33/inputs/text",
+          "/37/inputs/image",
+          "/40/inputs/height",
+          "/40/inputs/width",
+          "/6/inputs/text"
+        ],
+        "combined_request_not_an_isolated_image_request": true,
+        "whole_graph_matches_original_combined_oracle": true,
+        "saved_oracle_mismatch_pointers": [],
+        "warnings_count": 0,
+        "warning_sha256": [],
+        "manual_document_unchanged": true,
+        "whole_original_document_unchanged_at_harness_end": true
+      },
+      "attribution": "missing_automatic_image_kind_binding_not_invalid_asset_payload",
+      "safety_or_intent_judgment": "not_assigned_original_oracle_remains_unmodified"
+    },
+    {
+      "case": "r4b-02",
+      "kind": "init",
+      "original_expected_target": "/38/inputs/image",
+      "original_manual_boundary": false,
+      "request_value": {
+        "json_type": "dict",
+        "sha256": "5d80d49bd221d9cfe92dcd91685f2bb9b5667d2f0164e6b7e8e0ab9e48449a77",
+        "string_length": null,
+        "is_exact_single_key_asset_placeholder": true,
+        "placeholder_asset_id_is_string": true,
+        "ordinary_compile_literal_accepted_by_mapping": true
+      },
+      "automatic_saved_observation": {
+        "error_type": "BindingError",
+        "error_sha256": "67d1aeaf22889a2699a6b95725bf0c12e015829206596e95245c92c47dec2223",
+        "exact_known_missing_image_binding_message": true,
+        "matches_saved_error_sha256": true,
+        "structured_error_code": null,
+        "returned_compiled_result": false,
+        "effective_targets_from_failed_call": null,
+        "warning_list_from_failed_call": null,
+        "full_typed_delta_from_failed_call": null,
+        "baseline_had_matching_kind_binding": false,
+        "legacy_boundary_visible_was_harness_constant": true,
+        "legacy_has_unexpected_write_false_was_harness_constant": true
+      },
+      "saved_combined_explicit_mapping_observation": {
+        "same_original_payload_at_target": true,
+        "requested_asset_id_in_saved_uploads": true,
+        "image_binding_exactly_original_pointer": true,
+        "image_target": "/38/inputs/image",
+        "target_before_type": "str",
+        "target_after_type": "dict",
+        "target_is_in_actual_typed_delta": true,
+        "actual_combined_request_delta_pointers": [
+          "/16/inputs/text_g",
+          "/16/inputs/text_l",
+          "/19/inputs/text_g",
+          "/19/inputs/text_l",
+          "/36/inputs/seed",
+          "/38/inputs/image",
+          "/40/inputs/height",
+          "/40/inputs/width"
+        ],
+        "combined_request_not_an_isolated_image_request": true,
+        "whole_graph_matches_original_combined_oracle": true,
+        "saved_oracle_mismatch_pointers": [],
+        "warnings_count": 0,
+        "warning_sha256": [],
+        "manual_document_unchanged": true,
+        "whole_original_document_unchanged_at_harness_end": true
+      },
+      "attribution": "missing_automatic_image_kind_binding_not_invalid_asset_payload",
+      "safety_or_intent_judgment": "not_assigned_original_oracle_remains_unmodified"
+    },
+    {
+      "case": "r4b-09",
+      "kind": "ref",
+      "original_expected_target": "/95/inputs/image",
+      "original_manual_boundary": false,
+      "request_value": {
+        "json_type": "dict",
+        "sha256": "0179937bc01d4d57d612701b366ad9639e08d84908e696c7f012a10738ffdca8",
+        "string_length": null,
+        "is_exact_single_key_asset_placeholder": true,
+        "placeholder_asset_id_is_string": true,
+        "ordinary_compile_literal_accepted_by_mapping": true
+      },
+      "automatic_saved_observation": {
+        "error_type": "BindingError",
+        "error_sha256": "dc6a2656a19f863f3f88dc8729f8caaa2e166ed3cca68f361dd885f1920a560c",
+        "exact_known_missing_image_binding_message": true,
+        "matches_saved_error_sha256": true,
+        "structured_error_code": null,
+        "returned_compiled_result": false,
+        "effective_targets_from_failed_call": null,
+        "warning_list_from_failed_call": null,
+        "full_typed_delta_from_failed_call": null,
+        "baseline_had_matching_kind_binding": false,
+        "legacy_boundary_visible_was_harness_constant": true,
+        "legacy_has_unexpected_write_false_was_harness_constant": true
+      },
+      "saved_combined_explicit_mapping_observation": {
+        "same_original_payload_at_target": true,
+        "requested_asset_id_in_saved_uploads": true,
+        "image_binding_exactly_original_pointer": true,
+        "image_target": "/95/inputs/image",
+        "target_before_type": "str",
+        "target_after_type": "dict",
+        "target_is_in_actual_typed_delta": true,
+        "actual_combined_request_delta_pointers": [
+          "/62/inputs/text",
+          "/67/inputs/text",
+          "/79/inputs/seed",
+          "/9/inputs/height",
+          "/9/inputs/width",
+          "/95/inputs/image"
+        ],
+        "combined_request_not_an_isolated_image_request": true,
+        "whole_graph_matches_original_combined_oracle": true,
+        "saved_oracle_mismatch_pointers": [],
+        "warnings_count": 0,
+        "warning_sha256": [],
+        "manual_document_unchanged": true,
+        "whole_original_document_unchanged_at_harness_end": true
+      },
+      "attribution": "missing_automatic_image_kind_binding_not_invalid_asset_payload",
+      "safety_or_intent_judgment": "not_assigned_original_oracle_remains_unmodified"
+    }
+  ],
+  "contract": [
+    {
+      "file": "server/mio_server/comfy/compile.py",
+      "lines": [
+        81,
+        82,
+        92,
+        108
+      ],
+      "fact": "asset_value packages an asset placeholder; direct compile does not validate asset existence or require this representation"
+    },
+    {
+      "file": "server/mio_server/comfy/compile.py",
+      "lines": [
+        245,
+        247,
+        307,
+        318,
+        325,
+        342
+      ],
+      "fact": "image kind absent from default automatic-inference set; missing final kind or qualifier triggers the exact saved BindingError after compiling a graph copy"
+    },
+    {
+      "file": "server/mio_server/comfy/bindings.py",
+      "lines": [
+        86,
+        179,
+        214,
+        312,
+        326
+      ],
+      "fact": "BindingError has no structured code; mapping validates a writable target and applies any non-None value on a copy"
+    },
+    {
+      "file": "server/mio_server/render_models.py",
+      "lines": [
+        23,
+        27,
+        74,
+        84
+      ],
+      "fact": "workflow/stage value dictionaries have object values, not an image-asset schema"
+    }
+  ],
+  "remaining_limits": [
+    "The automatic calls returned no Compiled object, so their warnings, result graph delta and result effective targets remain unavailable, not empty or zero",
+    "Exception-path harness booleans are not product warning/delta evidence and do not establish a safe boundary",
+    "Existing mapping successes were combined requests; they do not constitute three isolated image-only mapping runs",
+    "Compile acceptance is not runtime upload, asset existence, ComfyUI execution, or rendered-image validation",
+    "Whether the original human automatic-image expectation is intended product coverage remains a separate review decision; no oracle or denominator was changed"
+  ],
+  "additional_product_requests_needed_for_this_attribution": 0,
+  "optional_future_plan_if_root_requests_isolated_delta": {
+    "authorized_now": false,
+    "maximum_calls": 6,
+    "original_automatic_calls": 3,
+    "same_target_explicit_mapping_calls": 3,
+    "fixed_cases": [
+      {
+        "case": "r4b-01",
+        "kind": "init",
+        "pointer": "/37/inputs/image"
+      },
+      {
+        "case": "r4b-02",
+        "kind": "init",
+        "pointer": "/38/inputs/image"
+      },
+      {
+        "case": "r4b-09",
+        "kind": "ref",
+        "pointer": "/95/inputs/image"
+      }
+    ],
+    "payload": "unchanged saved original single-key asset placeholder object, already accepted by the same compile API in the existing combined mapping call",
+    "predeclared_expectations": [
+      "Preserve original human oracle; record automatic exception or returned targets/warnings/typed delta without redefining success",
+      "For isolated explicit mapping, use the same original output closure and exactly the original single kind/target",
+      "Expected typed graph delta is exactly the single original image pointer; all other retained fields and JSON types remain exact",
+      "Expected mapping effective target is exactly that pointer, no unrelated kind or fallback stage; record every warning",
+      "Snapshot whole input document and original evidence bytes before/after; no DB write, runtime asset resolution, network, GPU, models, or subprocess"
+    ]
+  }
+}

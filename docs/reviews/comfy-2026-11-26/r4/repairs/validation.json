@@ -1,0 +1,77 @@
+{
+  "scope": "R4 repair integration; targeted local checks, not full repository gates or final audit",
+  "reviewed_baseline": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "full_suite_or_build_run_locally": false,
+  "serial_processes": true,
+  "resource_guard": {
+    "selected_affinity": "0x1",
+    "priority_class": 16384,
+    "name": "BelowNormal",
+    "all_python_guards_read_back_before_mio_import": true,
+    "record_count": 9
+  },
+  "first_backend_batch": {
+    "methods": 139,
+    "outcome": "FAILED",
+    "failed_subtests": 79,
+    "all_failures_in": "test_workflow_conditioning_stage_scope",
+    "cause": "New fixture expected unreachable nodes retained, contrary to existing output pruning",
+    "original_log_preserved_outside_repository": true
+  },
+  "affected_backend_after_fix": {
+    "methods": 72,
+    "outcome": "PASS",
+    "test_seconds": 7.174,
+    "scope": "conditioning stage, catalog, numeric-string LoRA, lossless/R3, inspection controls, slot adapters",
+    "overlaps_first_batch": true,
+    "do_not_add_batch_counts": true
+  },
+  "frontend": {
+    "methods": 1,
+    "outcome": "PASS",
+    "first_failure": "New test incorrectly expected renderWithProviders to return user; corrected to neighboring userEvent.setup convention",
+    "reran_only_affected_file": true,
+    "workers": 1,
+    "file_parallelism": false
+  },
+  "generation": {
+    "web_api": "executed",
+    "python_client": "executed",
+    "changed_outputs": [
+      "web/src/api/schema.d.ts",
+      "clients/openapi-v2.json"
+    ],
+    "python_method_files_changed": false
+  },
+  "static_additional_issue": {
+    "severity": "Medium",
+    "description": "Disabled named flat/Power invalid weights differed between catalog and detail",
+    "closed_by": "Shared pinned-value refresh within catalog error isolation",
+    "covered_in_affected_backend_batch": true
+  },
+  "ruff_and_changed_file_format": "PASS",
+  "git_whitespace": "PASS",
+  "source_sha256": {
+    "server/mio_server/api/library.py": "075a48b0774575f6ef0dc98a2e94fecf790617be23710b6f0756657a6144e571",
+    "server/mio_server/context.py": "d6f013edc925083047324110966559d1e31ab7f3a33d451a62df5bdb0f9a5343",
+    "server/mio_server/workflow_catalog.py": "00b25ecd0295fa0a52062ffd3e49b7116eb2511c26a3af9318aac6541d03398b",
+    "server/mio_server/comfy/binding_scope.py": "92d9e2891854d2e90892c47e69b7027e9d27f95a98871c9898793f494676446a",
+    "server/mio_server/comfy/binding_inference.py": "3231f44648a7f755323e5f1d7f9ea0ed9da14e7e43096b2d5a487dd656cbc278",
+    "server/mio_server/comfy/binding_stage_scope.py": "696bd0ec10d2b86eecdeab8d4173fc0f591840746f3eb4e9fc4d5df7c3f9ffb0",
+    "server/mio_server/comfy/workflow_slot_values.py": "dcce61d3f96bdd0f49ca16b92e03383b040adfd1781dbf0837388605a670af65",
+    "server/mio_server/comfy/workflow_slot_writers.py": "df6fe05a78a4710682308c5f113899446544967b6df4b19700996064646d92e4",
+    "server/tests/test_workflow_catalog.py": "4d60cf79c6cd07bdb60b7b79be192b1b6ee83b2b02fce626fdf4f8fa9fc5ce22",
+    "server/tests/test_workflow_conditioning_stage_scope.py": "43b99e117a1bd34dcf4733d4ee08deb69479b08209da8939f2b87299c37f6758",
+    "server/tests/test_workflow_lora_numeric_strings.py": "5e47cc6bacb48ce85969a41c0687fabeeb5724f1f6147ed9bcf1fc9e2964ebcd",
+    "web/src/api/types.ts": "0e7b4d7e39a90bda1054f0f77d97451328232ef7e0a5b03b2de8633a15aecb8e",
+    "web/src/i18n/configuration.ts": "e2dd6316fbd0de1c3dfb5cdd6df83c76048d456dfaca3f43ed12810d580f0374",
+    "web/src/pages/settings/WorkflowsSection.tsx": "752eefdb5325e80b9dd8c1ce08b1d9520e142382d9d159da1dfd8d713c7a8232",
+    "web/src/pages/settings/WorkflowCatalog.test.tsx": "5b6008ed1a245c979d89ab10f9a59ea75d00f98268c1ef6aa357f59bafe8ce5c",
+    "web/src/api/schema.d.ts": "4cf029253ef77f389e602f5fe0d5e2f1f8f251f8c5edaa19459439e7e77c6587",
+    "clients/openapi-v2.json": "43b5cc1110de71effef65e070bb97803527d187c766234c9c6799f51f23e91c3",
+    "clients/python/mio_client.py": "b39eddd578057a8a51ff0905ff91e6207795779e003f73a193e1cbdb6336cd3b",
+    "clients/astrbot_mio/mio_client.py": "b39eddd578057a8a51ff0905ff91e6207795779e003f73a193e1cbdb6336cd3b",
+    "server/mio_server/comfy/workflow_slot_plan.py": "56feb2401a04ddee9980ee2d4b7f58d7f94fcb522226ba8b3b909156fe8b4814"
+  },
+  "final_ci_and_real_corpus_and_five_fresh_auditors": "pending; not established by this file"
+}

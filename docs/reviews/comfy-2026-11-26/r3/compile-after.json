@@ -1,0 +1,2370 @@
+{
+  "kind": "Graph-free R3 compile repair retest publication projection",
+  "outcome": "REPAIR_RETEST_PASS_FOR_RECORDED_CASES",
+  "source_result_sha256": "8717e86b34f6917ff934ebb0d63044ec2ab5f4364a1e7dd11026c111b9a00db2",
+  "revision": {
+    "head_during_runs": "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090",
+    "committed_head_after_pause": "eb876cfbb8cf14de34a99b6544469460c11acc24",
+    "backend_contents_unchanged": true,
+    "current_git_status": []
+  },
+  "counts": {
+    "total": 23,
+    "exact_pass": 22,
+    "expected_safe_rejection": 1,
+    "fail": 0,
+    "type_sensitive_core_comparison": true,
+    "lora_typed_delta_and_full_graph_comparison": true,
+    "input_immutable_count": 23,
+    "core_oracles_preserved": true,
+    "lora_oracle_definitions_sha256": "6c41924f88aeff19595a8053ebdfa313acd6549ee5a94ada0006b85a6d5ba126"
+  },
+  "projection_policy": {
+    "text_and_asset_values": "Omitted; only type, length/item count and canonical value hashes retained",
+    "numeric_scalar_values": "Retained with exact JSON type and canonical hash",
+    "full_graphs_retained": false,
+    "new_product_calls": 0,
+    "new_tests": 0
+  },
+  "findings": [
+    {
+      "finding": "C1",
+      "original_severity": "High",
+      "status": "CLOSED_IN_RECORDED_CASES",
+      "conclusion": "Both generated-control and generated-style cases now match the unchanged main-only exact graph oracle; auxiliary branches untouched."
+    },
+    {
+      "finding": "C2",
+      "original_severity": "Medium",
+      "status": "CLOSED_IN_RECORDED_CASES",
+      "conclusion": "Both partial-text mirror cases match their original exact expected graph; no unrelated tag additions."
+    },
+    {
+      "finding": "C3",
+      "original_severity": "Medium",
+      "status": "CLOSED_IN_RECORDED_CASES",
+      "conclusion": "Clip-only change preserves model strength string and all other fields; controls read 0.7/0.2 in the complete-chain cross-check."
+    },
+    {
+      "finding": "C4",
+      "original_severity": "Medium",
+      "status": "CLOSED_WITH_CONSERVATIVE_BOUNDARY",
+      "conclusion": "Undeclared auxiliary output produces no prompt/width delta, warnings and missing bindings; no LoRA is falsely dead. Both groups remain read-only without a trusted route contract."
+    },
+    {
+      "finding": "C5",
+      "original_severity": "Low",
+      "status": "CLOSED_IN_RECORDED_BOUNDARY",
+      "conclusion": "Inspection returns slot_error/compilable=false; discovery and requested-LoRA compilation safely raise LibraryError. Compilation without a LoRA request remains an unchanged passthrough, not an unconditional reject-all validator."
+    },
+    {
+      "finding": "C6",
+      "original_severity": "Medium",
+      "status": "CLOSED_WITH_CONSERVATIVE_BOUNDARY",
+      "conclusion": "Real and synthetic fixed-preset sources retain original literals/preset and have empty automatic width/height bindings with ignored-value warnings. Effective size is not claimed to become the requested size; mapping the same ignored literals is not a valid remedy."
+    }
+  ],
+  "original_cases": [
+    {
+      "case": "ordinary_exact_types_and_metadata",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/canvas/inputs/batch_size",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+            "scalar": 1
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+            "scalar": 2
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/negative/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "555af2bc99e9bbc94e77eb70376a39460d7f427ec0ab92e4edab576c0ba0f864",
+            "character_count": 12
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "dff930583ccbc72fd315b89c4d163cba12083d30eb5a3c3d97bbd2ef0f0ca331",
+            "character_count": 15
+          }
+        },
+        {
+          "field_path": "/sample/inputs/cfg",
+          "old_summary": {
+            "value_type": "float",
+            "sha256": "8ab31b5afaea56114427e1f01b81d001b079a0f59539f6db3f099816ca794055",
+            "scalar": 6.0
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "4819f5315cb49422b0b21be64e48bb69c9c157cf41c6631994f931ab9fba86bd",
+            "scalar": 5.5
+          }
+        },
+        {
+          "field_path": "/sample/inputs/denoise",
+          "old_summary": {
+            "value_type": "float",
+            "sha256": "d0ff5974b6aa52cf562bea5921840c032a860a91a3512f7fe8f768f6bbe005f6",
+            "scalar": 1.0
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "1e9d7c27c8bbc8ddf0055c93e064a62fa995d177fee28cc8fa949bc8a4db06f4",
+            "scalar": 0.8
+          }
+        },
+        {
+          "field_path": "/sample/inputs/sampler_name",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "4d60ecd334f3c87d8e207460907d7d9ee3a70ffeb84f3dbb55cfdf4cedf205d5",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "e7914669ef1353e30312dc6a9548792c5e98de736aab75793ba7021df58420ab",
+            "character_count": 4
+          }
+        },
+        {
+          "field_path": "/sample/inputs/scheduler",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "82fbb169e798324839513347c048ecc9c91a6574588e1760f13d6b9650c328bf",
+            "character_count": 6
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "202edac05ccc3ac7e26f7bca60e01625b7737c15ae27fab859c53b9a501ed0ff",
+            "character_count": 6
+          }
+        },
+        {
+          "field_path": "/sample/inputs/seed",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "4523540f1504cd17100c4835e85b7eefd49911580f8efff0599a8f283be6b9e3",
+            "scalar": 17
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "25b7c81e770034aeda70db74af0fb638beca992d2a535641e6313f38b9665016",
+            "scalar": 991
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/canvas/inputs/batch_size",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+            "scalar": 1
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+            "scalar": 2
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/negative/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "555af2bc99e9bbc94e77eb70376a39460d7f427ec0ab92e4edab576c0ba0f864",
+            "character_count": 12
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "dff930583ccbc72fd315b89c4d163cba12083d30eb5a3c3d97bbd2ef0f0ca331",
+            "character_count": 15
+          }
+        },
+        {
+          "field_path": "/sample/inputs/cfg",
+          "old_summary": {
+            "value_type": "float",
+            "sha256": "8ab31b5afaea56114427e1f01b81d001b079a0f59539f6db3f099816ca794055",
+            "scalar": 6.0
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "4819f5315cb49422b0b21be64e48bb69c9c157cf41c6631994f931ab9fba86bd",
+            "scalar": 5.5
+          }
+        },
+        {
+          "field_path": "/sample/inputs/denoise",
+          "old_summary": {
+            "value_type": "float",
+            "sha256": "d0ff5974b6aa52cf562bea5921840c032a860a91a3512f7fe8f768f6bbe005f6",
+            "scalar": 1.0
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "1e9d7c27c8bbc8ddf0055c93e064a62fa995d177fee28cc8fa949bc8a4db06f4",
+            "scalar": 0.8
+          }
+        },
+        {
+          "field_path": "/sample/inputs/sampler_name",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "4d60ecd334f3c87d8e207460907d7d9ee3a70ffeb84f3dbb55cfdf4cedf205d5",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "e7914669ef1353e30312dc6a9548792c5e98de736aab75793ba7021df58420ab",
+            "character_count": 4
+          }
+        },
+        {
+          "field_path": "/sample/inputs/scheduler",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "82fbb169e798324839513347c048ecc9c91a6574588e1760f13d6b9650c328bf",
+            "character_count": 6
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "202edac05ccc3ac7e26f7bca60e01625b7737c15ae27fab859c53b9a501ed0ff",
+            "character_count": 6
+          }
+        },
+        {
+          "field_path": "/sample/inputs/seed",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "4523540f1504cd17100c4835e85b7eefd49911580f8efff0599a8f283be6b9e3",
+            "scalar": 17
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "25b7c81e770034aeda70db74af0fb638beca992d2a535641e6313f38b9665016",
+            "scalar": 991
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "sequential_refinement_preserves_second_stage",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/refine/inputs/seed",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "9400f1b21cb527d7fa3d3eabba93557a18ebe7a2ca4e471cfe5e4c5b4ca7f767",
+            "scalar": 19
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "25b7c81e770034aeda70db74af0fb638beca992d2a535641e6313f38b9665016",
+            "scalar": 991
+          }
+        },
+        {
+          "field_path": "/sample/inputs/seed",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "4523540f1504cd17100c4835e85b7eefd49911580f8efff0599a8f283be6b9e3",
+            "scalar": 17
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "25b7c81e770034aeda70db74af0fb638beca992d2a535641e6313f38b9665016",
+            "scalar": 991
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/refine/inputs/seed",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "9400f1b21cb527d7fa3d3eabba93557a18ebe7a2ca4e471cfe5e4c5b4ca7f767",
+            "scalar": 19
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "25b7c81e770034aeda70db74af0fb638beca992d2a535641e6313f38b9665016",
+            "scalar": 991
+          }
+        },
+        {
+          "field_path": "/sample/inputs/seed",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "4523540f1504cd17100c4835e85b7eefd49911580f8efff0599a8f283be6b9e3",
+            "scalar": 17
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "25b7c81e770034aeda70db74af0fb638beca992d2a535641e6313f38b9665016",
+            "scalar": 991
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "generated_control_reference_is_not_generation_stage",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "generated_style_reference_is_not_generation_stage",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "multiple_reference_mask_control_exact_targets",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/control/inputs/image",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "14a7a46fe1367049c948cdf9c968c44277349e4365a44ebdc8e56fb2facfc27a",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "dict",
+            "sha256": "72b6da8b5ee6b672cabe1ef2ffe8d23df6a1413699f1d8cfb03466a371db2cb8",
+            "item_count": 1
+          }
+        },
+        {
+          "field_path": "/mask/inputs/image",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "5db83911e89a9993463b96d09a6e094b252a24bfbd415f2817fffb1cfd1c3299",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "dict",
+            "sha256": "a80534a6f2c703de4a5c2351e4e78076113ccc46fdc574014e12184c55a4160d",
+            "item_count": 1
+          }
+        },
+        {
+          "field_path": "/ref1/inputs/image",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "53b5fe1e6b03824970117c96852f9bab679947b0da85089e2e775ce1a841897d",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "dict",
+            "sha256": "e2edaec6492fbf83d0256d38ce2451d0b0372cedb81314152a21af372c7db587",
+            "item_count": 1
+          }
+        },
+        {
+          "field_path": "/ref2/inputs/image",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "050545e7de06474dd1f43e86d2709be10949ceaadac31a99b569cf68d894499d",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "dict",
+            "sha256": "2eea274402c16d8e0951a98d44b6552a5095f8492207cc4eab945545c90751c9",
+            "item_count": 1
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/control/inputs/image",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "14a7a46fe1367049c948cdf9c968c44277349e4365a44ebdc8e56fb2facfc27a",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "dict",
+            "sha256": "72b6da8b5ee6b672cabe1ef2ffe8d23df6a1413699f1d8cfb03466a371db2cb8",
+            "item_count": 1
+          }
+        },
+        {
+          "field_path": "/mask/inputs/image",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "5db83911e89a9993463b96d09a6e094b252a24bfbd415f2817fffb1cfd1c3299",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "dict",
+            "sha256": "a80534a6f2c703de4a5c2351e4e78076113ccc46fdc574014e12184c55a4160d",
+            "item_count": 1
+          }
+        },
+        {
+          "field_path": "/ref1/inputs/image",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "53b5fe1e6b03824970117c96852f9bab679947b0da85089e2e775ce1a841897d",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "dict",
+            "sha256": "e2edaec6492fbf83d0256d38ce2451d0b0372cedb81314152a21af372c7db587",
+            "item_count": 1
+          }
+        },
+        {
+          "field_path": "/ref2/inputs/image",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "050545e7de06474dd1f43e86d2709be10949ceaadac31a99b569cf68d894499d",
+            "character_count": 5
+          },
+          "new_summary": {
+            "value_type": "dict",
+            "sha256": "2eea274402c16d8e0951a98d44b6552a5095f8492207cc4eab945545c90751c9",
+            "item_count": 1
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "coupled_selector_final_state_exact_delta",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/choice/inputs/value",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+            "scalar": 1
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+            "scalar": 2
+          }
+        },
+        {
+          "field_path": "/other_canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "a4ecdd704d258aa841bb3f9a1e3b0cafc59bd88810e542f8e7a0519809d78fe7",
+            "scalar": 448
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/other_canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "88820462180e5c893eff2ed73f4ec33e205d1cd5acc4d17fa7b2bca2495d3448",
+            "scalar": 320
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/other_text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "6b798eeb86ee6d63fa7df3aa43a810ba5f56f6558a59847ebc98ae045221f20c",
+            "character_count": 12
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/choice/inputs/value",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+            "scalar": 1
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+            "scalar": 2
+          }
+        },
+        {
+          "field_path": "/other_canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "a4ecdd704d258aa841bb3f9a1e3b0cafc59bd88810e542f8e7a0519809d78fe7",
+            "scalar": 448
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/other_canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "88820462180e5c893eff2ed73f4ec33e205d1cd5acc4d17fa7b2bca2495d3448",
+            "scalar": 320
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/other_text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "6b798eeb86ee6d63fa7df3aa43a810ba5f56f6558a59847ebc98ae045221f20c",
+            "character_count": 12
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "dynamic_selector_conservative_manual_boundary",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "scalar": 30
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "scalar": 30
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [
+        "工作流没有 height 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "工作流没有 prompt 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "工作流没有 width 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。"
+      ],
+      "warnings_differ_from_initial_audit": true,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "nested_json_pointer_types_escaping",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/sample/inputs/settings/a~1b~0c",
+          "old_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "058de5bc9a2d3f824953cbf822932797dc33480198e0ae02b27cf73760a99f90",
+            "scalar": -0.75
+          }
+        },
+        {
+          "field_path": "/sample/inputs/settings/literal/1",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce",
+            "scalar": 3
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "19581e27de7ced00ff1ce50b2047e7a567c76b1cbaebabe5ef03f7c3017bb5b7",
+            "scalar": 9
+          }
+        },
+        {
+          "field_path": "/sample/inputs/settings/switch",
+          "old_summary": {
+            "value_type": "bool",
+            "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "scalar": true
+          },
+          "new_summary": {
+            "value_type": "bool",
+            "sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "scalar": false
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/sample/inputs/settings/a~1b~0c",
+          "old_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "058de5bc9a2d3f824953cbf822932797dc33480198e0ae02b27cf73760a99f90",
+            "scalar": -0.75
+          }
+        },
+        {
+          "field_path": "/sample/inputs/settings/literal/1",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce",
+            "scalar": 3
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "19581e27de7ced00ff1ce50b2047e7a567c76b1cbaebabe5ef03f7c3017bb5b7",
+            "scalar": 9
+          }
+        },
+        {
+          "field_path": "/sample/inputs/settings/switch",
+          "old_summary": {
+            "value_type": "bool",
+            "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "scalar": true
+          },
+          "new_summary": {
+            "value_type": "bool",
+            "sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "scalar": false
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "mapping_link_rejection",
+      "status": "EXPECTED_SAFE_REJECTION",
+      "expected_delta": [],
+      "actual_delta": [],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": null,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": "BindingError"
+    },
+    {
+      "case": "output_variant_keeps_actual_closure",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/final",
+          "removed_summary": {
+            "value_type": "dict",
+            "sha256": "b63847687bca987f7c65db2b8a2d6bffed9b044e7472b20a73a370acab3a8de5",
+            "item_count": 3
+          }
+        },
+        {
+          "field_path": "/other",
+          "removed_summary": {
+            "value_type": "dict",
+            "sha256": "44df814a8efff019e54397d840e0e90c9c80d17230ebf7a4552cd135200f5a9c",
+            "item_count": 3
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/final",
+          "removed_summary": {
+            "value_type": "dict",
+            "sha256": "b63847687bca987f7c65db2b8a2d6bffed9b044e7472b20a73a370acab3a8de5",
+            "item_count": 3
+          }
+        },
+        {
+          "field_path": "/other",
+          "removed_summary": {
+            "value_type": "dict",
+            "sha256": "44df814a8efff019e54397d840e0e90c9c80d17230ebf7a4552cd135200f5a9c",
+            "item_count": 3
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "oracle_preserved": true,
+      "type_sensitive_exact_output": true,
+      "warnings": [],
+      "warnings_differ_from_initial_audit": false,
+      "source_immutable": true,
+      "rejection_type": null
+    },
+    {
+      "case": "object-partial-mirror-unrelated-tag-injection",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4,
+            "recorded_type": "float"
+          }
+        },
+        {
+          "field_path": "/stack/inputs/text",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "e85aedae51d08234d27a870c5d3a97fea3482c9ab8c6c4562c5789bde5942e25",
+            "character_count": 25,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "str",
+            "sha256": "70de6abb62580d04d7cbdc8f00740ac6337d5bcbf19eb3d584e3f84f4f25aa50",
+            "character_count": 25,
+            "recorded_type": "str"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4,
+            "recorded_type": "float"
+          }
+        },
+        {
+          "field_path": "/stack/inputs/text",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "e85aedae51d08234d27a870c5d3a97fea3482c9ab8c6c4562c5789bde5942e25",
+            "character_count": 25,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "str",
+            "sha256": "70de6abb62580d04d7cbdc8f00740ac6337d5bcbf19eb3d584e3f84f4f25aa50",
+            "character_count": 25,
+            "recorded_type": "str"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:loras → stack:loras"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "fc41ca466d67ce17a9451174d64534b3ba334e4115a24487b34e60bad79d081b",
+      "source_hash_after": "fc41ca466d67ce17a9451174d64534b3ba334e4115a24487b34e60bad79d081b",
+      "document_hash_before": "31f4c041b9f8027c2cfc27df578c63db92ca3e242728bac1bde4e0a26c0495d5",
+      "document_hash_after": "31f4c041b9f8027c2cfc27df578c63db92ca3e242728bac1bde4e0a26c0495d5",
+      "expected_output_hash": "8412709c469684b874a050e3ba4d85127be3bee5205b8e4a25ac12a2b615a3a5",
+      "actual_output_hash": "8412709c469684b874a050e3ba4d85127be3bee5205b8e4a25ac12a2b615a3a5"
+    },
+    {
+      "case": "object-two-text-mirrors-must-not-copy-cross-field-tags",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4,
+            "recorded_type": "float"
+          }
+        },
+        {
+          "field_path": "/stack/inputs/text",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "ef40c6f7e947123b4fc46bd99446273d7e49e93c5feb68b1294341e174c3f205",
+            "character_count": 19,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "str",
+            "sha256": "e633f7c2660aa0a2bf7c5c467a5d5bf4796439897e2d509445ca17df2af27307",
+            "character_count": 19,
+            "recorded_type": "str"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4,
+            "recorded_type": "float"
+          }
+        },
+        {
+          "field_path": "/stack/inputs/text",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "ef40c6f7e947123b4fc46bd99446273d7e49e93c5feb68b1294341e174c3f205",
+            "character_count": 19,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "str",
+            "sha256": "e633f7c2660aa0a2bf7c5c467a5d5bf4796439897e2d509445ca17df2af27307",
+            "character_count": 19,
+            "recorded_type": "str"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:loras → stack:loras"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "5583d4c1f56525a5406f225401a41d3a4bb14c9cd93b0f28947ae65879819660",
+      "source_hash_after": "5583d4c1f56525a5406f225401a41d3a4bb14c9cd93b0f28947ae65879819660",
+      "document_hash_before": "fd630debea1b1f561d7120bf2ab92a76df22f7d84dccc476699b45a1424c0954",
+      "document_hash_after": "fd630debea1b1f561d7120bf2ab92a76df22f7d84dccc476699b45a1424c0954",
+      "expected_output_hash": "a07f918a5f02de7a081dd46920f97af4fba13465041623f1e2e9925906e1a6df",
+      "actual_output_hash": "a07f918a5f02de7a081dd46920f97af4fba13465041623f1e2e9925906e1a6df"
+    },
+    {
+      "case": "object-tag-already-duplicated-extra-preserved",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4,
+            "recorded_type": "float"
+          }
+        },
+        {
+          "field_path": "/stack/inputs/text",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "039fb66ff6ecf7a03aab588c4d466ab202766a33c494c5608fcdbd678ee17c43",
+            "character_count": 35,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "str",
+            "sha256": "3b7ddf4df557dcf3a8a27a62de59b822b3c203160005a46871d2ccba2e906667",
+            "character_count": 35,
+            "recorded_type": "str"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4,
+            "recorded_type": "float"
+          }
+        },
+        {
+          "field_path": "/stack/inputs/text",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "039fb66ff6ecf7a03aab588c4d466ab202766a33c494c5608fcdbd678ee17c43",
+            "character_count": 35,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "str",
+            "sha256": "3b7ddf4df557dcf3a8a27a62de59b822b3c203160005a46871d2ccba2e906667",
+            "character_count": 35,
+            "recorded_type": "str"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:loras → stack:loras"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "3a41728dc69e6ac061665b4e2938fdd60aea1edb646dc177c1e4d0bce724028c",
+      "source_hash_after": "3a41728dc69e6ac061665b4e2938fdd60aea1edb646dc177c1e4d0bce724028c",
+      "document_hash_before": "225cf2608a42cbb584f6931e92fa2b9451813c8470a09485e1830df75ba2b759",
+      "document_hash_after": "225cf2608a42cbb584f6931e92fa2b9451813c8470a09485e1830df75ba2b759",
+      "expected_output_hash": "3b01a507d88dc11f3ff130f0d2904cc0515c8f4c26cb5b1c85b74f51878310f1",
+      "actual_output_hash": "3b01a507d88dc11f3ff130f0d2904cc0515c8f4c26cb5b1c85b74f51878310f1"
+    },
+    {
+      "case": "object-unrelated-tag-only-untouched",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:loras → stack:loras"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "634bb3e6d71e1ed5a786923354130afb04d4db48e5c1c267c2c98a3ad250feca",
+      "source_hash_after": "634bb3e6d71e1ed5a786923354130afb04d4db48e5c1c267c2c98a3ad250feca",
+      "document_hash_before": "3bff136140d0394a118702223a376f97f59a0bf00f5d0e47dd9d3dab557d5ffe",
+      "document_hash_after": "3bff136140d0394a118702223a376f97f59a0bf00f5d0e47dd9d3dab557d5ffe",
+      "expected_output_hash": "21e542a8ccad4d5dcee9133fefcdcc27129476a863e8b4041e08308b24b2e182",
+      "actual_output_hash": "21e542a8ccad4d5dcee9133fefcdcc27129476a863e8b4041e08308b24b2e182"
+    },
+    {
+      "case": "flat-zero-index-negative-duplicate-pin",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/clip_strength1",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "c18852d643e684c3a065f8479bdeef8576925fc67efb0cd70dd91156c9dea6dd",
+            "scalar": -0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "aad7122c106c4e63bb532bd4b2489c3ea59a80498aeb684882df77fcf101c03d",
+            "scalar": -0.123456789,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/clip_strength1",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "c18852d643e684c3a065f8479bdeef8576925fc67efb0cd70dd91156c9dea6dd",
+            "scalar": -0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "aad7122c106c4e63bb532bd4b2489c3ea59a80498aeb684882df77fcf101c03d",
+            "scalar": -0.123456789,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:lora0 → stack:lora0"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "72c09578e323fb6dfefbcb286703576cd5f33d5df41d4638d6111a8cfb743d1a",
+      "source_hash_after": "72c09578e323fb6dfefbcb286703576cd5f33d5df41d4638d6111a8cfb743d1a",
+      "document_hash_before": "46d32c994ee57fcf8d378c77f9e372169408781cc4060d0f242661e806c7325f",
+      "document_hash_after": "46d32c994ee57fcf8d378c77f9e372169408781cc4060d0f242661e806c7325f",
+      "expected_output_hash": "04a1d44ef612d34c982436cefd94b3fc4c5c5cca29640c8ae44ad29b4462a591",
+      "actual_output_hash": "04a1d44ef612d34c982436cefd94b3fc4c5c5cca29640c8ae44ad29b4462a591"
+    },
+    {
+      "case": "flat-sparse-removal-keeps-later-place",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/enabled_03",
+          "before_summary": {
+            "value_type": "bool",
+            "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "scalar": true,
+            "recorded_type": "bool"
+          },
+          "after_summary": {
+            "value_type": "bool",
+            "sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "scalar": false,
+            "recorded_type": "bool"
+          }
+        },
+        {
+          "field_path": "/stack/inputs/strength_03",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "2442e25873b52d89049090612f04a1584f03430f75d166e946ea1fad75dd1f54",
+            "scalar": -0.123,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "int",
+            "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+            "scalar": 0,
+            "recorded_type": "int"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/enabled_03",
+          "before_summary": {
+            "value_type": "bool",
+            "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+            "scalar": true,
+            "recorded_type": "bool"
+          },
+          "after_summary": {
+            "value_type": "bool",
+            "sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "scalar": false,
+            "recorded_type": "bool"
+          }
+        },
+        {
+          "field_path": "/stack/inputs/strength_03",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "2442e25873b52d89049090612f04a1584f03430f75d166e946ea1fad75dd1f54",
+            "scalar": -0.123,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "int",
+            "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+            "scalar": 0,
+            "recorded_type": "int"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:lora_name_01 → stack:lora_name_01"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "b7ab908729c1137b88b5589ae8e0f35de7bb980c5636aaf280f3533f81bfa9a0",
+      "source_hash_after": "b7ab908729c1137b88b5589ae8e0f35de7bb980c5636aaf280f3533f81bfa9a0",
+      "document_hash_before": "d557aeec6b5ab690f0e3b7ef1b7db64b6aaf839ce2b26da072cb6e80a09ac479",
+      "document_hash_after": "d557aeec6b5ab690f0e3b7ef1b7db64b6aaf839ce2b26da072cb6e80a09ac479",
+      "expected_output_hash": "9717ae7a48d2497a48cfddbacb5f8ba9dd770ad360b4f2eefe3967c519c7b982",
+      "actual_output_hash": "9717ae7a48d2497a48cfddbacb5f8ba9dd770ad360b4f2eefe3967c519c7b982"
+    },
+    {
+      "case": "power-clip-only-preserves-neighbor-types",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/lora_07/strengthTwo",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "d0ff5974b6aa52cf562bea5921840c032a860a91a3512f7fe8f768f6bbe005f6",
+            "scalar": 1.0,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3b69db667ffd1c8229ec0229a5640b96243394fd0e5886c5c5c8feed84c8f1c8",
+            "scalar": -0.3456789,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/lora_07/strengthTwo",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "d0ff5974b6aa52cf562bea5921840c032a860a91a3512f7fe8f768f6bbe005f6",
+            "scalar": 1.0,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3b69db667ffd1c8229ec0229a5640b96243394fd0e5886c5c5c8feed84c8f1c8",
+            "scalar": -0.3456789,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:lora_07 → stack:lora_07"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "203cb7eecb83c064b5f85d7dc4059dfdc79f31668fa2fb50c52ed6b3cdaeaeed",
+      "source_hash_after": "203cb7eecb83c064b5f85d7dc4059dfdc79f31668fa2fb50c52ed6b3cdaeaeed",
+      "document_hash_before": "ac751216547deb976e5f276049196ce18c1d6f530eaa73f8348a151fa5e42a93",
+      "document_hash_after": "ac751216547deb976e5f276049196ce18c1d6f530eaa73f8348a151fa5e42a93",
+      "expected_output_hash": "b394caa3c3eb32e39746209fc40015d387454d76ee4ddb6548c0b6bdd64c8768",
+      "actual_output_hash": "b394caa3c3eb32e39746209fc40015d387454d76ee4ddb6548c0b6bdd64c8768"
+    },
+    {
+      "case": "object-wrapped-no-mirror-partial-precise",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/loras/__value__/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "25f51e965c8950a9330c19b74b3be36cf425b06ac3183ff4c781cb5f90145d60",
+            "scalar": -0.2,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/loras/__value__/0/strength",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "25f51e965c8950a9330c19b74b3be36cf425b06ac3183ff4c781cb5f90145d60",
+            "scalar": -0.2,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:loras → stack:loras"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "05ddb909c7be4e092a683e0fbedcbd78855af3e4d33a039fdc59d57c7e6cd7aa",
+      "source_hash_after": "05ddb909c7be4e092a683e0fbedcbd78855af3e4d33a039fdc59d57c7e6cd7aa",
+      "document_hash_before": "b0077e1b8def09efc296a0248d4c4c13e65db4cb31fb5471dfa8e982f4ab44f1",
+      "document_hash_after": "b0077e1b8def09efc296a0248d4c4c13e65db4cb31fb5471dfa8e982f4ab44f1",
+      "expected_output_hash": "f5d6f4fa515cb836f7653dcab0d7a7037ea7b1a51e22d8a0c3aa47ada16df151",
+      "actual_output_hash": "f5d6f4fa515cb836f7653dcab0d7a7037ea7b1a51e22d8a0c3aa47ada16df151"
+    },
+    {
+      "case": "chain-modelonly-partial-precise",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/strength_model",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "25f51e965c8950a9330c19b74b3be36cf425b06ac3183ff4c781cb5f90145d60",
+            "scalar": -0.2,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/strength_model",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "25f51e965c8950a9330c19b74b3be36cf425b06ac3183ff4c781cb5f90145d60",
+            "scalar": -0.2,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:lora_name → stack:lora_name"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "d01b5758ce100a6af2da04ee21f47f0db750690a94ffceb2ed7a1ac73cec8047",
+      "source_hash_after": "d01b5758ce100a6af2da04ee21f47f0db750690a94ffceb2ed7a1ac73cec8047",
+      "document_hash_before": "9461da1476e7cb802f9c6a6906a674cf2c9d3aceaef2c2a9db8043a1bf555c29",
+      "document_hash_after": "9461da1476e7cb802f9c6a6906a674cf2c9d3aceaef2c2a9db8043a1bf555c29",
+      "expected_output_hash": "977cbcff76dac956c084033b06b152ae7f09a9175b293dcf20ab07cf7b34fba8",
+      "actual_output_hash": "977cbcff76dac956c084033b06b152ae7f09a9175b293dcf20ab07cf7b34fba8"
+    },
+    {
+      "case": "chain-model-clip-only-preserves-model-typed-value",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/strength_clip",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "25f51e965c8950a9330c19b74b3be36cf425b06ac3183ff4c781cb5f90145d60",
+            "scalar": -0.2,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/strength_clip",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "25f51e965c8950a9330c19b74b3be36cf425b06ac3183ff4c781cb5f90145d60",
+            "scalar": -0.2,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:lora_name → stack:lora_name"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "afa362fb75b9bc31fc3a9a808a54b35020a9cf414e5e0c836800ba7a47a4306a",
+      "source_hash_after": "afa362fb75b9bc31fc3a9a808a54b35020a9cf414e5e0c836800ba7a47a4306a",
+      "document_hash_before": "c4e32d1914720a1152b14420580b72d082d24cb8951ce4f0afa67ce0872a243c",
+      "document_hash_after": "c4e32d1914720a1152b14420580b72d082d24cb8951ce4f0afa67ce0872a243c",
+      "expected_output_hash": "fa80a6b7dc3c66094b9cd32aa0488572545008193e09491cc0fbcc282071baca",
+      "actual_output_hash": "fa80a6b7dc3c66094b9cd32aa0488572545008193e09491cc0fbcc282071baca"
+    },
+    {
+      "case": "chain-numeric-string-weight-clip-only-preserves-model",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/strength_clip",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "10bc5b531aad39c3e0fd9d39a5ee42c5c0ac8ae526692a806aa6995c3bdec961",
+            "character_count": 3,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/strength_clip",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "10bc5b531aad39c3e0fd9d39a5ee42c5c0ac8ae526692a806aa6995c3bdec961",
+            "character_count": 3,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:lora_name → stack:lora_name"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "46b0536ceb34f798462623cbdeaeefbeaa217a7555d8813013b0e541c27bd9bb",
+      "source_hash_after": "46b0536ceb34f798462623cbdeaeefbeaa217a7555d8813013b0e541c27bd9bb",
+      "document_hash_before": "7653d31be4ec7f33b3a2ab3156e843c0c87bd69e478af7a731243c9b26da2dee",
+      "document_hash_after": "7653d31be4ec7f33b3a2ab3156e843c0c87bd69e478af7a731243c9b26da2dee",
+      "expected_output_hash": "75a06d0027e6dd115af9d37b66ff11217af284be7d378e6c7b8af38cbbc30661",
+      "actual_output_hash": "75a06d0027e6dd115af9d37b66ff11217af284be7d378e6c7b8af38cbbc30661"
+    },
+    {
+      "case": "flat-numeric-string-neighbor-remains-exact",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/clip_strength_1",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "10bc5b531aad39c3e0fd9d39a5ee42c5c0ac8ae526692a806aa6995c3bdec961",
+            "character_count": 3,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/clip_strength_1",
+          "before_summary": {
+            "value_type": "str",
+            "sha256": "10bc5b531aad39c3e0fd9d39a5ee42c5c0ac8ae526692a806aa6995c3bdec961",
+            "character_count": 3,
+            "recorded_type": "str"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:lora_name_1 → stack:lora_name_1"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "1090ff8a1dfc9de35f514d890e2e4aad0684d6711f1c5a7ea5be98f9c666a851",
+      "source_hash_after": "1090ff8a1dfc9de35f514d890e2e4aad0684d6711f1c5a7ea5be98f9c666a851",
+      "document_hash_before": "e74621d3e6dc44148c438f0e191a58ac09385f252be091dfa72ef904c5acb2e0",
+      "document_hash_after": "e74621d3e6dc44148c438f0e191a58ac09385f252be091dfa72ef904c5acb2e0",
+      "expected_output_hash": "e27f9f4af7532cb9037b304e238b0d369d0de36375d466d0c6c56c76efe0c540",
+      "actual_output_hash": "e27f9f4af7532cb9037b304e238b0d369d0de36375d466d0c6c56c76efe0c540"
+    },
+    {
+      "case": "advanced-mode-only-edits-active-weights",
+      "status": "EXACT_PASS",
+      "expected_delta": [
+        {
+          "field_path": "/stack/inputs/model_str_1",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/model_str_1",
+          "before_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7,
+            "recorded_type": "float"
+          },
+          "after_summary": {
+            "value_type": "float",
+            "sha256": "3f4e105e025cd950d864c9723aa619c7c2839377ba97959d43b06e9102d72d4d",
+            "scalar": -0.234567891,
+            "recorded_type": "float"
+          }
+        }
+      ],
+      "unexpected_delta": [],
+      "warnings": [
+        "写入 LoRA origin:stack:lora_name_1 → stack:lora_name_1"
+      ],
+      "source_immutable": true,
+      "controls_immutable": true,
+      "source_hash_before": "e375063ad6f6422412e6e3171cade5cc85ef8312cfc835812d374c8c4037eb17",
+      "source_hash_after": "e375063ad6f6422412e6e3171cade5cc85ef8312cfc835812d374c8c4037eb17",
+      "document_hash_before": "10e7efacdde6ac7a946efd1c504ed54e6b23fa70d145c80049aff330d133794d",
+      "document_hash_after": "10e7efacdde6ac7a946efd1c504ed54e6b23fa70d145c80049aff330d133794d",
+      "expected_output_hash": "2b8e21bd91224f3a745dc8f2c8aa745cf246e5af052ca49ba1d22fca14d54f69",
+      "actual_output_hash": "2b8e21bd91224f3a745dc8f2c8aa745cf246e5af052ca49ba1d22fca14d54f69"
+    }
+  ],
+  "cross_checks": [
+    {
+      "case": "generated_reference_control",
+      "actual_delta": [
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "warnings": [],
+      "immutable": true,
+      "warning_count": 0
+    },
+    {
+      "case": "generated_reference_style",
+      "actual_delta": [
+        {
+          "field_path": "/canvas/inputs/height",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "62f6d46c48c7d9ff3d09a408d0ec880f167a5dc9c8fd343a4e56e96318349583",
+            "scalar": 896
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "e39eef82f61b21e2e7f762fcc4307358f165757f2e77ec855d6992f7e0191932",
+            "scalar": 1024
+          }
+        },
+        {
+          "field_path": "/canvas/inputs/width",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "3f1bb7c0da3c01e685edd592f3a3ca0b149a399d25b97c0da47118c24a39f59a",
+            "scalar": 640
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "f7b856c054de7ccced087ad4f9413380ec494e40abc818b840aaad990ca3c5bc",
+            "scalar": 768
+          }
+        },
+        {
+          "field_path": "/sample/inputs/steps",
+          "old_summary": {
+            "value_type": "int",
+            "sha256": "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+            "scalar": 20
+          },
+          "new_summary": {
+            "value_type": "int",
+            "sha256": "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+            "scalar": 28
+          }
+        },
+        {
+          "field_path": "/text/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "2c1be832d899aaa156c146764de6fe4805f6cd1a7e341a7fb200b442c6c5805d",
+            "character_count": 10
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "b460b796951b8a4e427db8d63213aa6b462315ad6832ac70ef44582ba800a64f",
+            "character_count": 13
+          }
+        }
+      ],
+      "warnings": [],
+      "immutable": true,
+      "warning_count": 0
+    },
+    {
+      "case": "auxiliary_selector_output_crosscheck",
+      "actual_delta": [],
+      "warnings": [
+        "工作流没有 prompt 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "工作流没有 width 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。"
+      ],
+      "expected_delta": [],
+      "immutable": true,
+      "direct_route_reason": "undeclared-output-port",
+      "compilable": true,
+      "missing": [
+        "prompt",
+        "negative",
+        "seed",
+        "width",
+        "height"
+      ]
+    },
+    {
+      "case": "auxiliary_selector_lora_reachability_crosscheck",
+      "actual_delta": [],
+      "warnings": [],
+      "direct_route_reason": "undeclared-output-port",
+      "dead": []
+    },
+    {
+      "case": "object_partial_text_mirror_crosscheck",
+      "actual_delta": [
+        {
+          "field_path": "/stack/inputs/loras/0/strength",
+          "old_summary": {
+            "value_type": "float",
+            "sha256": "973b372a514f91db8219fef585cdf81b09196afd7948f5fb1e29c2016dd995a0",
+            "scalar": 0.7
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4
+          }
+        },
+        {
+          "field_path": "/stack/inputs/text",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "ea84d0f855563a5e55409639f7e1bf82a77dfb03f01c74a97278c04c0e50119b",
+            "character_count": 31
+          },
+          "new_summary": {
+            "value_type": "str",
+            "sha256": "dc257498cd71edff3ec8681e1a674b7ed18c35015dbef5e5ce3000d159ce9c58",
+            "character_count": 31
+          }
+        }
+      ],
+      "warnings": [
+        "写入 LoRA origin:stack:loras → stack:loras"
+      ],
+      "immutable": true,
+      "expected_text_summary": {
+        "value_type": "str",
+        "sha256": "dc257498cd71edff3ec8681e1a674b7ed18c35015dbef5e5ce3000d159ce9c58",
+        "character_count": 31
+      },
+      "actual_text_summary": {
+        "value_type": "str",
+        "sha256": "dc257498cd71edff3ec8681e1a674b7ed18c35015dbef5e5ce3000d159ce9c58",
+        "character_count": 31
+      }
+    },
+    {
+      "case": "accepted_numeric_string_chain_crosscheck",
+      "actual_delta": [
+        {
+          "field_path": "/lora/inputs/strength_clip",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "10bc5b531aad39c3e0fd9d39a5ee42c5c0ac8ae526692a806aa6995c3bdec961",
+            "character_count": 3
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4
+          }
+        }
+      ],
+      "warnings": [],
+      "expected_delta": [
+        {
+          "field_path": "/lora/inputs/strength_clip",
+          "old_summary": {
+            "value_type": "str",
+            "sha256": "10bc5b531aad39c3e0fd9d39a5ee42c5c0ac8ae526692a806aa6995c3bdec961",
+            "character_count": 3
+          },
+          "new_summary": {
+            "value_type": "float",
+            "sha256": "c38109680f66022f4b4f568fc202ebf3aab270427fe5e8e18024af726e9c7180",
+            "scalar": -0.4
+          }
+        }
+      ],
+      "immutable": true,
+      "controls_strength": 0.7,
+      "controls_clip": 0.2
+    }
+  ],
+  "preset_boundaries": [
+    {
+      "case": "restricted_real_preset",
+      "status": "CONSERVATIVE_EMPTY_DELTA",
+      "source_dimension_scalars": {
+        "width": 64,
+        "height": 64
+      },
+      "compiled_dimension_scalars": {
+        "width": 64,
+        "height": 64
+      },
+      "unbound_dimensions": [
+        "width",
+        "height"
+      ],
+      "warnings": [
+        "工作流没有 height 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "工作流没有 width 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。"
+      ],
+      "source_immutable": true,
+      "preset_unchanged": true
+    },
+    {
+      "case": "neutral_synthetic_preset",
+      "status": "CONSERVATIVE_EMPTY_DELTA",
+      "source_dimension_scalars": {
+        "width": 64,
+        "height": 64
+      },
+      "compiled_dimension_scalars": {
+        "width": 64,
+        "height": 64
+      },
+      "unbound_dimensions": [
+        "width",
+        "height"
+      ],
+      "warnings": [
+        "工作流没有 height 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+        "工作流没有 width 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。"
+      ],
+      "source_immutable": true,
+      "preset_unchanged": true
+    }
+  ],
+  "low_boundary": {
+    "case": "malformed-object-bool-name",
+    "status": "STRUCTURED_REJECTION_AND_UNCHANGED_PASSTHROUGH_BOUNDARY",
+    "inspect_safe_rejection": true,
+    "inspection_issue_codes": [
+      {
+        "code": "slot_error",
+        "severity": "error"
+      },
+      {
+        "code": "unbound",
+        "severity": "warning"
+      },
+      {
+        "code": "unbound",
+        "severity": "warning"
+      },
+      {
+        "code": "unbound",
+        "severity": "warning"
+      },
+      {
+        "code": "unbound",
+        "severity": "warning"
+      },
+      {
+        "code": "unbound",
+        "severity": "warning"
+      },
+      {
+        "code": "dependencies_unchecked",
+        "severity": "info"
+      }
+    ],
+    "discovery_safe_rejection": true,
+    "requested_lora_safe_rejection": true,
+    "plain_passthrough_unchanged": true,
+    "source_immutable": true,
+    "source_hash_before": "55671ebecab0b2c4715fa132c728ad3d430e5dde6cdbe7e7301ba9a4fc5f93a3",
+    "source_hash_after": "55671ebecab0b2c4715fa132c728ad3d430e5dde6cdbe7e7301ba9a4fc5f93a3",
+    "document_hash_before": "648045cc7723e457e7a3bdbd5543ccc651b3ed8a67421890a2efbcd6ae0a9636",
+    "document_hash_after": "648045cc7723e457e7a3bdbd5543ccc651b3ed8a67421890a2efbcd6ae0a9636"
+  },
+  "integrity": {
+    "historical_audit_unchanged": true,
+    "historical_audit_file_count": 10,
+    "historical_audit_sha256": "42be349355510a186a1f8317cae1086b4764114dae64cc6eb9c72bbd8121f36c",
+    "backend_file_count": 455,
+    "backend_sha256": "60a60f5f80be9e58add7ecb4a0a29850921f65d3ffa6859cb0421b8fef9bb8f2",
+    "backend_manifest": "freeze-after.json",
+    "untracked_at_capture_binding_scope_sha256": "0894e62ef823241be6e6f22387766c3594da65eac1ccd43da8f949908a4dab16",
+    "real_blind_graph_sha256": "e9dcfc9336a0d31207e5cebb11ec464cc5c213e91f49a26ed31c1a5fc87b91fd"
+  },
+  "execution_policy": {
+    "product_calls_after_cpu_stop": 0,
+    "new_tests_after_cpu_stop": 0,
+    "browser_calls": 0,
+    "full_gates_run_here": false,
+    "own_probe_pids_at_pause_check": [],
+    "post_commit_product_rerun": false,
+    "evidence_only_consolidation": true
+  },
+  "not_executed_due_to_cpu_stop": [
+    "Post-commit product rerun or further repeat/expansion probes",
+    "Any further targeted test modules or full repository gates",
+    "Fresh independent Wave-4 final audit"
+  ]
+}

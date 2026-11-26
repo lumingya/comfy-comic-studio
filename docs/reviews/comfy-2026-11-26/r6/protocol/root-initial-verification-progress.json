@@ -1,0 +1,33 @@
+{
+  "schema": "mio.r6.root-initial-verification-progress.v1",
+  "source_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "roles": {
+    "compile": {
+      "sealed_files_verified": 35,
+      "mismatches": 0,
+      "seal_sha256": "5b31bad4b875696b4dca0bd439f04db9a23032a3120d817de0e847e416ee6b85"
+    },
+    "blind": {
+      "sealed_files_verified": 29,
+      "mismatches": 0,
+      "seal_sha256": "7022dd2f9cde943cff93b6e2fdc23592d588ebd8adabcfb24151286325b29f6b"
+    },
+    "generality": {
+      "sealed_files_verified": 8,
+      "mismatches": 0,
+      "seal_sha256": "9d671ba5a30e5c0bed79e43fd56648812970c207de55f922ef74e2f074212ee1"
+    },
+    "privacy": {
+      "sealed_files_verified": 12,
+      "mismatches": 0,
+      "seal_sha256": "1e88ad4f8a8fa7026b0f791625bad81ebcf4cb7d5e71ae31c0a7b100b91fa629"
+    }
+  },
+  "web_pending": true,
+  "metadata_supplement_links": {
+    "markdown_files": 3,
+    "relative_links": 6,
+    "broken_links": 0
+  },
+  "cross_authorized": false
+}

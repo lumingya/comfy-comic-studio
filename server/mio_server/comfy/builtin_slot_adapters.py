@@ -98,6 +98,9 @@ def _write_chain(graph, group, loras, notices):
 
 
 def _write_embedded(graph, group, loras, notices):
+    from .workflow_slot_values import _chain_value
+    from .workflow_slot_writers import _edit_chain
+
     slots = _slots()
     writer = group["writer"]
     active = [item for item in loras if item.get("enabled", True)]
@@ -107,15 +110,16 @@ def _write_embedded(graph, group, loras, notices):
     if not active and not descriptor["strengthPath"]:
         raise slots.LibraryError("内嵌 LoRA 没有强度字段，无法安全禁用")
     if active:
-        slots._write_field(graph, writer["nodeId"], writer["path"], active[0]["name"])
-    for path, clip in [(descriptor["strengthPath"], False), (descriptor["clipPath"], True)]:
+        _edit_chain(
+            graph,
+            descriptor,
+            _chain_value(graph[writer["nodeId"]]["inputs"], descriptor),
+            active[0],
+        )
+        return
+    for path in (descriptor["strengthPath"], descriptor["clipPath"]):
         if path:
-            strength = (
-                active[0].get("clip", active[0]["strength"])
-                if clip and active
-                else (active[0]["strength"] if active else 0)
-            )
-            slots._write_field(graph, writer["nodeId"], path, strength)
+            slots._write_field(graph, writer["nodeId"], path, 0)
 
 
 def _write_syntax(graph, group, loras, notices):

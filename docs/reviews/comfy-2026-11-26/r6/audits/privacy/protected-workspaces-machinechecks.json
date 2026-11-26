@@ -1,0 +1,42 @@
+{
+  "baseline_sha256": "6bba8b4c0f01d3bc4273a7719331b79deceaa68989e18d72dbaf932839ada61d",
+  "count": 2,
+  "results": [
+    {
+      "workspace_index": 0,
+      "mapping_verified": true,
+      "compared": true,
+      "head_matches_baseline": false,
+      "task_current_head_matches_candidate": true,
+      "status_hash_matches": true,
+      "status_records": 0,
+      "status_record_count_matches": true,
+      "unstaged_diff_hash_matches": true,
+      "staged_diff_hash_matches": true,
+      "data_count": 65,
+      "data_hash_matches": true,
+      "data_tracked_count": 65,
+      "data_tracked_count_matches": true,
+      "data_skip_count": 64,
+      "data_skip_count_matches": true
+    },
+    {
+      "workspace_index": 1,
+      "mapping_verified": true,
+      "compared": true,
+      "head_matches_baseline": false,
+      "task_current_head_matches_candidate": null,
+      "status_hash_matches": false,
+      "status_records": 1,
+      "status_record_count_matches": false,
+      "unstaged_diff_hash_matches": true,
+      "staged_diff_hash_matches": true,
+      "data_count": 65,
+      "data_hash_matches": true,
+      "data_tracked_count": 65,
+      "data_tracked_count_matches": true,
+      "data_skip_count": 64,
+      "data_skip_count_matches": true
+    }
+  ]
+}

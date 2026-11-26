@@ -1,0 +1,25 @@
+{
+  "schema": "mio.workflow.delivery.owned-process-cleanup.v1",
+  "checked_at_utc": "2026-11-26T11:16:23.1231088Z",
+  "processes": [
+    {
+      "label": "isolated_preview",
+      "root_pid": 48744,
+      "port": 8797,
+      "exact_commandline_and_listener_guard": true,
+      "descendant_snapshot_count": 2,
+      "stopped_only_snapshot_ids_with_matching_creation_time": true,
+      "listener_absent_after_stop": true
+    },
+    {
+      "label": "owned_headless_chrome",
+      "root_pid": 46124,
+      "port": 59871,
+      "exact_commandline_and_listener_guard": true,
+      "descendant_snapshot_count": 7,
+      "stopped_only_snapshot_ids_with_matching_creation_time": true,
+      "listener_absent_after_stop": true
+    }
+  ],
+  "user_browser_profile_or_comfyui_touched": false
+}

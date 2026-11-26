@@ -1,0 +1,166 @@
+{
+  "provenance": {
+    "source_head": "ed45509456b14006161d829666c466789e6a9e37",
+    "start_utc": "2026-11-26T03:40:37.150522+00:00",
+    "end_utc": "2026-11-26T03:43:54.151536+00:00",
+    "resource_guard": {
+      "pid": 8564,
+      "priority_class": 16384,
+      "verified_before_mio_import": true,
+      "python_processes": 1,
+      "available_mask_before": "0xffff",
+      "system_mask": "0xffff",
+      "affinity_mask_read_back": "0x1"
+    },
+    "source": {
+      "all_backend_python_file_count": 217,
+      "all_server_python_file_count": 404,
+      "all_backend_python_sha256": "5a5ee950ae0c972791ae17fab92978579adec7d6d419133e6eaf9eb9e649377d",
+      "all_server_python_sha256": "483fe89f5ea73cc39f5a99f4b4ebbe89a47021f1b376f47d180e971328b6f9b9"
+    },
+    "preservation": {
+      "all_sources_unchanged": true,
+      "old_artifacts_unchanged": true,
+      "old_artifact_count": 844,
+      "database_file_unchanged": true,
+      "database_sha256_before": "fceaa5521c2b65969f1cbadc57ef676aa4e6fe847f31aa8b21e451f92d6f0e49",
+      "database_sha256_after": "fceaa5521c2b65969f1cbadc57ef676aa4e6fe847f31aa8b21e451f92d6f0e49",
+      "old_artifact_aggregate_sha256": "6fe67dbd77e61a33700f814c1ebce4a4c223303f5ed9a7a34e54b17f48913e09"
+    },
+    "runs": [
+      {
+        "entry": "reprobe.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:37.853725+00:00",
+        "end_utc": "2026-11-26T03:40:42.332685+00:00"
+      },
+      {
+        "entry": "retest138.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:42.336996+00:00",
+        "end_utc": "2026-11-26T03:40:42.467684+00:00"
+      },
+      {
+        "entry": "request_evidence.py",
+        "pid": 8564,
+        "completed": false,
+        "error_type": "RuntimeError",
+        "start_utc": "2026-11-26T03:40:42.473274+00:00",
+        "end_utc": "2026-11-26T03:40:42.640136+00:00"
+      },
+      {
+        "entry": "probe.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:42.643127+00:00",
+        "end_utc": "2026-11-26T03:40:43.438592+00:00"
+      },
+      {
+        "entry": "replay_fixed138.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:43.440205+00:00",
+        "end_utc": "2026-11-26T03:40:44.262366+00:00"
+      },
+      {
+        "entry": "check_manual_boundaries.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:44.268009+00:00",
+        "end_utc": "2026-11-26T03:40:44.363892+00:00"
+      },
+      {
+        "entry": "retest.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:44.365597+00:00",
+        "end_utc": "2026-11-26T03:40:47.401571+00:00"
+      },
+      {
+        "entry": "probe.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:47.407953+00:00",
+        "end_utc": "2026-11-26T03:40:47.672615+00:00"
+      },
+      {
+        "entry": "probe_compile.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:47.674224+00:00",
+        "end_utc": "2026-11-26T03:40:47.742854+00:00"
+      },
+      {
+        "entry": "probe_retest.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:47.743728+00:00",
+        "end_utc": "2026-11-26T03:40:47.809538+00:00"
+      },
+      {
+        "entry": "probe.py",
+        "pid": 8564,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:40:47.812547+00:00",
+        "end_utc": "2026-11-26T03:40:47.866522+00:00"
+      },
+      {
+        "entry": "request_evidence_recovered.py",
+        "pid": 40500,
+        "completed": true,
+        "error_type": null,
+        "start_utc": "2026-11-26T03:43:53.146729+00:00",
+        "end_utc": "2026-11-26T03:43:54.151536+00:00"
+      }
+    ],
+    "child_processes_started": 0,
+    "network_calls_permitted": false,
+    "baseline_replays": 0,
+    "new_acquisition": false
+  },
+  "execution_sessions": [
+    {
+      "session": "primary",
+      "pid": 8564,
+      "start_utc": "2026-11-26T03:40:37.150522+00:00",
+      "end_utc": "2026-11-26T03:40:48.185008+00:00",
+      "affinity_mask_read_back": "0x1",
+      "priority_class": 16384
+    },
+    {
+      "session": "failed_supplement_recovery",
+      "pid": 40500,
+      "start_utc": "2026-11-26T03:43:53.146729+00:00",
+      "end_utc": "2026-11-26T03:43:54.151536+00:00",
+      "affinity_mask_read_back": "0x1",
+      "priority_class": 16384
+    }
+  ],
+  "recovery_accounting": {
+    "original_supplement_failed": true,
+    "original_publisher_failed": true,
+    "completed_cohort_entries_replayed": 0,
+    "unpersisted_original_kind_observations_recollected": 4,
+    "unpersisted_original_marker_requests_recollected": 8,
+    "checkpoint_after_every_recovered_marker_request": true,
+    "recovery_completed": true,
+    "preservation": {
+      "all_sources_unchanged": true,
+      "old_artifacts_unchanged": true,
+      "completed_result_files_unchanged": true,
+      "database_file_unchanged": true
+    }
+  }
+}

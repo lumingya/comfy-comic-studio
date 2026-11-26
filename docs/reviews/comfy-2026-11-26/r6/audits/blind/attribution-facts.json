@@ -1,0 +1,511 @@
+{
+  "counts": {
+    "explicit_calls": 184,
+    "compile_requests": 133,
+    "success": 125,
+    "expected_rejections": 8,
+    "expected_rejections_observed": 8,
+    "typed_exact_success": 111,
+    "all_full_contract_exact_success": 109,
+    "closure_exact_success": 125,
+    "outputs_exact_success": 125,
+    "request_document_unchanged_success": 125,
+    "original_document_unchanged_all": 133,
+    "original_graph_unchanged_all": 133,
+    "change_bearing_success": 98
+  },
+  "endpoint_codes": [
+    {
+      "sample": "own-04",
+      "representation": "api",
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "unbound",
+        "unbound",
+        "ambiguous",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "diagnostic_empty_catalog": {
+        "ok": false,
+        "missing_class_count": 9,
+        "expected_missing_class_count": 9,
+        "invalid_link_count": 0
+      },
+      "candidate_count": 5,
+      "active_lora_group_count": 0,
+      "import_graph_equal": true
+    },
+    {
+      "sample": "own-06",
+      "representation": "api",
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "unbound",
+        "unbound",
+        "ambiguous",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "diagnostic_empty_catalog": {
+        "ok": false,
+        "missing_class_count": 10,
+        "expected_missing_class_count": 10,
+        "invalid_link_count": 0
+      },
+      "candidate_count": 6,
+      "active_lora_group_count": 0,
+      "import_graph_equal": true
+    },
+    {
+      "sample": "own-07",
+      "representation": "api",
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "ambiguous",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "diagnostic_empty_catalog": {
+        "ok": false,
+        "missing_class_count": 17,
+        "expected_missing_class_count": 17,
+        "invalid_link_count": 0
+      },
+      "candidate_count": 4,
+      "active_lora_group_count": 0,
+      "import_graph_equal": true
+    },
+    {
+      "sample": "own-17",
+      "representation": "api",
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "unbound",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "diagnostic_empty_catalog": {
+        "ok": false,
+        "missing_class_count": 16,
+        "expected_missing_class_count": 16,
+        "invalid_link_count": 0
+      },
+      "candidate_count": 13,
+      "active_lora_group_count": 0,
+      "import_graph_equal": true
+    },
+    {
+      "sample": "api002",
+      "representation": "api",
+      "issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "diagnostic_empty_catalog": {
+        "ok": false,
+        "missing_class_count": 10,
+        "expected_missing_class_count": 10,
+        "invalid_link_count": 0
+      },
+      "candidate_count": 2,
+      "active_lora_group_count": 0,
+      "import_graph_equal": true
+    },
+    {
+      "sample": "final-01",
+      "representation": "api",
+      "issue_codes": [
+        "unbound",
+        "unbound",
+        "unbound",
+        "unbound",
+        "ambiguous",
+        "ambiguous",
+        "dependencies_unchecked"
+      ],
+      "diagnostic_empty_catalog": {
+        "ok": false,
+        "missing_class_count": 18,
+        "expected_missing_class_count": 18,
+        "invalid_link_count": 0
+      },
+      "candidate_count": 10,
+      "active_lora_group_count": 1,
+      "import_graph_equal": true
+    },
+    {
+      "sample": "com-01",
+      "representation": "ui",
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "diagnostic_empty_catalog": null,
+      "candidate_count": 0,
+      "active_lora_group_count": null,
+      "import_graph_equal": null
+    },
+    {
+      "sample": "com-02",
+      "representation": "ui",
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "diagnostic_empty_catalog": null,
+      "candidate_count": 0,
+      "active_lora_group_count": null,
+      "import_graph_equal": null
+    },
+    {
+      "sample": "com-06",
+      "representation": "ui",
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "diagnostic_empty_catalog": null,
+      "candidate_count": 0,
+      "active_lora_group_count": null,
+      "import_graph_equal": null
+    },
+    {
+      "sample": "com-08",
+      "representation": "ui",
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "diagnostic_empty_catalog": null,
+      "candidate_count": 0,
+      "active_lora_group_count": null,
+      "import_graph_equal": null
+    },
+    {
+      "sample": "own-02",
+      "representation": "ui",
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "diagnostic_empty_catalog": null,
+      "candidate_count": 0,
+      "active_lora_group_count": null,
+      "import_graph_equal": null
+    },
+    {
+      "sample": "own-12",
+      "representation": "ui",
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "diagnostic_empty_catalog": null,
+      "candidate_count": 0,
+      "active_lora_group_count": null,
+      "import_graph_equal": null
+    },
+    {
+      "sample": "last-03",
+      "representation": "ui",
+      "issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ],
+      "diagnostic_empty_catalog": null,
+      "candidate_count": 0,
+      "active_lora_group_count": null,
+      "import_graph_equal": null
+    }
+  ],
+  "warnings": [
+    {
+      "id": "own-04-automatic-003",
+      "kind": "automatic",
+      "role": "prompt",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 48,
+          "sha256": "5c32db4c31c8085b28cde88850c54686572a6f90039203338916cad38f230856"
+        }
+      ]
+    },
+    {
+      "id": "own-04-automatic-005",
+      "kind": "automatic",
+      "role": "negative",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 50,
+          "sha256": "a0465be8e2dc5ccbc3ff19f4c4357e4476271b3ccbba06bb3608e16f5ee9b825"
+        }
+      ]
+    },
+    {
+      "id": "own-06-automatic-022",
+      "kind": "automatic",
+      "role": "prompt",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 48,
+          "sha256": "5c32db4c31c8085b28cde88850c54686572a6f90039203338916cad38f230856"
+        }
+      ]
+    },
+    {
+      "id": "own-06-automatic-024",
+      "kind": "automatic",
+      "role": "negative",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 50,
+          "sha256": "a0465be8e2dc5ccbc3ff19f4c4357e4476271b3ccbba06bb3608e16f5ee9b825"
+        }
+      ]
+    },
+    {
+      "id": "own-06-automatic-027",
+      "kind": "automatic",
+      "role": "width",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 47,
+          "sha256": "374d80a1d12d5173c1d58fdf17513ac83a8c5c5011cab7d9554be163784bfc21"
+        }
+      ]
+    },
+    {
+      "id": "own-06-automatic-029",
+      "kind": "automatic",
+      "role": "height",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 48,
+          "sha256": "6ceffc1d9ba4c96f37b9e7a5dd7e5d10f72630a7177f0af27deb1945e3eb50e9"
+        }
+      ]
+    },
+    {
+      "id": "own-06-automatic-031",
+      "kind": "automatic",
+      "role": "batch",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 47,
+          "sha256": "f3cf26f322a6d58b38b03467cfbb0321c5e6b7d97cec9cdb098595f60d8c532a"
+        }
+      ]
+    },
+    {
+      "id": "own-17-conservative-058",
+      "kind": "conservative",
+      "role": "prompt",
+      "classes": []
+    },
+    {
+      "id": "own-17-automatic-063",
+      "kind": "automatic",
+      "role": "width",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 47,
+          "sha256": "374d80a1d12d5173c1d58fdf17513ac83a8c5c5011cab7d9554be163784bfc21"
+        }
+      ]
+    },
+    {
+      "id": "own-17-automatic-065",
+      "kind": "automatic",
+      "role": "height",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 48,
+          "sha256": "6ceffc1d9ba4c96f37b9e7a5dd7e5d10f72630a7177f0af27deb1945e3eb50e9"
+        }
+      ]
+    },
+    {
+      "id": "own-17-automatic-067",
+      "kind": "automatic",
+      "role": "batch",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 47,
+          "sha256": "f3cf26f322a6d58b38b03467cfbb0321c5e6b7d97cec9cdb098595f60d8c532a"
+        }
+      ]
+    },
+    {
+      "id": "own-17-automatic-073",
+      "kind": "automatic",
+      "role": "denoise",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 49,
+          "sha256": "feaa3e900ccd679e25df85d6cfd34c0c6d41f855174c82d06066938d48f6ed9e"
+        }
+      ]
+    },
+    {
+      "id": "final-01-automatic-113",
+      "kind": "automatic",
+      "role": "width",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 47,
+          "sha256": "374d80a1d12d5173c1d58fdf17513ac83a8c5c5011cab7d9554be163784bfc21"
+        }
+      ]
+    },
+    {
+      "id": "final-01-automatic-115",
+      "kind": "automatic",
+      "role": "height",
+      "classes": [
+        {
+          "category": "unbound-value-ignored-with-manual-guidance",
+          "length": 48,
+          "sha256": "6ceffc1d9ba4c96f37b9e7a5dd7e5d10f72630a7177f0af27deb1945e3eb50e9"
+        }
+      ]
+    },
+    {
+      "id": "final-01-lora-negative",
+      "kind": "lora-negative",
+      "role": "lora",
+      "classes": [
+        {
+          "category": "lora-write-notice",
+          "length": 40,
+          "sha256": "33328e55fab0b5286d0d6940fd3a811f483c6de1764f14c65623091d3d0b1b47"
+        }
+      ]
+    },
+    {
+      "id": "final-01-lora-disabled",
+      "kind": "lora-disabled",
+      "role": "lora",
+      "classes": [
+        {
+          "category": "lora-write-notice",
+          "length": 40,
+          "sha256": "33328e55fab0b5286d0d6940fd3a811f483c6de1764f14c65623091d3d0b1b47"
+        }
+      ]
+    }
+  ],
+  "warning_category_counts": {
+    "unbound-value-ignored-with-manual-guidance": 13,
+    "lora-write-notice": 2
+  },
+  "text_candidate_pointers": [
+    {
+      "sample": "own-04",
+      "candidates": [
+        {
+          "role": "prompt",
+          "pointer": "/5/inputs/text"
+        },
+        {
+          "role": "negative",
+          "pointer": "/5/inputs/text"
+        },
+        {
+          "role": "prompt",
+          "pointer": "/6/inputs/text"
+        },
+        {
+          "role": "negative",
+          "pointer": "/6/inputs/text"
+        }
+      ]
+    },
+    {
+      "sample": "own-06",
+      "candidates": [
+        {
+          "role": "prompt",
+          "pointer": "/5/inputs/text"
+        },
+        {
+          "role": "negative",
+          "pointer": "/5/inputs/text"
+        },
+        {
+          "role": "prompt",
+          "pointer": "/6/inputs/text"
+        },
+        {
+          "role": "negative",
+          "pointer": "/6/inputs/text"
+        }
+      ]
+    },
+    {
+      "sample": "own-07",
+      "candidates": [
+        {
+          "role": "prompt",
+          "pointer": "/6/inputs/text"
+        },
+        {
+          "role": "negative",
+          "pointer": "/6/inputs/text"
+        },
+        {
+          "role": "prompt",
+          "pointer": "/7/inputs/text"
+        },
+        {
+          "role": "negative",
+          "pointer": "/7/inputs/text"
+        }
+      ]
+    },
+    {
+      "sample": "own-17",
+      "candidates": []
+    },
+    {
+      "sample": "api002",
+      "candidates": []
+    },
+    {
+      "sample": "final-01",
+      "candidates": [
+        {
+          "role": "prompt",
+          "pointer": "/9/inputs/prompt"
+        },
+        {
+          "role": "negative",
+          "pointer": "/9/inputs/prompt"
+        },
+        {
+          "role": "prompt",
+          "pointer": "/10/inputs/prompt"
+        },
+        {
+          "role": "negative",
+          "pointer": "/10/inputs/prompt"
+        }
+      ]
+    }
+  ]
+}

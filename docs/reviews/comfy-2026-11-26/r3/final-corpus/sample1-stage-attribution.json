@@ -1,0 +1,382 @@
+{
+  "source_revision": "3e994bb80794dea7be9773f5cb9c47119bf34c27",
+  "scope": "Saved-result and static-source attribution only; zero new product calls",
+  "public_sample": "stable_cascade__image_remixing_multiple.png",
+  "public_source_url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/stable_cascade/stable_cascade__image_remixing_multiple.png",
+  "source_file_sha256": "57196fa33edf8bc275b20b53f201cef20913e924911ae0fe0d646e73400d49cf",
+  "original_oracle_provenance": {
+    "kind": "original pre-engine expectation manifest fixed before the original product calls",
+    "sha256": "9293cecf0989a14d883eb839110f5302cb2b69f328bdc5ce56c13e98d01e4d55",
+    "current_replay_did_not_redefine_truth": true,
+    "before_after_immutable_artifact_snapshots": "original manifest included in the recorded 721-artifact pre/post invariant set"
+  },
+  "normalized_graph_sha256": "88396eb6efcb09a42bd2336917ebaf472e0dc167ff2780e86443084f62a2bb92",
+  "neutral_node_roles": {
+    "3": "earlier sampler",
+    "33": "later sampler",
+    "34": "two-output latent source",
+    "36": "earlier-stage conditioning adapter",
+    "8": "decoder",
+    "9": "image sink"
+  },
+  "observed_graph_edges": [
+    {
+      "source_node": "8",
+      "source_output": 0,
+      "consumer_node": "9",
+      "consumer_port": "images"
+    },
+    {
+      "source_node": "33",
+      "source_output": 0,
+      "consumer_node": "8",
+      "consumer_port": "samples"
+    },
+    {
+      "source_node": "34",
+      "source_output": 1,
+      "consumer_node": "33",
+      "consumer_port": "latent_image"
+    },
+    {
+      "source_node": "34",
+      "source_output": 0,
+      "consumer_node": "3",
+      "consumer_port": "latent_image"
+    },
+    {
+      "source_node": "3",
+      "source_output": 0,
+      "consumer_node": "36",
+      "consumer_port": "stage_c"
+    },
+    {
+      "source_node": "36",
+      "source_output": 0,
+      "consumer_node": "33",
+      "consumer_port": "positive"
+    }
+  ],
+  "selection_cause_static": {
+    "at_50bb_rule": "primary_sites excludes scalar-control ports, then follows all other execution dependencies. Sampler 33 reaches sampler 3 through positive -> adapter stage_c, so sampler 3 is primary.",
+    "current_rule": "binding_scope.primary_sites follows canvas roles only. The image sink reaches decoder, sampler 33, then latent source output 1. Positive is explicitly non-canvas, so sampler 3 is absent from the canvas-site set and sampler 33 is primary.",
+    "current_canvas_lineage_derived_from_source": [
+      "9",
+      "8",
+      "33",
+      "34"
+    ],
+    "current_primary_derived_from_source": [
+      "33"
+    ],
+    "derivation_limit": "primary and canvas-lineage sets are statically derived from frozen graph and source, not a new runtime measurement. The changed targets and deltas are existing runtime records.",
+    "source_locations": [
+      "server/mio_server/comfy/binding_scope.py:9",
+      "server/mio_server/comfy/binding_scope.py:27",
+      "server/mio_server/comfy/binding_scope.py:96",
+      "server/mio_server/comfy/binding_scope.py:125",
+      "server/mio_server/comfy/binding_inference.py:378"
+    ]
+  },
+  "request_records": [
+    {
+      "kind": "steps",
+      "original_truth_mode": "manual",
+      "original_truth_candidates": [
+        "/3/inputs/steps",
+        "/33/inputs/steps"
+      ],
+      "initial_observed_automatic_targets": [
+        "/3/inputs/steps"
+      ],
+      "at_50bb_observed_automatic_targets": [
+        "/3/inputs/steps"
+      ],
+      "current_observed_automatic_targets": [
+        "/33/inputs/steps"
+      ],
+      "fixed_original_request_targets": [
+        "/3/inputs/steps"
+      ],
+      "observed_changed_pointers": [
+        "/33/inputs/steps"
+      ],
+      "warning_count": 0,
+      "all_connections_equal": true,
+      "matches_fixed_original_request": false,
+      "current_manual_operations": [
+        {
+          "target": "/3/inputs/steps",
+          "changed_pointers": [
+            "/3/inputs/steps"
+          ],
+          "whole_graph_exact": true,
+          "all_connections_equal": true
+        },
+        {
+          "target": "/33/inputs/steps",
+          "changed_pointers": [
+            "/33/inputs/steps"
+          ],
+          "whole_graph_exact": true,
+          "all_connections_equal": true
+        }
+      ]
+    },
+    {
+      "kind": "cfg",
+      "original_truth_mode": "manual",
+      "original_truth_candidates": [
+        "/3/inputs/cfg",
+        "/33/inputs/cfg"
+      ],
+      "initial_observed_automatic_targets": [
+        "/3/inputs/cfg"
+      ],
+      "at_50bb_observed_automatic_targets": [
+        "/3/inputs/cfg"
+      ],
+      "current_observed_automatic_targets": [
+        "/33/inputs/cfg"
+      ],
+      "fixed_original_request_targets": [
+        "/3/inputs/cfg"
+      ],
+      "observed_changed_pointers": [
+        "/33/inputs/cfg"
+      ],
+      "warning_count": 0,
+      "all_connections_equal": true,
+      "matches_fixed_original_request": false,
+      "current_manual_operations": [
+        {
+          "target": "/3/inputs/cfg",
+          "changed_pointers": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_exact": true,
+          "all_connections_equal": true
+        },
+        {
+          "target": "/33/inputs/cfg",
+          "changed_pointers": [
+            "/33/inputs/cfg"
+          ],
+          "whole_graph_exact": true,
+          "all_connections_equal": true
+        }
+      ]
+    },
+    {
+      "kind": "sampler",
+      "original_truth_mode": "manual",
+      "original_truth_candidates": [
+        "/3/inputs/sampler_name",
+        "/33/inputs/sampler_name"
+      ],
+      "initial_observed_automatic_targets": [
+        "/3/inputs/sampler_name"
+      ],
+      "at_50bb_observed_automatic_targets": [
+        "/3/inputs/sampler_name"
+      ],
+      "current_observed_automatic_targets": [
+        "/33/inputs/sampler_name"
+      ],
+      "fixed_original_request_targets": [
+        "/3/inputs/sampler_name"
+      ],
+      "observed_changed_pointers": [
+        "/33/inputs/sampler_name"
+      ],
+      "warning_count": 0,
+      "all_connections_equal": true,
+      "matches_fixed_original_request": false,
+      "current_manual_operations": [
+        {
+          "target": "/3/inputs/sampler_name",
+          "changed_pointers": [
+            "/3/inputs/sampler_name"
+          ],
+          "whole_graph_exact": true,
+          "all_connections_equal": true
+        },
+        {
+          "target": "/33/inputs/sampler_name",
+          "changed_pointers": [
+            "/33/inputs/sampler_name"
+          ],
+          "whole_graph_exact": true,
+          "all_connections_equal": true
+        }
+      ]
+    }
+  ],
+  "other_thirteen_empty_delta_warning_records": [
+    {
+      "sample": 2,
+      "original_request_position": 5,
+      "kind": "width",
+      "expected_targets": [
+        "/34/inputs/width"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 width 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 2,
+      "original_request_position": 6,
+      "kind": "height",
+      "expected_targets": [
+        "/34/inputs/height"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 height 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 2,
+      "original_request_position": 8,
+      "kind": "steps",
+      "expected_targets": [
+        "/3/inputs/steps"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 steps 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 2,
+      "original_request_position": 11,
+      "kind": "cfg",
+      "expected_targets": [
+        "/3/inputs/cfg"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 cfg 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 2,
+      "original_request_position": 14,
+      "kind": "sampler",
+      "expected_targets": [
+        "/3/inputs/sampler_name"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 sampler 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 14,
+      "original_request_position": 5,
+      "kind": "width",
+      "expected_targets": [
+        "/4/inputs/empty_latent_width"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 width 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 14,
+      "original_request_position": 6,
+      "kind": "height",
+      "expected_targets": [
+        "/4/inputs/empty_latent_height"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 height 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 14,
+      "original_request_position": 10,
+      "kind": "steps",
+      "expected_targets": [
+        "/8/inputs/steps"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 steps 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 14,
+      "original_request_position": 13,
+      "kind": "cfg",
+      "expected_targets": [
+        "/8/inputs/cfg"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 cfg 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 14,
+      "original_request_position": 16,
+      "kind": "sampler",
+      "expected_targets": [
+        "/8/inputs/sampler_name"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 sampler 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 15,
+      "original_request_position": 7,
+      "kind": "steps",
+      "expected_targets": [
+        "/10/inputs/steps"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 steps 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 15,
+      "original_request_position": 8,
+      "kind": "cfg",
+      "expected_targets": [
+        "/10/inputs/cfg"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 cfg 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    },
+    {
+      "sample": 15,
+      "original_request_position": 9,
+      "kind": "sampler",
+      "expected_targets": [
+        "/10/inputs/sampler_name"
+      ],
+      "actual_targets": [],
+      "observed_changed_pointers": [],
+      "observed_warning": "工作流没有 sampler 的绑定，值被忽略；请配置显式标签、手动 mapping 或可信适配器。",
+      "all_connections_equal": true
+    }
+  ],
+  "unchanged_evidence": {
+    "baseline_retained_node_count": 16,
+    "baseline_pruned_node_count": 0,
+    "baseline_original_node_values_equal": true,
+    "source_graph_snapshot_equal": true,
+    "source_document_deep_snapshot_equal": true,
+    "source_file_bytes_equal": true
+  },
+  "conclusion": "Observed automatic writes really retarget from the earlier sampler to a distinct later sampler. This is not merely an oracle-label difference. However, the original pre-engine oracle required manual selection of either stage, so the historical automatic earlier-stage write was not an approved automatic contract either. Both versions fail the unchanged manual oracle; the current three automatic writes have no warning. Preserve both the fixed-request failure and the manual-oracle failure for independent review, without treating this as a safe boundary or editing truth."
+}

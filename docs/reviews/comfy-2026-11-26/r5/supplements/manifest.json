@@ -1,0 +1,275 @@
+{
+  "schema": "mio.r5-supplements.safe-publication.v1",
+  "prepared_date": "2026-11-26",
+  "publication_state": "RESULTS_RECORDED_REVIEW_REQUIRED",
+  "role": "pure file safety publication preparation; not a new reviewer or product replay",
+  "source_allowlist": [
+    "r5-civitai-public-metadata/report.md",
+    "r5-civitai-public-metadata/results.json",
+    "r5-civitai-public-metadata/provenance-safe.json",
+    "r5-r4-reference-evidence/report.md",
+    "r5-r4-reference-evidence/results.json",
+    "r5-r4-reference-evidence/provenance-safe.json",
+    "r5-final-draft/coverage-map.md",
+    "r5-final-draft/coverage-map.json"
+  ],
+  "source_files": [
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-civitai-public-metadata/report.md",
+      "original_sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "original_git_blob_sha1_calculated": "0437032b9774b157b945e975a1b7c7bba4bb4ada",
+      "destination": "civitai-source-limitations/report.md",
+      "published_sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "published_git_blob_sha1_calculated": "0437032b9774b157b945e975a1b7c7bba4bb4ada",
+      "original_byte_identical": true,
+      "changes": [
+        "no byte changes"
+      ]
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-civitai-public-metadata/results.json",
+      "original_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "original_git_blob_sha1_calculated": "80fde6f1da73281539480ce6d24a3ace0e373520",
+      "destination": "civitai-source-limitations/results.json",
+      "published_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "published_git_blob_sha1_calculated": "80fde6f1da73281539480ce6d24a3ace0e373520",
+      "original_byte_identical": true,
+      "changes": [
+        "no byte changes"
+      ]
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-civitai-public-metadata/provenance-safe.json",
+      "original_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "original_git_blob_sha1_calculated": "ef1baf58174125c9457701cfd9557a7e87578e40",
+      "destination": "civitai-source-limitations/provenance-safe.json",
+      "published_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "published_git_blob_sha1_calculated": "ef1baf58174125c9457701cfd9557a7e87578e40",
+      "original_byte_identical": true,
+      "changes": [
+        "no byte changes"
+      ]
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-r4-reference-evidence/report.md",
+      "original_sha256": "bf15624f368f513fd47507d67f53bd44f8e91557fbef7f7a12668a5dd9db962c",
+      "original_git_blob_sha1_calculated": "8ce987da8184cb4512e7d8d34db67ba7c4310a0e",
+      "destination": "r4-reference-attribution/report.md",
+      "published_sha256": "bf15624f368f513fd47507d67f53bd44f8e91557fbef7f7a12668a5dd9db962c",
+      "published_git_blob_sha1_calculated": "8ce987da8184cb4512e7d8d34db67ba7c4310a0e",
+      "original_byte_identical": true,
+      "changes": [
+        "no byte changes"
+      ]
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-r4-reference-evidence/results.json",
+      "original_sha256": "fad648d7294317999f4696b5c3e44206d4f3daca66ac657a98be582558901c5f",
+      "original_git_blob_sha1_calculated": "3074680360892ae462aff48a35240d335d11570f",
+      "destination": "r4-reference-attribution/results.json",
+      "published_sha256": "fad648d7294317999f4696b5c3e44206d4f3daca66ac657a98be582558901c5f",
+      "published_git_blob_sha1_calculated": "3074680360892ae462aff48a35240d335d11570f",
+      "original_byte_identical": true,
+      "changes": [
+        "no byte changes"
+      ]
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-r4-reference-evidence/provenance-safe.json",
+      "original_sha256": "26c8198dc816c85c93bff42e749699a8effcdf346195cecb1ab7096f83d1ccf5",
+      "original_git_blob_sha1_calculated": "ba9d6edff0a0821a0bd33b6006c0a20807e14edf",
+      "destination": "r4-reference-attribution/provenance-safe.json",
+      "published_sha256": "26c8198dc816c85c93bff42e749699a8effcdf346195cecb1ab7096f83d1ccf5",
+      "published_git_blob_sha1_calculated": "ba9d6edff0a0821a0bd33b6006c0a20807e14edf",
+      "original_byte_identical": true,
+      "changes": [
+        "no byte changes"
+      ]
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-final-draft/coverage-map.md",
+      "original_sha256": "e5e0ec85076a3d782153600e35877928c93e8ec29f078e890b4ae42286574dd5",
+      "original_git_blob_sha1_calculated": "9c4e182a001278455446809e101651fd6012a402",
+      "destination": "coverage/coverage-map.md",
+      "published_sha256": "0d17834fe30fcf3a7b3d71a1a8b9836f92a8506a08597506250c8c5596231a52",
+      "published_git_blob_sha1_calculated": "ae1f810b2d34a23b51b110d02616bc0adf090db9",
+      "original_byte_identical": false,
+      "changes": [
+        "CRLF to LF: 56 sequences"
+      ]
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-final-draft/coverage-map.json",
+      "original_sha256": "bdea244dbdba3527bc0bb6af8c3736a1a87e914ad704d74685122968aa6416ed",
+      "original_git_blob_sha1_calculated": "e2be9dfb3a89d6951a6e0924359ec23a8b345f30",
+      "destination": "coverage/coverage-map.json",
+      "published_sha256": "3d0cb1f918f7d8dd9905e1261f7f07a903c3a5635ceac3be22e815beaa969d22",
+      "published_git_blob_sha1_calculated": "3229ef7907baba6847ee6e142943288786dd7448",
+      "original_byte_identical": false,
+      "changes": [
+        "CRLF to LF: 31239 sequences",
+        "original sample image filenames replaced consistently in keys and values by stable neutral source IDs; no original-name map exported"
+      ]
+    }
+  ],
+  "published_files": [
+    {
+      "destination": "civitai-source-limitations/report.md",
+      "sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "git_blob_sha1_calculated": "0437032b9774b157b945e975a1b7c7bba4bb4ada",
+      "bytes": 3292
+    },
+    {
+      "destination": "civitai-source-limitations/results.json",
+      "sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "git_blob_sha1_calculated": "80fde6f1da73281539480ce6d24a3ace0e373520",
+      "bytes": 65794
+    },
+    {
+      "destination": "civitai-source-limitations/provenance-safe.json",
+      "sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "git_blob_sha1_calculated": "ef1baf58174125c9457701cfd9557a7e87578e40",
+      "bytes": 2244
+    },
+    {
+      "destination": "r4-reference-attribution/report.md",
+      "sha256": "bf15624f368f513fd47507d67f53bd44f8e91557fbef7f7a12668a5dd9db962c",
+      "git_blob_sha1_calculated": "8ce987da8184cb4512e7d8d34db67ba7c4310a0e",
+      "bytes": 3861
+    },
+    {
+      "destination": "r4-reference-attribution/results.json",
+      "sha256": "fad648d7294317999f4696b5c3e44206d4f3daca66ac657a98be582558901c5f",
+      "git_blob_sha1_calculated": "3074680360892ae462aff48a35240d335d11570f",
+      "bytes": 10657
+    },
+    {
+      "destination": "r4-reference-attribution/provenance-safe.json",
+      "sha256": "26c8198dc816c85c93bff42e749699a8effcdf346195cecb1ab7096f83d1ccf5",
+      "git_blob_sha1_calculated": "ba9d6edff0a0821a0bd33b6006c0a20807e14edf",
+      "bytes": 3062
+    },
+    {
+      "destination": "coverage/coverage-map.md",
+      "sha256": "0d17834fe30fcf3a7b3d71a1a8b9836f92a8506a08597506250c8c5596231a52",
+      "git_blob_sha1_calculated": "ae1f810b2d34a23b51b110d02616bc0adf090db9",
+      "bytes": 23465
+    },
+    {
+      "destination": "coverage/coverage-map.json",
+      "sha256": "3d0cb1f918f7d8dd9905e1261f7f07a903c3a5635ceac3be22e815beaa969d22",
+      "git_blob_sha1_calculated": "3229ef7907baba6847ee6e142943288786dd7448",
+      "bytes": 1073041
+    },
+    {
+      "destination": "index.md",
+      "sha256": "824637f8140555ae9ca5b6bfaad875f0ceecd035d397b308dc8d8f37b7073d51",
+      "git_blob_sha1_calculated": "25612e292ba4f29c329b6690f429cf154bec9536",
+      "bytes": 4227
+    }
+  ],
+  "expected_publication_allowlist": [
+    "civitai-source-limitations/report.md",
+    "civitai-source-limitations/results.json",
+    "civitai-source-limitations/provenance-safe.json",
+    "r4-reference-attribution/report.md",
+    "r4-reference-attribution/results.json",
+    "r4-reference-attribution/provenance-safe.json",
+    "coverage/coverage-map.md",
+    "coverage/coverage-map.json",
+    "index.md",
+    "manifest.json"
+  ],
+  "self_manifest_hash_recorded_in_handoff": true,
+  "source_risks_remediated_in_publication_copy": [
+    {
+      "category": "historical sample image filename references",
+      "distinct_basenames": 11,
+      "string_value_occurrences": 444,
+      "object_key_occurrences": 11,
+      "total_replacements": 455,
+      "method": "stable neutral source IDs; original-name mapping not exported or persisted",
+      "numeric_values_and_result_boundaries_unchanged": true,
+      "registry_count": 132,
+      "saved_request_count": 660,
+      "all_source_refs_resolve": true,
+      "saved_json_pointers_unchanged": true
+    }
+  ],
+  "evidence_boundaries": {
+    "civitai_state": "CURRENT_METADATA_RECORDED_HISTORICAL_POPULARITY_NOT_PROVEN",
+    "civitai_summary": {
+      "fixed_sample_rows": 35,
+      "unique_public_model_sources": 34,
+      "public_image_sources": 0,
+      "http_attempt_count": 34,
+      "http_status_counts": {
+        "None": 34
+      },
+      "unique_sources_with_current_counters": 0,
+      "sample_rows_linked_to_current_counters": 0,
+      "unique_sources_unknown": 34,
+      "historical_likes_proven_sample_rows": 0,
+      "historical_sort_order_proven_sample_rows": 0,
+      "high_likes_selection_proven": false,
+      "sources_with_file_identity_check": 0,
+      "sample_rows_with_eligible_public_file_hash_hint": 0,
+      "original_byte_files_recovered": 0
+    },
+    "r4_reference_state": "STATIC_ATTRIBUTION_NO_PRODUCT_REPLAY",
+    "coverage_state": "STATIC_EVIDENCE_INDEX_PENDING_PRODUCT_ACCEPTANCE",
+    "product_measurement_revision": "ed45509456b14006161d829666c466789e6a9e37",
+    "coverage_candidate_state_is_historical_snapshot": "6e30208 has known CI regressions reported by root; next candidate not yet committed at last handoff. No complete gate or R5 PASS.",
+    "fresh_R5_at_snapshot": "NOT_STARTED",
+    "prohibited_inferences": [
+      "Do not turn class/category presence into full-chain compatibility",
+      "Do not turn UI-only guidance into executable API compatibility",
+      "Do not add overlapping topology/cohort/request-family denominators",
+      "Do not replace original strict false with mapping success or safe fallback",
+      "Do not turn a test definition/module presence into an execution PASS",
+      "Do not replace missing original25 with supplements or invent full SHA from a 12-character prefix",
+      "Do not replace reference/output/steps/cfg/sampler evidence with current230 five-kind results"
+    ],
+    "not_new_product_measurement": true,
+    "no_new_success_denominators": true
+  },
+  "normalization": {
+    "encoding": "UTF-8 no BOM",
+    "line_endings": "LF",
+    "terminal_newline": "exactly one",
+    "other_content_changes": "only sample image filename anonymization in coverage JSON",
+    "source_evidence_and_other_ready_directories_unmodified": true,
+    "git_blob_scope": "SHA1 calculated from byte buffers; no Git calls"
+  },
+  "publication_checks": {
+    "result": "PUBLICATION_COPY_NO_FINDINGS_AFTER_FILENAME_ANONYMIZATION",
+    "source_files": 8,
+    "published_files": 10,
+    "original_sha256_preserved": true,
+    "byte_identical_copies": 6,
+    "forbidden_dictionary_keys_found": 0,
+    "remaining_asset_filenames_found": 0,
+    "private_paths_secrets_accounts_models_found": 0,
+    "relative_markdown_links": 9,
+    "relative_markdown_links_valid": true,
+    "public_external_markdown_links_not_fetched": 1,
+    "independent_json_read_only_safety_review": true,
+    "source_reads_allowlist_only": true,
+    "product_imports": 0,
+    "product_calls": 0,
+    "test_runs": 0,
+    "browser_calls": 0,
+    "network_calls": 0,
+    "ci_queries": 0,
+    "git_calls": 0,
+    "repository_writes": 0
+  }
+}

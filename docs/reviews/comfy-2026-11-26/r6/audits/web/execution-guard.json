@@ -1,0 +1,15 @@
+{
+  "utc": "2026-11-26T09:38:50.819066+00:00",
+  "source_files_exact": true,
+  "source_runtime_count": 218,
+  "frontend_files_checked": 429,
+  "index_status": 200,
+  "index_sha256": "76e359396b1a4a06ff72e21bef3d48c81c82d75ea1115a09755d546aa8373a3a",
+  "lease": "r6-web-001",
+  "harness_pid": 41436,
+  "harness_affinity": 1,
+  "harness_priority": 16384,
+  "chrome_pid": 46124,
+  "preview_pid": 48744,
+  "actual_listener_owner_exact": true
+}

@@ -1,0 +1,147 @@
+{
+  "schema": "known-civitai-metadata-provenance-v1",
+  "guard": {
+    "pid": 47008,
+    "affinity_read_back": "0x1",
+    "priority_class_read_back": 16384
+  },
+  "browser_before": {
+    "pid": 46124,
+    "port": 59871,
+    "loopback_listener_exact": true,
+    "task_profile_exact": true,
+    "chrome_alive": true,
+    "command_line_sha256": "162350712c5818dd41172b29ff448aa6de74df152bbf4cb54450d685de0f943f",
+    "creation_filetime": 134401491232155198
+  },
+  "browser_after": {
+    "pid": 46124,
+    "port": 59871,
+    "loopback_listener_exact": true,
+    "task_profile_exact": true,
+    "chrome_alive": true,
+    "command_line_sha256": "162350712c5818dd41172b29ff448aa6de74df152bbf4cb54450d685de0f943f",
+    "creation_filetime": 134401491232155198
+  },
+  "collector_sha256": "1c57d34738e8c526b14dc4be5a6e182a58f3ed69d946d5936859c576a7975675",
+  "reviewed_protocol_sha256": "3f6ef9c13ca4e92bc06426a01f2c3198448e949f64f62eb02e2db23146a8d06c",
+  "old_source_hashes": [
+    {
+      "label": "original_manifest",
+      "before_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+      "after_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+      "unchanged": true
+    },
+    {
+      "label": "installed_protocol",
+      "before_sha256": "3f6ef9c13ca4e92bc06426a01f2c3198448e949f64f62eb02e2db23146a8d06c",
+      "after_sha256": "3f6ef9c13ca4e92bc06426a01f2c3198448e949f64f62eb02e2db23146a8d06c",
+      "unchanged": true
+    },
+    {
+      "label": "python_failure:results.json",
+      "before_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "after_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "unchanged": true
+    },
+    {
+      "label": "python_failure:provenance-safe.json",
+      "before_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "after_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "unchanged": true
+    },
+    {
+      "label": "python_failure:report.md",
+      "before_sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "after_sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "unchanged": true
+    },
+    {
+      "label": "chrome_connectivity:results.json",
+      "before_sha256": "8ffae956a6687f0598b111fb7eebe8476bed4b10c241d00e3ba679d4f0042625",
+      "after_sha256": "8ffae956a6687f0598b111fb7eebe8476bed4b10c241d00e3ba679d4f0042625",
+      "unchanged": true
+    },
+    {
+      "label": "chrome_connectivity:provenance-safe.json",
+      "before_sha256": "874da244158217fea3f218eda2c56c7d60604e1304c7eb3bc47f0323f86d3c1c",
+      "after_sha256": "874da244158217fea3f218eda2c56c7d60604e1304c7eb3bc47f0323f86d3c1c",
+      "unchanged": true
+    },
+    {
+      "label": "chrome_connectivity:report.md",
+      "before_sha256": "73afa86222c23ab3cad9293742c720fbd8c13471bbfdf90c12130b43f4927af0",
+      "after_sha256": "73afa86222c23ab3cad9293742c720fbd8c13471bbfdf90c12130b43f4927af0",
+      "unchanged": true
+    },
+    {
+      "label": "prior_single_source_metadata:results.json",
+      "before_sha256": "5584f3f9205090870e02fde0e7b909cb82707d6611434a8d807d0d6e1db945ff",
+      "after_sha256": "5584f3f9205090870e02fde0e7b909cb82707d6611434a8d807d0d6e1db945ff",
+      "unchanged": true
+    },
+    {
+      "label": "prior_single_source_metadata:provenance-safe.json",
+      "before_sha256": "53f67ba84fc825fa4a4eebce1a35d934d19c479fec7677240ff05dee37d3258e",
+      "after_sha256": "53f67ba84fc825fa4a4eebce1a35d934d19c479fec7677240ff05dee37d3258e",
+      "unchanged": true
+    },
+    {
+      "label": "prior_single_source_metadata:report.md",
+      "before_sha256": "1cb1356224f25dfd81cdcb3aa7d0fabf9c98eeb66f88856ecf665aaa18a8e042",
+      "after_sha256": "1cb1356224f25dfd81cdcb3aa7d0fabf9c98eeb66f88856ecf665aaa18a8e042",
+      "unchanged": true
+    }
+  ],
+  "method": {
+    "fixed_new_sources": 33,
+    "excluded_already_measured_id": 1215102,
+    "serial_only": true,
+    "maximum_get_attempts_per_source": 1,
+    "retries": 0,
+    "fresh_context_per_source": true,
+    "source_action_deadline_seconds": 24,
+    "source_cleanup_deadline_seconds": 30,
+    "source_hard_timeout_seconds": 32,
+    "goto_timeout_max_ms": 15000,
+    "chunk_max_bytes": 16384,
+    "collected_decode_cap_bytes": 524288,
+    "whole_body_api_used": false,
+    "IO_read_offset_used": false,
+    "redirect_or_non_exact_requests_rejected_before_dispatch": true,
+    "non_200_or_non_json_response_rejected_before_body": true,
+    "origin_url_frame_session_and_request_correlation_before_stream": true,
+    "raw_body_saved_or_emitted": false,
+    "browser_close_called": false,
+    "existing_contexts_pages_cookies_or_profile_enumerated": false,
+    "popen_class_preserved": true,
+    "login_or_challenge_interaction": false,
+    "asset_graph_or_model_downloads": 0,
+    "Mio_imports": 0,
+    "product_http_calls": 0,
+    "tests": 0,
+    "source_writes": 0,
+    "new_search_or_ranking_requests": 0
+  },
+  "privacy": {
+    "recursive_five_key_private_path_and_URL_guard": "passed",
+    "numeric_stats_allowlist": [
+      "thumbsUpCount",
+      "thumbsDownCount",
+      "favoriteCount",
+      "ratingCount",
+      "rating",
+      "downloadCount",
+      "commentCount",
+      "generationCount",
+      "collectedCount",
+      "heartCount",
+      "likeCount",
+      "laughCount",
+      "cryCount",
+      "dislikeCount"
+    ],
+    "unknown_extension_or_type_names_bucketed": true
+  },
+  "results_sha256": "79ef8f1f36fa85672308de516dfa2d626160a130d4d7b320376a4a485955367a"
+}

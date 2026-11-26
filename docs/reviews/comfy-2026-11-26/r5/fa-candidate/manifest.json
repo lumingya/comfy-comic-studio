@@ -1,0 +1,314 @@
+{
+  "schema": "mio.r5-candidate.safe-publication.v1",
+  "prepared_date": "2026-11-26",
+  "publication_state": "RESULTS_RECORDED_REVIEW_REQUIRED",
+  "role": "pure-file safety publisher; not a fresh review or runtime verification",
+  "source_allowlist": [
+    "r5-ownership-ci/report.md",
+    "r5-ownership-ci/ci-verified.json",
+    "r4-preview/running-server-r5.json",
+    "r4-preview/artifact-fa63083-provenance.json",
+    "r4-preview/connection-headless.json"
+  ],
+  "source_files": [
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-ownership-ci/report.md",
+      "original_sha256": "46d8ae98af5571198791fcc099d79ff76e71c0e807b8a4008ad0b6fb425a2de4",
+      "original_git_blob_sha1_calculated": "a911822d9a456a80da558b16d2137c914ba552d8",
+      "destination": "ci/report.md",
+      "published_sha256": "cbce27550be2883e53d38c915f9e125d1ea89abbfe48beb0013fc91fe0af472f",
+      "published_git_blob_sha1_calculated": "d4824a3f5a877692a8b15dbc8ad34a6a0b8c5085",
+      "original_byte_identical": false,
+      "normalization": {
+        "source_crlf_sequences": 422,
+        "published_encoding": "UTF-8 no BOM; LF; single terminal newline"
+      },
+      "projection": {
+        "mode": "content-preserving LF/EOF copy",
+        "retained_fields": "entire safe original content",
+        "omitted_fields": [],
+        "derived_fields": []
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-ownership-ci/ci-verified.json",
+      "original_sha256": "9838372d4d9a5f0861d97f760044717c915ec8bf34180f76b92d98fd8bb864c9",
+      "original_git_blob_sha1_calculated": "42056533056028a6532212cf449117cbc2348708",
+      "destination": "ci/ci-verified.json",
+      "published_sha256": "4540544b5ff6f8f1be08e3acc378d8857c7cac745c1814f16cf0ad7266d12eb7",
+      "published_git_blob_sha1_calculated": "bc9ec32097f0a55c3cf0f588227e923dbf8312cf",
+      "original_byte_identical": false,
+      "normalization": {
+        "source_crlf_sequences": 3012,
+        "published_encoding": "UTF-8 no BOM; LF; single terminal newline"
+      },
+      "projection": {
+        "mode": "content-preserving LF/EOF copy",
+        "retained_fields": "entire safe original content",
+        "omitted_fields": [],
+        "derived_fields": []
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-preview/running-server-r5.json",
+      "original_sha256": "06364781624adb1b9d318ed6db350dee9bdfb397da97ee73d90d0bc4d531fd7a",
+      "original_git_blob_sha1_calculated": "089b700a624d249fae3953450017a58d87e849e4",
+      "destination": "preview/running-server-r5.json",
+      "published_sha256": "9a3c844a8fa260d44847e5891884b5d5e285268fef10a203ceead66fe87ffe58",
+      "published_git_blob_sha1_calculated": "06319447c8c669ab998c06dc27600b9da4bcb70a",
+      "original_byte_identical": false,
+      "normalization": {
+        "source_crlf_sequences": 19,
+        "published_encoding": "UTF-8 no BOM; LF; single terminal newline"
+      },
+      "projection": {
+        "mode": "explicit allowlist public identity/summary projection",
+        "retained_fields": [
+          "pid",
+          "backend_head",
+          "backend_module_count",
+          "backend_module_sha256",
+          "verified_before_mio_import",
+          "affinity",
+          "priority_class",
+          "origin",
+          "api_only",
+          "artifact_id",
+          "artifact_run_id",
+          "frontend_head",
+          "index_sha256",
+          "asset_file_count",
+          "all_asset_files_verified_before_import",
+          "catalog_entries_after_app_creation"
+        ],
+        "omitted_fields": [
+          "static_asset_directory"
+        ],
+        "derived_fields": []
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-preview/artifact-fa63083-provenance.json",
+      "original_sha256": "11170fe2449163f0e3deada1babca04ef71b9b267211ca1d5eff7dff209ba024",
+      "original_git_blob_sha1_calculated": "d61b18825e25052a487ea1970327fb6986fdd096",
+      "destination": "preview/artifact-fa63083-provenance.json",
+      "published_sha256": "2f7875a95e2ddc253811077b97cf8abd77584bb0a873bc23ac7ef85758ecc4d2",
+      "published_git_blob_sha1_calculated": "114621cb7c6b17533435f1682704218c162d125a",
+      "original_byte_identical": false,
+      "normalization": {
+        "source_crlf_sequences": 419,
+        "published_encoding": "UTF-8 no BOM; LF; single terminal newline"
+      },
+      "projection": {
+        "mode": "explicit allowlist public identity/summary projection",
+        "retained_fields": [
+          "source_head",
+          "artifact_id",
+          "artifact_name",
+          "run_id",
+          "artifact_created_at",
+          "artifact_digest",
+          "archive_digest_verified",
+          "archive_bytes",
+          "local_build_run",
+          "index_sha256"
+        ],
+        "omitted_fields": [
+          "files"
+        ],
+        "derived_fields": [
+          {
+            "name": "file_inventory_count",
+            "derivation": "source files array length only; no file entries exported"
+          }
+        ]
+      }
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r4-preview/connection-headless.json",
+      "original_sha256": "011812dd105c726aad9b570854e2a83f89cf06ed126235925b90131f12f279c3",
+      "original_git_blob_sha1_calculated": "1406f0eb0389d05c7e04ac81618e1d77e7ddb3e6",
+      "destination": "preview/connection-headless.json",
+      "published_sha256": "1fdce0d3514acbc32322feb27a2c080f86071e450c40ec93f79d98819268cdc8",
+      "published_git_blob_sha1_calculated": "126d2d114cdbc9af4b467b74f4607cb5a4d55900",
+      "original_byte_identical": false,
+      "normalization": {
+        "source_crlf_sequences": 17,
+        "published_encoding": "UTF-8 no BOM; LF; single terminal newline"
+      },
+      "projection": {
+        "mode": "explicit allowlist public identity/summary projection",
+        "retained_fields": [
+          "verified_at_utc",
+          "direct_cdp_connected",
+          "browser_pid",
+          "browser_version",
+          "browser_mode",
+          "task_exclusive_browser",
+          "fresh_blank_context_created_and_closed",
+          "existing_contexts_tabs_profiles_not_enumerated",
+          "product_navigation_performed",
+          "required_product_origin",
+          "candidate_head",
+          "candidate_preview_ready",
+          "affinity",
+          "priority_class"
+        ],
+        "omitted_fields": [
+          "manual_user_approval_needed"
+        ],
+        "derived_fields": [
+          {
+            "name": "cdp_port",
+            "value": null,
+            "derivation": "port absent from all three allowlist preview sources; not inferred from product origin"
+          },
+          {
+            "name": "cdp_port_status",
+            "value": "NOT_RECORDED_IN_ALLOWLIST_SOURCE"
+          }
+        ]
+      }
+    }
+  ],
+  "published_files": [
+    {
+      "destination": "ci/report.md",
+      "sha256": "cbce27550be2883e53d38c915f9e125d1ea89abbfe48beb0013fc91fe0af472f",
+      "git_blob_sha1_calculated": "d4824a3f5a877692a8b15dbc8ad34a6a0b8c5085",
+      "bytes": 23991
+    },
+    {
+      "destination": "ci/ci-verified.json",
+      "sha256": "4540544b5ff6f8f1be08e3acc378d8857c7cac745c1814f16cf0ad7266d12eb7",
+      "git_blob_sha1_calculated": "bc9ec32097f0a55c3cf0f588227e923dbf8312cf",
+      "bytes": 126805
+    },
+    {
+      "destination": "preview/running-server-r5.json",
+      "sha256": "9a3c844a8fa260d44847e5891884b5d5e285268fef10a203ceead66fe87ffe58",
+      "git_blob_sha1_calculated": "06319447c8c669ab998c06dc27600b9da4bcb70a",
+      "bytes": 683
+    },
+    {
+      "destination": "preview/artifact-fa63083-provenance.json",
+      "sha256": "2f7875a95e2ddc253811077b97cf8abd77584bb0a873bc23ac7ef85758ecc4d2",
+      "git_blob_sha1_calculated": "114621cb7c6b17533435f1682704218c162d125a",
+      "bytes": 545
+    },
+    {
+      "destination": "preview/connection-headless.json",
+      "sha256": "1fdce0d3514acbc32322feb27a2c080f86071e450c40ec93f79d98819268cdc8",
+      "git_blob_sha1_calculated": "126d2d114cdbc9af4b467b74f4607cb5a4d55900",
+      "bytes": 667
+    },
+    {
+      "destination": "index.md",
+      "sha256": "f224d50f50a6f07145df0dfb3efee798755b90752c2765cf9524045f65daed6c",
+      "git_blob_sha1_calculated": "c4e92b7c2dc9052c368891be8384cc41f7421dcf",
+      "bytes": 4683
+    }
+  ],
+  "expected_publication_allowlist": [
+    "ci/report.md",
+    "ci/ci-verified.json",
+    "preview/running-server-r5.json",
+    "preview/artifact-fa63083-provenance.json",
+    "preview/connection-headless.json",
+    "index.md",
+    "manifest.json"
+  ],
+  "self_manifest_hash_recorded_in_handoff": true,
+  "evidence_summary": {
+    "candidate_head": "fa6308384826fad7629b2c727d70230cc7951d05",
+    "ci_runs": [
+      {
+        "id": 45768262520,
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "actual_checkout": "fa6308384826fad7629b2c727d70230cc7951d05",
+        "successful_jobs": 3
+      },
+      {
+        "id": 45768270363,
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "actual_checkout": "8b9318a7ceba2e37f1f24e6d113cf39d49510d2a",
+        "successful_jobs": 3
+      }
+    ],
+    "actual_pr_merge_checkout": "8b9318a7ceba2e37f1f24e6d113cf39d49510d2a",
+    "ci_is_not_five_role_review_or_cleanup": true,
+    "artifact": {
+      "id": 15093284680,
+      "run_id": 45768262520,
+      "source_head": "fa6308384826fad7629b2c727d70230cc7951d05",
+      "archive_digest": "sha256:4eeffd1d5b2f337506cfd89eae400cd72e2cc9bb1467445056cacaa7b5af7ff0",
+      "archive_digest_verified_in_source": true,
+      "archive_bytes": 758554,
+      "file_inventory_count": 81,
+      "index_sha256": "76e359396b1a4a06ff72e21bef3d48c81c82d75ea1115a09755d546aa8373a3a",
+      "no_local_build": true,
+      "zip_not_read_or_rehashed_by_this_publication_task": true
+    },
+    "preview_creation": {
+      "server_pid": 47224,
+      "backend_module_count": 217,
+      "backend_module_sha256": "5a5ee950ae0c972791ae17fab92978579adec7d6d419133e6eaf9eb9e649377d",
+      "catalog_entries_after_app_creation": 0,
+      "ordinary_catalog_interaction_not_measured": true,
+      "source_did_not_record_an_observation_timestamp": true
+    },
+    "earlier_blank_connectivity": {
+      "verified_at_utc": "2026-11-26T06:57:53.818454+00:00",
+      "browser_mode": "installed_chrome_headless_new",
+      "candidate_preview_ready": false,
+      "product_navigation_performed": false,
+      "cdp_port": null,
+      "cdp_port_recorded_in_allowlist_sources": false,
+      "not_a_web_review": true
+    },
+    "five_role_PASS": "NOT_CLAIMED",
+    "final_cleanup": "NOT_CLAIMED"
+  },
+  "privacy_projection": {
+    "private_static_directory_field_omitted": true,
+    "per_file_artifact_inventory_entries_omitted": 81,
+    "no_original_path_values_exported": true,
+    "no_original_assets_prompts_accounts_or_private_provenance_exported": true
+  },
+  "publication_checks": {
+    "result": "PUBLICATION_COPY_NO_FINDINGS_AFTER_ALLOWLIST_PROJECTION",
+    "source_files_verified": 5,
+    "published_files": 7,
+    "source_sha256_preserved": true,
+    "ci_original_contents_preserved_except_LF_EOF": true,
+    "utf8_no_bom_LF_single_terminal_newline": true,
+    "recursive_forbidden_dictionary_keys_found": 0,
+    "private_path_asset_model_secret_account_markers_found": 0,
+    "relative_markdown_links": 6,
+    "relative_markdown_links_valid": true,
+    "external_markdown_links_not_fetched": 23,
+    "git_blob_scope": "SHA1 calculated from byte buffers; no Git calls",
+    "source_reads_allowlist_only": true,
+    "no_new_review_directory_reads": true,
+    "product_imports": 0,
+    "product_calls": 0,
+    "test_runs": 0,
+    "build_runs": 0,
+    "browser_calls": 0,
+    "network_calls": 0,
+    "ci_queries": 0,
+    "gh_calls": 0,
+    "git_calls": 0,
+    "repository_writes": 0,
+    "old_ready_writes": 0
+  }
+}

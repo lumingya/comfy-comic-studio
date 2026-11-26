@@ -1,0 +1,19 @@
+{
+  "schema": "r5-blind-cross-final-seal-v1",
+  "utc": "2026-11-26T07:32:44.283839+00:00",
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "verdict": "REQUEST CHANGES",
+  "initial_unchanged": true,
+  "deduplicated_medium_count": 2,
+  "new_product_calls": 0,
+  "files": {
+    "cross-report.md": "b7a6ab9e67fbd62f7d1c10b49a78738cbc1207cb14636f9c2bd02d2b8a4a936b",
+    "cross-results.json": "39cc083f2c300ab461b434b8604623b76b7a63159b67cba0efb8de1ef6ed9ef2",
+    "cross-evidence.json": "7d12aeb45cc1e9fdbc963e6d912ec5c42c4b399ff81f58d553bc1f90ac282554",
+    "final.md": "f85a36cc645ba94f3a0d2c92bfc97478955a6d2646a1d030bdf4234ceb5a95ad",
+    "project-cross-evidence.py": "ee52b02249c4be1c769b12ed7d41cd5e7d4b76d49743e101e867a006d62dec89",
+    "finalize-cross.py": "997383620b54d6e1e3939630e28f5a482453fb76d42b3891838922f0c6e5d3a1",
+    "initial-seal.json": "1417d3f811d003251784623bd2cccde73da096b415f35287095b33d422e9c5eb"
+  }
+}

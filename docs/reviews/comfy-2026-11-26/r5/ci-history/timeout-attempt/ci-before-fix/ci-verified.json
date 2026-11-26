@@ -1,0 +1,2514 @@
+{
+  "schema": "mio.remote.ci.verification.safe.v1",
+  "date": "2026-11-26",
+  "result": "REQUEST CHANGES",
+  "role": "Read-only CI observation and evidence archival, not a new five-auditor round.",
+  "fixed_head": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+  "repository": "lumingya/comfy-comic-studio",
+  "summary": {
+    "run_count": 2,
+    "successful_runs": 1,
+    "job_count": 6,
+    "successful_jobs": 5,
+    "step_count": 70,
+    "successful_steps": 68,
+    "all_agents_ten_command_rows_covered_each_run": false,
+    "all_declared_command_classes_covered_each_run": true
+  },
+  "execution_constraints": {
+    "remote_read_only_gh_rest_cli": true,
+    "new_ci_triggered": false,
+    "workflow_or_gates_modified": false,
+    "local_product_test_lint_build_or_service_execution": false,
+    "local_http_or_browser_use": false,
+    "artifact_downloaded_by_this_observer": false,
+    "poll_interval_seconds": "45-60, with event-driven artifact detail retrieval",
+    "public_allowlist": [
+      "report.md",
+      "ci-verified.json"
+    ],
+    "raw_logs_and_scripts_published": false
+  },
+  "runs": [
+    {
+      "id": 45752905758,
+      "repository": "lumingya/comfy-comic-studio",
+      "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45752905758",
+      "event": "push",
+      "run_number": 287,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "metadata_head_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+      "actual_checkout_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+      "checkout_parents": [
+        "ed45509456b14006161d829666c466789e6a9e37"
+      ],
+      "workflow_blob_sha": "f7b08e4b1a182d9eb5b7c0831b46f8cf1e2d6470",
+      "job_count": 3,
+      "jobs": [
+        {
+          "id": 139684698508,
+          "run_id": 45752905758,
+          "name": "gate",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45752905758/job/139684698508",
+          "status": "completed",
+          "conclusion": "success",
+          "checkout_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "checkout_safe_line": 108,
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:01Z",
+              "completed_at": "2026-11-26T04:05:01Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:01Z",
+              "completed_at": "2026-11-26T04:05:03Z"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:03Z",
+              "completed_at": "2026-11-26T04:05:04Z"
+            },
+            {
+              "number": 4,
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:04Z",
+              "completed_at": "2026-11-26T04:05:07Z"
+            },
+            {
+              "number": 5,
+              "name": "Install Python dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:07Z",
+              "completed_at": "2026-11-26T04:05:13Z"
+            },
+            {
+              "number": 6,
+              "name": "Spike unit tests (next/)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:13Z",
+              "completed_at": "2026-11-26T04:05:33Z"
+            },
+            {
+              "number": 7,
+              "name": "v4 server (lint + unit tests)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:33Z",
+              "completed_at": "2026-11-26T04:21:52Z"
+            },
+            {
+              "number": 8,
+              "name": "API v2 clients and release tools (generated client current + lint)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:52Z",
+              "completed_at": "2026-11-26T04:21:59Z"
+            },
+            {
+              "number": 9,
+              "name": "v4 web (API types current + format + typecheck + tests + build)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:59Z",
+              "completed_at": "2026-11-26T04:24:42Z"
+            },
+            {
+              "number": 10,
+              "name": "Preserve built web for isolated browser verification",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:24:42Z",
+              "completed_at": "2026-11-26T04:24:44Z"
+            },
+            {
+              "number": 11,
+              "name": "Shipped data manifest",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:24:44Z",
+              "completed_at": "2026-11-26T04:24:44Z"
+            },
+            {
+              "number": 12,
+              "name": "Standalone assistant extension",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:24:44Z",
+              "completed_at": "2026-11-26T04:25:00Z"
+            },
+            {
+              "number": 13,
+              "name": "v4 release package smoke test",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:25:00Z",
+              "completed_at": "2026-11-26T04:25:01Z"
+            },
+            {
+              "number": 24,
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:25:01Z",
+              "completed_at": "2026-11-26T04:25:01Z"
+            },
+            {
+              "number": 25,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:25:01Z",
+              "completed_at": "2026-11-26T04:25:02Z"
+            },
+            {
+              "number": 26,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:25:02Z",
+              "completed_at": "2026-11-26T04:25:02Z"
+            },
+            {
+              "number": 27,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:25:02Z",
+              "completed_at": "2026-11-26T04:25:02Z"
+            }
+          ],
+          "started_at": "2026-11-26T04:05:00Z",
+          "completed_at": "2026-11-26T04:25:04Z",
+          "elapsed_seconds": 1204.0
+        },
+        {
+          "id": 139684698509,
+          "run_id": 45752905758,
+          "name": "launchers (windows-latest, Python 3.11)",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45752905758/job/139684698509",
+          "status": "completed",
+          "conclusion": "success",
+          "checkout_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "checkout_safe_line": 1596,
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:00Z",
+              "completed_at": "2026-11-26T04:05:01Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:01Z",
+              "completed_at": "2026-11-26T04:05:07Z"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:07Z",
+              "completed_at": "2026-11-26T04:05:07Z"
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:07Z",
+              "completed_at": "2026-11-26T04:05:24Z"
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:24Z",
+              "completed_at": "2026-11-26T04:06:15Z"
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:06:15Z",
+              "completed_at": "2026-11-26T04:34:51Z"
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:34:51Z",
+              "completed_at": "2026-11-26T04:34:51Z"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:34:51Z",
+              "completed_at": "2026-11-26T04:34:53Z"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:34:53Z",
+              "completed_at": "2026-11-26T04:34:53Z"
+            }
+          ],
+          "started_at": "2026-11-26T04:05:00Z",
+          "completed_at": "2026-11-26T04:34:54Z",
+          "elapsed_seconds": 1794.0
+        },
+        {
+          "id": 139684698917,
+          "run_id": 45752905758,
+          "name": "launchers (ubuntu-latest, Python 3.11)",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45752905758/job/139684698917",
+          "status": "completed",
+          "conclusion": "success",
+          "checkout_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "checkout_safe_line": 2107,
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:01Z",
+              "completed_at": "2026-11-26T04:05:01Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:01Z",
+              "completed_at": "2026-11-26T04:05:03Z"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:03Z",
+              "completed_at": "2026-11-26T04:05:03Z"
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:03Z",
+              "completed_at": "2026-11-26T04:05:11Z"
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:11Z",
+              "completed_at": "2026-11-26T04:05:39Z"
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:39Z",
+              "completed_at": "2026-11-26T04:25:32Z"
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:25:32Z",
+              "completed_at": "2026-11-26T04:25:32Z"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:25:32Z",
+              "completed_at": "2026-11-26T04:25:32Z"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:25:32Z",
+              "completed_at": "2026-11-26T04:25:32Z"
+            }
+          ],
+          "started_at": "2026-11-26T04:05:00Z",
+          "completed_at": "2026-11-26T04:25:34Z",
+          "elapsed_seconds": 1234.0
+        }
+      ],
+      "all_jobs_success": true,
+      "all_steps_success": true,
+      "command_coverage": [
+        {
+          "key": "server_unittest",
+          "command": "python -m unittest discover -s server/tests -t server -q",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "server_unittest",
+              "command": "python -m unittest discover -s server/tests -t server -q",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 server (lint + unit tests)",
+              "safe_line": 261
+            },
+            {
+              "key": "server_unittest",
+              "command": "python -m unittest discover -s server/tests -t server -q",
+              "job_id": 139684698509,
+              "job": "launchers (windows-latest, Python 3.11)",
+              "step": "v4 server unit tests",
+              "safe_line": 1748
+            },
+            {
+              "key": "server_unittest",
+              "command": "python -m unittest discover -s server/tests -t server -q",
+              "job_id": 139684698917,
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "step": "v4 server unit tests",
+              "safe_line": 2266
+            }
+          ]
+        },
+        {
+          "key": "spike_unittest",
+          "command": "python -m unittest discover -s next/tests -t next -q",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "spike_unittest",
+              "command": "python -m unittest discover -s next/tests -t next -q",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "Spike unit tests (next/)",
+              "safe_line": 244
+            }
+          ]
+        },
+        {
+          "key": "server_lint",
+          "command": "ruff check server extensions",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "server_lint",
+              "command": "ruff check server extensions",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 server (lint + unit tests)",
+              "safe_line": 259
+            }
+          ]
+        },
+        {
+          "key": "server_format",
+          "command": "ruff format --check server extensions",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "server_format",
+              "command": "ruff format --check server extensions",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 server (lint + unit tests)",
+              "safe_line": 260
+            }
+          ]
+        },
+        {
+          "key": "clients_tools_lint",
+          "command": "ruff check clients tools",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "clients_tools_lint",
+              "command": "ruff check clients tools",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 519
+            }
+          ]
+        },
+        {
+          "key": "clients_tools_format",
+          "command": "ruff format --check clients tools",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "clients_tools_format",
+              "command": "ruff format --check clients tools",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 520
+            }
+          ]
+        },
+        {
+          "key": "adapter_lint",
+          "command": "ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "adapter_lint",
+              "command": "ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 517
+            }
+          ]
+        },
+        {
+          "key": "adapter_format",
+          "command": "ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "adapter_format",
+              "command": "ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 518
+            }
+          ]
+        },
+        {
+          "key": "bootstrap_lint",
+          "command": "ruff check --config server/pyproject.toml mio_update_bootstrap.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "bootstrap_lint",
+              "command": "ruff check --config server/pyproject.toml mio_update_bootstrap.py",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 521
+            }
+          ]
+        },
+        {
+          "key": "bootstrap_format",
+          "command": "ruff format --check --config server/pyproject.toml mio_update_bootstrap.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "bootstrap_format",
+              "command": "ruff format --check --config server/pyproject.toml mio_update_bootstrap.py",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 522
+            }
+          ]
+        },
+        {
+          "key": "python_client_current",
+          "command": "python clients/python/generate.py --check",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "python_client_current",
+              "command": "python clients/python/generate.py --check",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 513
+            }
+          ]
+        },
+        {
+          "key": "extension_contracts_current",
+          "command": "python tools/generate_extension_contracts.py --check",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "extension_contracts_current",
+              "command": "python tools/generate_extension_contracts.py --check",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 512
+            }
+          ]
+        },
+        {
+          "key": "extension_examples",
+          "command": "python tools/check_extension_examples.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "extension_examples",
+              "command": "python tools/check_extension_examples.py",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 514
+            }
+          ]
+        },
+        {
+          "key": "doc_links_self_test",
+          "command": "python tools/check_doc_links.py --self-test",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "doc_links_self_test",
+              "command": "python tools/check_doc_links.py --self-test",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 515
+            }
+          ]
+        },
+        {
+          "key": "doc_links",
+          "command": "python tools/check_doc_links.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "doc_links",
+              "command": "python tools/check_doc_links.py",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 516
+            }
+          ]
+        },
+        {
+          "key": "web_install",
+          "command": "npm ci --prefix web --no-audit --no-fund",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_install",
+              "command": "npm ci --prefix web --no-audit --no-fund",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 570
+            }
+          ]
+        },
+        {
+          "key": "web_api_current_generation",
+          "command": "npm --prefix web run gen:api",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_api_current_generation",
+              "command": "npm --prefix web run gen:api",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 571
+            }
+          ]
+        },
+        {
+          "key": "web_api_current_diff",
+          "command": "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_api_current_diff",
+              "command": "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 572
+            }
+          ]
+        },
+        {
+          "key": "web_format",
+          "command": "npm --prefix web run format:check",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_format",
+              "command": "npm --prefix web run format:check",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 573
+            }
+          ]
+        },
+        {
+          "key": "web_types",
+          "command": "npm --prefix web run typecheck",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_types",
+              "command": "npm --prefix web run typecheck",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 574
+            }
+          ]
+        },
+        {
+          "key": "web_tests",
+          "command": "npm --prefix web test",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_tests",
+              "command": "npm --prefix web test",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 575
+            }
+          ]
+        },
+        {
+          "key": "web_build",
+          "command": "npm --prefix web run build",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_build",
+              "command": "npm --prefix web run build",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 577
+            }
+          ]
+        },
+        {
+          "key": "panel_scripts",
+          "command": "python tools/check_extension_examples.py --panel-tests",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "panel_scripts",
+              "command": "python tools/check_extension_examples.py --panel-tests",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 576
+            }
+          ]
+        },
+        {
+          "key": "shipped_check",
+          "command": "python tools/check_distribution.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "shipped_check",
+              "command": "python tools/check_distribution.py",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "Shipped data manifest",
+              "safe_line": 1396
+            }
+          ]
+        },
+        {
+          "key": "shipped_rebuild_check",
+          "command": "python tools/build_distribution.py --check",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "shipped_rebuild_check",
+              "command": "python tools/build_distribution.py --check",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "Shipped data manifest",
+              "safe_line": 1397
+            }
+          ]
+        },
+        {
+          "key": "assistant_install",
+          "command": "npm ci --no-audit --no-fund",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_install",
+              "command": "npm ci --no-audit --no-fund",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1410
+            }
+          ]
+        },
+        {
+          "key": "assistant_format",
+          "command": "npx prettier --check .",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_format",
+              "command": "npx prettier --check .",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1411
+            }
+          ]
+        },
+        {
+          "key": "assistant_tests",
+          "command": "npm test",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_tests",
+              "command": "npm test",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1412
+            }
+          ]
+        },
+        {
+          "key": "assistant_build",
+          "command": "npm run build",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_build",
+              "command": "npm run build",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1413
+            }
+          ]
+        },
+        {
+          "key": "assistant_dist_current",
+          "command": "git diff --exit-code -- dist",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_dist_current",
+              "command": "git diff --exit-code -- dist",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1414
+            }
+          ]
+        },
+        {
+          "key": "launchers",
+          "command": "python -m unittest tests.test_launchers -v",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "launchers",
+              "command": "python -m unittest tests.test_launchers -v",
+              "job_id": 139684698509,
+              "job": "launchers (windows-latest, Python 3.11)",
+              "step": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "safe_line": 1700
+            },
+            {
+              "key": "launchers",
+              "command": "python -m unittest tests.test_launchers -v",
+              "job_id": 139684698917,
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "step": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "safe_line": 2217
+            }
+          ]
+        },
+        {
+          "key": "release_package",
+          "command": "python tools/build_release.py --out",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "release_package",
+              "command": "python tools/build_release.py --out",
+              "job_id": 139684698508,
+              "job": "gate",
+              "step": "v4 release package smoke test",
+              "safe_line": 1470
+            }
+          ]
+        }
+      ],
+      "web_preview_artifacts": [
+        {
+          "id": 15086224952,
+          "name": "web-preview-8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "size_in_bytes": 758554,
+          "digest": "sha256:8c8d505885af88895b499dde7a30494d8acfdcf0d9f6f137f943519d9de1c94e",
+          "expired": false,
+          "created_at": "2026-11-26T04:24:44Z",
+          "expires_at": "2026-11-28T04:24:43Z",
+          "archive_download_url": "https://api.github.com/repos/lumingya/comfy-comic-studio/actions/artifacts/15086224952/zip",
+          "expected_name": "web-preview-8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "name_matches_actual_checkout": true,
+          "name_matches_metadata_head": true,
+          "workflow_run_id": 45752905758,
+          "workflow_run_head_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "belongs_to_run": true
+        }
+      ],
+      "error_evidence": [],
+      "log": {
+        "id": "raw-ci-45752905758.log",
+        "lines": 2514,
+        "bytes": 414720,
+        "sha256": "c12d6baba1dc6f60378f8201ba8b751fd49debf96172438985e9c7f40773fcb4"
+      },
+      "pull_requests_at_observation": [
+        {
+          "number": 1,
+          "head_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "base_sha": "98aefc051fb8a795f49528e9c70b5620dd90ae6d"
+        }
+      ],
+      "unittest_suites": [
+        {
+          "job_id": 139684698508,
+          "job": "gate",
+          "step": "Spike unit tests (next/)",
+          "test_count": 80,
+          "seconds": 19.541,
+          "safe_line": 255,
+          "result": "OK",
+          "result_summary": "OK",
+          "skipped": 0,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 257
+        },
+        {
+          "job_id": 139684698508,
+          "job": "gate",
+          "step": "v4 server (lint + unit tests)",
+          "test_count": 1819,
+          "seconds": 974.565,
+          "safe_line": 505,
+          "result": "OK",
+          "result_summary": "OK (skipped=3)",
+          "skipped": 3,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 507
+        },
+        {
+          "job_id": 139684698509,
+          "job": "launchers (windows-latest, Python 3.11)",
+          "step": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+          "test_count": 31,
+          "seconds": 46.802,
+          "safe_line": 1744,
+          "result": "OK",
+          "result_summary": "OK",
+          "skipped": 0,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 1746
+        },
+        {
+          "job_id": 139684698509,
+          "job": "launchers (windows-latest, Python 3.11)",
+          "step": "v4 server unit tests",
+          "test_count": 1819,
+          "seconds": 1713.068,
+          "safe_line": 1977,
+          "result": "OK",
+          "result_summary": "OK",
+          "skipped": 0,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 1979
+        },
+        {
+          "job_id": 139684698917,
+          "job": "launchers (ubuntu-latest, Python 3.11)",
+          "step": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+          "test_count": 31,
+          "seconds": 25.754,
+          "safe_line": 2262,
+          "result": "OK",
+          "result_summary": "OK",
+          "skipped": 0,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 2264
+        },
+        {
+          "job_id": 139684698917,
+          "job": "launchers (ubuntu-latest, Python 3.11)",
+          "step": "v4 server unit tests",
+          "test_count": 1819,
+          "seconds": 1189.639,
+          "safe_line": 2490,
+          "result": "OK",
+          "result_summary": "OK (skipped=3)",
+          "skipped": 3,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 2492
+        }
+      ],
+      "vitest_results": [
+        {
+          "job_id": 139684698508,
+          "step": "v4 web (API types current + format + typecheck + tests + build)",
+          "kind": "files",
+          "passed": 119,
+          "total": 119,
+          "safe_line": 1224
+        },
+        {
+          "job_id": 139684698508,
+          "step": "v4 web (API types current + format + typecheck + tests + build)",
+          "kind": "cases",
+          "passed": 965,
+          "total": 965,
+          "safe_line": 1225
+        },
+        {
+          "job_id": 139684698508,
+          "step": "Standalone assistant extension",
+          "kind": "files",
+          "passed": 2,
+          "total": 2,
+          "safe_line": 1446
+        },
+        {
+          "job_id": 139684698508,
+          "step": "Standalone assistant extension",
+          "kind": "cases",
+          "passed": 34,
+          "total": 34,
+          "safe_line": 1447
+        }
+      ],
+      "backend_full_matrix_succeeded": true,
+      "agents_command_rows": [
+        {
+          "requirement": "backend unittest",
+          "coverage_keys": [
+            "server_unittest"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "ruff server/clients/tools check and format",
+          "coverage_keys": [
+            "server_lint",
+            "server_format",
+            "clients_tools_lint",
+            "clients_tools_format"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "Python generated API clients current",
+          "coverage_keys": [
+            "python_client_current"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "Spike unittest",
+          "coverage_keys": [
+            "spike_unittest"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "shipped data manifest",
+          "coverage_keys": [
+            "shipped_check"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web format",
+          "coverage_keys": [
+            "web_format"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web typecheck",
+          "coverage_keys": [
+            "web_types"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web tests",
+          "coverage_keys": [
+            "web_tests"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web build",
+          "coverage_keys": [
+            "web_build"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web API generation plus no-diff",
+          "coverage_keys": [
+            "web_api_current_generation",
+            "web_api_current_diff"
+          ],
+          "covered": true
+        }
+      ],
+      "all_agents_commands_covered": true,
+      "step_count": 35,
+      "successful_step_count": 35,
+      "step_failures_or_skips": [],
+      "workflow_job_timeout_minutes": {
+        "gate": 30,
+        "launchers": 30
+      },
+      "web_artifact_workflow_contract": {
+        "upload_action_v4": true,
+        "uses_github_sha_in_name": true,
+        "path_is_web_dist": true
+      }
+    },
+    {
+      "id": 45752911753,
+      "repository": "lumingya/comfy-comic-studio",
+      "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45752911753",
+      "event": "pull_request",
+      "run_number": 288,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "failure",
+      "metadata_head_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+      "actual_checkout_sha": "3b4ef74eb0e0c1a70f769979efafa7d5a45ab04a",
+      "checkout_parents": [
+        "5569dc294fd16c7478abbd31317da7e9055c3be7",
+        "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c"
+      ],
+      "workflow_blob_sha": "5ae8d64f24cb26d9f7288d6d55fff59b85acdaca",
+      "job_count": 3,
+      "jobs": [
+        {
+          "id": 139684723305,
+          "run_id": 45752911753,
+          "name": "gate",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45752911753/job/139684723305",
+          "status": "completed",
+          "conclusion": "success",
+          "checkout_sha": "3b4ef74eb0e0c1a70f769979efafa7d5a45ab04a",
+          "checkout_safe_line": 124,
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:04Z",
+              "completed_at": "2026-11-26T04:05:05Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:05Z",
+              "completed_at": "2026-11-26T04:05:07Z"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:07Z",
+              "completed_at": "2026-11-26T04:05:07Z"
+            },
+            {
+              "number": 4,
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:07Z",
+              "completed_at": "2026-11-26T04:05:10Z"
+            },
+            {
+              "number": 5,
+              "name": "Install Python dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:10Z",
+              "completed_at": "2026-11-26T04:05:19Z"
+            },
+            {
+              "number": 6,
+              "name": "Spike unit tests (next/)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:19Z",
+              "completed_at": "2026-11-26T04:05:38Z"
+            },
+            {
+              "number": 7,
+              "name": "v4 server (lint + unit tests)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:38Z",
+              "completed_at": "2026-11-26T04:19:24Z"
+            },
+            {
+              "number": 8,
+              "name": "API v2 clients and release tools (generated client current + lint)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:19:24Z",
+              "completed_at": "2026-11-26T04:19:31Z"
+            },
+            {
+              "number": 9,
+              "name": "v4 web (API types current + format + typecheck + tests + build)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:19:31Z",
+              "completed_at": "2026-11-26T04:21:31Z"
+            },
+            {
+              "number": 10,
+              "name": "Preserve built web for isolated browser verification",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:31Z",
+              "completed_at": "2026-11-26T04:21:32Z"
+            },
+            {
+              "number": 11,
+              "name": "Shipped data manifest",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:32Z",
+              "completed_at": "2026-11-26T04:21:32Z"
+            },
+            {
+              "number": 12,
+              "name": "Standalone assistant extension",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:32Z",
+              "completed_at": "2026-11-26T04:21:42Z"
+            },
+            {
+              "number": 13,
+              "name": "v4 release package smoke test",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:42Z",
+              "completed_at": "2026-11-26T04:21:43Z"
+            },
+            {
+              "number": 24,
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:43Z",
+              "completed_at": "2026-11-26T04:21:43Z"
+            },
+            {
+              "number": 25,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:43Z",
+              "completed_at": "2026-11-26T04:21:43Z"
+            },
+            {
+              "number": 26,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:43Z",
+              "completed_at": "2026-11-26T04:21:43Z"
+            },
+            {
+              "number": 27,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:21:43Z",
+              "completed_at": "2026-11-26T04:21:43Z"
+            }
+          ],
+          "started_at": "2026-11-26T04:05:04Z",
+          "completed_at": "2026-11-26T04:21:45Z",
+          "elapsed_seconds": 1001.0
+        },
+        {
+          "id": 139684723495,
+          "run_id": 45752911753,
+          "name": "launchers (windows-latest, Python 3.11)",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45752911753/job/139684723495",
+          "status": "completed",
+          "conclusion": "failure",
+          "checkout_sha": "3b4ef74eb0e0c1a70f769979efafa7d5a45ab04a",
+          "checkout_safe_line": 1735,
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:05Z",
+              "completed_at": "2026-11-26T04:05:06Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:06Z",
+              "completed_at": "2026-11-26T04:05:12Z"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:12Z",
+              "completed_at": "2026-11-26T04:05:12Z"
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:12Z",
+              "completed_at": "2026-11-26T04:05:27Z"
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:27Z",
+              "completed_at": "2026-11-26T04:06:12Z"
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "failure",
+              "started_at": "2026-11-26T04:06:12Z",
+              "completed_at": "2026-11-26T04:35:34Z"
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "skipped",
+              "started_at": "2026-11-26T04:35:34Z",
+              "completed_at": "2026-11-26T04:35:34Z"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:35:34Z",
+              "completed_at": "2026-11-26T04:35:36Z"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:35:36Z",
+              "completed_at": "2026-11-26T04:35:36Z"
+            }
+          ],
+          "started_at": "2026-11-26T04:05:04Z",
+          "completed_at": "2026-11-26T04:35:38Z",
+          "elapsed_seconds": 1834.0
+        },
+        {
+          "id": 139684723587,
+          "run_id": 45752911753,
+          "name": "launchers (ubuntu-latest, Python 3.11)",
+          "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45752911753/job/139684723587",
+          "status": "completed",
+          "conclusion": "success",
+          "checkout_sha": "3b4ef74eb0e0c1a70f769979efafa7d5a45ab04a",
+          "checkout_safe_line": 2269,
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:06Z",
+              "completed_at": "2026-11-26T04:05:08Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:08Z",
+              "completed_at": "2026-11-26T04:05:14Z"
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:14Z",
+              "completed_at": "2026-11-26T04:05:15Z"
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:15Z",
+              "completed_at": "2026-11-26T04:05:24Z"
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:24Z",
+              "completed_at": "2026-11-26T04:05:46Z"
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:05:46Z",
+              "completed_at": "2026-11-26T04:20:06Z"
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:20:06Z",
+              "completed_at": "2026-11-26T04:20:06Z"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:20:06Z",
+              "completed_at": "2026-11-26T04:20:06Z"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T04:20:06Z",
+              "completed_at": "2026-11-26T04:20:06Z"
+            }
+          ],
+          "started_at": "2026-11-26T04:05:05Z",
+          "completed_at": "2026-11-26T04:20:10Z",
+          "elapsed_seconds": 905.0
+        }
+      ],
+      "all_jobs_success": false,
+      "all_steps_success": false,
+      "command_coverage": [
+        {
+          "key": "server_unittest",
+          "command": "python -m unittest discover -s server/tests -t server -q",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "server_unittest",
+              "command": "python -m unittest discover -s server/tests -t server -q",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 server (lint + unit tests)",
+              "safe_line": 277
+            },
+            {
+              "key": "server_unittest",
+              "command": "python -m unittest discover -s server/tests -t server -q",
+              "job_id": 139684723495,
+              "job": "launchers (windows-latest, Python 3.11)",
+              "step": "v4 server unit tests",
+              "safe_line": 1887
+            },
+            {
+              "key": "server_unittest",
+              "command": "python -m unittest discover -s server/tests -t server -q",
+              "job_id": 139684723587,
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "step": "v4 server unit tests",
+              "safe_line": 2428
+            }
+          ]
+        },
+        {
+          "key": "spike_unittest",
+          "command": "python -m unittest discover -s next/tests -t next -q",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "spike_unittest",
+              "command": "python -m unittest discover -s next/tests -t next -q",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "Spike unit tests (next/)",
+              "safe_line": 260
+            }
+          ]
+        },
+        {
+          "key": "server_lint",
+          "command": "ruff check server extensions",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "server_lint",
+              "command": "ruff check server extensions",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 server (lint + unit tests)",
+              "safe_line": 275
+            }
+          ]
+        },
+        {
+          "key": "server_format",
+          "command": "ruff format --check server extensions",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "server_format",
+              "command": "ruff format --check server extensions",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 server (lint + unit tests)",
+              "safe_line": 276
+            }
+          ]
+        },
+        {
+          "key": "clients_tools_lint",
+          "command": "ruff check clients tools",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "clients_tools_lint",
+              "command": "ruff check clients tools",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 535
+            }
+          ]
+        },
+        {
+          "key": "clients_tools_format",
+          "command": "ruff format --check clients tools",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "clients_tools_format",
+              "command": "ruff format --check clients tools",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 536
+            }
+          ]
+        },
+        {
+          "key": "adapter_lint",
+          "command": "ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "adapter_lint",
+              "command": "ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 533
+            }
+          ]
+        },
+        {
+          "key": "adapter_format",
+          "command": "ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "adapter_format",
+              "command": "ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 534
+            }
+          ]
+        },
+        {
+          "key": "bootstrap_lint",
+          "command": "ruff check --config server/pyproject.toml mio_update_bootstrap.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "bootstrap_lint",
+              "command": "ruff check --config server/pyproject.toml mio_update_bootstrap.py",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 537
+            }
+          ]
+        },
+        {
+          "key": "bootstrap_format",
+          "command": "ruff format --check --config server/pyproject.toml mio_update_bootstrap.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "bootstrap_format",
+              "command": "ruff format --check --config server/pyproject.toml mio_update_bootstrap.py",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 538
+            }
+          ]
+        },
+        {
+          "key": "python_client_current",
+          "command": "python clients/python/generate.py --check",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "python_client_current",
+              "command": "python clients/python/generate.py --check",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 529
+            }
+          ]
+        },
+        {
+          "key": "extension_contracts_current",
+          "command": "python tools/generate_extension_contracts.py --check",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "extension_contracts_current",
+              "command": "python tools/generate_extension_contracts.py --check",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 528
+            }
+          ]
+        },
+        {
+          "key": "extension_examples",
+          "command": "python tools/check_extension_examples.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "extension_examples",
+              "command": "python tools/check_extension_examples.py",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 530
+            }
+          ]
+        },
+        {
+          "key": "doc_links_self_test",
+          "command": "python tools/check_doc_links.py --self-test",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "doc_links_self_test",
+              "command": "python tools/check_doc_links.py --self-test",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 531
+            }
+          ]
+        },
+        {
+          "key": "doc_links",
+          "command": "python tools/check_doc_links.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "doc_links",
+              "command": "python tools/check_doc_links.py",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "API v2 clients and release tools (generated client current + lint)",
+              "safe_line": 532
+            }
+          ]
+        },
+        {
+          "key": "web_install",
+          "command": "npm ci --prefix web --no-audit --no-fund",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_install",
+              "command": "npm ci --prefix web --no-audit --no-fund",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 587
+            }
+          ]
+        },
+        {
+          "key": "web_api_current_generation",
+          "command": "npm --prefix web run gen:api",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_api_current_generation",
+              "command": "npm --prefix web run gen:api",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 588
+            }
+          ]
+        },
+        {
+          "key": "web_api_current_diff",
+          "command": "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_api_current_diff",
+              "command": "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 589
+            }
+          ]
+        },
+        {
+          "key": "web_format",
+          "command": "npm --prefix web run format:check",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_format",
+              "command": "npm --prefix web run format:check",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 590
+            }
+          ]
+        },
+        {
+          "key": "web_types",
+          "command": "npm --prefix web run typecheck",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_types",
+              "command": "npm --prefix web run typecheck",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 591
+            }
+          ]
+        },
+        {
+          "key": "web_tests",
+          "command": "npm --prefix web test",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_tests",
+              "command": "npm --prefix web test",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 592
+            }
+          ]
+        },
+        {
+          "key": "web_build",
+          "command": "npm --prefix web run build",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "web_build",
+              "command": "npm --prefix web run build",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 594
+            }
+          ]
+        },
+        {
+          "key": "panel_scripts",
+          "command": "python tools/check_extension_examples.py --panel-tests",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "panel_scripts",
+              "command": "python tools/check_extension_examples.py --panel-tests",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 web (API types current + format + typecheck + tests + build)",
+              "safe_line": 593
+            }
+          ]
+        },
+        {
+          "key": "shipped_check",
+          "command": "python tools/check_distribution.py",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "shipped_check",
+              "command": "python tools/check_distribution.py",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "Shipped data manifest",
+              "safe_line": 1520
+            }
+          ]
+        },
+        {
+          "key": "shipped_rebuild_check",
+          "command": "python tools/build_distribution.py --check",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "shipped_rebuild_check",
+              "command": "python tools/build_distribution.py --check",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "Shipped data manifest",
+              "safe_line": 1521
+            }
+          ]
+        },
+        {
+          "key": "assistant_install",
+          "command": "npm ci --no-audit --no-fund",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_install",
+              "command": "npm ci --no-audit --no-fund",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1534
+            }
+          ]
+        },
+        {
+          "key": "assistant_format",
+          "command": "npx prettier --check .",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_format",
+              "command": "npx prettier --check .",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1535
+            }
+          ]
+        },
+        {
+          "key": "assistant_tests",
+          "command": "npm test",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_tests",
+              "command": "npm test",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1536
+            }
+          ]
+        },
+        {
+          "key": "assistant_build",
+          "command": "npm run build",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_build",
+              "command": "npm run build",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1537
+            }
+          ]
+        },
+        {
+          "key": "assistant_dist_current",
+          "command": "git diff --exit-code -- dist",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "assistant_dist_current",
+              "command": "git diff --exit-code -- dist",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "Standalone assistant extension",
+              "safe_line": 1538
+            }
+          ]
+        },
+        {
+          "key": "launchers",
+          "command": "python -m unittest tests.test_launchers -v",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "launchers",
+              "command": "python -m unittest tests.test_launchers -v",
+              "job_id": 139684723495,
+              "job": "launchers (windows-latest, Python 3.11)",
+              "step": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "safe_line": 1839
+            },
+            {
+              "key": "launchers",
+              "command": "python -m unittest tests.test_launchers -v",
+              "job_id": 139684723587,
+              "job": "launchers (ubuntu-latest, Python 3.11)",
+              "step": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "safe_line": 2379
+            }
+          ]
+        },
+        {
+          "key": "release_package",
+          "command": "python tools/build_release.py --out",
+          "declared": true,
+          "covered": true,
+          "success_verification": "containing API step completed successfully",
+          "occurrences": [
+            {
+              "key": "release_package",
+              "command": "python tools/build_release.py --out",
+              "job_id": 139684723305,
+              "job": "gate",
+              "step": "v4 release package smoke test",
+              "safe_line": 1593
+            }
+          ]
+        }
+      ],
+      "web_preview_artifacts": [
+        {
+          "id": 15087376545,
+          "name": "web-preview-3b4ef74eb0e0c1a70f769979efafa7d5a45ab04a",
+          "size_in_bytes": 766799,
+          "digest": "sha256:f4a6347d24556e13d72bd174660532c75f165268ed118ae9bc5a1e17976c318e",
+          "expired": false,
+          "created_at": "2026-11-26T04:21:32Z",
+          "expires_at": "2026-11-28T04:21:31Z",
+          "archive_download_url": "https://api.github.com/repos/lumingya/comfy-comic-studio/actions/artifacts/15087376545/zip",
+          "expected_name": "web-preview-3b4ef74eb0e0c1a70f769979efafa7d5a45ab04a",
+          "name_matches_actual_checkout": true,
+          "name_matches_metadata_head": false,
+          "workflow_run_id": 45752911753,
+          "workflow_run_head_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "belongs_to_run": true
+        }
+      ],
+      "error_evidence": [
+        {
+          "job_id": 139684723495,
+          "step": "v4 server unit tests",
+          "safe_line": 2131,
+          "error": "Process completed with exit code 1."
+        }
+      ],
+      "log": {
+        "id": "raw-ci-45752911753.log",
+        "lines": 2676,
+        "bytes": 431660,
+        "sha256": "0256161fe6f6a33646b6875cd78da1028d1376bdcf45ba5ec0076ef0b6eeec7e"
+      },
+      "pull_requests_at_observation": [
+        {
+          "number": 1,
+          "head_sha": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+          "base_sha": "98aefc051fb8a795f49528e9c70b5620dd90ae6d"
+        }
+      ],
+      "unittest_suites": [
+        {
+          "job_id": 139684723305,
+          "job": "gate",
+          "step": "Spike unit tests (next/)",
+          "test_count": 80,
+          "seconds": 18.67,
+          "safe_line": 271,
+          "result": "OK",
+          "result_summary": "OK",
+          "skipped": 0,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 273
+        },
+        {
+          "job_id": 139684723305,
+          "job": "gate",
+          "step": "v4 server (lint + unit tests)",
+          "test_count": 1949,
+          "seconds": 823.189,
+          "safe_line": 521,
+          "result": "OK",
+          "result_summary": "OK (skipped=3)",
+          "skipped": 3,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 523
+        },
+        {
+          "job_id": 139684723495,
+          "job": "launchers (windows-latest, Python 3.11)",
+          "step": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+          "test_count": 31,
+          "seconds": 41.889,
+          "safe_line": 1883,
+          "result": "OK",
+          "result_summary": "OK",
+          "skipped": 0,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 1885
+        },
+        {
+          "job_id": 139684723495,
+          "job": "launchers (windows-latest, Python 3.11)",
+          "step": "v4 server unit tests",
+          "test_count": 1949,
+          "seconds": 1757.857,
+          "safe_line": 2125,
+          "result": "FAILED",
+          "result_summary": "FAILED (failures=1)",
+          "skipped": 0,
+          "failures": 1,
+          "errors": 0,
+          "result_safe_line": 2127
+        },
+        {
+          "job_id": 139684723587,
+          "job": "launchers (ubuntu-latest, Python 3.11)",
+          "step": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+          "test_count": 31,
+          "seconds": 18.915,
+          "safe_line": 2424,
+          "result": "OK",
+          "result_summary": "OK",
+          "skipped": 0,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 2426
+        },
+        {
+          "job_id": 139684723587,
+          "job": "launchers (ubuntu-latest, Python 3.11)",
+          "step": "v4 server unit tests",
+          "test_count": 1949,
+          "seconds": 857.806,
+          "safe_line": 2652,
+          "result": "OK",
+          "result_summary": "OK (skipped=3)",
+          "skipped": 3,
+          "failures": 0,
+          "errors": 0,
+          "result_safe_line": 2654
+        }
+      ],
+      "vitest_results": [
+        {
+          "job_id": 139684723305,
+          "step": "v4 web (API types current + format + typecheck + tests + build)",
+          "kind": "files",
+          "passed": 133,
+          "total": 133,
+          "safe_line": 1232
+        },
+        {
+          "job_id": 139684723305,
+          "step": "v4 web (API types current + format + typecheck + tests + build)",
+          "kind": "cases",
+          "passed": 1100,
+          "total": 1100,
+          "safe_line": 1233
+        },
+        {
+          "job_id": 139684723305,
+          "step": "Standalone assistant extension",
+          "kind": "files",
+          "passed": 2,
+          "total": 2,
+          "safe_line": 1569
+        },
+        {
+          "job_id": 139684723305,
+          "step": "Standalone assistant extension",
+          "kind": "cases",
+          "passed": 34,
+          "total": 34,
+          "safe_line": 1570
+        }
+      ],
+      "backend_full_matrix_succeeded": false,
+      "agents_command_rows": [
+        {
+          "requirement": "backend unittest",
+          "coverage_keys": [
+            "server_unittest"
+          ],
+          "covered": false
+        },
+        {
+          "requirement": "ruff server/clients/tools check and format",
+          "coverage_keys": [
+            "server_lint",
+            "server_format",
+            "clients_tools_lint",
+            "clients_tools_format"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "Python generated API clients current",
+          "coverage_keys": [
+            "python_client_current"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "Spike unittest",
+          "coverage_keys": [
+            "spike_unittest"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "shipped data manifest",
+          "coverage_keys": [
+            "shipped_check"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web format",
+          "coverage_keys": [
+            "web_format"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web typecheck",
+          "coverage_keys": [
+            "web_types"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web tests",
+          "coverage_keys": [
+            "web_tests"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web build",
+          "coverage_keys": [
+            "web_build"
+          ],
+          "covered": true
+        },
+        {
+          "requirement": "web API generation plus no-diff",
+          "coverage_keys": [
+            "web_api_current_generation",
+            "web_api_current_diff"
+          ],
+          "covered": true
+        }
+      ],
+      "all_agents_commands_covered": false,
+      "step_count": 35,
+      "successful_step_count": 33,
+      "step_failures_or_skips": [
+        {
+          "job_id": 139684723495,
+          "step": "v4 server unit tests",
+          "conclusion": "failure"
+        },
+        {
+          "job_id": 139684723495,
+          "step": "Post Run actions/setup-python@v5",
+          "conclusion": "skipped"
+        }
+      ],
+      "workflow_job_timeout_minutes": {
+        "gate": 30,
+        "launchers": 60
+      },
+      "actual_failure_evidence": {
+        "job_id": 139684723495,
+        "step": "v4 server unit tests",
+        "classification": "unit_test_assertion_failure",
+        "timed_out": false,
+        "test_id": "tests.test_review_cloud_deadline.CloudDeadlineReviewTests.test_tls_handshake_stall_obeys_deadline",
+        "complete_suite_summary_present": true,
+        "exit_code": 1,
+        "evidence": [
+          {
+            "safe_line": 2117,
+            "text": "FAIL: test_tls_handshake_stall_obeys_deadline (tests.test_review_cloud_deadline.CloudDeadlineReviewTests.test_tls_handshake_stall_obeys_deadline)"
+          },
+          {
+            "safe_line": 2121,
+            "text": "self.assertIn(\"deadline\", str(caught.exception), details)"
+          },
+          {
+            "safe_line": 2122,
+            "text": "AssertionError: 'deadline' not found in 'Image service connection failed' : elapsed=1.187000s, remaining=0.012999999999919964, causes=[('LLMError', None), ('ConnectTimeout', None), ('ConnectTimeout', None), ('TimeoutError', None)]"
+          },
+          {
+            "safe_line": 2125,
+            "text": "Ran 1949 tests in 1757.857s"
+          },
+          {
+            "safe_line": 2127,
+            "text": "FAILED (failures=1)"
+          },
+          {
+            "safe_line": 2131,
+            "text": "Process completed with exit code 1."
+          }
+        ],
+        "boundary": "The full suite completed and reported one assertion failure; this is not a job-timeout or cancellation diagnosis. Expected exception logs from unrelated passing failure-path tests are not actual failed test cases."
+      },
+      "failure_scope_context_from_independent_read_only_diagnosis": {
+        "test_source": "server/tests/test_review_cloud_deadline.py",
+        "shared_blob_sha": "6587c4595e6ef5d2430a00cb8cbc453b4e1b790e",
+        "same_blob_at": [
+          "common-base 38838ab",
+          "main 5569dc294fd16c7478abbd31317da7e9055c3be7",
+          "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c"
+        ],
+        "test_source_preexists_in_both_trees_and_is_unchanged_by_this_task": true,
+        "boundary": "Scope context was supplied by the coordinating agent's separate read-only source diagnosis; this CI observer does not infer a root cause or blame the merge base."
+      },
+      "expected_exception_log_lines_excluded_from_failure_evidence": 5,
+      "web_artifact_workflow_contract": {
+        "upload_action_v4": true,
+        "uses_github_sha_in_name": true,
+        "path_is_web_dist": true
+      }
+    }
+  ],
+  "workflow_differences": [
+    "--- fixed-head-ci.yml",
+    "+++ pr-merge-ci.yml",
+    "@@ -84,7 +84,8 @@",
+    "       matrix:",
+    "         os: [windows-latest, ubuntu-latest]",
+    "     runs-on: ${{ matrix.os }}",
+    "-    timeout-minutes: 30",
+    "+    # The full Windows suite continues past 30 minutes; retain every test with a bounded budget.",
+    "+    timeout-minutes: 60",
+    "     steps:",
+    "       - uses: actions/checkout@v4",
+    "       - uses: actions/setup-python@v5"
+  ],
+  "pr_base_evidence": {
+    "api_base_sha": "98aefc051fb8a795f49528e9c70b5620dd90ae6d",
+    "actual_first_parent": "5569dc294fd16c7478abbd31317da7e9055c3be7",
+    "equal": false,
+    "compare_status": "ahead",
+    "ahead_by": 21,
+    "behind_by": 0,
+    "merge_base_sha": "98aefc051fb8a795f49528e9c70b5620dd90ae6d",
+    "api_base_is_ancestor": true,
+    "remote_main_sha_observed_after_terminal": "5569dc294fd16c7478abbd31317da7e9055c3be7",
+    "actual_first_parent_matches_remote_main": true
+  },
+  "skip_case_attribution": {
+    "runtime_log_granularity": "unittest -q records aggregate skipped counts; it does not emit individual skipped case IDs or reasons.",
+    "individual_skip_ids_observed_in_runtime_log": false,
+    "case_level_explanation_method": "Remote immutable-revision AST/source guards correlated with Linux skipped=3 and Windows skipped=0; source attribution is distinguished from direct per-case runtime output.",
+    "source_guard_evidence": [
+      {
+        "revision": "8d1d9da515636967fa5c1c9e494ebd0be0fcec8c",
+        "case_guards": [
+          {
+            "file": "server/tests/test_windows_path_aliases.py",
+            "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+            "line": 39,
+            "class_name": "ThemePathAliasTests",
+            "target": "test_ordinary_short_path_is_accepted_by_package_and_resource_checks",
+            "decorator": "unittest.skipUnless(os.name == \"nt\", \"8.3 aliases are a Windows filesystem feature\")"
+          },
+          {
+            "file": "server/tests/test_windows_path_aliases.py",
+            "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+            "line": 46,
+            "class_name": "ThemePathAliasTests",
+            "target": "test_missing_child_below_ordinary_short_path_is_allowed",
+            "decorator": "unittest.skipUnless(os.name == \"nt\", \"8.3 aliases are a Windows filesystem feature\")"
+          },
+          {
+            "file": "server/tests/test_windows_path_aliases.py",
+            "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+            "line": 81,
+            "class_name": "ThemePathAliasTests",
+            "target": "test_real_junction_ancestor_is_rejected",
+            "decorator": "unittest.skipUnless(os.name == \"nt\", \"junctions are a Windows filesystem feature\")"
+          }
+        ]
+      },
+      {
+        "revision": "3b4ef74eb0e0c1a70f769979efafa7d5a45ab04a",
+        "case_guards": [
+          {
+            "file": "server/tests/test_windows_path_aliases.py",
+            "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+            "line": 39,
+            "class_name": "ThemePathAliasTests",
+            "target": "test_ordinary_short_path_is_accepted_by_package_and_resource_checks",
+            "decorator": "unittest.skipUnless(os.name == \"nt\", \"8.3 aliases are a Windows filesystem feature\")"
+          },
+          {
+            "file": "server/tests/test_windows_path_aliases.py",
+            "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+            "line": 46,
+            "class_name": "ThemePathAliasTests",
+            "target": "test_missing_child_below_ordinary_short_path_is_allowed",
+            "decorator": "unittest.skipUnless(os.name == \"nt\", \"8.3 aliases are a Windows filesystem feature\")"
+          },
+          {
+            "file": "server/tests/test_windows_path_aliases.py",
+            "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+            "line": 81,
+            "class_name": "ThemePathAliasTests",
+            "target": "test_real_junction_ancestor_is_rejected",
+            "decorator": "unittest.skipUnless(os.name == \"nt\", \"junctions are a Windows filesystem feature\")"
+          }
+        ]
+      }
+    ]
+  },
+  "boundaries": [
+    "Artifact existence alone is not full CI success.",
+    "Push fixed-tree and PR merge-tree counts are reported separately.",
+    "No assertion that a package-build smoke proves installer startup, signed-update installation, real GPU generation, or paid-service behavior.",
+    "No assertion that CI success completes the independent product audits or final external-cache cleanup."
+  ]
+}

@@ -1,0 +1,3038 @@
+{
+  "docs_json_count": 77,
+  "docs": [
+    {
+      "pointer": "docs/COMFY_WORKFLOW_138_RETEST_2026-11-25.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_MATRIX_2026-11-21.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RECOVERY_2026-11-25.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_TRUTH_2026-11-21.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-25/r2/blind-after.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-25/r2/blind-results.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/blind-after.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/blind-contracts.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/blind-cross-checks.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/blind-results.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/compile-after.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-deltas.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-ci/ci-verified.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/delta-attribution.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/effective-provenance.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/sample1-stage-attribution.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/privacy-ci.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/privacy-cross-checks.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/repairs-ci.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/blind/cohort-freeze.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/blind/initial-conclusion.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/blind/results.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/compile/initial-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/compile/results.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/privacy/privacy-ci.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/publication-check.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/publication-manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/effective-provenance.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/integration-ci-failed/ci-verified.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/integration-ci-failed/merge-type-fix.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/performance/performance.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/staged-archive-proof.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/validation.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/budget-regression/ci-verified.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/candidate-source.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/integration-history/ownership-fix/validation.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/ownership-proposal/validation.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/ci-before-fix/ci-verified.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/ci-history/timeout-attempt/timeout-fix/validation.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/ci/ci-verified.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/artifact-fa63083-provenance.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/connection-headless.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/fa-candidate/preview/running-server-r5.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/cross-final-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/blind/initial-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/cross-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/compile/initial-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/generality/final.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/generality/initial-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-process-supplement-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-process-supplement.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/cross-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/privacy/initial-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/cross-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/failed-audit/web/initial-seal.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/history-publication.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/civitai-source-limitations/provenance-safe.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/civitai-source-limitations/results.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/coverage/coverage-map.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/manifest.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/r4-reference-attribution/provenance-safe.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/supplements/r4-reference-attribution/results.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r5/synthetic-asset-redaction.json",
+      "graph_shaped_containers": 0,
+      "graph_pointers": [],
+      "large_data_urls": 0
+    }
+  ],
+  "filename_fields": [
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/0",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/1",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/2",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/4",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/5",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/6",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/7",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/8",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/9",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/comparison/raw_order_only_by_group/blind-r1/10",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/50/id",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/51/id",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/52/id",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/53/id",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/54/id",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/55/id",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/56/id",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/57/id",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/58/id",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/59/id",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_R2_RETEST_2026-11-26.json#/samples/60/id",
+      "sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/75/id",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/76/id",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/77/id",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/78/id",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/79/id",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/80/id",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/81/id",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/82/id",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/83/id",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/84/id",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/COMFY_WORKFLOW_RETEST_2026-11-25.json#/samples/85/id",
+      "sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/findings/0/sample",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/0/file",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/1/file",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/2/file",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/3/file",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/4/file",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/5/file",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/6/file",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/7/file",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/8/file",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/9/file",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/samples/10/file",
+      "sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/0/file",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/1/file",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/2/file",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/3/file",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/4/file",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/5/file",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/6/file",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/7/file",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/8/file",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/9/file",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-22/r1/blind.json#/route_results/10/file",
+      "sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/50/id",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/51/id",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/52/id",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/53/id",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/54/id",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/55/id",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/56/id",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/57/id",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/58/id",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/59/id",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/samples/60/id",
+      "sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-after.json#/public_behavior_delta_details/0/public_sample",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/corpus-deltas.json#/public_samples/0/public_sample",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/delta-attribution.json#/R2_sample1_stage_attribution/public_sample",
+      "sha256": "13572bec3efa13f7f441160f7a942f4c94852de1a51fd903ba63efdd9598d08e",
+      "length": 43,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/50/public_sample",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/51/public_sample",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/52/public_sample",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/53/public_sample",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/54/public_sample",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/55/public_sample",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/56/public_sample",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/57/public_sample",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/58/public_sample",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/59/public_sample",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/corpus_samples/60/public_sample",
+      "sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/publish.json#/R2_sample1_stage_attribution/public_sample",
+      "sha256": "13572bec3efa13f7f441160f7a942f4c94852de1a51fd903ba63efdd9598d08e",
+      "length": 43,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r3/final-corpus/sample1-stage-attribution.json#/public_sample",
+      "sha256": "13572bec3efa13f7f441160f7a942f4c94852de1a51fd903ba63efdd9598d08e",
+      "length": 43,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/50/public_sample",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/51/public_sample",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/52/public_sample",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/53/public_sample",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/54/public_sample",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/55/public_sample",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/56/public_sample",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/57/public_sample",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/58/public_sample",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/59/public_sample",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/60/public_sample",
+      "sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+      "length": 30,
+      "public_source_basename_in_same_document": true,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/0/screenshots_visually_inspected/0",
+      "sha256": "b47c3b1649a2c4963a95601c9aa4d78a5da149d64443f5de7571b8a31d002a8b",
+      "length": 21,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/0/screenshots_visually_inspected/1",
+      "sha256": "4cf140137983e80554ec52d654938f5631150dd68f533856ceb9620fa46e0790",
+      "length": 32,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/0/screenshots_visually_inspected/2",
+      "sha256": "f179ec212da3d51cd489bc43e4e5119b336068fd0170ea82fe9fcfcdeb046f70",
+      "length": 25,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/1/screenshots_visually_inspected/0",
+      "sha256": "98e0887b7e08e85b9bbb37d51f336649ca05086c4f3258198f32a25c7b87f564",
+      "length": 20,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/1/screenshots_visually_inspected/1",
+      "sha256": "cea637f097e2dd346b6787e05a9cc3a289edb5df55f78db8657a1308ac9778aa",
+      "length": 31,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/1/screenshots_visually_inspected/2",
+      "sha256": "6e39da2956f340ff308c6e954fcb19bf576192e9c50eebca64ad7f536a53f0f6",
+      "length": 24,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/2/screenshots_visually_inspected/0",
+      "sha256": "f82669d3104a0a4c313eda6420ca8e98ed0801cfa5a58a77cdb87231d96a95a6",
+      "length": 20,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/2/screenshots_visually_inspected/1",
+      "sha256": "9b19c113cccd6bf3693c7d0bc421a40250550945210b59baf19bf84e21552f64",
+      "length": 31,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/2/screenshots_visually_inspected/2",
+      "sha256": "861b65a37beeb75b10f4b8ef6e5a416a05158ba3a2301a336808d7c550466b31",
+      "length": 31,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/3/screenshots_visually_inspected/0",
+      "sha256": "16c85158516fec52ac918b881e0e19bdefee1ff810b4c18b506f40c4efc7a8ff",
+      "length": 19,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/3/screenshots_visually_inspected/1",
+      "sha256": "6c7a7d15235a2195e6e98c056852ac64b6f15f0e62a73476679456f11dbe861e",
+      "length": 30,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/web/measurements.json#/matrices/3/screenshots_visually_inspected/2",
+      "sha256": "37a6d800f6548f47b1ff9cb3be03c10597ca39b6aa74b94bb012ba348ea547e4",
+      "length": 23,
+      "public_source_basename_in_same_document": false,
+      "redaction_marker": false,
+      "synthetic_marker": false
+    }
+  ],
+  "added_python_lines_reviewed": 8301,
+  "boundary_calls": [
+    {
+      "pointer": "examples/extensions/standard-image-channels/transport.py:287",
+      "callee_type": "error",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        64
+      ]
+    },
+    {
+      "pointer": "examples/extensions/standard-image-channels/transport.py:294",
+      "callee_type": "error",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        31
+      ]
+    },
+    {
+      "pointer": "server/mio_server/api/library.py:130",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/api/library.py:141",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        23
+      ]
+    },
+    {
+      "pointer": "server/mio_server/api/library.py:108",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/api/library.py:110",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_dimensions.py:51",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_dimensions.py:176",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_dimensions.py:51",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_dimensions.py:181",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "field"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_dimensions.py:38",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_dimensions.py:142",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:75",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:110",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:113",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "field"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:73",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:127",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "target"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:181",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "f"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:248",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "f"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:110",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:289",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "port"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:355",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "field"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:382",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:76",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10,
+        0
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:124",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        8
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:124",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:366",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "field"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:375",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10,
+        0
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:377",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:77",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "k"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:195",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10,
+        0
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:257",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10,
+        0
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:65",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py:91",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_scope.py:84",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_scope.py:84",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_scope.py:114",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_stage_scope.py:43",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_stage_scope.py:30",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/compile.py:319",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        9
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/compile.py:276",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        5
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/compile.py:277",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/compile.py:285",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "group"
+      ],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection.py:128",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection.py:189",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "kind"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection.py:203",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "kind"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:53",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid",
+        "self"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:57",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:70",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "field"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:79",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "field"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:88",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:53",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:90",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:112",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:60",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        5
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:84",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        9
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:101",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:314",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "marker"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:63",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "section"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:308",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "marker"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:317",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py:333",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:39",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:40",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "node"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:44",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:53",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:60",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:80",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "node"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:81",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "slot"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:114",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "_UNKNOWN",
+        "str",
+        "value"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:168",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:169",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:254",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:40",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:58",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:80",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:188",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:91",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:231",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "expected"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:257",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:258",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:54",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:135",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:219",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:84",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:88",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10,
+        0
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:95",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py:248",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:84",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        5
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:106",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        5
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:107",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        5
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:110",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        11
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:111",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        9
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:76",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:109",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:78",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        8
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:268",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "tag"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:89",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        5
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:117",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:115",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        10
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_import.py:114",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4,
+        0
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_graph.py:76",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "consumer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_graph.py:113",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "consumer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_graph.py:63",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_graph.py:101",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "start"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_graph.py:61",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_graph.py:28",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "nid"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_graph.py:63",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "source"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_graph.py:61",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "consumer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_plan.py:167",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_plan.py:167",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_plan.py:170",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_plan.py:181",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        16
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:20",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "descriptor"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:25",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "path"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:55",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:55",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:56",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        2
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:57",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        8
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:57",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        11
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:55",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:97",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "e"
+      ],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:96",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "e"
+      ],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:97",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_values.py:96",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:97",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "entry"
+      ],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:136",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:82",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:97",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:105",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        12
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:216",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:278",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "i"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:291",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "text_path"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:309",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "key"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:311",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "key"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:316",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "index"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:102",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        8
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:146",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "item",
+        "power"
+      ],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:190",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "i"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:103",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:103",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        2
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:220",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "item"
+      ],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:320",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:349",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:72",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "key"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:73",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "key"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:92",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "field",
+        "item"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:249",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        13
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/workflow_slot_writers.py:233",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "field",
+        "item"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:144",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "stored"
+      ],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:27",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "value"
+      ],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:156",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:47",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        5
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:145",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:151",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:28",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:144",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:156",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:158",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:108",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "key"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:67",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        6,
+        0
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:68",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        8
+      ]
+    },
+    {
+      "pointer": "server/mio_server/workflow_catalog.py:158",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        4
+      ]
+    },
+    {
+      "pointer": "server/tests/test_cloud_timeout_classification.py:126",
+      "callee_type": "request",
+      "argument_symbol_pointers": [
+        "method",
+        "transfer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_cloud_timeout_classification.py:154",
+      "callee_type": "request",
+      "argument_symbol_pointers": [
+        "method",
+        "transfer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_cloud_timeout_classification.py:175",
+      "callee_type": "request",
+      "argument_symbol_pointers": [
+        "method",
+        "transfer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_cloud_timeout_classification.py:203",
+      "callee_type": "request",
+      "argument_symbol_pointers": [
+        "method",
+        "transfer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_cloud_timeout_classification.py:142",
+      "callee_type": "request",
+      "argument_symbol_pointers": [
+        "method",
+        "transfer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_cloud_timeout_classification.py:170",
+      "callee_type": "request",
+      "argument_symbol_pointers": [
+        "method",
+        "transfer"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_catalog.py:356",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_catalog.py:325",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_catalog.py:327",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_catalog.py:341",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "bad"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_catalog.py:363",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_catalog.py:349",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_conditioning_stage_scope.py:91",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "actual"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_conditioning_stage_scope.py:91",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "expected"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:23",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "value"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:221",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:253",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:300",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:310",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        30
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:40",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "value"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:216",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        27
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:219",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        22
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:229",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        27
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:288",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:313",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        11
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:317",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        30
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:255",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "graph"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:267",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        27
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:280",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        27
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:216",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "graph"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:245",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        22
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:54",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "package"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:231",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "graph"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:247",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "body"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:64",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "graph"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_import_media.py:89",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "graph"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_lora_lossless.py:40",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "actual"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_lora_lossless.py:40",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "expected"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_lora_lossless.py:206",
+      "callee_type": "get",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        7
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_lora_numeric_strings.py:113",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "actual"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_lora_numeric_strings.py:113",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "expected"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_lora_r3_lossless.py:68",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "actual"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_lora_r3_lossless.py:68",
+      "callee_type": "dumps",
+      "argument_symbol_pointers": [
+        "expected"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_stack_modes.py:200",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        14
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_stack_modes.py:206",
+      "callee_type": "post",
+      "argument_symbol_pointers": [],
+      "string_argument_lengths": [
+        11
+      ]
+    },
+    {
+      "pointer": "server/tests/test_workflow_stack_modes.py:212",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "doc"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_stack_modes.py:234",
+      "callee_type": "post",
+      "argument_symbol_pointers": [
+        "doc"
+      ],
+      "string_argument_lengths": []
+    },
+    {
+      "pointer": "server/tests/test_workflow_stack_modes.py:239",
+      "callee_type": "get",
+      "argument_symbol_pointers": [
+        "doc"
+      ],
+      "string_argument_lengths": []
+    }
+  ],
+  "product_execution_count": 0,
+  "network_calls": 0,
+  "repository_writes": 0
+}

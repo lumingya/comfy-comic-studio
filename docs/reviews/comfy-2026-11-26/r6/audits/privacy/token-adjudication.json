@@ -1,0 +1,93 @@
+{
+  "count": 11,
+  "records": [
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/50/public_sample",
+      "sha256": "953832573f722d5a8bc3bc7915faa8e325b5d74aa2717c15acf68178e6d7dc24",
+      "length": 8,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/51/public_sample",
+      "sha256": "cd6134e52cad7d1bf2b6079bb6401508c515ab9b39fc715a3c5b78ef9243ea64",
+      "length": 17,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/52/public_sample",
+      "sha256": "aeafe463fb09cde9c5387bd83b3195a2db339e6445e1786a38c1f4db21dcb95c",
+      "length": 31,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/53/public_sample",
+      "sha256": "cb84192afbd71a99e3f3de4ecedcf0392a399ea88ba6e4c7cfe74f63d628fe6b",
+      "length": 29,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/54/public_sample",
+      "sha256": "3c3222ae84225945acc55e1631d37b86851e32c19c05e00adc249f060e2603e4",
+      "length": 37,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/55/public_sample",
+      "sha256": "40c4568ebf5cd3bb78f9684a6de9e156cda51fe15bfd6c065ce75c153665a8e8",
+      "length": 30,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/56/public_sample",
+      "sha256": "e053d2266e1c0f32cfa4f85a5b5164bdb9a7df132058987f59a9d98ad951e2f9",
+      "length": 23,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/57/public_sample",
+      "sha256": "df37dde5c9f7364cb9db23674b5bce9db377f1ab2d4fa7c366ebf61a102515c7",
+      "length": 20,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/58/public_sample",
+      "sha256": "756990dd730361b8bc023986b46898ac116266599ae4a8cfefe2f49a8bb8406c",
+      "length": 28,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/59/public_sample",
+      "sha256": "1d3c9c296a0efcd81866d16262aa9b927fc1eb377f5dfca046a2f704e3e95530",
+      "length": 27,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    },
+    {
+      "pointer": "docs/reviews/comfy-2026-11-26/r4/repairs/after-repair/final-corpus/publish.json#/corpus/samples/60/public_sample",
+      "sha256": "996ac20e8a64471b6afef0a2ea9d162b24c5362fddbf0dcc64a3d7a949efa6f0",
+      "length": 30,
+      "contains_redaction_marker": false,
+      "contains_synthetic_marker": false,
+      "filename_only": true
+    }
+  ]
+}

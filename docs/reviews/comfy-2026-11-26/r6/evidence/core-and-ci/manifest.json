@@ -1,0 +1,271 @@
+{
+  "schema": "mio.r6-publication-preparation.v1",
+  "utc": "2026-11-26T09:23:38.709618+00:00",
+  "source_files": 31,
+  "candidate_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "published_to_repository": false,
+  "r6_verdict_claimed": false,
+  "mio_imports": 0,
+  "product_calls": 0,
+  "test_runs": 0,
+  "records": {
+    "ci/report.md": {
+      "source_pointer": "repairs/r6-candidate-ci/report.md",
+      "source_sha256": "5622bf5cde091b9cabf533c6084b71293cd145fb64ac73efcfccca637adc5e73",
+      "published_sha256": "2aea722688fbfc39fdfdedab7a4c0ab17827934dcba586c1993c67d3c4cb9a48",
+      "byte_identical": false,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "ci/ci-verified.json": {
+      "source_pointer": "repairs/r6-candidate-ci/ci-verified.json",
+      "source_sha256": "6ad3b99652352e7819fa4d513de03e0f6c16f98c41a478baee2bdaa5a9150d11",
+      "published_sha256": "2c3fcf2dd12e07bede90c13f19914cf659a60053c667427aca4ddd725740add2",
+      "byte_identical": false,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "preview/running-server-r6.json": {
+      "source_pointer": "repairs/r6-preview/running-server-r6.json",
+      "source_sha256": "97094302113c67116daaaa1fdf9f22270ef020407e007684d3c0d4b25f69f7ec",
+      "published_sha256": "97094302113c67116daaaa1fdf9f22270ef020407e007684d3c0d4b25f69f7ec",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "preview/artifact-fe91406-provenance.json": {
+      "source_pointer": "repairs/r6-preview/artifact-fe91406-provenance.json",
+      "source_sha256": "af7afd08426ddbc4f397bb78dcfc982ea5250b8b4da65de15c97ea5e71799af3",
+      "published_sha256": "af7afd08426ddbc4f397bb78dcfc982ea5250b8b4da65de15c97ea5e71799af3",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "preview/preview-source-freeze.json": {
+      "source_pointer": "repairs/r6-preview/preview-source-freeze.json",
+      "source_sha256": "cc6e282acc157c8f61928ff2914d1e877aa90c0ae192b941f5df29a3505a2255",
+      "published_sha256": "cc6e282acc157c8f61928ff2914d1e877aa90c0ae192b941f5df29a3505a2255",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "preview/root-ci-authorization.json": {
+      "source_pointer": "repairs/r6-preview/root-ci-authorization.json",
+      "source_sha256": "f9468189a41cd0273127e6ebf60a4b8f21853a37f4f78cc6bc3409a032712a8e",
+      "published_sha256": "f9468189a41cd0273127e6ebf60a4b8f21853a37f4f78cc6bc3409a032712a8e",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "current75/report.md": {
+      "source_pointer": "repairs/final-current75-replay/report.md",
+      "source_sha256": "b1f8e6af0430869282fdfe4f06c4b9f64fc4f12265ab1a302d9804190482e9c5",
+      "published_sha256": "b1f8e6af0430869282fdfe4f06c4b9f64fc4f12265ab1a302d9804190482e9c5",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "current75/summary.json": {
+      "source_pointer": "repairs/final-current75-replay/summary.json",
+      "source_sha256": "570f81402b040ca4d43bc6cbfc25abfa9c36610ae869a0ae5810b2db9f0435b4",
+      "published_sha256": "570f81402b040ca4d43bc6cbfc25abfa9c36610ae869a0ae5810b2db9f0435b4",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "current75/provenance-safe.json": {
+      "source_pointer": "repairs/final-current75-replay/provenance-safe.json",
+      "source_sha256": "3fa3dddd3eeff57d0f2ad7aad7bea0cadb50e43f791b3afabe9e67a5a3cfc8e8",
+      "published_sha256": "3fa3dddd3eeff57d0f2ad7aad7bea0cadb50e43f791b3afabe9e67a5a3cfc8e8",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "finding-replay/report.md": {
+      "source_pointer": "repairs/r6-r5-finding-replay/report.md",
+      "source_sha256": "97175723cb810063a31345eb069217440e93fbf5141d3067a04aa79b15d72b95",
+      "published_sha256": "97175723cb810063a31345eb069217440e93fbf5141d3067a04aa79b15d72b95",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "finding-replay/results.json": {
+      "source_pointer": "repairs/r6-r5-finding-replay/results.json",
+      "source_sha256": "9098921c9a9c81be8520bccb06c85f4377d39beef2a37e9bf03c527d88a20409",
+      "published_sha256": "9098921c9a9c81be8520bccb06c85f4377d39beef2a37e9bf03c527d88a20409",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "finding-replay/provenance-safe.json": {
+      "source_pointer": "repairs/r6-r5-finding-replay/provenance-safe.json",
+      "source_sha256": "473e3a79bdb003167d1d2748259653310f323e66b3555cfe9ad58677a0069f7a",
+      "published_sha256": "473e3a79bdb003167d1d2748259653310f323e66b3555cfe9ad58677a0069f7a",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "finding-replay/assessment-safe.json": {
+      "source_pointer": "repairs/r6-r5-finding-replay/assessment-safe.json",
+      "source_sha256": "8ef177319b7462a320b3553344232d4ae0fe227edb70899126c29a9916fce98b",
+      "published_sha256": "8ef177319b7462a320b3553344232d4ae0fe227edb70899126c29a9916fce98b",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "finding-replay/completion-seal-safe.json": {
+      "source_pointer": "repairs/r6-r5-finding-replay/completion-seal-safe.json",
+      "source_sha256": "00042ad25859e4b3de2f6aac5b8c000419190c7de219152bf8618293d25a2c7c",
+      "published_sha256": "00042ad25859e4b3de2f6aac5b8c000419190c7de219152bf8618293d25a2c7c",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "civitai-metadata/report.md": {
+      "source_pointer": "repairs/r6-civitai-known-source-metadata/report.md",
+      "source_sha256": "d27661018aee1212ba8ac08fccd19655e6dd5ac93fd8e5443243e19c8c8b3b65",
+      "published_sha256": "d27661018aee1212ba8ac08fccd19655e6dd5ac93fd8e5443243e19c8c8b3b65",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "civitai-metadata/results.json": {
+      "source_pointer": "repairs/r6-civitai-known-source-metadata/results.json",
+      "source_sha256": "79ef8f1f36fa85672308de516dfa2d626160a130d4d7b320376a4a485955367a",
+      "published_sha256": "79ef8f1f36fa85672308de516dfa2d626160a130d4d7b320376a4a485955367a",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "civitai-metadata/provenance-safe.json": {
+      "source_pointer": "repairs/r6-civitai-known-source-metadata/provenance-safe.json",
+      "source_sha256": "1d74877ac4e439d9c5bf4a7616049b89b8c08ae67b2160ba73701bc58cd496fe",
+      "published_sha256": "1d74877ac4e439d9c5bf4a7616049b89b8c08ae67b2160ba73701bc58cd496fe",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-initial/execution-plan.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery/execution-plan.json",
+      "source_sha256": "52f4ddfad4ff910cf3443adb3b8b39104a5aab8b7381a9da2456a80fe93a515a",
+      "published_sha256": "52f4ddfad4ff910cf3443adb3b8b39104a5aab8b7381a9da2456a80fe93a515a",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-initial/results.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery/results.json",
+      "source_sha256": "dff9a7419fd79dee010a364e77e111afc661c11ff805573dff1af2b82469ba30",
+      "published_sha256": "dff9a7419fd79dee010a364e77e111afc661c11ff805573dff1af2b82469ba30",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-initial/provenance-safe.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery/provenance-safe.json",
+      "source_sha256": "abaeb12890325cbde7f33f49be26502889dfc1df6c3442210f041653c127f6f2",
+      "published_sha256": "abaeb12890325cbde7f33f49be26502889dfc1df6c3442210f041653c127f6f2",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-initial/report.md": {
+      "source_pointer": "repairs/r6-civitai-static-recovery/report.md",
+      "source_sha256": "554041bec6671c309314b02ab588277efb51df9ea7e3dde20f7114da8d9f77be",
+      "published_sha256": "554041bec6671c309314b02ab588277efb51df9ea7e3dde20f7114da8d9f77be",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-transport/execution-plan.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery-transportfix/execution-plan.json",
+      "source_sha256": "cc42e5844bbc555184750e01b1e868a0c4e3e0e29e67b32046fcba9878f058be",
+      "published_sha256": "cc42e5844bbc555184750e01b1e868a0c4e3e0e29e67b32046fcba9878f058be",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-transport/results.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery-transportfix/results.json",
+      "source_sha256": "e6130b3602d7ddef0c524d6bf60d02cd67990f679e28ea113a5e2e821f22b501",
+      "published_sha256": "e6130b3602d7ddef0c524d6bf60d02cd67990f679e28ea113a5e2e821f22b501",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-transport/provenance-safe.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery-transportfix/provenance-safe.json",
+      "source_sha256": "cf0e18173bd8106d794e94b0cde173909b496ef2ee6a0452e429f21505b7bf51",
+      "published_sha256": "cf0e18173bd8106d794e94b0cde173909b496ef2ee6a0452e429f21505b7bf51",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-transport/report.md": {
+      "source_pointer": "repairs/r6-civitai-static-recovery-transportfix/report.md",
+      "source_sha256": "3236da475fe5572c0f26f771cbf5ddc55ec2311a6a0a8ac4c5f7265eccbb0099",
+      "published_sha256": "3236da475fe5572c0f26f771cbf5ddc55ec2311a6a0a8ac4c5f7265eccbb0099",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-redirect/execution-plan.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery-redirectfix/execution-plan.json",
+      "source_sha256": "6fa91db32fdeea96b1660904e0478615190fef53ee0536c84208af51750af821",
+      "published_sha256": "6fa91db32fdeea96b1660904e0478615190fef53ee0536c84208af51750af821",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-redirect/results.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery-redirectfix/results.json",
+      "source_sha256": "99deb60decb5a6726924abd8a54a143080da8bf0349164662e8c2c8165119d6a",
+      "published_sha256": "99deb60decb5a6726924abd8a54a143080da8bf0349164662e8c2c8165119d6a",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-redirect/provenance-safe.json": {
+      "source_pointer": "repairs/r6-civitai-static-recovery-redirectfix/provenance-safe.json",
+      "source_sha256": "41195d0b1810c4ba240779be26b2b3abea60086922e4f84b4108f72e8cf8d44f",
+      "published_sha256": "41195d0b1810c4ba240779be26b2b3abea60086922e4f84b4108f72e8cf8d44f",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "recovery-redirect/report.md": {
+      "source_pointer": "repairs/r6-civitai-static-recovery-redirectfix/report.md",
+      "source_sha256": "f8965513d5a0ff120195e214c35b01797107cca35005e594de7cb5f864ba5ab2",
+      "published_sha256": "f8965513d5a0ff120195e214c35b01797107cca35005e594de7cb5f864ba5ab2",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "seen-prefix/report-v2.md": {
+      "source_pointer": "audits/r6/preflight/report-v2.md",
+      "source_sha256": "37934cc793a851623b4e146e71c7d0350116a4e3b8bbbea2f94962414fee73e3",
+      "published_sha256": "37934cc793a851623b4e146e71c7d0350116a4e3b8bbbea2f94962414fee73e3",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    },
+    "seen-prefix/report-v3.md": {
+      "source_pointer": "audits/r6/preflight/report-v3.md",
+      "source_sha256": "f76f9a58c1896d347c7f8b6900ba37b96e7b8188d5ad93f0d4439e4baecdf705",
+      "published_sha256": "f76f9a58c1896d347c7f8b6900ba37b96e7b8188d5ad93f0d4439e4baecdf705",
+      "byte_identical": true,
+      "normalization": "UTF-8 without BOM; LF; one EOF newline; JSON whitespace only unless known path projection recorded",
+      "known_path_replacements": 0
+    }
+  },
+  "index_sha256": "e353b1a1296423e7b72c667df0413aa0340dc1a0612df0506213043859b981d9",
+  "checks": {
+    "explicit_source_allowlist": true,
+    "forbidden_graph_keys": 0,
+    "strong_secret_matches": 0,
+    "private_windows_paths_after_projection": 0,
+    "asset_filename_matches": 0,
+    "utf8_without_bom_lf_single_eof": true,
+    "relative_links_resolve": true
+  }
+}

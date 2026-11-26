@@ -1,0 +1,84 @@
+{
+  "schema": "fixed-two-civitai-static-redirectfix-execution-v1",
+  "sealed_utc": "2026-11-26T08:45:25.534283+00:00",
+  "parent_action_plan_sha256": "a9dba5c76af313d428d75b3780af6d94035e4a86e308cd397f609b62e3a83edc",
+  "fixed_source_order": [
+    2503119,
+    2539304
+  ],
+  "prior_zero_http_results_sha256": "dff9a7419fd79dee010a364e77e111afc661c11ff805573dff1af2b82469ba30",
+  "prior_zero_http_failure_preserved": true,
+  "local_harness_correction": "Unregister Fetch listener only after successful registration; preserve original guard outcome on early return",
+  "prior_307_results_sha256": "e6130b3602d7ddef0c524d6bf60d02cd67990f679e28ea113a5e2e821f22b501",
+  "prior_307_stage_preserved": true,
+  "root_redirect_scope_correction": "Prior root instruction accidentally limited redirect to302. This final independent policy stage allows standard301/302/303/307/308 preserving GET for one actual Location only. Both metadata and initial file endpoints may be reacquired as explicitly authorized; do not claim zero repetition. Prior4GET plus new<=6, cumulative<=10; no second redirect or alternative file.",
+  "root_transport_clarification": "IP literals are all rejected. System resolver private addresses in task proxy environment are not evidence of Chrome actual remote IP. Continue exact trusted HTTPS domain policy with normal Chrome/Context TLS validation, without proxy changes or remote public-IP claims.",
+  "file_selection": "Only exact previously selected Config JSON tuples: source2503119 version3123550 file3007440; source2539304 version2894060 file2772685. Revalidate against one current metadata response per source; no alternate.",
+  "locked_file_ids": [
+    {
+      "source_resource_id": 2503119,
+      "version_id": 3123550,
+      "file_id": 3007440
+    },
+    {
+      "source_resource_id": 2539304,
+      "version_id": 2894060,
+      "file_id": 2772685
+    }
+  ],
+  "get_limits": {
+    "metadata": 2,
+    "file_initial": 2,
+    "file_redirect": 2,
+    "total": 6,
+    "retries": 0
+  },
+  "prior_actual_gets": 4,
+  "cumulative_actual_get_cap": 10,
+  "redirect_policy": {
+    "maximum_actual_server_location_follow_per_file": 1,
+    "allowed_initial_redirect_statuses": [
+      301,
+      302,
+      303,
+      307,
+      308
+    ],
+    "redirect_method": "GET",
+    "HTTPS_only": true,
+    "host_families": [
+      "civitai.com",
+      "cloudflarestorage.com",
+      "amazonaws.com"
+    ],
+    "no_userinfo_ip_literal_abnormal_port_or_interactive_path": true,
+    "location_query_headers_and_signed_urls_only_in_memory": true,
+    "automatic_redirects_blocked": true
+  },
+  "caps": {
+    "chunk_decoded_bytes": 16384,
+    "metadata_decoded_bytes": 524288,
+    "file_decoded_bytes": 2097152,
+    "metadata_attempt_seconds": 32,
+    "file_attempt_seconds": 35,
+    "source_total_seconds": 125
+  },
+  "only_static_json_first_batch": true,
+  "valid_graph_cache_only": true,
+  "pure_functions_source_sha256": "74b0f79370cb03bb434a6c58fe3e6e6697db02aa0d74ef57ac3cce5240739ae3",
+  "pure_functions_extracted_not_module_main": [
+    "canonical_bytes",
+    "digest",
+    "raw_digest",
+    "graph_payloads",
+    "topology"
+  ],
+  "canonical_algorithm": "json-sorted-utf8-finite-v1",
+  "topology_algorithm": "directed-port-wl32-v1",
+  "legacy_12hex_prefix_match_without_original_serialization_algorithm": null,
+  "supplement_only_no_current75_or_historical_truth_replacement": true,
+  "Mio_imports": 0,
+  "product_requests": 0,
+  "tests": 0,
+  "model_or_asset_execution": 0
+}

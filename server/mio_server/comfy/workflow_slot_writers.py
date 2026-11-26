@@ -3,15 +3,23 @@
 import copy
 import re
 
-from .workflow_slot_common import LibraryError, _consumer_index, _is_link, _write_field
-from .workflow_slot_syntax import format_tag, lora_display_name
-from .workflow_slot_values import _name_key
+from .workflow_slot_common import (
+    LORA_TAG,
+    LibraryError,
+    _consumer_index,
+    _is_link,
+    _is_number,
+    _write_field,
+)
+from .workflow_slot_syntax import _num, format_tag
+from .workflow_slot_values import _chain_value, _is_empty_name, _name_key, _stack_value
 
 
 def _apply_chain(workflow, lora, loras, notices):
     chain = copy.deepcopy(lora["chain"])
     if not chain:
         raise LibraryError("工作流里没有可用的 LoRA 加载节点")
+    originals = [_chain_value(workflow[d["nodeId"]]["inputs"], d) for d in chain]
     while len(chain) < len(loras):
         tail = chain[-1]
         tail_node = workflow[tail["nodeId"]]
@@ -30,23 +38,11 @@ def _apply_chain(workflow, lora, loras, notices):
             clone["inputs"][key] = [tail["nodeId"], i]
         workflow[new_id] = clone
         chain.append({**tail, "nodeId": new_id})
+        originals.append(None)
     for i, d in enumerate(chain):
         node = workflow[d["nodeId"]]
-        if i < len(loras) and loras[i].get("enabled", True):
-            l = loras[i]
-            _write_field(workflow, d["nodeId"], d["namePath"], lora_display_name(l["name"], "file"))
-            if d["strengthPath"]:
-                _write_field(workflow, d["nodeId"], d["strengthPath"], l["strength"])
-            if d["clipPath"]:
-                _write_field(workflow, d["nodeId"], d["clipPath"], l.get("clip", l["strength"]))
-            continue
         if i < len(loras):
-            l = loras[i]
-            _write_field(workflow, d["nodeId"], d["namePath"], lora_display_name(l["name"], "file"))
-            if d["strengthPath"]:
-                _write_field(workflow, d["nodeId"], d["strengthPath"], 0)
-            if d["clipPath"]:
-                _write_field(workflow, d["nodeId"], d["clipPath"], 0)
+            _edit_chain(workflow, d, originals[i], loras[i])
             continue
         users = _consumer_index(workflow).get(d["nodeId"], [])
         bypassable = bool(d["passthrough"]) and all(
@@ -68,6 +64,96 @@ def _apply_chain(workflow, lora, loras, notices):
             notices.append("LoRA 节点 %s 无法绕过，已将其强度设为 0。" % d["nodeId"])
 
 
+def _changes(before, after):
+    return {
+        key
+        for key in ("name", "strength", "clip", "enabled")
+        if before is None
+        or before.get(key, True if key == "enabled" else None)
+        != after.get(key, True if key == "enabled" else None)
+    }
+
+
+def _edit_chain(workflow, descriptor, before, item):
+    changes = _changes(before, item)
+    node_id = descriptor["nodeId"]
+    if "name" in changes:
+        _write_field(workflow, node_id, descriptor["namePath"], item["name"])
+    disabled = not item.get("enabled", True)
+    for path, field in (
+        (descriptor["strengthPath"], "strength"),
+        (descriptor["clipPath"], "clip"),
+    ):
+        if path and (field in changes or "enabled" in changes):
+            _write_field(
+                workflow,
+                node_id,
+                path,
+                0 if disabled else item.get(field, item["strength"]),
+            )
+
+
+def _object_value(entry):
+    name = entry.get("name", entry.get("lora"))
+    if _is_empty_name(name):
+        return None
+    value = {
+        "name": name,
+        "strength": _num(entry.get("strength", 1)),
+        "enabled": entry.get("active") is not False and entry.get("on") is not False,
+    }
+    if entry.get("clipStrength") not in (None, ""):
+        value["clip"] = _num(entry["clipStrength"])
+    return value
+
+
+def _assign_existing(originals, loras):
+    """Match occurrences before adding anything, retaining each native position."""
+    assigned, pending = {}, []
+    for item in loras:
+        name = _name_key(item["name"])
+        index = next(
+            (
+                i
+                for i, old in enumerate(originals)
+                if old is not None and _name_key(old["name"]) == name and i not in assigned
+            ),
+            None,
+        )
+        if index is None:
+            pending.append(item)
+        else:
+            assigned[index] = item
+    return assigned, pending
+
+
+def _edit_object(entry, before, item, *, power=False):
+    changes = _changes(before, item)
+    if not changes:
+        return
+    if "name" in changes:
+        entry["lora" if "lora" in entry and "name" not in entry else "name"] = item["name"]
+    enabled = item.get("enabled", True)
+    gates = [key for key in (("on",) if power else ("active", "on")) if key in entry]
+    if "enabled" in changes:
+        for key in gates or (["on"] if power else ["active"]):
+            entry[key] = enabled
+    disabling = "enabled" in changes and not enabled
+    if "strength" in changes or disabling:
+        entry["strength"] = 0 if disabling else item["strength"]
+    clip_key = "strengthTwo" if power else "clipStrength"
+    if clip_key in entry and ("clip" in changes or disabling):
+        entry[clip_key] = 0 if disabling else item.get("clip", None if power else item["strength"])
+
+
+def _switch_value(previous, enabled):
+    if isinstance(previous, bool):
+        return enabled
+    if _is_number(previous):
+        return type(previous)(enabled)
+    return "On" if enabled else "Off"
+
+
 def _apply_stack(workflow, lora, loras):
     node = workflow.get(lora["nodeId"])
     if not isinstance(node, dict):
@@ -75,64 +161,95 @@ def _apply_stack(workflow, lora, loras):
     slots = copy.deepcopy(lora["slots"])
     if not slots:
         raise LibraryError("节点没有可识别的 LoRA 输入")
-    object_style = slots[0]["objectStyle"]
-    if len(loras) > len(slots):
-        if not object_style:
+    inputs = node["inputs"]
+    originals = [_stack_value(inputs, slot) for slot in slots]
+    assigned, pending = _assign_existing(originals, loras)
+    free = [i for i in range(len(slots)) if i not in assigned]
+    while len(free) < len(pending):
+        template = next((slot for slot in slots if slot["objectStyle"]), None)
+        if template is None:
             raise LibraryError(
                 "LoRA 堆栈只有 %d 个位置，无法放下 %d 个 LoRA" % (len(slots), len(loras))
             )
-        template = node["inputs"][slots[0]["namePath"]]
-        base, suffix = slots[0]["namePrefix"], slots[0]["nameSuffix"]
-        next_index = max(s["index"] for s in slots) + 1
-        while len(slots) < len(loras):
-            token = str(next_index).rjust(len(slots[0]["slotToken"]), "0")
-            path = base + token + suffix
-            node["inputs"][path] = copy.deepcopy(template)
-            slots.append({**slots[0], "index": next_index, "slotToken": token, "namePath": path})
-            next_index += 1
+        index = max(slot["index"] for slot in slots) + 1
+        token = str(index).rjust(len(template["slotToken"]), "0")
+        path = template["namePrefix"] + token + template["nameSuffix"]
+        while path in inputs:
+            index += 1
+            token = str(index).rjust(len(template["slotToken"]), "0")
+            path = template["namePrefix"] + token + template["nameSuffix"]
+        inputs[path] = copy.deepcopy(inputs[template["namePath"]])
+        free.append(len(slots))
+        slots.append({**template, "index": index, "slotToken": token, "namePath": path})
+        originals.append(None)
+    assigned.update(zip(free, pending))
+    membership_changed = bool(pending) or any(
+        item is not None and i not in assigned for i, item in enumerate(originals)
+    )
     for i, slot in enumerate(slots):
-        l = loras[i] if i < len(loras) else None
-        if slot["objectStyle"]:
-            if l is None:
-                del node["inputs"][slot["namePath"]]
-                continue
-            entry = node["inputs"][slot["namePath"]]
-            if "lora" in entry or "name" not in entry:
-                entry["lora"] = lora_display_name(l["name"], "file")
-            else:
-                entry["name"] = lora_display_name(l["name"], "file")
-            enabled = l.get("enabled", True)
-            entry["on"] = enabled
-            entry["strength"] = l["strength"] if enabled else 0
-            if "strengthTwo" in entry:
-                entry["strengthTwo"] = (l["clip"] if "clip" in l else None) if enabled else 0
+        item, before = assigned.get(i), originals[i]
+        if item is None and before is None:
             continue
-        switch_value = node["inputs"][slot["switchPath"]] if slot["switchPath"] else None
-        on, off = (True, False) if isinstance(switch_value, bool) else ("On", "Off")
-        if l is not None:
-            _write_field(
-                workflow, lora["nodeId"], slot["namePath"], lora_display_name(l["name"], "file")
-            )
-            enabled = l.get("enabled", True)
-            for key in slot["strengthPaths"]:
-                _write_field(workflow, lora["nodeId"], key, l["strength"] if enabled else 0)
-            for key in slot["clipPaths"]:
+        if slot["objectStyle"]:
+            if item is None:
+                del inputs[slot["namePath"]]
+            else:
+                _edit_object(inputs[slot["namePath"]], before, item, power=True)
+            continue
+        switch_path = slot["switchPath"]
+        if item is None:
+            if switch_path:
                 _write_field(
-                    workflow, lora["nodeId"], key, l.get("clip", l["strength"]) if enabled else 0
+                    workflow,
+                    lora["nodeId"],
+                    switch_path,
+                    _switch_value(inputs[switch_path], False),
                 )
-            if slot["switchPath"]:
-                _write_field(workflow, lora["nodeId"], slot["switchPath"], on if enabled else off)
-        elif slot["switchPath"]:
-            _write_field(workflow, lora["nodeId"], slot["switchPath"], off)
-        else:
-            _write_field(workflow, lora["nodeId"], slot["namePath"], "None")
-            for key in slot["strengthPaths"]:
-                _write_field(workflow, lora["nodeId"], key, 0)
-            for key in slot["clipPaths"]:
-                _write_field(workflow, lora["nodeId"], key, 0)
-    for count in ("lora_count", "num_loras"):
-        if count in node["inputs"]:
-            _write_field(workflow, lora["nodeId"], count, len(loras))
+            else:
+                _write_field(workflow, lora["nodeId"], slot["namePath"], "None")
+                for key in set(slot["strengthPaths"] + slot["clipPaths"]):
+                    _write_field(workflow, lora["nodeId"], key, 0)
+            continue
+        changes = _changes(before, item)
+        if not changes:
+            continue
+        enabled = item.get("enabled", True)
+        if (
+            set(slot["strengthPaths"]) & set(slot["clipPaths"])
+            and enabled
+            and item.get("clip", item["strength"]) != item["strength"]
+        ):
+            raise LibraryError("此 LoRA 位置共用模型与 CLIP 强度，请使用相同权重或切换高级模式")
+        if "name" in changes:
+            _write_field(workflow, lora["nodeId"], slot["namePath"], item["name"])
+        disabling = "enabled" in changes and not enabled
+        for paths, field in ((slot["strengthPaths"], "strength"), (slot["clipPaths"], "clip")):
+            if field in changes or disabling:
+                for key in paths:
+                    _write_field(
+                        workflow,
+                        lora["nodeId"],
+                        key,
+                        0 if disabling else item.get(field, item["strength"]),
+                    )
+        if switch_path and "enabled" in changes:
+            _write_field(
+                workflow,
+                lora["nodeId"],
+                switch_path,
+                _switch_value(inputs[switch_path], enabled),
+            )
+    if membership_changed:
+        for count in ("lora_count", "num_loras"):
+            if count not in inputs:
+                continue
+            first_index = min(slot["index"] for slot in slots)
+            extent = max((slots[i]["index"] for i in assigned), default=-(first_index == 0))
+            value = extent + (first_index == 0)
+            if any(slot.get("preserveEmpty") for slot in slots):
+                value = max(inputs[count], value)
+            if inputs[count] != value:
+                _write_field(workflow, lora["nodeId"], count, value)
 
 
 def _write_object(wf, writer, loras):
@@ -148,33 +265,89 @@ def _write_object(wf, writer, loras):
         raise LibraryError("LoRA 对象字段已连线或形态已变化，请重新分析")
     wrapped = isinstance(raw, dict)
     entries = raw["__value__"] if wrapped else raw
-    if any(not isinstance(e, dict) for e in entries):
+    if any(not isinstance(entry, dict) for entry in entries):
         raise LibraryError("LoRA 对象条目无效，请重新分析")
-    template = (
-        entries[0] if entries else {"name": "", "strength": 1, "active": True, "clipStrength": 1}
+    originals = [_object_value(entry) for entry in entries]
+    assigned, pending = _assign_existing(originals, loras)
+    template = next(
+        (entry for entry, value in zip(entries, originals) if value is not None),
+        {"name": "", "strength": 1, "active": True, "clipStrength": 1},
     )
     values = []
-    occurrences = {}
-    for lora in loras:
-        name_key = _name_key(lora["name"])
-        occurrence = occurrences.get(name_key, 0)
-        occurrences[name_key] = occurrence + 1
-        originals = [
-            entry
-            for entry in entries
-            if _name_key(entry.get("name", entry.get("lora", ""))) == name_key
-        ]
-        e = copy.deepcopy(originals[occurrence] if occurrence < len(originals) else template)
-        e["lora" if "lora" in e and "name" not in e else "name"] = lora["name"]
-        enabled = lora.get("enabled", True)
-        e.update(strength=lora["strength"] if enabled else 0, active=enabled)
-        if "on" in e:
-            e["on"] = enabled
-        if "clipStrength" in e:
-            e["clipStrength"] = lora.get("clip", lora["strength"]) if enabled else 0
-        values.append(e)
+    for i, entry in enumerate(entries):
+        item = assigned.get(i)
+        if item is None and originals[i] is not None:
+            continue
+        value = copy.deepcopy(entry)
+        if item is not None:
+            _edit_object(value, originals[i], item)
+        values.append(value)
+    for item in pending:
+        value = copy.deepcopy(template)
+        _edit_object(value, None, item)
+        values.append(value)
     node["inputs"][path] = {**raw, "__value__": values} if wrapped else values
     for text_path in writer.get("textPaths", []):
-        node["inputs"][text_path] = " ".join(
-            format_tag(lora, "path") for lora in loras if lora.get("enabled", True)
-        )
+        text = node["inputs"].get(text_path)
+        if isinstance(text, str):
+            node["inputs"][text_path] = _mirror_object_tags(text, originals, assigned, pending)
+
+
+def _mirror_object_tags(text, originals, assigned, pending):
+    """Own only as many same-name tags as there are evidenced object occurrences."""
+    owned = {}
+    for index, item in enumerate(originals):
+        if item is not None:
+            owned.setdefault(_name_key(item["name"]), []).append(index)
+    matches = list(LORA_TAG.finditer(text))
+    if not any(_name_key(match[1].strip()) in owned for match in matches):
+        return text
+    used, unowned = {}, set()
+
+    def replace(match):
+        key = _name_key(match[1].strip())
+        occurrence = used.get(key, 0)
+        used[key] = occurrence + 1
+        positions = owned.get(key, [])
+        if occurrence >= len(positions):
+            unowned.add(key)
+            return match[0]
+        index = positions[occurrence]
+        item = assigned.get(index)
+        changes = _changes(originals[index], item) if item is not None else set()
+        if item is not None and not changes:
+            return match[0]
+        if item is None or not item.get("enabled", True):
+            return ""
+        # Keep the spelling and formatting of the tag's untouched components too.
+        formatted = LORA_TAG.fullmatch(format_tag(item, "path"))
+        edits = []
+        for field, group in (("name", 1), ("strength", 2), ("clip", 3)):
+            if field not in changes or match[group] is None or formatted[group] is None:
+                continue
+            edits.append(
+                (
+                    match.start(group) - match.start(),
+                    match.end(group) - match.start(),
+                    formatted[group],
+                )
+            )
+        if any(
+            field in changes and (match[group] is None or formatted[group] is None)
+            for field, group in (("strength", 2), ("clip", 3))
+        ):
+            return format_tag(item, "path")
+        value = match[0]
+        for start, end, replacement in reversed(edits):
+            value = value[:start] + replacement + value[end:]
+        return value
+
+    updated = LORA_TAG.sub(replace, text)
+    additions = [
+        format_tag(item, "path")
+        for item in pending
+        if item.get("enabled", True) and _name_key(item["name"]) not in unowned
+    ]
+    if additions:
+        updated += ("" if not updated or updated[-1].isspace() else " ") + " ".join(additions)
+    return updated

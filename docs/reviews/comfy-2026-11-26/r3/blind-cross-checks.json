@@ -1,0 +1,55 @@
+[
+  {
+    "case": "generated_control_reference",
+    "main_target_changed": false,
+    "auxiliary_target_changed": true,
+    "changed_pointers": [
+      "/aux_z/inputs/width",
+      "/aux_t/inputs/text",
+      "/aux_s/inputs/steps"
+    ],
+    "warnings": [],
+    "compilable": true,
+    "immutable": true
+  },
+  {
+    "case": "generated_style_reference",
+    "main_target_changed": false,
+    "auxiliary_target_changed": true,
+    "changed_pointers": [
+      "/aux_z/inputs/width",
+      "/aux_t/inputs/text",
+      "/aux_s/inputs/steps"
+    ],
+    "warnings": [],
+    "compilable": true,
+    "immutable": true
+  },
+  {
+    "case": "undeclared_auxiliary_output",
+    "route_reason": "undeclared-output-port",
+    "changed_pointers": [
+      "/left_z/inputs/width",
+      "/left_t/inputs/text"
+    ],
+    "warnings": []
+  },
+  {
+    "case": "partial_object_text_mirror",
+    "changed_pointers": [
+      "/stack/inputs/loras",
+      "/stack/inputs/text_a",
+      "/stack/inputs/text_b"
+    ],
+    "unrequested_cross_field_tag": true
+  },
+  {
+    "case": "numeric_string_clip_only",
+    "unrequested_model_before": "0.7",
+    "unrequested_model_after": 1,
+    "changed_pointers": [
+      "/lora/inputs/strength_model",
+      "/lora/inputs/strength_clip"
+    ]
+  }
+]

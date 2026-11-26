@@ -58,6 +58,10 @@
   font: 500 19px var(--serif);
 }
 
+.dialog > h2 {
+  overflow-wrap: anywhere;
+}
+
 .dialog-close {
   position: absolute;
   top: 16px;

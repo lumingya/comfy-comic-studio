@@ -1,0 +1,2269 @@
+{
+  "schema": "known-civitai-bounded-metadata-v1",
+  "state": "TERMINAL_OBSERVATIONS_RECORDED",
+  "started_utc": "2026-11-26T07:51:48.509320+00:00",
+  "fixed_historical_row_count": 35,
+  "fixed_unique_source_count": 34,
+  "new_source_count": 33,
+  "source_order": "numeric resource ID; not popularity ordering",
+  "new_source_set_sha256": "8b883b2ab56dbc33b46d6c1fb8272fee100c53fbaba471f3d3f1c851b2baa3c7",
+  "in_flight_source_resource_id": null,
+  "prior_source_reference": {
+    "source_resource_id": 1215102,
+    "collected_in_this_stage": false,
+    "stage": "r5-civitai-chrome-metadata",
+    "results_sha256": "5584f3f9205090870e02fde0e7b909cb82707d6611434a8d807d0d6e1db945ff",
+    "observed_started_utc": "2026-11-26T07:40:56.106778+00:00",
+    "observed_finished_utc": "2026-11-26T07:41:17.465241+00:00",
+    "response_body_sha256": "c0f8ff8ef85b5a112b76c660dcaa4f90ff8de106f4d580359458d2b3f00d00c5",
+    "response_body_bytes": 15510,
+    "resource_type": "Workflows",
+    "finite_numeric_stats": {
+      "thumbsUpCount": 964,
+      "thumbsDownCount": 2,
+      "downloadCount": 35440,
+      "commentCount": 21
+    },
+    "versions_count": 2,
+    "file_extension_or_type_counts": null,
+    "workflow_graph_bytes_verified": null
+  },
+  "fixed_row_memberships": [
+    {
+      "manifest_row_index": 40,
+      "sample_identity_sha256": "9d6a5aa2bc7cb78909b64081ca78df0ade915cf213d65e7799914718e7502da9",
+      "source_resource_id": 1215102
+    },
+    {
+      "manifest_row_index": 41,
+      "sample_identity_sha256": "d3a2892dbea6ae7c1b71cae393dc5e858e72a38460c8db34c3e5b314be30b16d",
+      "source_resource_id": 128556
+    },
+    {
+      "manifest_row_index": 42,
+      "sample_identity_sha256": "86184e89b9f601f41480c10ed5434e7241c983c2f0797f31731b0b5ed3bb7414",
+      "source_resource_id": 1403746
+    },
+    {
+      "manifest_row_index": 43,
+      "sample_identity_sha256": "029f43bdd8b2ab08465ebd584cc5026f96ccbb99cbdd7a126d0e90069e419a35",
+      "source_resource_id": 143018
+    },
+    {
+      "manifest_row_index": 44,
+      "sample_identity_sha256": "614b71377b6c1258f30d2745aa71a67f3f076560feca39c89b598f774ca0f338",
+      "source_resource_id": 1459738
+    },
+    {
+      "manifest_row_index": 45,
+      "sample_identity_sha256": "721d3e3a006138812f63cff849c41687e3eddbe0a440bd8565030ec9e2dcb825",
+      "source_resource_id": 1466666
+    },
+    {
+      "manifest_row_index": 46,
+      "sample_identity_sha256": "fff133175a0a32a5c2010bc63fba5d543ca738dd00e79f951be61d79a7ac03e9",
+      "source_resource_id": 1513601
+    },
+    {
+      "manifest_row_index": 47,
+      "sample_identity_sha256": "363d3bbeb8b6474db97a6b4303a4c09464994a79182dabd2d5e0d0a8bd98efd5",
+      "source_resource_id": 1598938
+    },
+    {
+      "manifest_row_index": 48,
+      "sample_identity_sha256": "2c6e9ccbe9ec8d9878897e52ba51d576a73baf3f0252fcb4268824b21c51daf3",
+      "source_resource_id": 160207
+    },
+    {
+      "manifest_row_index": 49,
+      "sample_identity_sha256": "51f48c5c02ecd5ffdf58dccc7dc009dd324f99d43e2543633910e9195e6b27d5",
+      "source_resource_id": 1621455
+    },
+    {
+      "manifest_row_index": 50,
+      "sample_identity_sha256": "06fe1fc9c9606ebdf6d88519cf66884be988eb3475f29fcfc816bb3dd3965ccf",
+      "source_resource_id": 1720275
+    },
+    {
+      "manifest_row_index": 51,
+      "sample_identity_sha256": "394cf87c4f2e537db948f3311244e3b0cf73df4cb6bf0615cd27b13574b6321e",
+      "source_resource_id": 1722123
+    },
+    {
+      "manifest_row_index": 52,
+      "sample_identity_sha256": "9d72c9eea8711dc6d71cb78b54ae9f35567a09424b2b3c3a9bc7c807df2c46bf",
+      "source_resource_id": 1804319
+    },
+    {
+      "manifest_row_index": 53,
+      "sample_identity_sha256": "bc09a5fd1cbbfb6b0b4887eb7c9ff6854079a9418b1e271f5549178570d0e6a2",
+      "source_resource_id": 1910487
+    },
+    {
+      "manifest_row_index": 54,
+      "sample_identity_sha256": "112d8092ade29afb4b9626b968375d6502f0f4b5106e0b1ca2991fba16dc562e",
+      "source_resource_id": 2060113
+    },
+    {
+      "manifest_row_index": 55,
+      "sample_identity_sha256": "716a1d7c2185b0f02448bd0167dd42587c73ce531ddd453a1a46108bdeb6776d",
+      "source_resource_id": 21100
+    },
+    {
+      "manifest_row_index": 56,
+      "sample_identity_sha256": "54e8644135ec50688ce65436b34839ff55bd01542a990fc6c4bda92cd9a7fb74",
+      "source_resource_id": 2203669
+    },
+    {
+      "manifest_row_index": 57,
+      "sample_identity_sha256": "ffd63ec562278f18f45f141f61c95d6cc67a6412c02aa09d86ba8e99bd781ea5",
+      "source_resource_id": 2503119
+    },
+    {
+      "manifest_row_index": 58,
+      "sample_identity_sha256": "c40378182ae5538b5a548f61195f33c35cd580492ff8b7a13f356b3167fcd2cf",
+      "source_resource_id": 2539304
+    },
+    {
+      "manifest_row_index": 59,
+      "sample_identity_sha256": "cb416fc24e9b974b29c8fa3d6a68f661cc7b3f52f087fa22d4bef408bcb82666",
+      "source_resource_id": 304986
+    },
+    {
+      "manifest_row_index": 60,
+      "sample_identity_sha256": "0d4411adb49c66d4dd5a1d50722fc0f01bea734dc88f4342076285c5b34386b5",
+      "source_resource_id": 333060
+    },
+    {
+      "manifest_row_index": 61,
+      "sample_identity_sha256": "ec27551295c6d927283de8002ffc2f093cc84ed847a64bde1fc59e4fe0ed9f04",
+      "source_resource_id": 364115
+    },
+    {
+      "manifest_row_index": 62,
+      "sample_identity_sha256": "05c55782a9a22e1ea2d7f42e1821ed846b797ba03796d4be841eb8ddc98aff24",
+      "source_resource_id": 617060
+    },
+    {
+      "manifest_row_index": 63,
+      "sample_identity_sha256": "12c197962f1128e7c84610236d0b2339ed8c53d3d5b7fe7d44749d1d15b65108",
+      "source_resource_id": 617451
+    },
+    {
+      "manifest_row_index": 64,
+      "sample_identity_sha256": "a6d49ec32ccf7df2ebe8ddb5642b56be7306806398650157cfb61fc57f6f3133",
+      "source_resource_id": 618578
+    },
+    {
+      "manifest_row_index": 65,
+      "sample_identity_sha256": "2dda514cab23ae0daffd6f7cc319cc2822ca99b630580bd575cecd28c80f04a2",
+      "source_resource_id": 664292
+    },
+    {
+      "manifest_row_index": 66,
+      "sample_identity_sha256": "fd2be5c5fc65ba1f30cef11612fefd19dc7aff24b9ca7dabf4630025173ff069",
+      "source_resource_id": 688735
+    },
+    {
+      "manifest_row_index": 67,
+      "sample_identity_sha256": "6aa87bb64d5388d910d4a8f239ef522751ca9b60190655b4fc8775dfe384d780",
+      "source_resource_id": 698637
+    },
+    {
+      "manifest_row_index": 68,
+      "sample_identity_sha256": "216a0f0591dad04b4e04a84b0c9b48f1c4b11e91c96f98e16e62f6c9e1838c15",
+      "source_resource_id": 709352
+    },
+    {
+      "manifest_row_index": 69,
+      "sample_identity_sha256": "435d60d52f247225ef8819b24a4ffcb408ba095e5b674d5e02fa03200f4f7246",
+      "source_resource_id": 830300
+    },
+    {
+      "manifest_row_index": 70,
+      "sample_identity_sha256": "3d985d07a47dec62702e53823eb4865b03d2024bcf0981b03255538ebc9b3835",
+      "source_resource_id": 830300
+    },
+    {
+      "manifest_row_index": 71,
+      "sample_identity_sha256": "cd5da137e89b6baf8f9571cbb6db8e9946c6c21197bed1fd08434205d0cfa530",
+      "source_resource_id": 871897
+    },
+    {
+      "manifest_row_index": 72,
+      "sample_identity_sha256": "8b64e14c1ae905bcb8eae17070025e18e8c9b3cf6a242df66d6dcaddcd19dde9",
+      "source_resource_id": 892447
+    },
+    {
+      "manifest_row_index": 73,
+      "sample_identity_sha256": "721e7925a1df48627a7ba71f86c55ad2cd6570a48d65f5dfbdaf5871c0a54c18",
+      "source_resource_id": 912123
+    },
+    {
+      "manifest_row_index": 74,
+      "sample_identity_sha256": "208a26ca82ffc2810b1417bf235c351b66dcaa0347258d22b45e1f5d6413eedd",
+      "source_resource_id": 933018
+    }
+  ],
+  "sources": [
+    {
+      "source_resource_id": 21100,
+      "public_source_url": "https://civitai.com/models/21100",
+      "metadata_url": "https://civitai.com/api/v1/models/21100",
+      "outcome": "http_non_200",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 403,
+      "metadata": null,
+      "response_body_sha256": null,
+      "response_body_bytes": null,
+      "stream_opened": false,
+      "stream_eof": false,
+      "stream_closed": false,
+      "navigation_aborted_after_stream": false,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:49.058656+00:00",
+      "stage": "single_goto_stream_observation",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": false,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:51:50.369218+00:00",
+      "elapsed_seconds": 1.311,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "response_rejections": 1
+      }
+    },
+    {
+      "source_resource_id": 128556,
+      "public_source_url": "https://civitai.com/models/128556",
+      "metadata_url": "https://civitai.com/api/v1/models/128556",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 1075,
+          "thumbsDownCount": 0,
+          "downloadCount": 24939,
+          "commentCount": 69
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 18,
+        "file_entry_count": 18,
+        "file_extension_counts": {
+          "zip": 18
+        },
+        "file_type_counts": {
+          "Archive": 18
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "c0f4b83dc4cfbd1e51f78869fba66f3e5358ee468b95f7e8044152b719849ece",
+      "response_body_bytes": 39589,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:50.380502+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:51:51.473889+00:00",
+      "elapsed_seconds": 1.093,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 4,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 39589
+      }
+    },
+    {
+      "source_resource_id": 143018,
+      "public_source_url": "https://civitai.com/models/143018",
+      "metadata_url": "https://civitai.com/api/v1/models/143018",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 310,
+          "thumbsDownCount": 3,
+          "downloadCount": 20434,
+          "commentCount": 12
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 1,
+        "file_entry_count": 1,
+        "file_extension_counts": {
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "3ee080f5e6bdd23d7c76f0c6f9ccac9f125f2dda0a74ff8f2045fa5ea0fc692c",
+      "response_body_bytes": 7218,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:51.482953+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:51:52.549852+00:00",
+      "elapsed_seconds": 1.067,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 7218,
+        "collected_body_bytes": 7218
+      }
+    },
+    {
+      "source_resource_id": 160207,
+      "public_source_url": "https://civitai.com/models/160207",
+      "metadata_url": "https://civitai.com/api/v1/models/160207",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 475,
+          "thumbsDownCount": 0,
+          "downloadCount": 12162,
+          "commentCount": 11
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 1,
+        "file_entry_count": 1,
+        "file_extension_counts": {
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "e98b19611649481c6c747804a3b16ee42db599902da033b5a3479243bf649d14",
+      "response_body_bytes": 4745,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:52.559070+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:51:54.416316+00:00",
+      "elapsed_seconds": 1.857,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 4745,
+        "collected_body_bytes": 4745
+      }
+    },
+    {
+      "source_resource_id": 304986,
+      "public_source_url": "https://civitai.com/models/304986",
+      "metadata_url": "https://civitai.com/api/v1/models/304986",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 424,
+          "thumbsDownCount": 4,
+          "downloadCount": 14729,
+          "commentCount": 14
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 1,
+        "file_entry_count": 1,
+        "file_extension_counts": {
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "edc0d9c086a915f81748df32ffa2b2ef1c5e5b33682a21c57438f8a0fbecd0e3",
+      "response_body_bytes": 5594,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:54.427116+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:51:55.543863+00:00",
+      "elapsed_seconds": 1.117,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 5594,
+        "collected_body_bytes": 5594
+      }
+    },
+    {
+      "source_resource_id": 333060,
+      "public_source_url": "https://civitai.com/models/333060",
+      "metadata_url": "https://civitai.com/api/v1/models/333060",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 286,
+          "thumbsDownCount": 1,
+          "downloadCount": 10866,
+          "commentCount": 21
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 1,
+        "file_entry_count": 1,
+        "file_extension_counts": {
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "374eb22bb75ba8499e5468f0fd5d3be556ec2cddb29856437fd07e34be001ca1",
+      "response_body_bytes": 3213,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:55.553329+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:51:56.631536+00:00",
+      "elapsed_seconds": 1.078,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 3213,
+        "collected_body_bytes": 3213
+      }
+    },
+    {
+      "source_resource_id": 364115,
+      "public_source_url": "https://civitai.com/models/364115",
+      "metadata_url": "https://civitai.com/api/v1/models/364115",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 138,
+          "thumbsDownCount": 1,
+          "downloadCount": 8389,
+          "commentCount": 8
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 2,
+        "file_entry_count": 2,
+        "file_extension_counts": {
+          "zip": 2
+        },
+        "file_type_counts": {
+          "Archive": 2
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "5dfe336c8d42a3d1d6c4165bb3e0567b6b540f6b8b2df20400c9691023a9949d",
+      "response_body_bytes": 5810,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:56.641468+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:51:58.391719+00:00",
+      "elapsed_seconds": 1.75,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 5810,
+        "collected_body_bytes": 5810
+      }
+    },
+    {
+      "source_resource_id": 617060,
+      "public_source_url": "https://civitai.com/models/617060",
+      "metadata_url": "https://civitai.com/api/v1/models/617060",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 300,
+          "thumbsDownCount": 1,
+          "downloadCount": 21066,
+          "commentCount": 22
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 2,
+        "file_entry_count": 2,
+        "file_extension_counts": {
+          "zip": 2
+        },
+        "file_type_counts": {
+          "Archive": 2
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "4f349f2a67f7a8ead231ce4de8410aacd99b148dd67c023e8718e4406f3da834",
+      "response_body_bytes": 13017,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:58.403460+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:51:59.758242+00:00",
+      "elapsed_seconds": 1.355,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 13017,
+        "collected_body_bytes": 13017
+      }
+    },
+    {
+      "source_resource_id": 617451,
+      "public_source_url": "https://civitai.com/models/617451",
+      "metadata_url": "https://civitai.com/api/v1/models/617451",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 477,
+          "thumbsDownCount": 1,
+          "downloadCount": 11757,
+          "commentCount": 24
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 4,
+        "file_entry_count": 4,
+        "file_extension_counts": {
+          "zip": 4
+        },
+        "file_type_counts": {
+          "Archive": 4
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "672f83b2cbc2c87ec16ff1bb10d8096aa5af11b70ae6528782e2a1a649e57e4b",
+      "response_body_bytes": 18755,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:51:59.769828+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:00.943520+00:00",
+      "elapsed_seconds": 1.174,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 3,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 18755
+      }
+    },
+    {
+      "source_resource_id": 618578,
+      "public_source_url": "https://civitai.com/models/618578",
+      "metadata_url": "https://civitai.com/api/v1/models/618578",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 2336,
+          "thumbsDownCount": 6,
+          "downloadCount": 110887,
+          "commentCount": 97
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 20,
+        "file_entry_count": 20,
+        "file_extension_counts": {
+          "zip": 20
+        },
+        "file_type_counts": {
+          "Archive": 20
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "7c700e72817f1d3ec3647de8f599029ba50d5179441e3aea0437241edc56832d",
+      "response_body_bytes": 85611,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:00.953416+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:02.317975+00:00",
+      "elapsed_seconds": 1.365,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 7,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 85611
+      }
+    },
+    {
+      "source_resource_id": 664292,
+      "public_source_url": "https://civitai.com/models/664292",
+      "metadata_url": "https://civitai.com/api/v1/models/664292",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 294,
+          "thumbsDownCount": 0,
+          "downloadCount": 12790,
+          "commentCount": 43
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 10,
+        "file_entry_count": 10,
+        "file_extension_counts": {
+          "zip": 10
+        },
+        "file_type_counts": {
+          "Archive": 10
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "97302f86d6011e6517533cdb2bfca27dc1c9aab2440b56821e0e91d929149be7",
+      "response_body_bytes": 28821,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:02.328684+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:03.727802+00:00",
+      "elapsed_seconds": 1.399,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 3,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 28821
+      }
+    },
+    {
+      "source_resource_id": 688735,
+      "public_source_url": "https://civitai.com/models/688735",
+      "metadata_url": "https://civitai.com/api/v1/models/688735",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 307,
+          "thumbsDownCount": 3,
+          "downloadCount": 14803,
+          "commentCount": 18
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 4,
+        "file_entry_count": 4,
+        "file_extension_counts": {
+          "zip": 4
+        },
+        "file_type_counts": {
+          "Archive": 4
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "aedb4cf8f4598db963582a8563d24748d8cb8fef6fd7f18875208189fdfeb4d7",
+      "response_body_bytes": 11587,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:03.740371+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:05.945149+00:00",
+      "elapsed_seconds": 2.205,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 11587,
+        "collected_body_bytes": 11587
+      }
+    },
+    {
+      "source_resource_id": 698637,
+      "public_source_url": "https://civitai.com/models/698637",
+      "metadata_url": "https://civitai.com/api/v1/models/698637",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 276,
+          "thumbsDownCount": 1,
+          "downloadCount": 14752,
+          "commentCount": 36
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 4,
+        "file_entry_count": 4,
+        "file_extension_counts": {
+          "zip": 4
+        },
+        "file_type_counts": {
+          "Archive": 4
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "cf4113ab8a6452e650d6c7e95d5f54bb28339e6e3758dd066ebc4ab5ad1e7655",
+      "response_body_bytes": 12996,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:05.955249+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:07.558652+00:00",
+      "elapsed_seconds": 1.603,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 12996,
+        "collected_body_bytes": 12996
+      }
+    },
+    {
+      "source_resource_id": 709352,
+      "public_source_url": "https://civitai.com/models/709352",
+      "metadata_url": "https://civitai.com/api/v1/models/709352",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 322,
+          "thumbsDownCount": 1,
+          "downloadCount": 12410,
+          "commentCount": 30
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 1,
+        "file_entry_count": 1,
+        "file_extension_counts": {
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "55a892e9e1fbf7ecd9a6dfc2be1396d39a9666f71d5ddb175e91afe4293242c7",
+      "response_body_bytes": 4778,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:07.569204+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:08.670824+00:00",
+      "elapsed_seconds": 1.102,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 4778,
+        "collected_body_bytes": 4778
+      }
+    },
+    {
+      "source_resource_id": 830300,
+      "public_source_url": "https://civitai.com/models/830300",
+      "metadata_url": "https://civitai.com/api/v1/models/830300",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 457,
+          "thumbsDownCount": 4,
+          "downloadCount": 16725,
+          "commentCount": 13
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 20,
+        "file_entry_count": 20,
+        "file_extension_counts": {
+          "zip": 20
+        },
+        "file_type_counts": {
+          "Archive": 20
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "bacad60673d087fc925bfd68d34748184e54117fd6e389e4b72b799d02dba8dc",
+      "response_body_bytes": 120214,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:08.681381+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:10.138971+00:00",
+      "elapsed_seconds": 1.458,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 9,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 120214
+      }
+    },
+    {
+      "source_resource_id": 871897,
+      "public_source_url": "https://civitai.com/models/871897",
+      "metadata_url": "https://civitai.com/api/v1/models/871897",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 209,
+          "thumbsDownCount": 0,
+          "downloadCount": 9687,
+          "commentCount": 12
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 5,
+        "file_entry_count": 5,
+        "file_extension_counts": {
+          "zip": 5
+        },
+        "file_type_counts": {
+          "Archive": 5
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "12b49e2cc7b204a3c0b1ec2073c6f8e892b05a3728915d86e668d75eed044b4c",
+      "response_body_bytes": 16078,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:10.149538+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:11.783585+00:00",
+      "elapsed_seconds": 1.634,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 16078,
+        "collected_body_bytes": 16078
+      }
+    },
+    {
+      "source_resource_id": 892447,
+      "public_source_url": "https://civitai.com/models/892447",
+      "metadata_url": "https://civitai.com/api/v1/models/892447",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 294,
+          "thumbsDownCount": 2,
+          "downloadCount": 18411,
+          "commentCount": 15
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 2,
+        "file_entry_count": 2,
+        "file_extension_counts": {
+          "zip": 2
+        },
+        "file_type_counts": {
+          "Archive": 2
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "f22702c5ac7032042e0dce931f0e2d9b94ec1d498d6fe962ecb88b151e5ed76b",
+      "response_body_bytes": 5497,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:11.796761+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:12.922732+00:00",
+      "elapsed_seconds": 1.126,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 5497,
+        "collected_body_bytes": 5497
+      }
+    },
+    {
+      "source_resource_id": 912123,
+      "public_source_url": "https://civitai.com/models/912123",
+      "metadata_url": "https://civitai.com/api/v1/models/912123",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 447,
+          "thumbsDownCount": 0,
+          "downloadCount": 23107,
+          "commentCount": 23
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 6,
+        "file_entry_count": 6,
+        "file_extension_counts": {
+          "zip": 6
+        },
+        "file_type_counts": {
+          "Archive": 6
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "cdadf275ec7ffe7a3094ac1022f56c6f9a346e91a68b8e8c1e7004a568f70b4f",
+      "response_body_bytes": 32669,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:12.934467+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:14.338163+00:00",
+      "elapsed_seconds": 1.404,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 3,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 32669
+      }
+    },
+    {
+      "source_resource_id": 933018,
+      "public_source_url": "https://civitai.com/models/933018",
+      "metadata_url": "https://civitai.com/api/v1/models/933018",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 642,
+          "thumbsDownCount": 4,
+          "downloadCount": 17836,
+          "commentCount": 37
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 16,
+        "file_entry_count": 16,
+        "file_extension_counts": {
+          "zip": 16
+        },
+        "file_type_counts": {
+          "Archive": 16
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "08050f0c10a35e920acee2af06cff54da04698eb480fd732207c9b944f61990f",
+      "response_body_bytes": 55735,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:14.351145+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:15.727807+00:00",
+      "elapsed_seconds": 1.377,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 5,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 55735
+      }
+    },
+    {
+      "source_resource_id": 1403746,
+      "public_source_url": "https://civitai.com/models/1403746",
+      "metadata_url": "https://civitai.com/api/v1/models/1403746",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 366,
+          "thumbsDownCount": 0,
+          "downloadCount": 9076,
+          "commentCount": 17
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 9,
+        "file_entry_count": 9,
+        "file_extension_counts": {
+          "zip": 9
+        },
+        "file_type_counts": {
+          "Archive": 9
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "59a747f23ba5b2689c3b994a95d90106b8c7d0efe80614af76c97f3ec3ee9715",
+      "response_body_bytes": 32632,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:15.741395+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:16.846794+00:00",
+      "elapsed_seconds": 1.105,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 3,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 32632
+      }
+    },
+    {
+      "source_resource_id": 1459738,
+      "public_source_url": "https://civitai.com/models/1459738",
+      "metadata_url": "https://civitai.com/api/v1/models/1459738",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 58,
+          "thumbsDownCount": 0,
+          "downloadCount": 1338,
+          "commentCount": 3
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 2,
+        "file_entry_count": 2,
+        "file_extension_counts": {
+          "zip": 2
+        },
+        "file_type_counts": {
+          "Archive": 2
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "e31c68ac437b8dda03d7d8f379c9d39c5b4ce3d6468529ca0bf96af3da6f7806",
+      "response_body_bytes": 8507,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:16.861981+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:17.974015+00:00",
+      "elapsed_seconds": 1.112,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 8507,
+        "collected_body_bytes": 8507
+      }
+    },
+    {
+      "source_resource_id": 1466666,
+      "public_source_url": "https://civitai.com/models/1466666",
+      "metadata_url": "https://civitai.com/api/v1/models/1466666",
+      "outcome": "http_non_200",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 403,
+      "metadata": null,
+      "response_body_sha256": null,
+      "response_body_bytes": null,
+      "stream_opened": false,
+      "stream_eof": false,
+      "stream_closed": false,
+      "navigation_aborted_after_stream": false,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:17.986582+00:00",
+      "stage": "single_goto_stream_observation",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": false,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:19.561396+00:00",
+      "elapsed_seconds": 1.575,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "response_rejections": 1
+      }
+    },
+    {
+      "source_resource_id": 1513601,
+      "public_source_url": "https://civitai.com/models/1513601",
+      "metadata_url": "https://civitai.com/api/v1/models/1513601",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 803,
+          "thumbsDownCount": 2,
+          "downloadCount": 31275,
+          "commentCount": 32
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 11,
+        "file_entry_count": 11,
+        "file_extension_counts": {
+          "zip": 11
+        },
+        "file_type_counts": {
+          "Archive": 11
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "15bc18700449ccd88ec75bc7ff8e5950315b098bcf9e76b9acc72a3c444c0cfa",
+      "response_body_bytes": 75882,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:19.590708+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:20.665544+00:00",
+      "elapsed_seconds": 1.075,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 6,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 75882
+      }
+    },
+    {
+      "source_resource_id": 1598938,
+      "public_source_url": "https://civitai.com/models/1598938",
+      "metadata_url": "https://civitai.com/api/v1/models/1598938",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 1283,
+          "thumbsDownCount": 1,
+          "downloadCount": 23839,
+          "commentCount": 75
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 5,
+        "file_entry_count": 5,
+        "file_extension_counts": {
+          "zip": 5
+        },
+        "file_type_counts": {
+          "Archive": 5
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "0279332d731f7b7c8427d97aa027822eb236fad75d6f5ab6dce6b8df8af7e66c",
+      "response_body_bytes": 49499,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:20.676237+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:22.595360+00:00",
+      "elapsed_seconds": 1.919,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 5,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 49499
+      }
+    },
+    {
+      "source_resource_id": 1621455,
+      "public_source_url": "https://civitai.com/models/1621455",
+      "metadata_url": "https://civitai.com/api/v1/models/1621455",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 77,
+          "thumbsDownCount": 0,
+          "downloadCount": 2200,
+          "commentCount": 4
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 6,
+        "file_entry_count": 6,
+        "file_extension_counts": {
+          "json": 1,
+          "zip": 5
+        },
+        "file_type_counts": {
+          "Archive": 5,
+          "Config": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": true,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "76070dca2a92cab916069549d184400727efbee3a612e923088dc20fba327776",
+      "response_body_bytes": 32090,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:22.608869+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:24.204911+00:00",
+      "elapsed_seconds": 1.596,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 3,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 32090
+      }
+    },
+    {
+      "source_resource_id": 1720275,
+      "public_source_url": "https://civitai.com/models/1720275",
+      "metadata_url": "https://civitai.com/api/v1/models/1720275",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 57,
+          "thumbsDownCount": 0,
+          "downloadCount": 3186,
+          "commentCount": 6
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 1,
+        "file_entry_count": 1,
+        "file_extension_counts": {
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "653a4a38a2006654ea14df24599b34c39f0c6a18b1022e237f05789f51503424",
+      "response_body_bytes": 2311,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:24.218774+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:25.586125+00:00",
+      "elapsed_seconds": 1.367,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 2311,
+        "collected_body_bytes": 2311
+      }
+    },
+    {
+      "source_resource_id": 1722123,
+      "public_source_url": "https://civitai.com/models/1722123",
+      "metadata_url": "https://civitai.com/api/v1/models/1722123",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 202,
+          "thumbsDownCount": 4,
+          "downloadCount": 6609,
+          "commentCount": 34
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 2,
+        "file_entry_count": 2,
+        "file_extension_counts": {
+          "zip": 2
+        },
+        "file_type_counts": {
+          "Archive": 2
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "fedb074dbfd347a67629beed9e35ad324ca24d7a0d65853574cfdf1fc1bff9f4",
+      "response_body_bytes": 19400,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:25.598124+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:26.728626+00:00",
+      "elapsed_seconds": 1.131,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 3,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 19400
+      }
+    },
+    {
+      "source_resource_id": 1804319,
+      "public_source_url": "https://civitai.com/models/1804319",
+      "metadata_url": "https://civitai.com/api/v1/models/1804319",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 40,
+          "thumbsDownCount": 0,
+          "downloadCount": 1120,
+          "commentCount": 0
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 5,
+        "file_entry_count": 5,
+        "file_extension_counts": {
+          "zip": 5
+        },
+        "file_type_counts": {
+          "Archive": 5
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "ed16b0ea110652cada3036f3ac66975eb70e148b79ed8ded54f0130d83e623df",
+      "response_body_bytes": 23042,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:26.741551+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:28.020848+00:00",
+      "elapsed_seconds": 1.279,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 3,
+        "maximum_decoded_chunk_bytes": 16384,
+        "collected_body_bytes": 23042
+      }
+    },
+    {
+      "source_resource_id": 1910487,
+      "public_source_url": "https://civitai.com/models/1910487",
+      "metadata_url": "https://civitai.com/api/v1/models/1910487",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 89,
+          "thumbsDownCount": 3,
+          "downloadCount": 3180,
+          "commentCount": 9
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 1,
+        "file_entry_count": 1,
+        "file_extension_counts": {
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "0fd94c563a10647f6e97772e599b6eb6712beb30595209da5a3d52a8987d2783",
+      "response_body_bytes": 5164,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:28.032679+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:29.218146+00:00",
+      "elapsed_seconds": 1.185,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 5164,
+        "collected_body_bytes": 5164
+      }
+    },
+    {
+      "source_resource_id": 2060113,
+      "public_source_url": "https://civitai.com/models/2060113",
+      "metadata_url": "https://civitai.com/api/v1/models/2060113",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 18,
+          "thumbsDownCount": 0,
+          "downloadCount": 666,
+          "commentCount": 2
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 2,
+        "file_entry_count": 2,
+        "file_extension_counts": {
+          "zip": 2
+        },
+        "file_type_counts": {
+          "Archive": 2
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "38da9564ee742742b1a194520a22d9ff709144427270f8df16bb79db86269449",
+      "response_body_bytes": 7397,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:29.230431+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:30.529599+00:00",
+      "elapsed_seconds": 1.299,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 7397,
+        "collected_body_bytes": 7397
+      }
+    },
+    {
+      "source_resource_id": 2203669,
+      "public_source_url": "https://civitai.com/models/2203669",
+      "metadata_url": "https://civitai.com/api/v1/models/2203669",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 19,
+          "thumbsDownCount": 0,
+          "downloadCount": 480,
+          "commentCount": 0
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 1,
+        "file_entry_count": 1,
+        "file_extension_counts": {
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": false,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "d09116c504e2715f7a27adcf8f6f9f228348016515bece041c4a2b4e2ef04eac",
+      "response_body_bytes": 5660,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:30.542133+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:32.145974+00:00",
+      "elapsed_seconds": 1.604,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 5660,
+        "collected_body_bytes": 5660
+      }
+    },
+    {
+      "source_resource_id": 2503119,
+      "public_source_url": "https://civitai.com/models/2503119",
+      "metadata_url": "https://civitai.com/api/v1/models/2503119",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 637,
+          "thumbsDownCount": 1,
+          "downloadCount": 50430,
+          "commentCount": 79
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 4,
+        "file_entry_count": 4,
+        "file_extension_counts": {
+          "json": 2,
+          "zip": 2
+        },
+        "file_type_counts": {
+          "Archive": 2,
+          "Config": 2
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": true,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "0e3809da1efde5b9c4817ed62ae9b040f029ddf384be8ee009c8585184e91f6e",
+      "response_body_bytes": 11609,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:32.157397+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:33.196062+00:00",
+      "elapsed_seconds": 1.039,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 11609,
+        "collected_body_bytes": 11609
+      }
+    },
+    {
+      "source_resource_id": 2539304,
+      "public_source_url": "https://civitai.com/models/2539304",
+      "metadata_url": "https://civitai.com/api/v1/models/2539304",
+      "outcome": "metadata_recorded",
+      "terminal": true,
+      "goto_attempt_count": 1,
+      "goto_returned": false,
+      "page_commit_claimed": false,
+      "final_page_origin": null,
+      "http_status": 200,
+      "metadata": {
+        "id_matches_expected": true,
+        "resource_type": "Workflows",
+        "finite_numeric_stats": {
+          "thumbsUpCount": 22,
+          "thumbsDownCount": 0,
+          "downloadCount": 637,
+          "commentCount": 0
+        },
+        "stats_numeric_keys": [
+          "thumbsUpCount",
+          "thumbsDownCount",
+          "downloadCount",
+          "commentCount"
+        ],
+        "versions_count": 2,
+        "file_entry_count": 2,
+        "file_extension_counts": {
+          "json": 1,
+          "zip": 1
+        },
+        "file_type_counts": {
+          "Archive": 1,
+          "Config": 1
+        },
+        "workflow_resource_type_declared": true,
+        "json_workflow_file_declared": true,
+        "workflow_graph_bytes_verified": null
+      },
+      "response_body_sha256": "a7c992777d1f699b8172f0be6a238d63da952b68be7537fc06279ce4f9d2ab75",
+      "response_body_bytes": 6661,
+      "stream_opened": true,
+      "stream_eof": true,
+      "stream_closed": true,
+      "navigation_aborted_after_stream": true,
+      "own_context_created": true,
+      "own_context_closed": true,
+      "started_utc": "2026-11-26T07:52:33.208921+00:00",
+      "stage": "project_safe_fields",
+      "exact_response_url_origin": true,
+      "own_frame_session": true,
+      "request_correlated": true,
+      "json_media_type": true,
+      "goto_exception_type": "Error",
+      "finished_utc": "2026-11-26T07:52:34.319130+00:00",
+      "elapsed_seconds": 1.11,
+      "counters": {
+        "permitted_remote_requests": 1,
+        "stream_attempts": 1,
+        "io_read_calls": 2,
+        "maximum_decoded_chunk_bytes": 6661,
+        "collected_body_bytes": 6661
+      }
+    }
+  ],
+  "summary": {
+    "source_count": 33,
+    "terminal_count": 33,
+    "goto_attempt_count": 33,
+    "permitted_remote_get_count": 33,
+    "outcome_counts": {
+      "http_non_200": 2,
+      "metadata_recorded": 31
+    },
+    "http_status_counts": {
+      "200": 31,
+      "403": 2
+    },
+    "metadata_recorded_count": 31,
+    "workflow_type_declared_count": 31,
+    "json_file_declared_count": 3,
+    "body_eof_count": 31,
+    "own_context_created_count": 33,
+    "own_context_closed_count": 33,
+    "stream_opened_count": 31,
+    "stream_closed_count": 31,
+    "collected_bytes_total": 751781,
+    "maximum_collected_bytes_one_source": 120214,
+    "maximum_decoded_chunk_bytes": 16384,
+    "workflow_graph_bytes_verified_count": 0,
+    "historical_popularity_proven_count": 0,
+    "original_bytes_recovered": 0
+  },
+  "playwright_version": "1.56.0",
+  "finished_utc": "2026-11-26T07:52:34.343983+00:00",
+  "original_chrome_still_alive_same_identity": true,
+  "all_whitelisted_old_sources_unchanged": true
+}

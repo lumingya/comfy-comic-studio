@@ -1,0 +1,53 @@
+{
+  "schema": "mio.audit.initial-seal.v1",
+  "role": "generality",
+  "utc": "2026-11-26T07:12:16.628779+00:00",
+  "head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "verdict": "INITIAL_NO_PRODUCT_FINDINGS",
+  "product_finding_counts": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  },
+  "process_observation_counts": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 1
+  },
+  "full_task_changed_file_count": 148,
+  "source": {
+    "product": {
+      "count": 217,
+      "sha256": "5a5ee950ae0c972791ae17fab92978579adec7d6d419133e6eaf9eb9e649377d"
+    },
+    "all_server": {
+      "count": 405,
+      "sha256": "7a8dec42eb98849d6eff92dfeb84dd9b329136ee7e16a754b367bb7dda60da17"
+    }
+  },
+  "scope": "Static full-task production diff and contract analysis, existing evidence identities.",
+  "untested": [
+    "No new application import, HTTP call, tests, browser, build, GPU or service call.",
+    "No independent fresh private database execution.",
+    "No independent remote command verification; owned by privacy role.",
+    "Cross-review and final delivery cleanup have not occurred."
+  ],
+  "evidence_sha256": {
+    "original_task": "9539a19f9ad94c3a8e98bbb22e3365b58ce5e8c667973a8b2954fa623a8c5f8c",
+    "common_brief": "47a62e7466f6b97f4305f5dc26169e32cafb4a6023c0acc00db2c0361111626a",
+    "role_acceptance": "f4a95845505ab4f5185efa465131b32346825d66edb1b433ac5eaa7754919870",
+    "candidate_frozen_source": "d00f18119075e566b88daaf8a999fb9a729e5277812e5b589c2405a18c09082c",
+    "historical_corpus_publication": "efba4d0ce2765db38377027b2ac135804c6cdbc93a4226c595c24753a53dfa1b",
+    "historical_corpus_report": "8d6504e97c79f42fa59499289eff9b910fa76d9c6e14c3d2dbdcc223dacf99c9",
+    "historical_effective_provenance": "662d8d829e1cf6b77425137545af53f0b2656be383b8850ebcf77f120f020370"
+  },
+  "sealed_files_sha256": {
+    "report.md": "7dcd31b952ca10cc7076738a7f2cc4715e57a68b6ba799a3c3aa41e1c4fcc2de",
+    "source-identity.json": "7100ede024071f3e807cf5e48adf814bb79bfe529628ec8e6c3608364ed1c90a",
+    "existing-evidence.json": "519543c13653efc56fb6bb470e9b426a75f7ff93d89a482e537477ee3924efea",
+    "seal.py": "cdbe2761f365ee263d6f1fd3e953b432794df682f14d32f1b50ec895aa06b433"
+  }
+}

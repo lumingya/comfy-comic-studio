@@ -1,0 +1,69 @@
+{
+  "schema": "r5-replay-readback-assessment-v1",
+  "utc": "2026-11-26T08:15:12.512309+00:00",
+  "guard": {
+    "pid": 47324,
+    "affinity": 1,
+    "priority": 16384
+  },
+  "scope": "Offline assessment of the one completed product batch; no new product call and no changed oracle or request.",
+  "original_product_results_sha256": "9098921c9a9c81be8520bccb06c85f4377d39beef2a37e9bf03c527d88a20409",
+  "original_provenance_sha256": "473e3a79bdb003167d1d2748259653310f323e66b3555cfe9ad58677a0069f7a",
+  "original_report_sha256": "85a81db0a65a1042b83137338cd1e657ac3b6729827ea4dd13eb2619485e7515",
+  "pre_call_seal_sha256": "faf77cb235eb8e512de90d430313eeaebc900fda860adeaa42953afe872a9ca2",
+  "observations": [
+    {
+      "id": "C02",
+      "frozen_r5_format": "mio",
+      "current_format": "mio",
+      "format_exactly_matches_frozen_r5": true,
+      "frozen_decoded_payload_is_envelope": true,
+      "pre_call_candidate_requirements_unchanged": true,
+      "all_pre_call_candidate_requirements_met": true,
+      "automatic_bindings_and_scope_exact": true,
+      "importable": true,
+      "compilable": true,
+      "original_composite_inspection_passed": false,
+      "unplanned_api_label_condition_passed": false
+    },
+    {
+      "id": "C03",
+      "frozen_r5_format": "mio",
+      "current_format": "mio",
+      "format_exactly_matches_frozen_r5": true,
+      "frozen_decoded_payload_is_envelope": true,
+      "pre_call_candidate_requirements_unchanged": true,
+      "all_pre_call_candidate_requirements_met": true,
+      "automatic_bindings_and_scope_exact": true,
+      "importable": true,
+      "compilable": true,
+      "original_composite_inspection_passed": false,
+      "unplanned_api_label_condition_passed": false
+    },
+    {
+      "id": "C05",
+      "frozen_r5_format": "mio",
+      "current_format": "mio",
+      "format_exactly_matches_frozen_r5": true,
+      "frozen_decoded_payload_is_envelope": true,
+      "pre_call_candidate_requirements_unchanged": true,
+      "all_pre_call_candidate_requirements_met": true,
+      "automatic_bindings_and_scope_exact": true,
+      "importable": true,
+      "compilable": true,
+      "original_composite_inspection_passed": false,
+      "unplanned_api_label_condition_passed": false
+    }
+  ],
+  "counts": {
+    "candidate_requirements_met": 3,
+    "automatic_binding_and_scope_exact": 3,
+    "format_exactly_matches_frozen_r5": 3,
+    "original_composite_inspection_passed": 0,
+    "manual_compile_passed_unchanged": 5
+  },
+  "harness_limit": "The replay evaluator added an API-only format condition to a decoded envelope that both frozen R5 and current inspection label mio. All candidate and scope requirements are recorded independently. The original false composite is retained unchanged.",
+  "no_post_result_oracle_or_request_change": true,
+  "new_product_calls": 0,
+  "product_lease_released": true
+}

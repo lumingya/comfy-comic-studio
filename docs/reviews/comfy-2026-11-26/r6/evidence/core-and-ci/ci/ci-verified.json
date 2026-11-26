@@ -1,0 +1,3097 @@
+{
+  "schema_version": 2,
+  "scope": "Read-only CI verification for fixed branch HEAD and its two exact event runs. This is not an R6 final review, cleanup, product-runtime validation, or overall-task completion claim.",
+  "repository": "lumingya/comfy-comic-studio",
+  "fixed_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "branch": "codex/static-workflow-compat",
+  "branch_head_initial": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "branch_head_final": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "head_parents": [
+    "6122ccab6aae015d1fb20295db4a66158e8f790f"
+  ],
+  "candidate_head_changed_files": [
+    {
+      "path": "docs/ROADMAP.md",
+      "status": "modified"
+    },
+    {
+      "path": "server/mio_server/comfy/inspection.py",
+      "status": "modified"
+    },
+    {
+      "path": "server/mio_server/comfy/inspection_candidates.py",
+      "status": "added"
+    },
+    {
+      "path": "server/tests/test_workflow_inspection_candidates.py",
+      "status": "added"
+    }
+  ],
+  "document_history_in_checkout": {
+    "commit": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+    "basis": "Remote metadata identifies this as the direct parent of the checked-out candidate. The candidate changes only ROADMAP plus the three listed source/test files; archive/history documents are inherited. Documentation scan counts are reported from these new CI logs, without assuming every historical document is newly added."
+  },
+  "pr_number": 1,
+  "pr_metadata_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "actual_pr_merge_checkout": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+  "actual_pr_merge_parents": [
+    "6ed78255bca6487ce874946118f26a26ec22c3dc",
+    "fe914065c7aafb0672bfe10274361f83179ce7f1"
+  ],
+  "merge_commit_source_url": "https://github.com/lumingya/comfy-comic-studio/commit/c59eaf873ce98d0940a08ee70c0a1991475e5139",
+  "runs": [
+    {
+      "id": 45779838148,
+      "event": "push",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148",
+      "head_sha_metadata": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "head_branch": "codex/static-workflow-compat",
+      "actual_checkout": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-26T08:02:26Z",
+      "terminal_updated_at": "2026-11-26T08:27:40Z",
+      "workflow_path": ".github/workflows/ci.yml",
+      "jobs": [
+        {
+          "id": 139772444799,
+          "name": "launchers (ubuntu-latest, Python 3.11)",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148/job/139772444799",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-26T08:02:45Z",
+          "completed_at": "2026-11-26T08:23:53Z",
+          "seconds": 1268,
+          "platform": "Linux",
+          "python": "3.11",
+          "checkout": {
+            "sha": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+            "command": "git log -1 --format=%H",
+            "command_log_line": 105,
+            "result_log_line": 106,
+            "timestamp": "2026-11-26T08:02:48.8159326Z"
+          },
+          "job_log_sha256": "7b61f4828a7b5848862dab05bbb5e16ac40b73f4507223cc30627e9e8ac7fb6a",
+          "suite_results": [
+            {
+              "test_count": 31,
+              "seconds": 23.784,
+              "skipped": 0,
+              "result": "OK",
+              "summary_log_line": 261
+            },
+            {
+              "test_count": 1831,
+              "seconds": 1228.023,
+              "skipped": 3,
+              "result": "OK (skipped=3)",
+              "summary_log_line": 488
+            }
+          ],
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:46Z",
+              "completed_at": "2026-11-26T08:02:47Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:47Z",
+              "completed_at": "2026-11-26T08:02:48Z",
+              "execution_evidence": {
+                "command_group_log_line": 34,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/checkout@v4"
+              }
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:48Z",
+              "completed_at": "2026-11-26T08:02:49Z",
+              "execution_evidence": {
+                "command_group_log_line": 107,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/setup-python@v5"
+              }
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:49Z",
+              "completed_at": "2026-11-26T08:02:54Z",
+              "execution_evidence": {
+                "command_group_log_line": 121,
+                "commands": [
+                  "python -m pip install -r server/requirements-dev.txt"
+                ],
+                "result_anchors": [],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:54Z",
+              "completed_at": "2026-11-26T08:03:20Z",
+              "execution_evidence": {
+                "command_group_log_line": 215,
+                "commands": [
+                  "python -m unittest tests.test_launchers -v"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 228,
+                    "text": "test_bytes_ascii_crlf_no_bom (tests.test_launchers.BatchFileTests.test_bytes_ascii_crlf_no_bom) ... ok"
+                  },
+                  {
+                    "log_line": 229,
+                    "text": "test_git_keeps_line_endings (tests.test_launchers.BatchFileTests.test_git_keeps_line_endings) ... ok"
+                  },
+                  {
+                    "log_line": 230,
+                    "text": "test_goto_targets_exist (tests.test_launchers.BatchFileTests.test_goto_targets_exist) ... ok"
+                  },
+                  {
+                    "log_line": 231,
+                    "text": "test_no_fragile_constructs (tests.test_launchers.BatchFileTests.test_no_fragile_constructs) ... ok"
+                  },
+                  {
+                    "log_line": 232,
+                    "text": "test_parentheses_balanced_outside_quotes (tests.test_launchers.BatchFileTests.test_parentheses_balanced_outside_quotes) ... ok"
+                  },
+                  {
+                    "log_line": 233,
+                    "text": "test_paths_are_quoted (tests.test_launchers.BatchFileTests.test_paths_are_quoted) ... ok"
+                  },
+                  {
+                    "log_line": 234,
+                    "text": "test_runs_bootstrap_update_and_server_in_order (tests.test_launchers.BatchFileTests.test_runs_bootstrap_update_and_server_in_order) ... ok"
+                  },
+                  {
+                    "log_line": 235,
+                    "text": "test_variables_are_defined (tests.test_launchers.BatchFileTests.test_variables_are_defined) ... ok"
+                  },
+                  {
+                    "log_line": 236,
+                    "text": "test_changed_requirements_reinstall (tests.test_launchers.BootstrapTests.test_changed_requirements_reinstall) ... ok"
+                  },
+                  {
+                    "log_line": 237,
+                    "text": "test_empty_stamp_and_missing_modules_is_not_up_to_date (tests.test_launchers.BootstrapTests.test_empty_stamp_and_missing_modules_is_not_up_to_date) ... ok"
+                  },
+                  {
+                    "log_line": 238,
+                    "text": "test_failed_install_keeps_old_stamp (tests.test_launchers.BootstrapTests.test_failed_install_keeps_old_stamp) ... ok"
+                  },
+                  {
+                    "log_line": 239,
+                    "text": "test_fresh_environment_installs_and_stamps (tests.test_launchers.BootstrapTests.test_fresh_environment_installs_and_stamps) ... ok"
+                  },
+                  {
+                    "log_line": 240,
+                    "text": "test_old_python_is_rejected_before_installing (tests.test_launchers.BootstrapTests.test_old_python_is_rejected_before_installing) ... ok"
+                  },
+                  {
+                    "log_line": 241,
+                    "text": "test_probe_and_module_list (tests.test_launchers.BootstrapTests.test_probe_and_module_list) ... ok"
+                  },
+                  {
+                    "log_line": 242,
+                    "text": "test_stamp_matches_but_module_missing_reinstalls (tests.test_launchers.BootstrapTests.test_stamp_matches_but_module_missing_reinstalls) ... ok"
+                  },
+                  {
+                    "log_line": 243,
+                    "text": "test_still_missing_after_install_fails (tests.test_launchers.BootstrapTests.test_still_missing_after_install_fails) ... ok"
+                  },
+                  {
+                    "log_line": 244,
+                    "text": "test_up_to_date_does_nothing (tests.test_launchers.BootstrapTests.test_up_to_date_does_nothing) ... ok"
+                  },
+                  {
+                    "log_line": 245,
+                    "text": "test_bootstrap_failure_stops_the_launcher (tests.test_launchers.LauncherExecutionTests.test_bootstrap_failure_stops_the_launcher) ... ok"
+                  },
+                  {
+                    "log_line": 246,
+                    "text": "test_check_from_awkward_folder (tests.test_launchers.LauncherExecutionTests.test_check_from_awkward_folder) ... ok"
+                  },
+                  {
+                    "log_line": 247,
+                    "text": "test_check_builds_app_and_exits (tests.test_launchers.ServerEntryTests.test_check_builds_app_and_exits) ... ok"
+                  },
+                  {
+                    "log_line": 248,
+                    "text": "test_open_when_ready (tests.test_launchers.ServerEntryTests.test_open_when_ready) ... ok"
+                  },
+                  {
+                    "log_line": 249,
+                    "text": "test_lf_and_shebang (tests.test_launchers.ShellScriptTests.test_lf_and_shebang) ... ok"
+                  },
+                  {
+                    "log_line": 250,
+                    "text": "test_release_ships_launchers_and_bootstrap (tests.test_launchers.ShellScriptTests.test_release_ships_launchers_and_bootstrap) ... ok"
+                  },
+                  {
+                    "log_line": 251,
+                    "text": "test_same_steps_as_bat (tests.test_launchers.ShellScriptTests.test_same_steps_as_bat) ... ok"
+                  },
+                  {
+                    "log_line": 252,
+                    "text": "test_syntax (tests.test_launchers.ShellScriptTests.test_syntax) ... ok"
+                  },
+                  {
+                    "log_line": 253,
+                    "text": "test_fresh_dist_is_left_alone (tests.test_launchers.WebBuildTests.test_fresh_dist_is_left_alone) ... ok"
+                  },
+                  {
+                    "log_line": 254,
+                    "text": "test_installs_dependencies_first (tests.test_launchers.WebBuildTests.test_installs_dependencies_first) ... ok"
+                  },
+                  {
+                    "log_line": 255,
+                    "text": "test_missing_dist_is_built (tests.test_launchers.WebBuildTests.test_missing_dist_is_built) ... ok"
+                  },
+                  {
+                    "log_line": 256,
+                    "text": "test_newer_source_rebuilds (tests.test_launchers.WebBuildTests.test_newer_source_rebuilds) ... ok"
+                  },
+                  {
+                    "log_line": 257,
+                    "text": "test_no_node_or_failed_build_never_blocks_start (tests.test_launchers.WebBuildTests.test_no_node_or_failed_build_never_blocks_start) ... ok"
+                  },
+                  {
+                    "log_line": 258,
+                    "text": "test_release_without_sources_and_opt_out (tests.test_launchers.WebBuildTests.test_release_without_sources_and_opt_out) ... ok"
+                  },
+                  {
+                    "log_line": 261,
+                    "text": "Ran 31 tests in 23.784s"
+                  },
+                  {
+                    "log_line": 263,
+                    "text": "OK"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "server"
+              }
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:20Z",
+              "completed_at": "2026-11-26T08:23:51Z",
+              "execution_evidence": {
+                "command_group_log_line": 264,
+                "commands": [
+                  "python -m unittest discover -s server/tests -t server -q"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 488,
+                    "text": "Ran 1831 tests in 1228.023s"
+                  },
+                  {
+                    "log_line": 493,
+                    "text": "OK (skipped=3)"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:23:51Z",
+              "completed_at": "2026-11-26T08:23:51Z"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:23:51Z",
+              "completed_at": "2026-11-26T08:23:52Z"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:23:52Z",
+              "completed_at": "2026-11-26T08:23:52Z"
+            }
+          ],
+          "dependency_environment": {
+            "ruff_successfully_installed": true,
+            "ruff_install_log_line": 214
+          },
+          "launcher_full_mode_observed": true,
+          "launcher_sh_guard_test": {
+            "explicitly_ok": true,
+            "log_line": 252
+          }
+        },
+        {
+          "id": 139772445054,
+          "name": "launchers (windows-latest, Python 3.11)",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148/job/139772445054",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-26T08:02:47Z",
+          "completed_at": "2026-11-26T08:27:39Z",
+          "seconds": 1492,
+          "platform": "Windows",
+          "python": "3.11",
+          "checkout": {
+            "sha": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+            "command": "git log -1 --format=%H",
+            "command_log_line": 92,
+            "result_log_line": 93,
+            "timestamp": "2026-11-26T08:03:21.5943643Z"
+          },
+          "job_log_sha256": "adcd29e0452e2386124c2348c30ab82b577964c926118d7349fb51ebea3fdd8d",
+          "suite_results": [
+            {
+              "test_count": 31,
+              "seconds": 33.367,
+              "skipped": 0,
+              "result": "OK",
+              "summary_log_line": 241
+            },
+            {
+              "test_count": 1831,
+              "seconds": 1402.771,
+              "skipped": 0,
+              "result": "OK",
+              "summary_log_line": 474
+            }
+          ],
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:47Z",
+              "completed_at": "2026-11-26T08:02:50Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:50Z",
+              "completed_at": "2026-11-26T08:03:21Z",
+              "execution_evidence": {
+                "command_group_log_line": 34,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/checkout@v4"
+              }
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:21Z",
+              "completed_at": "2026-11-26T08:03:21Z",
+              "execution_evidence": {
+                "command_group_log_line": 94,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/setup-python@v5"
+              }
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:21Z",
+              "completed_at": "2026-11-26T08:03:34Z",
+              "execution_evidence": {
+                "command_group_log_line": 108,
+                "commands": [
+                  "python -m pip install -r server/requirements-dev.txt"
+                ],
+                "result_anchors": [],
+                "shell": "pwsh -command",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:34Z",
+              "completed_at": "2026-11-26T08:04:10Z",
+              "execution_evidence": {
+                "command_group_log_line": 196,
+                "commands": [
+                  "python -m unittest tests.test_launchers -v"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 208,
+                    "text": "test_bytes_ascii_crlf_no_bom (tests.test_launchers.BatchFileTests.test_bytes_ascii_crlf_no_bom) ... ok"
+                  },
+                  {
+                    "log_line": 209,
+                    "text": "test_git_keeps_line_endings (tests.test_launchers.BatchFileTests.test_git_keeps_line_endings) ... ok"
+                  },
+                  {
+                    "log_line": 210,
+                    "text": "test_goto_targets_exist (tests.test_launchers.BatchFileTests.test_goto_targets_exist) ... ok"
+                  },
+                  {
+                    "log_line": 211,
+                    "text": "test_no_fragile_constructs (tests.test_launchers.BatchFileTests.test_no_fragile_constructs) ... ok"
+                  },
+                  {
+                    "log_line": 212,
+                    "text": "test_parentheses_balanced_outside_quotes (tests.test_launchers.BatchFileTests.test_parentheses_balanced_outside_quotes) ... ok"
+                  },
+                  {
+                    "log_line": 213,
+                    "text": "test_paths_are_quoted (tests.test_launchers.BatchFileTests.test_paths_are_quoted) ... ok"
+                  },
+                  {
+                    "log_line": 214,
+                    "text": "test_runs_bootstrap_update_and_server_in_order (tests.test_launchers.BatchFileTests.test_runs_bootstrap_update_and_server_in_order) ... ok"
+                  },
+                  {
+                    "log_line": 215,
+                    "text": "test_variables_are_defined (tests.test_launchers.BatchFileTests.test_variables_are_defined) ... ok"
+                  },
+                  {
+                    "log_line": 216,
+                    "text": "test_changed_requirements_reinstall (tests.test_launchers.BootstrapTests.test_changed_requirements_reinstall) ... ok"
+                  },
+                  {
+                    "log_line": 217,
+                    "text": "test_empty_stamp_and_missing_modules_is_not_up_to_date (tests.test_launchers.BootstrapTests.test_empty_stamp_and_missing_modules_is_not_up_to_date) ... ok"
+                  },
+                  {
+                    "log_line": 218,
+                    "text": "test_failed_install_keeps_old_stamp (tests.test_launchers.BootstrapTests.test_failed_install_keeps_old_stamp) ... ok"
+                  },
+                  {
+                    "log_line": 219,
+                    "text": "test_fresh_environment_installs_and_stamps (tests.test_launchers.BootstrapTests.test_fresh_environment_installs_and_stamps) ... ok"
+                  },
+                  {
+                    "log_line": 220,
+                    "text": "test_old_python_is_rejected_before_installing (tests.test_launchers.BootstrapTests.test_old_python_is_rejected_before_installing) ... ok"
+                  },
+                  {
+                    "log_line": 221,
+                    "text": "test_probe_and_module_list (tests.test_launchers.BootstrapTests.test_probe_and_module_list) ... ok"
+                  },
+                  {
+                    "log_line": 222,
+                    "text": "test_stamp_matches_but_module_missing_reinstalls (tests.test_launchers.BootstrapTests.test_stamp_matches_but_module_missing_reinstalls) ... ok"
+                  },
+                  {
+                    "log_line": 223,
+                    "text": "test_still_missing_after_install_fails (tests.test_launchers.BootstrapTests.test_still_missing_after_install_fails) ... ok"
+                  },
+                  {
+                    "log_line": 224,
+                    "text": "test_up_to_date_does_nothing (tests.test_launchers.BootstrapTests.test_up_to_date_does_nothing) ... ok"
+                  },
+                  {
+                    "log_line": 225,
+                    "text": "test_bootstrap_failure_stops_the_launcher (tests.test_launchers.LauncherExecutionTests.test_bootstrap_failure_stops_the_launcher) ... ok"
+                  },
+                  {
+                    "log_line": 226,
+                    "text": "test_check_from_awkward_folder (tests.test_launchers.LauncherExecutionTests.test_check_from_awkward_folder) ... ok"
+                  },
+                  {
+                    "log_line": 227,
+                    "text": "test_check_builds_app_and_exits (tests.test_launchers.ServerEntryTests.test_check_builds_app_and_exits) ... ok"
+                  },
+                  {
+                    "log_line": 228,
+                    "text": "test_open_when_ready (tests.test_launchers.ServerEntryTests.test_open_when_ready) ... ok"
+                  },
+                  {
+                    "log_line": 229,
+                    "text": "test_lf_and_shebang (tests.test_launchers.ShellScriptTests.test_lf_and_shebang) ... ok"
+                  },
+                  {
+                    "log_line": 230,
+                    "text": "test_release_ships_launchers_and_bootstrap (tests.test_launchers.ShellScriptTests.test_release_ships_launchers_and_bootstrap) ... ok"
+                  },
+                  {
+                    "log_line": 231,
+                    "text": "test_same_steps_as_bat (tests.test_launchers.ShellScriptTests.test_same_steps_as_bat) ... ok"
+                  },
+                  {
+                    "log_line": 232,
+                    "text": "test_syntax (tests.test_launchers.ShellScriptTests.test_syntax) ... ok"
+                  },
+                  {
+                    "log_line": 233,
+                    "text": "test_fresh_dist_is_left_alone (tests.test_launchers.WebBuildTests.test_fresh_dist_is_left_alone) ... ok"
+                  },
+                  {
+                    "log_line": 234,
+                    "text": "test_installs_dependencies_first (tests.test_launchers.WebBuildTests.test_installs_dependencies_first) ... ok"
+                  },
+                  {
+                    "log_line": 235,
+                    "text": "test_missing_dist_is_built (tests.test_launchers.WebBuildTests.test_missing_dist_is_built) ... ok"
+                  },
+                  {
+                    "log_line": 236,
+                    "text": "test_newer_source_rebuilds (tests.test_launchers.WebBuildTests.test_newer_source_rebuilds) ... ok"
+                  },
+                  {
+                    "log_line": 237,
+                    "text": "test_no_node_or_failed_build_never_blocks_start (tests.test_launchers.WebBuildTests.test_no_node_or_failed_build_never_blocks_start) ... ok"
+                  },
+                  {
+                    "log_line": 238,
+                    "text": "test_release_without_sources_and_opt_out (tests.test_launchers.WebBuildTests.test_release_without_sources_and_opt_out) ... ok"
+                  },
+                  {
+                    "log_line": 241,
+                    "text": "Ran 31 tests in 33.367s"
+                  },
+                  {
+                    "log_line": 243,
+                    "text": "OK"
+                  }
+                ],
+                "shell": "pwsh -command",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "server"
+              }
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:04:10Z",
+              "completed_at": "2026-11-26T08:27:36Z",
+              "execution_evidence": {
+                "command_group_log_line": 244,
+                "commands": [
+                  "python -m unittest discover -s server/tests -t server -q"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 474,
+                    "text": "Ran 1831 tests in 1402.771s"
+                  },
+                  {
+                    "log_line": 476,
+                    "text": "OK"
+                  }
+                ],
+                "shell": "pwsh -command",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:27:36Z",
+              "completed_at": "2026-11-26T08:27:36Z"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:27:36Z",
+              "completed_at": "2026-11-26T08:27:37Z"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:27:37Z",
+              "completed_at": "2026-11-26T08:27:38Z"
+            }
+          ],
+          "dependency_environment": {
+            "ruff_successfully_installed": true,
+            "ruff_install_log_line": 195
+          },
+          "launcher_full_mode_observed": true,
+          "launcher_sh_guard_test": {
+            "explicitly_ok": true,
+            "log_line": 232
+          }
+        },
+        {
+          "id": 139772445202,
+          "name": "gate",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148/job/139772445202",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-26T08:02:46Z",
+          "completed_at": "2026-11-26T08:22:15Z",
+          "seconds": 1169,
+          "platform": "Linux",
+          "python": "3.13",
+          "checkout": {
+            "sha": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+            "command": "git log -1 --format=%H",
+            "command_log_line": 107,
+            "result_log_line": 108,
+            "timestamp": "2026-11-26T08:02:50.4538307Z"
+          },
+          "job_log_sha256": "2b1f15121d2e51d66d8c217871fc2b5ac02f9dc1300b271478cc3d87f28df38a",
+          "suite_results": [
+            {
+              "test_count": 80,
+              "seconds": 19.387,
+              "skipped": 0,
+              "result": "OK",
+              "summary_log_line": 255
+            },
+            {
+              "test_count": 1831,
+              "seconds": 973.788,
+              "skipped": 3,
+              "result": "OK (skipped=3)",
+              "summary_log_line": 504
+            }
+          ],
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:47Z",
+              "completed_at": "2026-11-26T08:02:48Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:48Z",
+              "completed_at": "2026-11-26T08:02:50Z",
+              "execution_evidence": {
+                "command_group_log_line": 36,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/checkout@v4"
+              }
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:50Z",
+              "completed_at": "2026-11-26T08:02:50Z",
+              "execution_evidence": {
+                "command_group_log_line": 109,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/setup-python@v5"
+              }
+            },
+            {
+              "number": 4,
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:50Z",
+              "completed_at": "2026-11-26T08:02:54Z",
+              "execution_evidence": {
+                "command_group_log_line": 123,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/setup-node@v4"
+              }
+            },
+            {
+              "number": 5,
+              "name": "Install Python dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:54Z",
+              "completed_at": "2026-11-26T08:03:01Z",
+              "execution_evidence": {
+                "command_group_log_line": 149,
+                "commands": [
+                  "python -m pip install -r server/requirements-dev.txt"
+                ],
+                "result_anchors": [],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 6,
+              "name": "Spike unit tests (next/)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:01Z",
+              "completed_at": "2026-11-26T08:03:21Z",
+              "execution_evidence": {
+                "command_group_log_line": 243,
+                "commands": [
+                  "python -m unittest discover -s next/tests -t next -q"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 255,
+                    "text": "Ran 80 tests in 19.387s"
+                  },
+                  {
+                    "log_line": 257,
+                    "text": "OK"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 7,
+              "name": "v4 server (lint + unit tests)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:21Z",
+              "completed_at": "2026-11-26T08:19:38Z",
+              "execution_evidence": {
+                "command_group_log_line": 258,
+                "commands": [
+                  "ruff check server extensions",
+                  "ruff format --check server extensions",
+                  "python -m unittest discover -s server/tests -t server -q"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 271,
+                    "text": "All checks passed!"
+                  },
+                  {
+                    "log_line": 272,
+                    "text": "431 files already formatted"
+                  },
+                  {
+                    "log_line": 504,
+                    "text": "Ran 1831 tests in 973.788s"
+                  },
+                  {
+                    "log_line": 506,
+                    "text": "OK (skipped=3)"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 8,
+              "name": "API v2 clients and release tools (generated client current + lint)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:19:38Z",
+              "completed_at": "2026-11-26T08:19:44Z",
+              "execution_evidence": {
+                "command_group_log_line": 510,
+                "commands": [
+                  "python tools/generate_extension_contracts.py --check",
+                  "python clients/python/generate.py --check",
+                  "python tools/check_extension_examples.py",
+                  "python tools/check_doc_links.py --self-test",
+                  "python tools/check_doc_links.py",
+                  "ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+                  "ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+                  "ruff check clients tools",
+                  "ruff format --check clients tools",
+                  "ruff check --config server/pyproject.toml mio_update_bootstrap.py",
+                  "ruff format --check --config server/pyproject.toml mio_update_bootstrap.py"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 531,
+                    "text": "extension bridge contracts up to date"
+                  },
+                  {
+                    "log_line": 532,
+                    "text": "clients up to date"
+                  },
+                  {
+                    "log_line": 558,
+                    "text": "Checked 25 extension/theme packages; 0 invalid"
+                  },
+                  {
+                    "log_line": 559,
+                    "text": "Document link checker self-test passed"
+                  },
+                  {
+                    "log_line": 560,
+                    "text": "Checked 272 tracked Markdown/HTML documents: {'checked': 1597, 'declared-route': 55, 'embedded': 1, 'external': 128}"
+                  },
+                  {
+                    "log_line": 561,
+                    "text": "0 broken links; 55 explicit notices"
+                  },
+                  {
+                    "log_line": 562,
+                    "text": "All checks passed!"
+                  },
+                  {
+                    "log_line": 563,
+                    "text": "10 files already formatted"
+                  },
+                  {
+                    "log_line": 564,
+                    "text": "All checks passed!"
+                  },
+                  {
+                    "log_line": 565,
+                    "text": "32 files already formatted"
+                  },
+                  {
+                    "log_line": 566,
+                    "text": "All checks passed!"
+                  },
+                  {
+                    "log_line": 567,
+                    "text": "1 file already formatted"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 9,
+              "name": "v4 web (API types current + format + typecheck + tests + build)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:19:44Z",
+              "completed_at": "2026-11-26T08:21:56Z",
+              "execution_evidence": {
+                "command_group_log_line": 568,
+                "commands": [
+                  "npm ci --prefix web --no-audit --no-fund",
+                  "npm --prefix web run gen:api",
+                  "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+                  "npm --prefix web run format:check",
+                  "npm --prefix web run typecheck",
+                  "npm --prefix web test",
+                  "python tools/check_extension_examples.py --panel-tests",
+                  "npm --prefix web run build"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 590,
+                    "text": "> mio-web@4.0.0 gen:api"
+                  },
+                  {
+                    "log_line": 591,
+                    "text": "> node scripts/gen-api.mjs"
+                  },
+                  {
+                    "log_line": 595,
+                    "text": "> mio-web@4.0.0 format:check"
+                  },
+                  {
+                    "log_line": 596,
+                    "text": "> prettier --check ."
+                  },
+                  {
+                    "log_line": 599,
+                    "text": "All matched files use Prettier code style!"
+                  },
+                  {
+                    "log_line": 601,
+                    "text": "> mio-web@4.0.0 typecheck"
+                  },
+                  {
+                    "log_line": 602,
+                    "text": "> tsc --noEmit"
+                  },
+                  {
+                    "log_line": 605,
+                    "text": "> mio-web@4.0.0 test"
+                  },
+                  {
+                    "log_line": 606,
+                    "text": "> vitest run"
+                  },
+                  {
+                    "log_line": 1175,
+                    "text": " Test Files  119 passed (119)"
+                  },
+                  {
+                    "log_line": 1176,
+                    "text": "      Tests  965 passed (965)"
+                  },
+                  {
+                    "log_line": 1180,
+                    "text": "Testing server/tests/professional_review_panels.cjs"
+                  },
+                  {
+                    "log_line": 1183,
+                    "text": "Testing examples/extensions/finalize-studio/bridge.test.cjs"
+                  },
+                  {
+                    "log_line": 1185,
+                    "text": "Testing examples/extensions/finalize-studio/logic.test.cjs"
+                  },
+                  {
+                    "log_line": 1187,
+                    "text": "Testing examples/extensions/panel-retouch/bridge.test.cjs"
+                  },
+                  {
+                    "log_line": 1189,
+                    "text": "Testing examples/extensions/panel-retouch/logic.test.cjs"
+                  },
+                  {
+                    "log_line": 1192,
+                    "text": "Testing examples/extensions/variant-workshop/model.test.cjs"
+                  },
+                  {
+                    "log_line": 1210,
+                    "text": "# tests 3"
+                  },
+                  {
+                    "log_line": 1212,
+                    "text": "# pass 3"
+                  },
+                  {
+                    "log_line": 1213,
+                    "text": "# fail 0"
+                  },
+                  {
+                    "log_line": 1214,
+                    "text": "# cancelled 0"
+                  },
+                  {
+                    "log_line": 1215,
+                    "text": "# skipped 0"
+                  },
+                  {
+                    "log_line": 1216,
+                    "text": "# todo 0"
+                  },
+                  {
+                    "log_line": 1217,
+                    "text": "# duration_ms 9.469774"
+                  },
+                  {
+                    "log_line": 1220,
+                    "text": "> mio-web@4.0.0 build"
+                  },
+                  {
+                    "log_line": 1221,
+                    "text": "> tsc --noEmit && vite build"
+                  },
+                  {
+                    "log_line": 1314,
+                    "text": "✓ built in 5.92s"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 10,
+              "name": "Preserve built web for isolated browser verification",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:56Z",
+              "completed_at": "2026-11-26T08:21:58Z",
+              "execution_evidence": {
+                "command_group_log_line": 1315,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/upload-artifact@v4"
+              }
+            },
+            {
+              "number": 11,
+              "name": "Shipped data manifest",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:58Z",
+              "completed_at": "2026-11-26T08:21:58Z",
+              "execution_evidence": {
+                "command_group_log_line": 1346,
+                "commands": [
+                  "python tools/check_distribution.py",
+                  "python tools/build_distribution.py --check"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 1358,
+                    "text": "Verified 64 release data files (not a runtime requirement)"
+                  },
+                  {
+                    "log_line": 1359,
+                    "text": "data/distribution.json matches 64 shipped files"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 12,
+              "name": "Standalone assistant extension",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:58Z",
+              "completed_at": "2026-11-26T08:22:11Z",
+              "execution_evidence": {
+                "command_group_log_line": 1360,
+                "commands": [
+                  "npm ci --no-audit --no-fund",
+                  "npx prettier --check .",
+                  "npm test",
+                  "npm run build",
+                  "git diff --exit-code -- dist"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 1379,
+                    "text": "All matched files use Prettier code style!"
+                  },
+                  {
+                    "log_line": 1381,
+                    "text": "> mio-extension-ai-assist@1.0.0 test"
+                  },
+                  {
+                    "log_line": 1382,
+                    "text": "> vitest run"
+                  },
+                  {
+                    "log_line": 1397,
+                    "text": " Test Files  2 passed (2)"
+                  },
+                  {
+                    "log_line": 1398,
+                    "text": "      Tests  34 passed (34)"
+                  },
+                  {
+                    "log_line": 1403,
+                    "text": "> mio-extension-ai-assist@1.0.0 build"
+                  },
+                  {
+                    "log_line": 1404,
+                    "text": "> tsc --noEmit && vite build"
+                  },
+                  {
+                    "log_line": 1419,
+                    "text": "✓ built in 3.01s"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "extensions/ai-assist/page"
+              }
+            },
+            {
+              "number": 13,
+              "name": "v4 release package smoke test",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:22:11Z",
+              "completed_at": "2026-11-26T08:22:12Z",
+              "execution_evidence": {
+                "command_group_log_line": 1420,
+                "commands": [
+                  "python tools/build_release.py --out \"$RUNNER_TEMP/mio-release-smoke\""
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 1431,
+                    "text": "warning: no release key — manifest is unsigned; in-app update will refuse it"
+                  },
+                  {
+                    "log_line": 1432,
+                    "text": "Release archive built: 5129107 bytes; sha256 624e0fb6de5c040adacc6d0e5a222133187e33c31b6e01d90cc4085cebf98b89"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 24,
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:22:12Z",
+              "completed_at": "2026-11-26T08:22:12Z"
+            },
+            {
+              "number": 25,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:22:12Z",
+              "completed_at": "2026-11-26T08:22:12Z"
+            },
+            {
+              "number": 26,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:22:12Z",
+              "completed_at": "2026-11-26T08:22:12Z"
+            },
+            {
+              "number": 27,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:22:12Z",
+              "completed_at": "2026-11-26T08:22:12Z"
+            }
+          ],
+          "dependency_environment": {
+            "ruff_successfully_installed": true,
+            "ruff_install_log_line": 242
+          }
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 15098114848,
+          "name": "web-preview-fe914065c7aafb0672bfe10274361f83179ce7f1",
+          "size_in_bytes": 758554,
+          "digest": "sha256:d6a13e6d7c10125e2c96e62253bf90309bede137e41847fbb68e630bcee7d1dd",
+          "created_at": "2026-11-26T08:21:57Z",
+          "updated_at": "2026-11-26T08:21:57Z",
+          "expires_at": "2026-11-28T08:21:56Z",
+          "expired": false,
+          "run_id": 45779838148,
+          "run_branch_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+          "build_checkout": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+          "digest_evidence": "GitHub artifact API metadata only; archive bytes were not downloaded by this observer.",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779838148/artifacts/15098114848"
+        }
+      ]
+    },
+    {
+      "id": 45779847204,
+      "event": "pull_request",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204",
+      "head_sha_metadata": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "head_branch": "codex/static-workflow-compat",
+      "actual_checkout": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-26T08:02:31Z",
+      "terminal_updated_at": "2026-11-26T08:35:25Z",
+      "workflow_path": ".github/workflows/ci.yml",
+      "jobs": [
+        {
+          "id": 139772479333,
+          "name": "gate",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204/job/139772479333",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-26T08:02:50Z",
+          "completed_at": "2026-11-26T08:21:45Z",
+          "seconds": 1135,
+          "platform": "Linux",
+          "python": "3.13",
+          "checkout": {
+            "sha": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+            "command": "git log -1 --format=%H",
+            "command_log_line": 123,
+            "result_log_line": 124,
+            "timestamp": "2026-11-26T08:02:53.3599414Z"
+          },
+          "job_log_sha256": "852d955675208f9fe2c078c33d2df9a4cdc7d153be118dfcfc966334b45dd9aa",
+          "suite_results": [
+            {
+              "test_count": 80,
+              "seconds": 19.38,
+              "skipped": 0,
+              "result": "OK",
+              "summary_log_line": 271
+            },
+            {
+              "test_count": 1977,
+              "seconds": 939.812,
+              "skipped": 3,
+              "result": "OK (skipped=3)",
+              "summary_log_line": 521
+            }
+          ],
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:51Z",
+              "completed_at": "2026-11-26T08:02:51Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:51Z",
+              "completed_at": "2026-11-26T08:02:53Z",
+              "execution_evidence": {
+                "command_group_log_line": 36,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/checkout@v4"
+              }
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:53Z",
+              "completed_at": "2026-11-26T08:02:53Z",
+              "execution_evidence": {
+                "command_group_log_line": 125,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/setup-python@v5"
+              }
+            },
+            {
+              "number": 4,
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:53Z",
+              "completed_at": "2026-11-26T08:02:56Z",
+              "execution_evidence": {
+                "command_group_log_line": 139,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/setup-node@v4"
+              }
+            },
+            {
+              "number": 5,
+              "name": "Install Python dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:56Z",
+              "completed_at": "2026-11-26T08:03:02Z",
+              "execution_evidence": {
+                "command_group_log_line": 165,
+                "commands": [
+                  "python -m pip install -r server/requirements-dev.txt"
+                ],
+                "result_anchors": [],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 6,
+              "name": "Spike unit tests (next/)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:02Z",
+              "completed_at": "2026-11-26T08:03:21Z",
+              "execution_evidence": {
+                "command_group_log_line": 259,
+                "commands": [
+                  "python -m unittest discover -s next/tests -t next -q"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 271,
+                    "text": "Ran 80 tests in 19.380s"
+                  },
+                  {
+                    "log_line": 273,
+                    "text": "OK"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 7,
+              "name": "v4 server (lint + unit tests)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:21Z",
+              "completed_at": "2026-11-26T08:19:04Z",
+              "execution_evidence": {
+                "command_group_log_line": 274,
+                "commands": [
+                  "ruff check server extensions",
+                  "ruff format --check server extensions",
+                  "python -m unittest discover -s server/tests -t server -q"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 287,
+                    "text": "All checks passed!"
+                  },
+                  {
+                    "log_line": 288,
+                    "text": "448 files already formatted"
+                  },
+                  {
+                    "log_line": 521,
+                    "text": "Ran 1977 tests in 939.812s"
+                  },
+                  {
+                    "log_line": 523,
+                    "text": "OK (skipped=3)"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 8,
+              "name": "API v2 clients and release tools (generated client current + lint)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:19:04Z",
+              "completed_at": "2026-11-26T08:19:10Z",
+              "execution_evidence": {
+                "command_group_log_line": 527,
+                "commands": [
+                  "python tools/generate_extension_contracts.py --check",
+                  "python clients/python/generate.py --check",
+                  "python tools/check_extension_examples.py",
+                  "python tools/check_doc_links.py --self-test",
+                  "python tools/check_doc_links.py",
+                  "ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+                  "ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+                  "ruff check clients tools",
+                  "ruff format --check clients tools",
+                  "ruff check --config server/pyproject.toml mio_update_bootstrap.py",
+                  "ruff format --check --config server/pyproject.toml mio_update_bootstrap.py"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 548,
+                    "text": "extension bridge contracts up to date"
+                  },
+                  {
+                    "log_line": 549,
+                    "text": "clients up to date"
+                  },
+                  {
+                    "log_line": 575,
+                    "text": "Checked 25 extension/theme packages; 0 invalid"
+                  },
+                  {
+                    "log_line": 576,
+                    "text": "Document link checker self-test passed"
+                  },
+                  {
+                    "log_line": 577,
+                    "text": "Checked 289 tracked Markdown/HTML documents: {'checked': 1656, 'declared-route': 57, 'embedded': 1, 'external': 134, 'template': 1}"
+                  },
+                  {
+                    "log_line": 579,
+                    "text": "0 broken links; 58 explicit notices"
+                  },
+                  {
+                    "log_line": 580,
+                    "text": "All checks passed!"
+                  },
+                  {
+                    "log_line": 581,
+                    "text": "10 files already formatted"
+                  },
+                  {
+                    "log_line": 582,
+                    "text": "All checks passed!"
+                  },
+                  {
+                    "log_line": 583,
+                    "text": "38 files already formatted"
+                  },
+                  {
+                    "log_line": 584,
+                    "text": "All checks passed!"
+                  },
+                  {
+                    "log_line": 585,
+                    "text": "1 file already formatted"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 9,
+              "name": "v4 web (API types current + format + typecheck + tests + build)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:19:10Z",
+              "completed_at": "2026-11-26T08:21:29Z",
+              "execution_evidence": {
+                "command_group_log_line": 586,
+                "commands": [
+                  "npm ci --prefix web --no-audit --no-fund",
+                  "npm --prefix web run gen:api",
+                  "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+                  "npm --prefix web run format:check",
+                  "npm --prefix web run typecheck",
+                  "npm --prefix web test",
+                  "python tools/check_extension_examples.py --panel-tests",
+                  "npm --prefix web run build"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 608,
+                    "text": "> mio-web@4.0.0 gen:api"
+                  },
+                  {
+                    "log_line": 609,
+                    "text": "> node scripts/gen-api.mjs"
+                  },
+                  {
+                    "log_line": 613,
+                    "text": "> mio-web@4.0.0 format:check"
+                  },
+                  {
+                    "log_line": 614,
+                    "text": "> prettier --check ."
+                  },
+                  {
+                    "log_line": 617,
+                    "text": "All matched files use Prettier code style!"
+                  },
+                  {
+                    "log_line": 619,
+                    "text": "> mio-web@4.0.0 typecheck"
+                  },
+                  {
+                    "log_line": 620,
+                    "text": "> tsc --noEmit"
+                  },
+                  {
+                    "log_line": 623,
+                    "text": "> mio-web@4.0.0 test"
+                  },
+                  {
+                    "log_line": 624,
+                    "text": "> vitest run"
+                  },
+                  {
+                    "log_line": 1252,
+                    "text": " Test Files  133 passed (133)"
+                  },
+                  {
+                    "log_line": 1253,
+                    "text": "      Tests  1100 passed (1100)"
+                  },
+                  {
+                    "log_line": 1257,
+                    "text": "Testing server/tests/professional_review_panels.cjs"
+                  },
+                  {
+                    "log_line": 1260,
+                    "text": "Testing extensions/finalize-studio/bridge.test.cjs"
+                  },
+                  {
+                    "log_line": 1262,
+                    "text": "Testing extensions/finalize-studio/logic.test.cjs"
+                  },
+                  {
+                    "log_line": 1264,
+                    "text": "Testing extensions/finalize-studio/package.test.cjs"
+                  },
+                  {
+                    "log_line": 1266,
+                    "text": "Testing extensions/finalize-studio/view.test.cjs"
+                  },
+                  {
+                    "log_line": 1268,
+                    "text": "Testing extensions/motion-studio/tests/motion-studio.test.cjs"
+                  },
+                  {
+                    "log_line": 1301,
+                    "text": "# tests 6"
+                  },
+                  {
+                    "log_line": 1303,
+                    "text": "# pass 6"
+                  },
+                  {
+                    "log_line": 1304,
+                    "text": "# fail 0"
+                  },
+                  {
+                    "log_line": 1305,
+                    "text": "# cancelled 0"
+                  },
+                  {
+                    "log_line": 1306,
+                    "text": "# skipped 0"
+                  },
+                  {
+                    "log_line": 1307,
+                    "text": "# todo 0"
+                  },
+                  {
+                    "log_line": 1308,
+                    "text": "# duration_ms 261.18615"
+                  },
+                  {
+                    "log_line": 1309,
+                    "text": "Testing extensions/panel-retouch/tests/app.test.cjs"
+                  },
+                  {
+                    "log_line": 1311,
+                    "text": "Testing extensions/panel-retouch/tests/logic.test.cjs"
+                  },
+                  {
+                    "log_line": 1313,
+                    "text": "Testing extensions/panel-retouch/tests/manifest.test.cjs"
+                  },
+                  {
+                    "log_line": 1315,
+                    "text": "Testing extensions/panel-retouch/tests/mask.test.cjs"
+                  },
+                  {
+                    "log_line": 1317,
+                    "text": "Testing extensions/panel-retouch/tests/workspace.test.cjs"
+                  },
+                  {
+                    "log_line": 1319,
+                    "text": "Testing extensions/qa-review/panel.test.cjs"
+                  },
+                  {
+                    "log_line": 1327,
+                    "text": "Testing extensions/script-assistant/panel.test.cjs"
+                  },
+                  {
+                    "log_line": 1329,
+                    "text": "Testing extensions/variant-workshop/model.test.cjs"
+                  },
+                  {
+                    "log_line": 1367,
+                    "text": "# tests 7"
+                  },
+                  {
+                    "log_line": 1369,
+                    "text": "# pass 7"
+                  },
+                  {
+                    "log_line": 1370,
+                    "text": "# fail 0"
+                  },
+                  {
+                    "log_line": 1371,
+                    "text": "# cancelled 0"
+                  },
+                  {
+                    "log_line": 1372,
+                    "text": "# skipped 0"
+                  },
+                  {
+                    "log_line": 1373,
+                    "text": "# todo 0"
+                  },
+                  {
+                    "log_line": 1374,
+                    "text": "# duration_ms 21.798549"
+                  },
+                  {
+                    "log_line": 1375,
+                    "text": "Testing extensions/variant-workshop/panel.test.cjs"
+                  },
+                  {
+                    "log_line": 1377,
+                    "text": "Testing examples/extensions/finalize-studio/bridge.test.cjs"
+                  },
+                  {
+                    "log_line": 1379,
+                    "text": "Testing examples/extensions/finalize-studio/logic.test.cjs"
+                  },
+                  {
+                    "log_line": 1381,
+                    "text": "Testing examples/extensions/panel-retouch/bridge.test.cjs"
+                  },
+                  {
+                    "log_line": 1383,
+                    "text": "Testing examples/extensions/panel-retouch/logic.test.cjs"
+                  },
+                  {
+                    "log_line": 1386,
+                    "text": "Testing examples/extensions/variant-workshop/bridge.test.cjs"
+                  },
+                  {
+                    "log_line": 1388,
+                    "text": "Testing examples/extensions/variant-workshop/model.test.cjs"
+                  },
+                  {
+                    "log_line": 1406,
+                    "text": "# tests 3"
+                  },
+                  {
+                    "log_line": 1408,
+                    "text": "# pass 3"
+                  },
+                  {
+                    "log_line": 1409,
+                    "text": "# fail 0"
+                  },
+                  {
+                    "log_line": 1410,
+                    "text": "# cancelled 0"
+                  },
+                  {
+                    "log_line": 1411,
+                    "text": "# skipped 0"
+                  },
+                  {
+                    "log_line": 1412,
+                    "text": "# todo 0"
+                  },
+                  {
+                    "log_line": 1413,
+                    "text": "# duration_ms 9.276173"
+                  },
+                  {
+                    "log_line": 1416,
+                    "text": "> mio-web@4.0.0 build"
+                  },
+                  {
+                    "log_line": 1417,
+                    "text": "> tsc --noEmit && vite build"
+                  },
+                  {
+                    "log_line": 1510,
+                    "text": "✓ built in 5.63s"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 10,
+              "name": "Preserve built web for isolated browser verification",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:29Z",
+              "completed_at": "2026-11-26T08:21:30Z",
+              "execution_evidence": {
+                "command_group_log_line": 1511,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/upload-artifact@v4"
+              }
+            },
+            {
+              "number": 11,
+              "name": "Shipped data manifest",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:30Z",
+              "completed_at": "2026-11-26T08:21:30Z",
+              "execution_evidence": {
+                "command_group_log_line": 1542,
+                "commands": [
+                  "python tools/check_distribution.py",
+                  "python tools/build_distribution.py --check"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 1554,
+                    "text": "Verified 64 release data files (not a runtime requirement)"
+                  },
+                  {
+                    "log_line": 1555,
+                    "text": "data/distribution.json matches 64 shipped files"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 12,
+              "name": "Standalone assistant extension",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:30Z",
+              "completed_at": "2026-11-26T08:21:42Z",
+              "execution_evidence": {
+                "command_group_log_line": 1556,
+                "commands": [
+                  "npm ci --no-audit --no-fund",
+                  "npx prettier --check .",
+                  "npm test",
+                  "npm run build",
+                  "git diff --exit-code -- dist"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 1575,
+                    "text": "All matched files use Prettier code style!"
+                  },
+                  {
+                    "log_line": 1577,
+                    "text": "> mio-extension-ai-assist@1.0.0 test"
+                  },
+                  {
+                    "log_line": 1578,
+                    "text": "> vitest run"
+                  },
+                  {
+                    "log_line": 1593,
+                    "text": " Test Files  2 passed (2)"
+                  },
+                  {
+                    "log_line": 1594,
+                    "text": "      Tests  34 passed (34)"
+                  },
+                  {
+                    "log_line": 1599,
+                    "text": "> mio-extension-ai-assist@1.0.0 build"
+                  },
+                  {
+                    "log_line": 1600,
+                    "text": "> tsc --noEmit && vite build"
+                  },
+                  {
+                    "log_line": 1615,
+                    "text": "✓ built in 2.77s"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "extensions/ai-assist/page"
+              }
+            },
+            {
+              "number": 13,
+              "name": "v4 release package smoke test",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:42Z",
+              "completed_at": "2026-11-26T08:21:43Z",
+              "execution_evidence": {
+                "command_group_log_line": 1616,
+                "commands": [
+                  "python tools/build_release.py --out \"$RUNNER_TEMP/mio-release-smoke\""
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 1627,
+                    "text": "warning: no release key — manifest is unsigned; in-app update will refuse it"
+                  },
+                  {
+                    "log_line": 1628,
+                    "text": "Release archive built: 5185397 bytes; sha256 9bce32e39732faf68a7f38de0ec4ebe68f8f55c64cd31b2d1a7141aeb2f38778"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 24,
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:43Z",
+              "completed_at": "2026-11-26T08:21:43Z"
+            },
+            {
+              "number": 25,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:43Z",
+              "completed_at": "2026-11-26T08:21:43Z"
+            },
+            {
+              "number": 26,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:43Z",
+              "completed_at": "2026-11-26T08:21:44Z"
+            },
+            {
+              "number": 27,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:21:44Z",
+              "completed_at": "2026-11-26T08:21:44Z"
+            }
+          ],
+          "dependency_environment": {
+            "ruff_successfully_installed": true,
+            "ruff_install_log_line": 258
+          }
+        },
+        {
+          "id": 139772479613,
+          "name": "launchers (ubuntu-latest, Python 3.11)",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204/job/139772479613",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-26T08:02:50Z",
+          "completed_at": "2026-11-26T08:23:28Z",
+          "seconds": 1238,
+          "platform": "Linux",
+          "python": "3.11",
+          "checkout": {
+            "sha": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+            "command": "git log -1 --format=%H",
+            "command_log_line": 121,
+            "result_log_line": 122,
+            "timestamp": "2026-11-26T08:02:54.3130983Z"
+          },
+          "job_log_sha256": "bd059c14350abe46e734c3a6bc1683badcb84b7c9d2d673cd7cee71637b9a3ab",
+          "suite_results": [
+            {
+              "test_count": 31,
+              "seconds": 23.477,
+              "skipped": 0,
+              "result": "OK",
+              "summary_log_line": 277
+            },
+            {
+              "test_count": 1977,
+              "seconds": 1195.789,
+              "skipped": 3,
+              "result": "OK (skipped=3)",
+              "summary_log_line": 505
+            }
+          ],
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:51Z",
+              "completed_at": "2026-11-26T08:02:52Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:52Z",
+              "completed_at": "2026-11-26T08:02:54Z",
+              "execution_evidence": {
+                "command_group_log_line": 34,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/checkout@v4"
+              }
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:54Z",
+              "completed_at": "2026-11-26T08:02:54Z",
+              "execution_evidence": {
+                "command_group_log_line": 123,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/setup-python@v5"
+              }
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:54Z",
+              "completed_at": "2026-11-26T08:03:01Z",
+              "execution_evidence": {
+                "command_group_log_line": 137,
+                "commands": [
+                  "python -m pip install -r server/requirements-dev.txt"
+                ],
+                "result_anchors": [],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:01Z",
+              "completed_at": "2026-11-26T08:03:27Z",
+              "execution_evidence": {
+                "command_group_log_line": 231,
+                "commands": [
+                  "python -m unittest tests.test_launchers -v"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 244,
+                    "text": "test_bytes_ascii_crlf_no_bom (tests.test_launchers.BatchFileTests.test_bytes_ascii_crlf_no_bom) ... ok"
+                  },
+                  {
+                    "log_line": 245,
+                    "text": "test_git_keeps_line_endings (tests.test_launchers.BatchFileTests.test_git_keeps_line_endings) ... ok"
+                  },
+                  {
+                    "log_line": 246,
+                    "text": "test_goto_targets_exist (tests.test_launchers.BatchFileTests.test_goto_targets_exist) ... ok"
+                  },
+                  {
+                    "log_line": 247,
+                    "text": "test_no_fragile_constructs (tests.test_launchers.BatchFileTests.test_no_fragile_constructs) ... ok"
+                  },
+                  {
+                    "log_line": 248,
+                    "text": "test_parentheses_balanced_outside_quotes (tests.test_launchers.BatchFileTests.test_parentheses_balanced_outside_quotes) ... ok"
+                  },
+                  {
+                    "log_line": 249,
+                    "text": "test_paths_are_quoted (tests.test_launchers.BatchFileTests.test_paths_are_quoted) ... ok"
+                  },
+                  {
+                    "log_line": 250,
+                    "text": "test_runs_bootstrap_update_and_server_in_order (tests.test_launchers.BatchFileTests.test_runs_bootstrap_update_and_server_in_order) ... ok"
+                  },
+                  {
+                    "log_line": 251,
+                    "text": "test_variables_are_defined (tests.test_launchers.BatchFileTests.test_variables_are_defined) ... ok"
+                  },
+                  {
+                    "log_line": 252,
+                    "text": "test_changed_requirements_reinstall (tests.test_launchers.BootstrapTests.test_changed_requirements_reinstall) ... ok"
+                  },
+                  {
+                    "log_line": 253,
+                    "text": "test_empty_stamp_and_missing_modules_is_not_up_to_date (tests.test_launchers.BootstrapTests.test_empty_stamp_and_missing_modules_is_not_up_to_date) ... ok"
+                  },
+                  {
+                    "log_line": 254,
+                    "text": "test_failed_install_keeps_old_stamp (tests.test_launchers.BootstrapTests.test_failed_install_keeps_old_stamp) ... ok"
+                  },
+                  {
+                    "log_line": 255,
+                    "text": "test_fresh_environment_installs_and_stamps (tests.test_launchers.BootstrapTests.test_fresh_environment_installs_and_stamps) ... ok"
+                  },
+                  {
+                    "log_line": 256,
+                    "text": "test_old_python_is_rejected_before_installing (tests.test_launchers.BootstrapTests.test_old_python_is_rejected_before_installing) ... ok"
+                  },
+                  {
+                    "log_line": 257,
+                    "text": "test_probe_and_module_list (tests.test_launchers.BootstrapTests.test_probe_and_module_list) ... ok"
+                  },
+                  {
+                    "log_line": 258,
+                    "text": "test_stamp_matches_but_module_missing_reinstalls (tests.test_launchers.BootstrapTests.test_stamp_matches_but_module_missing_reinstalls) ... ok"
+                  },
+                  {
+                    "log_line": 259,
+                    "text": "test_still_missing_after_install_fails (tests.test_launchers.BootstrapTests.test_still_missing_after_install_fails) ... ok"
+                  },
+                  {
+                    "log_line": 260,
+                    "text": "test_up_to_date_does_nothing (tests.test_launchers.BootstrapTests.test_up_to_date_does_nothing) ... ok"
+                  },
+                  {
+                    "log_line": 261,
+                    "text": "test_bootstrap_failure_stops_the_launcher (tests.test_launchers.LauncherExecutionTests.test_bootstrap_failure_stops_the_launcher) ... ok"
+                  },
+                  {
+                    "log_line": 262,
+                    "text": "test_check_from_awkward_folder (tests.test_launchers.LauncherExecutionTests.test_check_from_awkward_folder) ... ok"
+                  },
+                  {
+                    "log_line": 263,
+                    "text": "test_check_builds_app_and_exits (tests.test_launchers.ServerEntryTests.test_check_builds_app_and_exits) ... ok"
+                  },
+                  {
+                    "log_line": 264,
+                    "text": "test_open_when_ready (tests.test_launchers.ServerEntryTests.test_open_when_ready) ... ok"
+                  },
+                  {
+                    "log_line": 265,
+                    "text": "test_lf_and_shebang (tests.test_launchers.ShellScriptTests.test_lf_and_shebang) ... ok"
+                  },
+                  {
+                    "log_line": 266,
+                    "text": "test_release_ships_launchers_and_bootstrap (tests.test_launchers.ShellScriptTests.test_release_ships_launchers_and_bootstrap) ... ok"
+                  },
+                  {
+                    "log_line": 267,
+                    "text": "test_same_steps_as_bat (tests.test_launchers.ShellScriptTests.test_same_steps_as_bat) ... ok"
+                  },
+                  {
+                    "log_line": 268,
+                    "text": "test_syntax (tests.test_launchers.ShellScriptTests.test_syntax) ... ok"
+                  },
+                  {
+                    "log_line": 269,
+                    "text": "test_fresh_dist_is_left_alone (tests.test_launchers.WebBuildTests.test_fresh_dist_is_left_alone) ... ok"
+                  },
+                  {
+                    "log_line": 270,
+                    "text": "test_installs_dependencies_first (tests.test_launchers.WebBuildTests.test_installs_dependencies_first) ... ok"
+                  },
+                  {
+                    "log_line": 271,
+                    "text": "test_missing_dist_is_built (tests.test_launchers.WebBuildTests.test_missing_dist_is_built) ... ok"
+                  },
+                  {
+                    "log_line": 272,
+                    "text": "test_newer_source_rebuilds (tests.test_launchers.WebBuildTests.test_newer_source_rebuilds) ... ok"
+                  },
+                  {
+                    "log_line": 273,
+                    "text": "test_no_node_or_failed_build_never_blocks_start (tests.test_launchers.WebBuildTests.test_no_node_or_failed_build_never_blocks_start) ... ok"
+                  },
+                  {
+                    "log_line": 274,
+                    "text": "test_release_without_sources_and_opt_out (tests.test_launchers.WebBuildTests.test_release_without_sources_and_opt_out) ... ok"
+                  },
+                  {
+                    "log_line": 277,
+                    "text": "Ran 31 tests in 23.477s"
+                  },
+                  {
+                    "log_line": 279,
+                    "text": "OK"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "server"
+              }
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:27Z",
+              "completed_at": "2026-11-26T08:23:25Z",
+              "execution_evidence": {
+                "command_group_log_line": 280,
+                "commands": [
+                  "python -m unittest discover -s server/tests -t server -q"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 505,
+                    "text": "Ran 1977 tests in 1195.789s"
+                  },
+                  {
+                    "log_line": 509,
+                    "text": "OK (skipped=3)"
+                  }
+                ],
+                "shell": "bash -e",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:23:25Z",
+              "completed_at": "2026-11-26T08:23:26Z"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:23:26Z",
+              "completed_at": "2026-11-26T08:23:26Z"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:23:26Z",
+              "completed_at": "2026-11-26T08:23:26Z"
+            }
+          ],
+          "dependency_environment": {
+            "ruff_successfully_installed": true,
+            "ruff_install_log_line": 230
+          },
+          "launcher_full_mode_observed": true,
+          "launcher_sh_guard_test": {
+            "explicitly_ok": true,
+            "log_line": 268
+          }
+        },
+        {
+          "id": 139772479662,
+          "name": "launchers (windows-latest, Python 3.11)",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204/job/139772479662",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-11-26T08:02:51Z",
+          "completed_at": "2026-11-26T08:35:25Z",
+          "seconds": 1954,
+          "platform": "Windows",
+          "python": "3.11",
+          "checkout": {
+            "sha": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+            "command": "git log -1 --format=%H",
+            "command_log_line": 108,
+            "result_log_line": 109,
+            "timestamp": "2026-11-26T08:03:01.7214819Z"
+          },
+          "job_log_sha256": "494b89adff06f23cb3ede417d47de46cde90248725fc68baecd1c105ebce0ca6",
+          "suite_results": [
+            {
+              "test_count": 31,
+              "seconds": 42.306,
+              "skipped": 0,
+              "result": "OK",
+              "summary_log_line": 257
+            },
+            {
+              "test_count": 1977,
+              "seconds": 1875.03,
+              "skipped": 0,
+              "result": "OK",
+              "summary_log_line": 491
+            }
+          ],
+          "steps": [
+            {
+              "number": 1,
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:52Z",
+              "completed_at": "2026-11-26T08:02:53Z"
+            },
+            {
+              "number": 2,
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:02:53Z",
+              "completed_at": "2026-11-26T08:03:01Z",
+              "execution_evidence": {
+                "command_group_log_line": 34,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/checkout@v4"
+              }
+            },
+            {
+              "number": 3,
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:01Z",
+              "completed_at": "2026-11-26T08:03:01Z",
+              "execution_evidence": {
+                "command_group_log_line": 110,
+                "commands": [],
+                "result_anchors": [],
+                "action": "actions/setup-python@v5"
+              }
+            },
+            {
+              "number": 4,
+              "name": "Install server dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:01Z",
+              "completed_at": "2026-11-26T08:03:16Z",
+              "execution_evidence": {
+                "command_group_log_line": 124,
+                "commands": [
+                  "python -m pip install -r server/requirements-dev.txt"
+                ],
+                "result_anchors": [],
+                "shell": "pwsh -command",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 5,
+              "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:03:16Z",
+              "completed_at": "2026-11-26T08:04:02Z",
+              "execution_evidence": {
+                "command_group_log_line": 212,
+                "commands": [
+                  "python -m unittest tests.test_launchers -v"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 224,
+                    "text": "test_bytes_ascii_crlf_no_bom (tests.test_launchers.BatchFileTests.test_bytes_ascii_crlf_no_bom) ... ok"
+                  },
+                  {
+                    "log_line": 225,
+                    "text": "test_git_keeps_line_endings (tests.test_launchers.BatchFileTests.test_git_keeps_line_endings) ... ok"
+                  },
+                  {
+                    "log_line": 226,
+                    "text": "test_goto_targets_exist (tests.test_launchers.BatchFileTests.test_goto_targets_exist) ... ok"
+                  },
+                  {
+                    "log_line": 227,
+                    "text": "test_no_fragile_constructs (tests.test_launchers.BatchFileTests.test_no_fragile_constructs) ... ok"
+                  },
+                  {
+                    "log_line": 228,
+                    "text": "test_parentheses_balanced_outside_quotes (tests.test_launchers.BatchFileTests.test_parentheses_balanced_outside_quotes) ... ok"
+                  },
+                  {
+                    "log_line": 229,
+                    "text": "test_paths_are_quoted (tests.test_launchers.BatchFileTests.test_paths_are_quoted) ... ok"
+                  },
+                  {
+                    "log_line": 230,
+                    "text": "test_runs_bootstrap_update_and_server_in_order (tests.test_launchers.BatchFileTests.test_runs_bootstrap_update_and_server_in_order) ... ok"
+                  },
+                  {
+                    "log_line": 231,
+                    "text": "test_variables_are_defined (tests.test_launchers.BatchFileTests.test_variables_are_defined) ... ok"
+                  },
+                  {
+                    "log_line": 232,
+                    "text": "test_changed_requirements_reinstall (tests.test_launchers.BootstrapTests.test_changed_requirements_reinstall) ... ok"
+                  },
+                  {
+                    "log_line": 233,
+                    "text": "test_empty_stamp_and_missing_modules_is_not_up_to_date (tests.test_launchers.BootstrapTests.test_empty_stamp_and_missing_modules_is_not_up_to_date) ... ok"
+                  },
+                  {
+                    "log_line": 234,
+                    "text": "test_failed_install_keeps_old_stamp (tests.test_launchers.BootstrapTests.test_failed_install_keeps_old_stamp) ... ok"
+                  },
+                  {
+                    "log_line": 235,
+                    "text": "test_fresh_environment_installs_and_stamps (tests.test_launchers.BootstrapTests.test_fresh_environment_installs_and_stamps) ... ok"
+                  },
+                  {
+                    "log_line": 236,
+                    "text": "test_old_python_is_rejected_before_installing (tests.test_launchers.BootstrapTests.test_old_python_is_rejected_before_installing) ... ok"
+                  },
+                  {
+                    "log_line": 237,
+                    "text": "test_probe_and_module_list (tests.test_launchers.BootstrapTests.test_probe_and_module_list) ... ok"
+                  },
+                  {
+                    "log_line": 238,
+                    "text": "test_stamp_matches_but_module_missing_reinstalls (tests.test_launchers.BootstrapTests.test_stamp_matches_but_module_missing_reinstalls) ... ok"
+                  },
+                  {
+                    "log_line": 239,
+                    "text": "test_still_missing_after_install_fails (tests.test_launchers.BootstrapTests.test_still_missing_after_install_fails) ... ok"
+                  },
+                  {
+                    "log_line": 240,
+                    "text": "test_up_to_date_does_nothing (tests.test_launchers.BootstrapTests.test_up_to_date_does_nothing) ... ok"
+                  },
+                  {
+                    "log_line": 241,
+                    "text": "test_bootstrap_failure_stops_the_launcher (tests.test_launchers.LauncherExecutionTests.test_bootstrap_failure_stops_the_launcher) ... ok"
+                  },
+                  {
+                    "log_line": 242,
+                    "text": "test_check_from_awkward_folder (tests.test_launchers.LauncherExecutionTests.test_check_from_awkward_folder) ... ok"
+                  },
+                  {
+                    "log_line": 243,
+                    "text": "test_check_builds_app_and_exits (tests.test_launchers.ServerEntryTests.test_check_builds_app_and_exits) ... ok"
+                  },
+                  {
+                    "log_line": 244,
+                    "text": "test_open_when_ready (tests.test_launchers.ServerEntryTests.test_open_when_ready) ... ok"
+                  },
+                  {
+                    "log_line": 245,
+                    "text": "test_lf_and_shebang (tests.test_launchers.ShellScriptTests.test_lf_and_shebang) ... ok"
+                  },
+                  {
+                    "log_line": 246,
+                    "text": "test_release_ships_launchers_and_bootstrap (tests.test_launchers.ShellScriptTests.test_release_ships_launchers_and_bootstrap) ... ok"
+                  },
+                  {
+                    "log_line": 247,
+                    "text": "test_same_steps_as_bat (tests.test_launchers.ShellScriptTests.test_same_steps_as_bat) ... ok"
+                  },
+                  {
+                    "log_line": 248,
+                    "text": "test_syntax (tests.test_launchers.ShellScriptTests.test_syntax) ... ok"
+                  },
+                  {
+                    "log_line": 249,
+                    "text": "test_fresh_dist_is_left_alone (tests.test_launchers.WebBuildTests.test_fresh_dist_is_left_alone) ... ok"
+                  },
+                  {
+                    "log_line": 250,
+                    "text": "test_installs_dependencies_first (tests.test_launchers.WebBuildTests.test_installs_dependencies_first) ... ok"
+                  },
+                  {
+                    "log_line": 251,
+                    "text": "test_missing_dist_is_built (tests.test_launchers.WebBuildTests.test_missing_dist_is_built) ... ok"
+                  },
+                  {
+                    "log_line": 252,
+                    "text": "test_newer_source_rebuilds (tests.test_launchers.WebBuildTests.test_newer_source_rebuilds) ... ok"
+                  },
+                  {
+                    "log_line": 253,
+                    "text": "test_no_node_or_failed_build_never_blocks_start (tests.test_launchers.WebBuildTests.test_no_node_or_failed_build_never_blocks_start) ... ok"
+                  },
+                  {
+                    "log_line": 254,
+                    "text": "test_release_without_sources_and_opt_out (tests.test_launchers.WebBuildTests.test_release_without_sources_and_opt_out) ... ok"
+                  },
+                  {
+                    "log_line": 257,
+                    "text": "Ran 31 tests in 42.306s"
+                  },
+                  {
+                    "log_line": 259,
+                    "text": "OK"
+                  }
+                ],
+                "shell": "pwsh -command",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "server"
+              }
+            },
+            {
+              "number": 6,
+              "name": "v4 server unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:04:02Z",
+              "completed_at": "2026-11-26T08:35:21Z",
+              "execution_evidence": {
+                "command_group_log_line": 260,
+                "commands": [
+                  "python -m unittest discover -s server/tests -t server -q"
+                ],
+                "result_anchors": [
+                  {
+                    "log_line": 491,
+                    "text": "Ran 1977 tests in 1875.030s"
+                  },
+                  {
+                    "log_line": 493,
+                    "text": "OK"
+                  }
+                ],
+                "shell": "pwsh -command",
+                "execution_basis": "Emitted command script, completed successful step, sequential fail-fast shell, and retained result anchors. A command is not credited from workflow text alone.",
+                "working_directory": "."
+              }
+            },
+            {
+              "number": 11,
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:35:21Z",
+              "completed_at": "2026-11-26T08:35:21Z"
+            },
+            {
+              "number": 12,
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:35:21Z",
+              "completed_at": "2026-11-26T08:35:23Z"
+            },
+            {
+              "number": 13,
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-26T08:35:23Z",
+              "completed_at": "2026-11-26T08:35:23Z"
+            }
+          ],
+          "dependency_environment": {
+            "ruff_successfully_installed": true,
+            "ruff_install_log_line": 211
+          },
+          "launcher_full_mode_observed": true,
+          "launcher_sh_guard_test": {
+            "explicitly_ok": true,
+            "log_line": 248
+          }
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 15098358802,
+          "name": "web-preview-c59eaf873ce98d0940a08ee70c0a1991475e5139",
+          "size_in_bytes": 766799,
+          "digest": "sha256:41091c188ad17bf794513f3e58596b5e6c42f8b1ed3b953e6aac41ea9dcb22bc",
+          "created_at": "2026-11-26T08:21:29Z",
+          "updated_at": "2026-11-26T08:21:29Z",
+          "expires_at": "2026-11-28T08:21:29Z",
+          "expired": false,
+          "run_id": 45779847204,
+          "run_branch_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+          "build_checkout": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+          "digest_evidence": "GitHub artifact API metadata only; archive bytes were not downloaded by this observer.",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45779847204/artifacts/15098358802"
+        }
+      ]
+    }
+  ],
+  "required_command_coverage": [
+    {
+      "command": "python -m unittest discover -s server/tests -t server -q",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772444799,
+          "step_number": 6,
+          "step_conclusion": "success",
+          "command_group_log_line": 264
+        },
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445054,
+          "step_number": 6,
+          "step_conclusion": "success",
+          "command_group_log_line": 244
+        },
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 7,
+          "step_conclusion": "success",
+          "command_group_log_line": 258
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 7,
+          "step_conclusion": "success",
+          "command_group_log_line": 274
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479613,
+          "step_number": 6,
+          "step_conclusion": "success",
+          "command_group_log_line": 280
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479662,
+          "step_number": 6,
+          "step_conclusion": "success",
+          "command_group_log_line": 260
+        }
+      ]
+    },
+    {
+      "command": "ruff check server extensions",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 7,
+          "step_conclusion": "success",
+          "command_group_log_line": 258
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 7,
+          "step_conclusion": "success",
+          "command_group_log_line": 274
+        }
+      ]
+    },
+    {
+      "command": "ruff format --check server extensions",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 7,
+          "step_conclusion": "success",
+          "command_group_log_line": 258
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 7,
+          "step_conclusion": "success",
+          "command_group_log_line": 274
+        }
+      ]
+    },
+    {
+      "command": "ruff check clients tools",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 8,
+          "step_conclusion": "success",
+          "command_group_log_line": 510
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 8,
+          "step_conclusion": "success",
+          "command_group_log_line": 527
+        }
+      ]
+    },
+    {
+      "command": "ruff format --check clients tools",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 8,
+          "step_conclusion": "success",
+          "command_group_log_line": 510
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 8,
+          "step_conclusion": "success",
+          "command_group_log_line": 527
+        }
+      ]
+    },
+    {
+      "command": "python clients/python/generate.py --check",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 8,
+          "step_conclusion": "success",
+          "command_group_log_line": 510
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 8,
+          "step_conclusion": "success",
+          "command_group_log_line": 527
+        }
+      ]
+    },
+    {
+      "command": "python -m unittest discover -s next/tests -t next -q",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 6,
+          "step_conclusion": "success",
+          "command_group_log_line": 243
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 6,
+          "step_conclusion": "success",
+          "command_group_log_line": 259
+        }
+      ]
+    },
+    {
+      "command": "python tools/check_distribution.py",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 11,
+          "step_conclusion": "success",
+          "command_group_log_line": 1346
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 11,
+          "step_conclusion": "success",
+          "command_group_log_line": 1542
+        }
+      ]
+    },
+    {
+      "command": "npm ci --prefix web --no-audit --no-fund",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 568
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 586
+        }
+      ]
+    },
+    {
+      "command": "npm --prefix web run format:check",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 568
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 586
+        }
+      ]
+    },
+    {
+      "command": "npm --prefix web run typecheck",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 568
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 586
+        }
+      ]
+    },
+    {
+      "command": "npm --prefix web test",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 568
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 586
+        }
+      ]
+    },
+    {
+      "command": "npm --prefix web run build",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 568
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 586
+        }
+      ]
+    },
+    {
+      "command": "npm --prefix web run gen:api",
+      "executed_occurrences": [
+        {
+          "run_id": 45779838148,
+          "job_id": 139772445202,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 568
+        },
+        {
+          "run_id": 45779847204,
+          "job_id": 139772479333,
+          "step_number": 9,
+          "step_conclusion": "success",
+          "command_group_log_line": 586
+        }
+      ]
+    }
+  ],
+  "ruff_scope_equivalence": "The AGENTS server/clients/tools lint command is split into server+extensions and clients+tools steps. Both check and format variants completed successfully in both gates.",
+  "workflow_scope": {
+    "head_gate_timeout_minutes": 30,
+    "head_launchers_timeout_minutes": 30,
+    "merge_gate_timeout_minutes": 30,
+    "merge_launchers_timeout_minutes": 60,
+    "command_lists_identical_between_checkouts": true,
+    "only_workflow_difference": "The merge checkout adds an explanatory comment and increases the launcher job timeout from 30 to 60 minutes.",
+    "additional_gates_executed": [
+      "extension contract generation current",
+      "extension/theme package validation",
+      "documentation checker self-test and scan",
+      "extension examples and bootstrap lint",
+      "frontend generated API diff",
+      "extension panel tests",
+      "distribution build check",
+      "standalone assistant format/tests/build and committed-dist diff",
+      "real launcher full mode on both operating systems",
+      "unsigned release package smoke build"
+    ]
+  },
+  "tls_contract_source_identity": {
+    "baseline_source_ref": "fa6308384826fad7629b2c727d70230cc7951d05",
+    "basis": "Only the historical source contract is compared, never a prior CI result. Both new exact refs have the same Git blob and source bytes as the retained baseline.",
+    "files": [
+      {
+        "path": "server/tests/test_review_cloud_deadline.py",
+        "git_blob": "6587c4595e6ef5d2430a00cb8cbc453b4e1b790e",
+        "sha256": "44ead6ec575660bde8dbcd5f87a342d13c014cdc2ac7f7dae2e19be9fc217706",
+        "same_at_both_new_refs_and_baseline": true
+      },
+      {
+        "path": "server/tests/test_windows_path_aliases.py",
+        "git_blob": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+        "sha256": "3d616d8dddcd51e1be50fa478b4b0808b1c0e9d76ed17cf8ddd10e6cd729a308",
+        "same_at_both_new_refs_and_baseline": true
+      }
+    ],
+    "contracts_preserved": "Live ClientHello; TLS stall elapsed below 1.5 seconds and deadline classification; early peer-close remains connection failure with sent false and remaining budget over one second; cancel/scope workers stop; HTTPS JSON/download deadline and cancellation assertions remain unchanged."
+  },
+  "quiet_suite_skip_and_tls_proof": {
+    "proof_type": "Source-anchored inference from full discovery, mandatory skip conditions and exact aggregate outcomes; quiet logs do not print successful individual test names or individual elapsed values.",
+    "same_remote_blobs_at_head_and_merge": {
+      "server/tests/test_review_cloud_deadline.py": [
+        {
+          "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+          "path": "server/tests/test_review_cloud_deadline.py",
+          "blob_sha": "6587c4595e6ef5d2430a00cb8cbc453b4e1b790e",
+          "sha256": "44ead6ec575660bde8dbcd5f87a342d13c014cdc2ac7f7dae2e19be9fc217706",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_review_cloud_deadline.py",
+          "bytes": 18501
+        },
+        {
+          "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+          "path": "server/tests/test_review_cloud_deadline.py",
+          "blob_sha": "6587c4595e6ef5d2430a00cb8cbc453b4e1b790e",
+          "sha256": "44ead6ec575660bde8dbcd5f87a342d13c014cdc2ac7f7dae2e19be9fc217706",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_review_cloud_deadline.py",
+          "bytes": 18501
+        }
+      ],
+      "server/tests/test_windows_path_aliases.py": [
+        {
+          "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+          "path": "server/tests/test_windows_path_aliases.py",
+          "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+          "sha256": "3d616d8dddcd51e1be50fa478b4b0808b1c0e9d76ed17cf8ddd10e6cd729a308",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_windows_path_aliases.py",
+          "bytes": 4592
+        },
+        {
+          "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+          "path": "server/tests/test_windows_path_aliases.py",
+          "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+          "sha256": "3d616d8dddcd51e1be50fa478b4b0808b1c0e9d76ed17cf8ddd10e6cd729a308",
+          "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_windows_path_aliases.py",
+          "bytes": 4592
+        }
+      ]
+    },
+    "mandatory_linux_skips": [
+      {
+        "method": "test_ordinary_short_path_is_accepted_by_package_and_resource_checks",
+        "decorator_line": 39,
+        "method_line": 40,
+        "condition": "os.name == \"nt\"",
+        "source_path": "server/tests/test_windows_path_aliases.py",
+        "source_urls": [
+          "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_windows_path_aliases.py#L39",
+          "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_windows_path_aliases.py#L39"
+        ]
+      },
+      {
+        "method": "test_missing_child_below_ordinary_short_path_is_allowed",
+        "decorator_line": 46,
+        "method_line": 47,
+        "condition": "os.name == \"nt\"",
+        "source_path": "server/tests/test_windows_path_aliases.py",
+        "source_urls": [
+          "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_windows_path_aliases.py#L46",
+          "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_windows_path_aliases.py#L46"
+        ]
+      },
+      {
+        "method": "test_real_junction_ancestor_is_rejected",
+        "decorator_line": 81,
+        "method_line": 82,
+        "condition": "os.name == \"nt\"",
+        "source_path": "server/tests/test_windows_path_aliases.py",
+        "source_urls": [
+          "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_windows_path_aliases.py#L81",
+          "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_windows_path_aliases.py#L81"
+        ]
+      }
+    ],
+    "aggregate_evidence": "All four Linux full suites report exactly three skips. The three discovered Windows-only methods must skip on Linux and exhaust that count. Both Windows full suites report OK with no skip count (zero). Therefore no additional TLS/HTTPS fixture skip occurred in any of the six successful full suites.",
+    "real_transport_source": "The source uses a loopback ThreadingHTTPServer, checks a live TLS ClientHello, and wraps the server socket with an SSLContext for HTTPS. It is not only a mock-transport suite.",
+    "real_transport_source_lines": [
+      43,
+      45,
+      46,
+      49,
+      50,
+      78,
+      80,
+      118,
+      174,
+      180
+    ],
+    "openssl_fixture_condition": "The HTTPS fixture can raise SkipTest only when neither OpenSSL on PATH nor Git-bundled OpenSSL is available. No such additional skip occurred, as proven by the aggregate counts.",
+    "covered_methods": [
+      {
+        "method": "test_tls_handshake_stall_obeys_deadline",
+        "line": 321,
+        "assertions": "A live ClientHello is received, elapsed is below 1.5 seconds, and the error is a deadline.",
+        "source_urls": [
+          "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_review_cloud_deadline.py#L321",
+          "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_review_cloud_deadline.py#L321"
+        ]
+      },
+      {
+        "method": "test_tls_peer_close_is_not_classified_as_deadline",
+        "line": 339,
+        "assertions": "A live ClientHello is received; remaining budget is over one second; connection failure, not deadline; sent is false.",
+        "source_urls": [
+          "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_review_cloud_deadline.py#L339",
+          "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_review_cloud_deadline.py#L339"
+        ]
+      },
+      {
+        "method": "test_tls_handshake_stall_is_interrupted_by_cancel_and_scope_close",
+        "line": 349,
+        "assertions": "Both cancel and scope close interrupt the TLS worker; the worker is no longer alive after the 0.4-second join and reports cancellation.",
+        "source_urls": [
+          "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_review_cloud_deadline.py#L349",
+          "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_review_cloud_deadline.py#L349"
+        ]
+      },
+      {
+        "method": "test_https_json_and_download_stalls_obey_absolute_deadline",
+        "line": 244,
+        "assertions": "HTTPS JSON and download bodies both use the absolute-deadline stall check.",
+        "source_urls": [
+          "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_review_cloud_deadline.py#L244",
+          "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_review_cloud_deadline.py#L244"
+        ]
+      },
+      {
+        "method": "test_https_body_stall_is_interrupted_by_cancel_and_scope_close",
+        "line": 374,
+        "assertions": "Both cancellation methods interrupt both HTTPS body variants.",
+        "source_urls": [
+          "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_review_cloud_deadline.py#L374",
+          "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_review_cloud_deadline.py#L374"
+        ]
+      }
+    ],
+    "other_known_environment_guards": "Launcher test_syntax requires sh and is explicitly ok in all four verbose launcher logs. The API generated-client check requires ruff; ruff is installed in the CI dependency step, and no residual skip capacity remains.",
+    "limitations": "No separate TLS-only job or new local test was run. Numeric per-test elapsed values are not present in successful quiet logs; only their source assertions and suite success are established."
+  },
+  "source_evidence": [
+    {
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "path": "server/tests/test_review_cloud_deadline.py",
+      "blob_sha": "6587c4595e6ef5d2430a00cb8cbc453b4e1b790e",
+      "sha256": "44ead6ec575660bde8dbcd5f87a342d13c014cdc2ac7f7dae2e19be9fc217706",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_review_cloud_deadline.py",
+      "bytes": 18501
+    },
+    {
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "path": "server/tests/test_windows_path_aliases.py",
+      "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+      "sha256": "3d616d8dddcd51e1be50fa478b4b0808b1c0e9d76ed17cf8ddd10e6cd729a308",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_windows_path_aliases.py",
+      "bytes": 4592
+    },
+    {
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "path": "server/tests/test_launchers.py",
+      "blob_sha": "90eb6e56d8535ae3dd34f42ff1d25dd98c91b22e",
+      "sha256": "97f4d7a51c90eaf8526852597a65f51b55f9777efeb4fab9e7a1256fd4bbc11a",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_launchers.py",
+      "bytes": 18616
+    },
+    {
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "path": "server/tests/test_api_v2.py",
+      "blob_sha": "531e8550fff6ee387c5c125e0fc5ce519480c055",
+      "sha256": "163456069e065ed25a347829818164c4b5a63b00e8acee82bd7ab530dd3e633d",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/server/tests/test_api_v2.py",
+      "bytes": 15095
+    },
+    {
+      "ref": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+      "path": ".github/workflows/ci.yml",
+      "blob_sha": "f7b08e4b1a182d9eb5b7c0831b46f8cf1e2d6470",
+      "sha256": "7495468da2c2eb9636edba2eeac6264da899bb3efcea0cddfefea4e434978e7e",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/fe914065c7aafb0672bfe10274361f83179ce7f1/.github/workflows/ci.yml",
+      "bytes": 4272
+    },
+    {
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "path": "server/tests/test_review_cloud_deadline.py",
+      "blob_sha": "6587c4595e6ef5d2430a00cb8cbc453b4e1b790e",
+      "sha256": "44ead6ec575660bde8dbcd5f87a342d13c014cdc2ac7f7dae2e19be9fc217706",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_review_cloud_deadline.py",
+      "bytes": 18501
+    },
+    {
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "path": "server/tests/test_windows_path_aliases.py",
+      "blob_sha": "05414310f0ef0e36777a76da5d5a1e3358ce815c",
+      "sha256": "3d616d8dddcd51e1be50fa478b4b0808b1c0e9d76ed17cf8ddd10e6cd729a308",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_windows_path_aliases.py",
+      "bytes": 4592
+    },
+    {
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "path": "server/tests/test_launchers.py",
+      "blob_sha": "90eb6e56d8535ae3dd34f42ff1d25dd98c91b22e",
+      "sha256": "97f4d7a51c90eaf8526852597a65f51b55f9777efeb4fab9e7a1256fd4bbc11a",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_launchers.py",
+      "bytes": 18616
+    },
+    {
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "path": "server/tests/test_api_v2.py",
+      "blob_sha": "531e8550fff6ee387c5c125e0fc5ce519480c055",
+      "sha256": "163456069e065ed25a347829818164c4b5a63b00e8acee82bd7ab530dd3e633d",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/server/tests/test_api_v2.py",
+      "bytes": 15095
+    },
+    {
+      "ref": "c59eaf873ce98d0940a08ee70c0a1991475e5139",
+      "path": ".github/workflows/ci.yml",
+      "blob_sha": "5ae8d64f24cb26d9f7288d6d55fff59b85acdaca",
+      "sha256": "0af485985e3abcc92f4595f56c96fd526e0950143a2ec53305e6dbe4bca8fb8e",
+      "source_url": "https://github.com/lumingya/comfy-comic-studio/blob/c59eaf873ce98d0940a08ee70c0a1991475e5139/.github/workflows/ci.yml",
+      "bytes": 4369
+    }
+  ],
+  "observation": {
+    "first_sample": "2026-11-26T08:05:27.725745+00:00",
+    "final_sample": "2026-11-26T08:35:27.733537+00:00",
+    "sample_interval_seconds": 60,
+    "samples": 31,
+    "transient_read_error_count": 1,
+    "transient_read_errors": [
+      {
+        "observed_at": "2026-11-26T08:05:11.892246+00:00",
+        "run_id": null,
+        "kind": "GitHub API EOF"
+      }
+    ],
+    "sampler_exited_normally": true,
+    "additional_failed_read_retry_records": 1,
+    "artifact_archives_downloaded": false,
+    "local_activity": "Standard-library evidence processing and read-only gh API/log retrieval only; no local product import/test/lint/build/service/browser/HTTP product call; no rerun/cancel/push/source/workflow edit."
+  },
+  "release_smoke_limit": "Both release builds succeeded and produced archive size/hash evidence. The logs explicitly warn that the smoke manifest is unsigned, so this is not a signed-update acceptance test."
+}

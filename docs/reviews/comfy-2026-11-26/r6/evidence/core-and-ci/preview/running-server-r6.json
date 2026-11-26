@@ -1,0 +1,32 @@
+{
+  "schema": "mio.r6-running-preview.v1",
+  "utc": "2026-11-26T08:49:04.247382+00:00",
+  "pid": 48744,
+  "backend_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "backend_module_count": 218,
+  "backend_module_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+  "all_server_count": 407,
+  "all_server_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32",
+  "verified_before_mio_import": true,
+  "cpu_guard": {
+    "pid": 48744,
+    "affinity_mask": 1,
+    "priority_class": 16384,
+    "utc": "2026-11-26T08:49:00.682123+00:00",
+    "verified_before_mio_import": true
+  },
+  "origin": "http://127.0.0.1:8797",
+  "api_only": false,
+  "artifact_id": 15098114848,
+  "artifact_run_id": 45779838148,
+  "frontend_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "index_sha256": "76e359396b1a4a06ff72e21bef3d48c81c82d75ea1115a09755d546aa8373a3a",
+  "artifact_zip_sha256": "d6a13e6d7c10125e2c96e62253bf90309bede137e41847fbb68e630bcee7d1dd",
+  "asset_file_count": 81,
+  "all_asset_files_verified_before_import": true,
+  "catalog_entries_after_app_creation": 0,
+  "fresh_owned_workspace": true,
+  "all_ci_evidence_sha256": "6ad3b99652352e7819fa4d513de03e0f6c16f98c41a478baee2bdaa5a9150d11",
+  "local_frontend_build_run": false,
+  "preview_script_sha256": "90d913e4aadf0d4787510a03280e542a48184e93fe2f4e007ffec308b08eff93"
+}

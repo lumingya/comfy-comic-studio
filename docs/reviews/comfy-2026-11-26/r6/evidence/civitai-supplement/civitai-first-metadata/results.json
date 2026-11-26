@@ -1,0 +1,62 @@
+{
+  "schema": "chrome-bounded-public-metadata-v1",
+  "started_utc": "2026-11-26T07:40:56.106778+00:00",
+  "public_url": "https://civitai.com/api/v1/models/1215102",
+  "stage": "finished_response_level_observation",
+  "outcome": "bounded_public_metadata_recorded",
+  "goto_attempt_count": 1,
+  "goto_returned": false,
+  "page_commit_claimed": false,
+  "final_page_origin": null,
+  "http_status": 200,
+  "response_body_sha256": "c0f8ff8ef85b5a112b76c660dcaa4f90ff8de106f4d580359458d2b3f00d00c5",
+  "response_body_bytes": 15510,
+  "public_numeric_metadata": {
+    "id": 1215102,
+    "resource_type": "Workflows",
+    "finite_numeric_stats": {
+      "thumbsUpCount": 964,
+      "thumbsDownCount": 2,
+      "downloadCount": 35440,
+      "commentCount": 21
+    },
+    "stats_numeric_keys": [
+      "thumbsUpCount",
+      "thumbsDownCount",
+      "downloadCount",
+      "commentCount"
+    ],
+    "versions_count": 2,
+    "workflow_resource_type_confirmed": true,
+    "json_workflow_file_declared": false,
+    "static_workflow_graph_bytes_confirmed": null
+  },
+  "stream_opened": true,
+  "stream_eof": true,
+  "stream_closed": true,
+  "navigation_aborted_after_stream": true,
+  "own_context_created": true,
+  "own_context_closed": true,
+  "historical_likes_or_rank_proven": false,
+  "original_workflow_bytes_recovered": 0,
+  "playwright_version": "1.56.0",
+  "own_frame_id_sha256": "792d163b8886b74fd4485396139d30cea164e91f1cb53a9bbc5ea55ab60d8e2d",
+  "pre_navigation_target_origin_verified": true,
+  "response_request_url_exact": true,
+  "response_origin_exact": true,
+  "response_on_own_frame_and_session": true,
+  "response_request_correlated": true,
+  "response_json_media_type": true,
+  "returned_resource_id_matches": true,
+  "goto_exception_type": "Error",
+  "bounded_read_counters": {
+    "permitted_remote_requests": 1,
+    "response_stream_attempts": 1,
+    "io_read_calls": 2,
+    "maximum_decoded_chunk_bytes": 15510,
+    "collected_body_bytes": 15510
+  },
+  "finished_utc": "2026-11-26T07:41:17.465241+00:00",
+  "original_chrome_still_alive_same_identity": true,
+  "all_whitelisted_old_sources_unchanged": true
+}

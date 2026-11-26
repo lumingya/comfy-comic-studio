@@ -1,0 +1,17 @@
+{
+  "schema": "mio.r6-committed-candidate.v1",
+  "utc": "2026-11-26T08:02:24.776455+00:00",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "tested_worktree_parent": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+  "tested_source_hashes_match": true,
+  "runtime_count": 218,
+  "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+  "all_server_count": 407,
+  "all_server_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32",
+  "new_helper_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+  "unit_methods": 30,
+  "unit_successful": true,
+  "source_freeze": "formatted/frozen-source.json",
+  "first_format_check_failure_preserved": true,
+  "source_status": []
+}

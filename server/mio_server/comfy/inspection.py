@@ -12,6 +12,22 @@ from . import bindings as B
 from . import compile as C
 from . import slot_adapters as SA
 from .diagnostics import MODEL_FILE, diagnose
+from .inspection_candidates import image_candidates, text_candidates
+from .workflow_import import (
+    WorkflowDecodeError,
+    normalize_workflow,
+    ui_issues,
+    validate_finite_numbers,
+)
+
+_KINDS = {
+    "prompt": "正提示词",
+    "negative": "负提示词",
+    "seed": "种子",
+    "width": "宽度",
+    "height": "高度",
+    "output": "出图节点",
+}
 
 
 class InspectRequest(BaseModel):
@@ -78,39 +94,48 @@ class Inspection(BaseModel):
     lora_controls: dict | None = None
 
 
+class FileInspection(BaseModel):
+    workflow: dict[str, Any] | None = None
+    inspection: Inspection
+
+
 def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=None) -> Inspection:
     """Never imports, mutates input, contacts ComfyUI or executes a workflow."""
-    payload = request.workflow
-    graph = payload.get("graph", payload)
-    result = Inspection(format="mio" if "graph" in payload else "api")
-    if isinstance(graph, dict) and len(graph) > 20000:
-        result.format = "invalid"
-        result.issues.append(
-            Issue(
-                code="graph_too_large",
-                severity="error",
-                message="工作流超过 20000 个节点的分析上限。",
+    result = Inspection(format="mio" if "graph" in request.workflow else "api")
+    try:
+        validate_finite_numbers(
+            (
+                request.config.model_dump() if request.config is not None else None,
+                request.values,
+                request.overrides,
+                request.object_info,
             )
         )
+        payload = normalize_workflow(request.workflow)
+    except WorkflowDecodeError as exc:
+        result.format = "invalid"
+        result.issues.append(Issue(code=exc.code, severity="error", message=str(exc)))
         return result
+    graph = payload["graph"]
+    result.format = (
+        "mio" if graph is not request.workflow and "graph" in request.workflow else "api"
+    )
     if isinstance(graph, dict) and isinstance(graph.get("nodes"), list):
         result.format = "ui"
-        result.issues.append(
-            Issue(
-                code="ui_format",
-                severity="error",
-                message="这是 ComfyUI 界面工作流，请使用「导出 (API)」；不会猜测自定义控件的值顺序。",
-            )
-        )
+        result.issues.extend(Issue(**issue) for issue in ui_issues(graph))
         return result
     try:
-        config = request.config or WorkflowConfig.model_validate(
-            payload.get("config", {}) if "graph" in payload else {}
-        )
+        config = request.config or WorkflowConfig.model_validate(payload.get("config", {}))
         doc = WorkflowDoc(name="Import preview", graph=graph, config=config)
-    except (ValidationError, ValueError, TypeError) as exc:
+    except (ValidationError, ValueError, TypeError):
         result.format = "invalid"
-        result.issues.append(Issue(code="invalid_format", severity="error", message=str(exc)))
+        result.issues.append(
+            Issue(
+                code="invalid_format",
+                severity="error",
+                message="工作流节点或配置格式不完整；节点需包含 class_type 与 inputs 对象。请重新导出 API 格式，或检查 Mio 配置。",
+            )
+        )
         return result
     result.importable = True
     try:
@@ -141,6 +166,8 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
             registry=registry,
         )
         selected = compiled.graph
+        bound = compiled.resolved_bindings
+        result.output_nodes = compiled.outputs
         result.compilable = not any(issue.severity == "error" for issue in result.issues)
         result.issues.extend(
             Issue(code="compile_warning", severity="warning", message=w)
@@ -159,10 +186,12 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
                 code="unbound",
                 severity="warning",
                 kind=kind,
-                message=f"未绑定 {kind}；保留工作流原值，Mio 传入的该参数不会生效。",
+                message=f"未绑定{_KINDS.get(kind, kind)}；保留工作流原值，Mio 传入的该参数不会生效。",
             )
         )
-    candidates = _candidates(selected, set(result.missing), request.object_info)
+    candidates = _candidates(
+        selected, set(result.missing), request.object_info, roots=result.output_nodes
+    )
     result.candidates = [BindingTarget(**asdict(b)) for b in candidates]
     for kind in result.missing:
         if len([b for b in candidates if b.kind == kind]) > 1:
@@ -171,7 +200,7 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
                     code="ambiguous",
                     severity="warning",
                     kind=kind,
-                    message=f"{kind} 有多个候选，请明确选择映射；未自动改写。",
+                    message=f"{_KINDS.get(kind, kind)}有多个候选，请明确选择映射；未自动改写。",
                 )
             )
     classes: dict[str, list[str]] = {}
@@ -198,12 +227,10 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
     return result
 
 
-def _candidates(graph: dict, missing: set[str], object_info: dict | None) -> list[B.Binding]:
-    found = []
-    for node, field, _ in B.text_sources(graph):
-        for kind in ("prompt", "negative"):
-            if kind in missing and field in B.TEXT_FIELDS:
-                found.append(B.Binding(kind, node, field, source="candidate"))
+def _candidates(
+    graph: dict, missing: set[str], object_info: dict | None, *, roots=()
+) -> list[B.Binding]:
+    found = text_candidates(graph, missing, object_info or {})
     for node_id, node in graph.items():
         for kind in ("seed", "width", "height"):
             field = B._default_field(kind, node["inputs"])
@@ -213,4 +240,5 @@ def _candidates(graph: dict, missing: set[str], object_info: dict | None) -> lis
             "output_node"
         ):
             found.append(B.Binding("output", node_id, source="candidate"))
+    found.extend(image_candidates(graph, object_info or {}, roots))
     return list(dict.fromkeys(found))

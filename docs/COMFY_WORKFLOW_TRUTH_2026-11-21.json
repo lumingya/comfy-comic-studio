@@ -1,0 +1,3008 @@
+{
+  "before_revision": "aa06d0a",
+  "after_revision": "71457f6f8599a8595c500a5b8da904dcc7565d93",
+  "sample_count": 21,
+  "slot_dimensions": 105,
+  "method": "Manually specified graph wiring and upstream node contracts, before comparison with Mio B.resolve/compiled mappings. No engine inference used as truth.",
+  "evaluation_policy": [
+    "The documented default selects the causally first generation-stage prompt and latent canvas, preserving distinct downstream stage prompts and canvas dimensions. Sampler dependencies through actual reference conditioning count toward causal ordering.",
+    "ModelSamplingFlux width/height calibration mirrors the chosen primary canvas; upstream patch formula explicitly depends on image area.",
+    "Seed fans out to every active sampling stage.",
+    "Manual-required slots and genuinely absent inputs are not counted as automatically correct.",
+    "Paired polarity contracts learned from upstream are recorded, but not injected into the engine object_info-less comparison."
+  ],
+  "summary": {
+    "before": {
+      "correct": 52,
+      "missing": 10,
+      "absent_correctly_unbound": 25,
+      "manual_abstained": 14,
+      "incorrect": 4
+    },
+    "after": {
+      "correct": 66,
+      "absent_correctly_unbound": 25,
+      "manual_abstained": 14
+    }
+  },
+  "summary_by_kind": {
+    "before": {
+      "prompt": {
+        "correct": 9,
+        "missing": 5,
+        "manual_abstained": 7
+      },
+      "negative": {
+        "correct": 11,
+        "missing": 2,
+        "manual_abstained": 7,
+        "absent_correctly_unbound": 1
+      },
+      "seed": {
+        "correct": 18,
+        "missing": 3
+      },
+      "width": {
+        "correct": 7,
+        "absent_correctly_unbound": 12,
+        "incorrect": 2
+      },
+      "height": {
+        "correct": 7,
+        "absent_correctly_unbound": 12,
+        "incorrect": 2
+      }
+    },
+    "after": {
+      "prompt": {
+        "correct": 14,
+        "manual_abstained": 7
+      },
+      "negative": {
+        "correct": 13,
+        "manual_abstained": 7,
+        "absent_correctly_unbound": 1
+      },
+      "seed": {
+        "correct": 21
+      },
+      "width": {
+        "correct": 9,
+        "absent_correctly_unbound": 12
+      },
+      "height": {
+        "correct": 9,
+        "absent_correctly_unbound": 12
+      }
+    }
+  },
+  "resolved_semantic_questions": [
+    {
+      "id": "Q1",
+      "sample": "36f3012270d0",
+      "fields": [
+        "width",
+        "height"
+      ],
+      "reason": "ModelSamplingFlux computes shift from image area; documented default couples its calibration dimensions to primary canvas. Independently verified upstream formula justifies27+30.",
+      "status": "resolved by explicit product policy and upstream contract; not by matching inference output"
+    },
+    {
+      "id": "Q2",
+      "sample": "2df6c0ad8d1a",
+      "fields": [
+        "prompt",
+        "negative",
+        "width",
+        "height"
+      ],
+      "reason": "ReferenceLatent actually appends upstream sampled latent to downstream conditioning. Documented default chooses causally first generation stage; original manual expected6/33/27 is retained.",
+      "status": "resolved by explicit root-stage-only product policy and upstream conditioning contract"
+    }
+  ],
+  "samples": [
+    {
+      "id": "f986015b8f4b",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/2/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/2/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/2/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/4/inputs/width"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/4/inputs/height"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/sdxl/sdxl-txt2img.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "d5274291bd76",
+      "annotation_basis": "upscale",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/text"
+          ],
+          "reason": "UltimateSDUpscale.positive drives tiled redraw; this CLIPTextEncode.text is its sole positive text origin.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/3/inputs/text"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/4/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/4/inputs/text"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/6/inputs/seed"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Upscaling output dimensions derive from image size and upscale_by; tile_width/tile_height are tile processing controls, not output canvas dimensions.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Upscaling output dimensions derive from image size and upscale_by; tile_width/tile_height are tile processing controls, not output canvas dimensions.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/ssitu/ComfyUI_UltimateSDUpscale/blob/main/usdu_nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/sdxl/sdxl-upscale.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "655d40f671a6",
+      "annotation_basis": "sd3",
+      "fields": {
+        "prompt": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/4/inputs/clip_l",
+            "/4/inputs/clip_g",
+            "/4/inputs/t5xxl"
+          ],
+          "reason": "CLIPTextEncodeSD3 has three different existing encoder texts; the consumer polarity is known, but choosing or replacing their texts requires a user decision. No single automatic writable text origin.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/5/inputs/clip_l",
+            "/5/inputs/clip_g",
+            "/5/inputs/t5xxl"
+          ],
+          "reason": "CLIPTextEncodeSD3 has three different existing encoder texts; the consumer polarity is known, but choosing or replacing their texts requires a user decision. No single automatic writable text origin.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/7/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/width"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/height"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_sd3.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/sd35/sd35-txt2img.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "791854c46022",
+      "annotation_basis": "sd3_upscale",
+      "fields": {
+        "prompt": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/5/inputs/clip_l",
+            "/5/inputs/clip_g",
+            "/5/inputs/t5xxl"
+          ],
+          "reason": "CLIPTextEncodeSD3 has three different existing encoder texts; the consumer polarity is known, but choosing or replacing their texts requires a user decision. No single automatic writable text origin.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/6/inputs/clip_l",
+            "/6/inputs/clip_g",
+            "/6/inputs/t5xxl"
+          ],
+          "reason": "CLIPTextEncodeSD3 has three different existing encoder texts; the consumer polarity is known, but choosing or replacing their texts requires a user decision. No single automatic writable text origin.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/8/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/8/inputs/seed"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/8/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Upscaling output dimensions derive from image size and upscale_by; tile_width/tile_height are tile processing controls, not output canvas dimensions.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Upscaling output dimensions derive from image size and upscale_by; tile_width/tile_height are tile processing controls, not output canvas dimensions.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_sd3.py",
+        "https://github.com/ssitu/ComfyUI_UltimateSDUpscale/blob/main/usdu_nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/sd35/sd35-upscale.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "307b139c99fc",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/2/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/2/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/2/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/sdxl/sdxl-img2img.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "ae121aa6f8a3",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/4/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/7/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/width"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/height"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/flux/flux-txt2img.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "f70be9265ddf",
+      "annotation_basis": "upscale",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/text"
+          ],
+          "reason": "UltimateSDUpscale.positive drives tiled redraw; this CLIPTextEncode.text is its sole positive text origin.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/5/inputs/text"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/6/inputs/text"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/8/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/8/inputs/seed"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/8/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Upscaling output dimensions derive from image size and upscale_by; tile_width/tile_height are tile processing controls, not output canvas dimensions.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Upscaling output dimensions derive from image size and upscale_by; tile_width/tile_height are tile processing controls, not output canvas dimensions.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/ssitu/ComfyUI_UltimateSDUpscale/blob/main/usdu_nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/flux/flux-upscale.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "42bc1ab92665",
+      "annotation_basis": "sd3",
+      "fields": {
+        "prompt": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/3/inputs/clip_l",
+            "/3/inputs/clip_g",
+            "/3/inputs/t5xxl"
+          ],
+          "reason": "CLIPTextEncodeSD3 has three different existing encoder texts; the consumer polarity is known, but choosing or replacing their texts requires a user decision. No single automatic writable text origin.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/4/inputs/clip_l",
+            "/4/inputs/clip_g",
+            "/4/inputs/t5xxl"
+          ],
+          "reason": "CLIPTextEncodeSD3 has three different existing encoder texts; the consumer polarity is known, but choosing or replacing their texts requires a user decision. No single automatic writable text origin.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/7/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_sd3.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/sd35/sd35-img2img.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "f2346cebed95",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/4/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/8/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/8/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/8/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/flux/flux-img2img.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "313ddd5f790f",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/2/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/2/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/2/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/8/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/8/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/8/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/sdxl/sdxl-inpaint.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "96a0e789477e",
+      "annotation_basis": "sd3",
+      "fields": {
+        "prompt": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/4/inputs/clip_l",
+            "/4/inputs/clip_g",
+            "/4/inputs/t5xxl"
+          ],
+          "reason": "CLIPTextEncodeSD3 has three different existing encoder texts; the consumer polarity is known, but choosing or replacing their texts requires a user decision. No single automatic writable text origin.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/5/inputs/clip_l",
+            "/5/inputs/clip_g",
+            "/5/inputs/t5xxl"
+          ],
+          "reason": "CLIPTextEncodeSD3 has three different existing encoder texts; the consumer polarity is known, but choosing or replacing their texts requires a user decision. No single automatic writable text origin.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/10/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/10/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/10/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_sd3.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/sd35/sd35-inpaint.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "5fd0e557fd65",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/4/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/4/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/10/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/10/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/10/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/barstoolbluz/comfyui-client/blob/main/workflows/api/flux/flux-inpaint.json",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "a691c9736ec5",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/7/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/width"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/height"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/aura_flow/aura_flow_0.2_example.png",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "1b84265f3feb",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/7/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/12/inputs/width"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/12/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/12/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/12/inputs/height"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/12/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/12/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/chroma/chroma_example.png",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "8653f5522836",
+      "annotation_basis": "standard",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/16/inputs/text"
+          ],
+          "reason": "KSampler.positive is fed by this CLIPTextEncode.text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/16/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/16/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/40/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/40/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/40/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/53/inputs/width"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/53/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/53/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/53/inputs/height"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/53/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/53/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/hidream/hidream_full_example.png",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "921fdc29a75e",
+      "annotation_basis": "paired_ip2p",
+      "fields": {
+        "prompt": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/23/inputs/text"
+          ],
+          "reason": "InstructPixToPixConditioning upstream contract maps output0 to positive and output1 to negative; positive then passes FluxGuidance. Origins are externally verifiable, but this test supplied no object_info output contract. Deliberate manual mapping/synchronized definitions, not an automatic success.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/7/inputs/text"
+          ],
+          "reason": "InstructPixToPixConditioning upstream contract maps output0 to positive and output1 to negative; positive then passes FluxGuidance. Origins are externally verifiable, but this test supplied no object_info output contract. Deliberate manual mapping/synchronized definitions, not an automatic success.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_flux.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_ip2p.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_depth_lora_example.png",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "f155f417d99c",
+      "annotation_basis": "paired_inpaint",
+      "fields": {
+        "prompt": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/23/inputs/text"
+          ],
+          "reason": "InpaintModelConditioning upstream contract maps output0 to positive and output1 to negative; positive then passes FluxGuidance. Origins are externally verifiable, but this test supplied no object_info output contract. Deliberate manual mapping/synchronized definitions, not an automatic success.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/7/inputs/text"
+          ],
+          "reason": "InpaintModelConditioning upstream contract maps output0 to positive and output1 to negative; positive then passes FluxGuidance. Origins are externally verifiable, but this test supplied no object_info output contract. Deliberate manual mapping/synchronized definitions, not an automatic success.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_flux.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_fill_inpaint_example.png",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "d13d6bedaadb",
+      "annotation_basis": "paired_ip2p",
+      "fields": {
+        "prompt": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/23/inputs/text"
+          ],
+          "reason": "InstructPixToPixConditioning upstream contract maps output0 to positive and output1 to negative; positive then passes FluxGuidance. Origins are externally verifiable, but this test supplied no object_info output contract. Deliberate manual mapping/synchronized definitions, not an automatic success.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "manual_required",
+          "origin_candidates": [
+            "/7/inputs/text"
+          ],
+          "reason": "InstructPixToPixConditioning upstream contract maps output0 to positive and output1 to negative; positive then passes FluxGuidance. Origins are externally verifiable, but this test supplied no object_info output contract. Deliberate manual mapping/synchronized definitions, not an automatic success.",
+          "observed": {
+            "before": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "manual_abstained",
+              "actual_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "Dimensions derive from loaded image/VAE or inpaint conditioning; no literal canvas width/height input exists.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_flux.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_ip2p.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_canny_model_example.png",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "c5c9427693a3",
+      "annotation_basis": "controlnet",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/24/inputs/text"
+          ],
+          "reason": "KSampler.positive follows two ControlNetApply.conditioning links back to this text encoder; control images are not text origins.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/24/inputs/text"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/24/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/7/inputs/text"
+          ],
+          "reason": "The sampling negative port is linked to this text encoder; empty text still supplies a negative conditioning input.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/7/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/3/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/3/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/width"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/5/inputs/height"
+          ],
+          "reason": "The sampler latent_image originates at this empty latent canvas; this literal controls generated dimensions.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/5/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/controlnet/mixing_controlnets.png",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "36f3012270d0",
+      "annotation_basis": "redux",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/text"
+          ],
+          "reason": "BasicGuider.conditioning follows StyleModelApply and FluxGuidance back to this text encoder; image embedding augments it and is not a text source.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/6/inputs/text"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "absent",
+          "expected_targets": [],
+          "reason": "BasicGuider accepts one conditioning input and no negative conditioning input; no negative encoder exists in this graph.",
+          "observed": {
+            "before": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            },
+            "after": {
+              "status": "absent_correctly_unbound",
+              "actual_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/25/inputs/noise_seed"
+          ],
+          "reason": "RandomNoise supplies the sampler noise.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/25/inputs/noise_seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/25/inputs/noise_seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/27/inputs/width",
+            "/30/inputs/width"
+          ],
+          "reason": "Actual canvas is EmptySD3LatentImage27, while ModelSamplingFlux30 computes a sampling shift from width*height. The documented default mapping policy couples primary canvas and model-sampling calibration dimensions, keeping both aligned. This is supported by the upstream patch formula and this graph's common primary sampling path.",
+          "observed": {
+            "before": {
+              "status": "incorrect",
+              "actual_targets": [
+                "/27/inputs/width"
+              ],
+              "missing_targets": [
+                "/30/inputs/width"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/27/inputs/width",
+                "/30/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/27/inputs/height",
+            "/30/inputs/height"
+          ],
+          "reason": "Actual canvas is EmptySD3LatentImage27, while ModelSamplingFlux30 computes a sampling shift from width*height. The documented default mapping policy couples primary canvas and model-sampling calibration dimensions, keeping both aligned. This is supported by the upstream patch formula and this graph's common primary sampling path.",
+          "observed": {
+            "before": {
+              "status": "incorrect",
+              "actual_targets": [
+                "/27/inputs/height"
+              ],
+              "missing_targets": [
+                "/30/inputs/height"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/27/inputs/height",
+                "/30/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_flux.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_custom_sampler.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_sd3.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_model_advanced.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_redux_model_example.png",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    },
+    {
+      "id": "2df6c0ad8d1a",
+      "annotation_basis": "comic",
+      "fields": {
+        "prompt": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/6/inputs/text"
+          ],
+          "reason": "Root sampler31 feeds six later panel samplers via ReferenceLatent conditioning. Root-stage-only scope would write node6 text and preserve distinct later texts; default outputs include both the root image and the stitched final panels. The documented default targets the causally first generation stage. ReferenceLatent's upstream implementation confirms the dependency is real reference conditioning, not an incidental shared scalar.",
+          "observed": {
+            "before": {
+              "status": "missing",
+              "actual_targets": [],
+              "missing_targets": [
+                "/6/inputs/text"
+              ],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/6/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "negative": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/33/inputs/text"
+          ],
+          "reason": "All seven samplers share this negative encoder; it is a known semantic origin. The root-stage mapping policy writes the single shared negative text origin.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/33/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/33/inputs/text"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "seed": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/31/inputs/seed",
+            "/92/inputs/seed",
+            "/108/inputs/seed",
+            "/118/inputs/seed",
+            "/136/inputs/seed",
+            "/143/inputs/seed",
+            "/150/inputs/seed"
+          ],
+          "reason": "Seed controls every executing sampling stage; in the comic this explicitly fans out to all seven KSamplers.",
+          "observed": {
+            "before": {
+              "status": "correct",
+              "actual_targets": [
+                "/108/inputs/seed",
+                "/118/inputs/seed",
+                "/136/inputs/seed",
+                "/143/inputs/seed",
+                "/150/inputs/seed",
+                "/31/inputs/seed",
+                "/92/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/108/inputs/seed",
+                "/118/inputs/seed",
+                "/136/inputs/seed",
+                "/143/inputs/seed",
+                "/150/inputs/seed",
+                "/31/inputs/seed",
+                "/92/inputs/seed"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "width": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/27/inputs/width"
+          ],
+          "reason": "Seven independent latent canvases exist. Root-stage-only scope would write only node27, while uniform-page scope could deliberately fan out. The documented default is root-stage-only; ReferenceLatent gives causal stage ordering through conditioning. Later panel canvas sizes must remain intact.",
+          "observed": {
+            "before": {
+              "status": "incorrect",
+              "actual_targets": [
+                "/107/inputs/width",
+                "/117/inputs/width",
+                "/132/inputs/width",
+                "/139/inputs/width",
+                "/146/inputs/width",
+                "/27/inputs/width",
+                "/95/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": [
+                "/107/inputs/width",
+                "/117/inputs/width",
+                "/132/inputs/width",
+                "/139/inputs/width",
+                "/146/inputs/width",
+                "/95/inputs/width"
+              ]
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/27/inputs/width"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        },
+        "height": {
+          "expected_mode": "automatic",
+          "expected_targets": [
+            "/27/inputs/height"
+          ],
+          "reason": "Seven independent latent canvases exist. Root-stage-only scope would write only node27, while uniform-page scope could deliberately fan out. The documented default is root-stage-only; ReferenceLatent gives causal stage ordering through conditioning. Later panel canvas sizes must remain intact.",
+          "observed": {
+            "before": {
+              "status": "incorrect",
+              "actual_targets": [
+                "/107/inputs/height",
+                "/117/inputs/height",
+                "/132/inputs/height",
+                "/139/inputs/height",
+                "/146/inputs/height",
+                "/27/inputs/height",
+                "/95/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": [
+                "/107/inputs/height",
+                "/117/inputs/height",
+                "/132/inputs/height",
+                "/139/inputs/height",
+                "/146/inputs/height",
+                "/95/inputs/height"
+              ]
+            },
+            "after": {
+              "status": "correct",
+              "actual_targets": [
+                "/27/inputs/height"
+              ],
+              "missing_targets": [],
+              "unexpected_targets": []
+            }
+          }
+        }
+      },
+      "upstream_contract_sources": [
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/nodes.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_edit_model.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_flux.py",
+        "https://github.com/Comfy-Org/ComfyUI/blob/master/comfy_extras/nodes_sd3.py"
+      ],
+      "source_url": "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/flux/flux_kontext_example_comic.webp",
+      "compile_assertions": {
+        "before": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        },
+        "after": {
+          "source_immutable": true,
+          "unbound_retained_fields_preserved": true,
+          "all_retained_bound_values_written": true,
+          "no_link_overwritten": true,
+          "no_unknown_nodes_inserted": true
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Independent static structural semantic annotation only; no GPU, model execution or image-quality truth.",
+    "Upstream current source was read on2026-11-22; original publisher node installations/versions were not available.",
+    "21 executable API graphs are a small, deliberately selected corpus; no population-wide accuracy claim.",
+    "Paired contract and multi-encoder manual abstentions are separated from automatic correctness.",
+    "No raw prompts, model filenames, private paths, raw workflows or cookie information are included."
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schema": "r6-privacy-cross-seal-v1",
+  "utc": "2026-11-26T10:43:20.890618+00:00",
+  "role": "privacy",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "scope_verdict": "VERIFIED PASS",
+  "product_medium_or_higher_count": 0,
+  "process_clean_pass": false,
+  "initial_unchanged": true,
+  "root_actual_delivery_signed": false,
+  "files": [
+    {
+      "pointer": "audits/r6/privacy/cross.md",
+      "sha256": "e36e02620b1af125b33b2288d48e2a2a1df3b8c16bf094a063dc960136d696b2",
+      "bytes": 11705
+    },
+    {
+      "pointer": "audits/r6/privacy/cross-machinechecks.json",
+      "sha256": "671a2afc50e11678895e84d5cc7b99b8b8a04e8366d1b459c1c6ec2e439b6f21",
+      "bytes": 18991
+    },
+    {
+      "pointer": "audits/r6/privacy/cross-inputs.json",
+      "sha256": "675ad223f918bf086d487f8bc221b7edfbc9047f8e5fac9a531a0879977b4352",
+      "bytes": 26965
+    },
+    {
+      "pointer": "audits/r6/privacy/publication-machinechecks.json",
+      "sha256": "e45ec0ea0a0e55b13c93082c38ca991fc926990fdf224bcc3abacbd460e460cf",
+      "bytes": 45417
+    },
+    {
+      "pointer": "audits/r6/privacy/public-safe-files.json",
+      "sha256": "b8d8a423d71b8af0507b43abe1fc90da89b1b8b19518e6d98b3b865112a50689",
+      "bytes": 13850
+    },
+    {
+      "pointer": "audits/r6/privacy/final.md",
+      "sha256": "384ca450a5248b90d680a515bc33a598a63564d1190b33d43e9d4842119ac934",
+      "bytes": 3865
+    },
+    {
+      "pointer": "audits/r6/privacy/final.json",
+      "sha256": "ce4e4e76c9c2531c25b3816afbf57f51d6dc52152552eda428ca2aa272f249d1",
+      "bytes": 2197
+    }
+  ]
+}

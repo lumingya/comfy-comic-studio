@@ -1,0 +1,134 @@
+{
+  "schema": "mio.r5-ownership.safe-publication-draft.v1",
+  "prepared_date": "2026-11-26",
+  "publication_state": "RESULTS_RECORDED_REVIEW_REQUIRED",
+  "patch_reference": {
+    "kind": "worktree_patch_on_6e",
+    "base_head": "6e302081e650210202b232990ab05bbd6961e149",
+    "committed_new_head": null,
+    "snapshot_scope": "uncommitted two-file patch described in controller handoff; later commit identity must be separate"
+  },
+  "role": "pure safe publication preparation; not R5 reviewer or new five-role approval",
+  "source_allowlist": [
+    "r5-timeout-ownership-validation/result.json",
+    "r5-timeout-ownership-validation/resume-result.json",
+    "r5-timeout-ownership-validation/offline-unit.log"
+  ],
+  "source_files": [
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-ownership-validation/result.json",
+      "original_sha256": "99be20b29101133a3b9893bf5afeaea69e51fb3d835f6d45badae282116406ee",
+      "original_git_blob_sha1_calculated": "543b47307febb2987053011b6c7e2f43c1d2cad5",
+      "destination": "validation.json",
+      "published_sha256": "a30e2e2022d0319edd18ec121a9bb0f3247bf179144f46e2fb854c2453bcfcb9",
+      "published_git_blob_sha1_calculated": "5bae54f2366dc28318d89689b66fa278fc77928d",
+      "publication_field": "initial_result",
+      "projection": "complete parsed JSON values preserved; formatting rebuilt",
+      "original_byte_identical": false
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-ownership-validation/resume-result.json",
+      "original_sha256": "07e006fa9325550c3e6131c62a0aa45214fc00ab1ad3899331377aad71ecf1ba",
+      "original_git_blob_sha1_calculated": "ff0126d2e65fce9e7a4c0f82147b6015680c0f56",
+      "destination": "validation.json",
+      "published_sha256": "a30e2e2022d0319edd18ec121a9bb0f3247bf179144f46e2fb854c2453bcfcb9",
+      "published_git_blob_sha1_calculated": "5bae54f2366dc28318d89689b66fa278fc77928d",
+      "publication_field": "resume_result",
+      "projection": "complete parsed JSON values preserved; formatting rebuilt",
+      "original_byte_identical": false
+    },
+    {
+      "source_root_label": "external-temp-evidence/repairs",
+      "source": "r5-timeout-ownership-validation/offline-unit.log",
+      "original_sha256": "61e170787842799f8d195de7ca4d61a5992be80c92f5a8ae07b9b12704ee1e32",
+      "original_git_blob_sha1_calculated": "0dd63566e97a6a95e3f6f5193dd9852896065379",
+      "destination": "validation.json",
+      "published_sha256": "a30e2e2022d0319edd18ec121a9bb0f3247bf179144f46e2fb854c2453bcfcb9",
+      "published_git_blob_sha1_calculated": "5bae54f2366dc28318d89689b66fa278fc77928d",
+      "publication_field": "offline_unit_summary",
+      "projection": "only three neutral summary lines plus derived count/duration; full log not copied",
+      "original_byte_identical": false
+    }
+  ],
+  "published_files": [
+    {
+      "destination": "report.md",
+      "sha256": "0270b297b9ac8fdf77a9479e588aa640087c903d9db0b6433229b7fd8873f19e",
+      "git_blob_sha1_calculated": "3cebe4bf8803bc523de79d773112266e1fe589b3",
+      "bytes": 4386
+    },
+    {
+      "destination": "validation.json",
+      "sha256": "a30e2e2022d0319edd18ec121a9bb0f3247bf179144f46e2fb854c2453bcfcb9",
+      "git_blob_sha1_calculated": "5bae54f2366dc28318d89689b66fa278fc77928d",
+      "bytes": 7831
+    }
+  ],
+  "self_manifest_hash_recorded_in_handoff": true,
+  "expected_publication_allowlist": [
+    "report.md",
+    "validation.json",
+    "manifest.json"
+  ],
+  "normalization": {
+    "encoding": "UTF-8 without BOM",
+    "line_endings": "LF",
+    "terminal_newline": "exactly one LF",
+    "JSON_sources": "complete parsed values aggregated; controller context attributed separately",
+    "allowed_neutral_unit_log": "source bytes hashed and checked; only three summary lines projected; no full log copy",
+    "original_sources_modified": false,
+    "git_blob_scope": "Calculated object OIDs for exact original/published bytes, not actual Git repository/index queries"
+  },
+  "evidence_boundaries": {
+    "initial_lint_failure_and_I001_context_preserved": true,
+    "initial_tests_unexecuted": true,
+    "worktree_patch_not_presented_as_committed_head": true,
+    "source_file_hashes": {
+      "examples/extensions/standard-image-channels/transport.py": "6ea6c8ee92319e4160b2952a3f06e44f999abb7ce700872d04c65d0da8c22ebd",
+      "server/tests/test_cloud_timeout_classification.py": "85070b64185f33c52f6d7f05e6a4309a22186b42c56d69619055ab77458addf9"
+    },
+    "local_unit_methods": 6,
+    "new_methods": 4,
+    "new_subscenarios": 100,
+    "old_methods": 2,
+    "unittest_summary_seconds": 0.061,
+    "outer_offline_unit_seconds": 2.14,
+    "source_CPU_guards_unique_processes": 3,
+    "broad_TimeoutException_failure_snapshot_from_controller_preserved": true,
+    "old_6e_3_method_50_subscenario_record_not_promoted": true,
+    "only_MockTransport_factories_and_FakeDeadline_locally": true,
+    "real_TLS_guard_thread_socket_evidence_pending": true,
+    "new_CI_terminal": "PENDING",
+    "new_five_role_review": "PENDING",
+    "cleanup": "PENDING",
+    "old_R4_R5_ready_not_read_or_modified": true
+  },
+  "publication_checks": {
+    "result": "NO_FINDINGS_WITHIN_PUBLICATION_SCOPE",
+    "source_files": 3,
+    "published_files": 3,
+    "all_source_hashes_preserved": true,
+    "source_JSON_parsed_values_preserved": true,
+    "neutral_log_summary_lines": 3,
+    "all_published_UTF8_without_BOM_LF_single_EOF": true,
+    "recursive_forbidden_dictionary_keys": [
+      "class_type",
+      "inputs",
+      "links",
+      "widgets_values",
+      "extra_pnginfo"
+    ],
+    "forbidden_dictionary_key_count": 0,
+    "absolute_private_path_account_prompt_model_credential_candidates": 0,
+    "relative_link_count": 2,
+    "relative_layout_links_valid": true,
+    "original_graph_product_source_unlisted_logs_or_unfinished_CI_report_read": false,
+    "explicit_allowed_neutral_unit_log_read_for_hash_and_summary": true,
+    "repo_files_or_Git_modified": false,
+    "tests_product_network_browser_Git_or_CI_calls": 0,
+    "Python_processes_started": 0,
+    "actual_Git_blob_comparison": "not performed; external drafts only"
+  }
+}

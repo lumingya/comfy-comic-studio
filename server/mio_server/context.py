@@ -47,6 +47,7 @@ from .theme_packages import ThemePackageManager
 from .trash import Trash
 from .update import Updater
 from .webhooks import Dispatcher
+from .workflow_catalog import WorkflowCatalog
 
 INSTALL_ROOT = Path(__file__).resolve().parents[2]
 
@@ -83,6 +84,11 @@ class AppContext:
     image_llm_factory: Callable | None = None
     _close_lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
     _closing: bool = field(default=False, init=False, repr=False)
+    workflow_catalog: WorkflowCatalog = field(init=False, repr=False)
+
+    def __post_init__(self):
+        self.workflow_catalog = WorkflowCatalog(self.registry)
+        self.closers.append(self.workflow_catalog.close)
 
     @classmethod
     def create(

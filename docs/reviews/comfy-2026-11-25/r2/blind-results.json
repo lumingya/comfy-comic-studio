@@ -1,0 +1,7913 @@
+{
+  "audit": "Wave4 R2 CrossAudit-2-WildBlindTest",
+  "head": "6f9bdf2c56994397754f4ec2c782f1ab63bc75a0",
+  "verdict": "REQUEST CHANGES",
+  "sample_count": 15,
+  "api_samples": 13,
+  "ui_samples": 2,
+  "total_nodes": 228,
+  "unique_classes": 85,
+  "largest_sample_nodes": 32,
+  "containers": {
+    "png": 9,
+    "json": 6
+  },
+  "pre_engine_expectations_sha256": "9293cecf0989a14d883eb839110f5302cb2b69f328bdc5ce56c13e98d01e4d55",
+  "frozen_source_archive_sha256": "901b833618cc7ccb3935a036449b9a032e8d6192a84e1f82b8b4ae0a2ea122b3",
+  "deduplication": {
+    "listed_old_sources": 115,
+    "available_old_files_recomputed": 90,
+    "available_old_unique_topologies": 89,
+    "available_old_composition": {
+      "initial": 50,
+      "supplement": 25,
+      "r1_blind": 15
+    },
+    "unavailable_old_civitai": 25,
+    "method": "Source URL plus published original hashes and independently recomputed SHA256; class+field-shape+link-port neighborhood topology, five refinement rounds. No old expected targets or engine results used as truth.",
+    "pre_engine_rejections": [
+      {
+        "index": 7,
+        "reason": "old topology duplicate"
+      },
+      {
+        "index": 9,
+        "reason": "old topology duplicate"
+      },
+      {
+        "index": 12,
+        "reason": "old topology duplicate"
+      }
+    ],
+    "limit": "The25 unavailable original Civitai sources can be compared only to recorded source/hash/node summary, not independently refingerprinted. No absolute topology novelty proof for those25."
+  },
+  "results": {
+    "decode_exact": 15,
+    "inspect_file_routes": 15,
+    "api_import_and_loras_routes": 13,
+    "ui_guidance_and_import_rejection": 2,
+    "compiled_no_edit": 13,
+    "noedit_surviving_values_equal": 13,
+    "source_input_immutable": 15,
+    "source_files_immutable": 15,
+    "offline_missing_catalog_exact": 13,
+    "strict_pre_engine_semantic_expectations": {
+      "checks": 130,
+      "correct": 99,
+      "wrong_or_abstained": 31
+    },
+    "expectation_modes": {
+      "auto_total": 100,
+      "auto_exact": 83,
+      "manual_total": 25,
+      "manual_exact": 11,
+      "absent_total": 5,
+      "absent_exact": 5
+    },
+    "whole_graph_compile_checks": 138,
+    "whole_graph_compile_checks_pass": 138,
+    "links_preserved_checks": 138,
+    "automatic_checks": 86,
+    "manual_checks": 52,
+    "lora_negative_override_and_disable_checks": 4,
+    "lora_whole_graph_equal": 4
+  },
+  "oracle_notes": [
+    "All15 were frozen before the first engine run, including failures; no failure-based sample replacement.",
+    "Reference image test initially passed a SHA string but the compile contract expects an explicit $asset object. The harness was corrected and rerun; original failures were not product failures.",
+    "Pre-engine output expectation for sample14 marked two real save nodes as manual. Preserving both is an acceptable output policy, so this strict oracle mismatch is not a finding.",
+    "Reference auto absence reflects established manual image-role mapping; these remain strict oracle mismatches, not High/Medium defects."
+  ],
+  "findings": [
+    {
+      "id": "H1",
+      "severity": "High",
+      "title": "Generation size silently targets support masks instead of the connected latent producer",
+      "samples": [
+        14
+      ],
+      "evidence": {
+        "intended": [
+          "/4/inputs/empty_latent_width",
+          "/4/inputs/empty_latent_height"
+        ],
+        "actual": [
+          "/56/inputs/width",
+          "/58/inputs/width",
+          "/56/inputs/height",
+          "/58/inputs/height"
+        ],
+        "connections": [
+          "/8/inputs/latent_image -> 4:3",
+          "/56 -> /57 -> /59 -> /61/inputs/attn_mask",
+          "/58 -> /59 -> /63 -> /62/inputs/attn_mask",
+          "/8/inputs/model -> 62:0"
+        ],
+        "compile_result": "width=1152 changes masks56 and58 only; latent remains authored512x768. No size warning. All links retained.",
+        "native_contract": "https://raw.githubusercontent.com/jags111/efficiency-nodes-comfyui/main/efficiency_nodes.py",
+        "code": "binding_inference.py infer_bindings dimensions includes model ancestors"
+      },
+      "impact": "Requested image dimensions are ignored while attention mask dimensions are modified. Whole graph preservation alone cannot establish semantic correctness."
+    },
+    {
+      "id": "M1",
+      "severity": "Medium",
+      "title": "Dual guider negative inference overwrites a source shared with positive conditioning",
+      "samples": [
+        4
+      ],
+      "evidence": {
+        "actual_negative": [
+          "/6/inputs/text"
+        ],
+        "connections": [
+          "/52/inputs/positive -> 6:0",
+          "/52/inputs/negative -> 7:0",
+          "/53/inputs/cond1 -> 52:0",
+          "/53/inputs/cond2 -> 52:1",
+          "/53/inputs/negative -> 6:0",
+          "/54/inputs/guider -> 53:0",
+          "/8/inputs/samples -> 54:0",
+          "/9/inputs/images -> 8:0"
+        ],
+        "compile_result": "negative value replaces6.text, also altering cond1 positive text. No shared-source warning.",
+        "native_contracts": [
+          "https://raw.githubusercontent.com/comfyanonymous/ComfyUI/master/comfy_extras/nodes_ip2p.py",
+          "https://raw.githubusercontent.com/comfyanonymous/ComfyUI/master/comfy_extras/nodes_custom_sampler.py"
+        ],
+        "code": "binding_inference.py positive_literals only scans positive/conditioning; prompt_owners includes guider with cond1/cond2 but protection misses those roles"
+      },
+      "impact": "Changing the negative field changes positive image-conditioned instructions. Abstain or require an explicit mapping for shared roles."
+    },
+    {
+      "id": "L1",
+      "severity": "Low",
+      "title": "Clear native paired conditioning often requires manual text mapping",
+      "samples": [
+        2,
+        6,
+        10,
+        14,
+        15
+      ],
+      "evidence": {
+        "known_expected_text_targets": [
+          "/6/inputs/text",
+          "/7/inputs/text",
+          "/23/inputs/text",
+          "/4/inputs/positive",
+          "/4/inputs/negative"
+        ],
+        "behavior": "Paired-output and custom loader boundaries abstain and issue unbound/ambiguous guidance. Explicit manual mappings passed exact whole graph comparison."
+      },
+      "impact": "Conservative, visible limitation; not counted as semantic auto success. Native contracts could improve convenience without guessing custom output order."
+    },
+    {
+      "id": "L2",
+      "severity": "Low",
+      "title": "Multi-stage scalar policy fans seed out but other scalar knobs use the primary stage",
+      "samples": [
+        1,
+        2,
+        14
+      ],
+      "evidence": {
+        "observed": [
+          "seed -> stageC3 and stageB33; steps/cfg/sampler -> stageC3 only",
+          "seed -> sampler8 and upscaler71; steps/cfg/sampler -> sampler8 only"
+        ],
+        "pre_engine_oracle": "Marked multi-stage seed/steps/cfg/sampler as manual, so these remain strict expectation mismatches."
+      },
+      "impact": "Distinct authored stage seeds become one seed without stage guidance. A documented all-stage seed policy or explicit stage controls would clarify intent; no link/value corruption outside the declared inferred seed targets."
+    }
+  ],
+  "limits": [
+    "No render, GPU job, model download, browser profile, credential or external paid service.",
+    "13 API graphs and2 UI-only graphs; UI-only safely rejected with export guidance and not claimed executable. Largest32 nodes; no120-300 node sample.",
+    "Two real API LoRA chains tested with a requested negative override and disable; source weights were positive. No authored active negative weight or authored disabled API LoRA in fixed15.",
+    "After the15 were frozen, a source scout identified MagicNodes UI examples with authored disabled negative weight (-1 model,0.2 clip), but they were not added or claimed as engine-tested coverage.",
+    "Offline diagnose uses empty object_info to verify exact missing custom-node catalog and malformed links. Installed model availability/custom VALIDATE_INPUTS not verified.",
+    "No repeat of global CI gates; Wave3 green CI supplied by coordinator."
+  ],
+  "samples": [
+    {
+      "index": 1,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/stable_cascade/stable_cascade__image_remixing_multiple.png",
+      "sha256": "57196fa33edf8bc275b20b53f201cef20913e924911ae0fe0d646e73400d49cf",
+      "topology_sha256": "2a6fe3e00a4138c572498e49d1920aa6ab2ab3e5ba95f0de494ca8623c1ae21e",
+      "format": "api",
+      "node_count": 16,
+      "classes": {
+        "KSampler": 2,
+        "CLIPTextEncode": 2,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "StableCascade_EmptyLatentImage": 1,
+        "StableCascade_StageB_Conditioning": 1,
+        "CheckpointLoaderSimple": 1,
+        "LoadImage": 2,
+        "unCLIPCheckpointLoader": 1,
+        "CLIPVisionEncode": 2,
+        "unCLIPConditioning": 2
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "manual",
+          "targets": [
+            "/3/inputs/seed",
+            "/33/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/34/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/34/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "manual",
+          "targets": [
+            "/48/inputs/image",
+            "/52/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "manual",
+          "targets": [
+            "/3/inputs/steps",
+            "/33/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "manual",
+          "targets": [
+            "/3/inputs/cfg",
+            "/33/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "manual",
+          "targets": [
+            "/3/inputs/sampler_name",
+            "/33/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Cascade StageC and StageB samplers have distinct seeds/steps/cfg; never infer single stage. Two CLIPVision references need explicit role.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "7",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "3",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "3",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "3",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "3",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "3",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "3",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "33",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "34",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "34",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "34",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "ref",
+            "node": "48",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "52",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "3",
+          "6",
+          "7",
+          "8",
+          "9",
+          "33",
+          "34",
+          "36",
+          "42",
+          "48",
+          "49",
+          "50",
+          "51",
+          "52",
+          "53",
+          "54"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "prompt": [
+          "/6/inputs/text"
+        ],
+        "negative": [
+          "/7/inputs/text"
+        ],
+        "seed": [
+          "/3/inputs/seed",
+          "/33/inputs/seed"
+        ],
+        "steps": [
+          "/3/inputs/steps"
+        ],
+        "cfg": [
+          "/3/inputs/cfg"
+        ],
+        "denoise": [
+          "/3/inputs/denoise"
+        ],
+        "sampler": [
+          "/3/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/3/inputs/scheduler"
+        ],
+        "width": [
+          "/34/inputs/width"
+        ],
+        "height": [
+          "/34/inputs/height"
+        ],
+        "batch": [
+          "/34/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/text"
+            ]
+          },
+          "actual": [
+            "/6/inputs/text"
+          ],
+          "ok": true
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [
+            "/7/inputs/text"
+          ],
+          "ok": true
+        },
+        "seed": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/3/inputs/seed",
+              "/33/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/3/inputs/seed",
+            "/33/inputs/seed"
+          ],
+          "ok": false
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/34/inputs/width"
+            ]
+          },
+          "actual": [
+            "/34/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/34/inputs/height"
+            ]
+          },
+          "actual": [
+            "/34/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/48/inputs/image",
+              "/52/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": true
+        },
+        "steps": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/3/inputs/steps",
+              "/33/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/3/inputs/steps"
+          ],
+          "ok": false
+        },
+        "cfg": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/3/inputs/cfg",
+              "/33/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/3/inputs/cfg"
+          ],
+          "ok": false
+        },
+        "sampler": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/3/inputs/sampler_name",
+              "/33/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/3/inputs/sampler_name"
+          ],
+          "ok": false
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "automatic",
+          "actual_diffs": [
+            "/6/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "prompt",
+              "node": "6",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "automatic",
+          "actual_diffs": [
+            "/7/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "negative",
+              "node": "7",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/seed",
+            "/33/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "3",
+              "field": "seed",
+              "source": "heuristic"
+            },
+            {
+              "kind": "seed",
+              "node": "33",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "manual",
+          "target": "/3/inputs/seed",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/3/inputs/seed"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "manual",
+          "target": "/33/inputs/seed",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/33/inputs/seed"
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/34/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "34",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/34/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "34",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/48/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/48/inputs/image"
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/52/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/52/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "3",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "manual",
+          "target": "/3/inputs/steps",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "manual",
+          "target": "/33/inputs/steps",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/33/inputs/steps"
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "3",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "manual",
+          "target": "/3/inputs/cfg",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "manual",
+          "target": "/33/inputs/cfg",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/33/inputs/cfg"
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/sampler_name"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "3",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "manual",
+          "target": "/3/inputs/sampler_name",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/3/inputs/sampler_name"
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "manual",
+          "target": "/33/inputs/sampler_name",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/33/inputs/sampler_name"
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 11,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 2,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/stable_cascade/stable_cascade__inpaint_controlnet.png",
+      "sha256": "fa95c22e880555b82702c1a16d3b3820458826c0b1cbc113e9d1f3c21769f6da",
+      "topology_sha256": "d67d72d84de834d7c7411b31101f8bab6e38f0ebf53f53568e8657d87abe55b8",
+      "format": "api",
+      "node_count": 22,
+      "classes": {
+        "KSampler": 2,
+        "CLIPTextEncode": 2,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "StableCascade_EmptyLatentImage": 1,
+        "StableCascade_StageB_Conditioning": 1,
+        "CheckpointLoaderSimple": 2,
+        "ControlNetLoader": 1,
+        "ControlNetApplyAdvanced": 1,
+        "LoadImage": 1,
+        "JoinImageWithAlpha": 1,
+        "ImageCompositeMasked": 2,
+        "EmptyImage": 1,
+        "InvertMask": 2,
+        "ThresholdMask": 1,
+        "GrowMask": 1,
+        "PreviewImage": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "manual",
+          "targets": [
+            "/3/inputs/seed",
+            "/33/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/34/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/34/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "auto",
+          "targets": [
+            "/50/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "manual",
+          "targets": [
+            "/3/inputs/steps",
+            "/33/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "manual",
+          "targets": [
+            "/3/inputs/cfg",
+            "/33/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "manual",
+          "targets": [
+            "/3/inputs/sampler_name",
+            "/33/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Cascade StageC inpaint control plus StageB, generated output is final composite69 not Preview76. EmptyImage62 is mask support not generation size.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "3",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "3",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "3",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "3",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "3",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "3",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "33",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "34",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "34",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "34",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "prompt",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "7",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "7",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "mask",
+            "node": "50",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "50",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [
+          "prompt",
+          "negative"
+        ],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定正提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "prompt"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定负提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "negative"
+          },
+          {
+            "code": "ambiguous",
+            "severity": "warning",
+            "message": "正提示词有多个候选，请明确选择映射；未自动改写。",
+            "kind": "prompt"
+          },
+          {
+            "code": "ambiguous",
+            "severity": "warning",
+            "message": "负提示词有多个候选，请明确选择映射；未自动改写。",
+            "kind": "negative"
+          },
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "3",
+          "6",
+          "7",
+          "8",
+          "9",
+          "33",
+          "34",
+          "36",
+          "41",
+          "42",
+          "47",
+          "49",
+          "50",
+          "60",
+          "61",
+          "62",
+          "64",
+          "66",
+          "69",
+          "70",
+          "71"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [
+          "76"
+        ],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "seed": [
+          "/3/inputs/seed",
+          "/33/inputs/seed"
+        ],
+        "steps": [
+          "/3/inputs/steps"
+        ],
+        "cfg": [
+          "/3/inputs/cfg"
+        ],
+        "denoise": [
+          "/3/inputs/denoise"
+        ],
+        "sampler": [
+          "/3/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/3/inputs/scheduler"
+        ],
+        "width": [
+          "/34/inputs/width"
+        ],
+        "height": [
+          "/34/inputs/height"
+        ],
+        "batch": [
+          "/34/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/text"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "seed": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/3/inputs/seed",
+              "/33/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/3/inputs/seed",
+            "/33/inputs/seed"
+          ],
+          "ok": false
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/34/inputs/width"
+            ]
+          },
+          "actual": [
+            "/34/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/34/inputs/height"
+            ]
+          },
+          "actual": [
+            "/34/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/50/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "steps": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/3/inputs/steps",
+              "/33/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/3/inputs/steps"
+          ],
+          "ok": false
+        },
+        "cfg": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/3/inputs/cfg",
+              "/33/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/3/inputs/cfg"
+          ],
+          "ok": false
+        },
+        "sampler": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/3/inputs/sampler_name",
+              "/33/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/3/inputs/sampler_name"
+          ],
+          "ok": false
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "manual",
+          "target": "/6/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/6/inputs/text"
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "manual",
+          "target": "/7/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/7/inputs/text"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/seed",
+            "/33/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "3",
+              "field": "seed",
+              "source": "heuristic"
+            },
+            {
+              "kind": "seed",
+              "node": "33",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "manual",
+          "target": "/3/inputs/seed",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/3/inputs/seed"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "manual",
+          "target": "/33/inputs/seed",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/33/inputs/seed"
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/34/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "34",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/34/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "34",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/50/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/50/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "3",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "manual",
+          "target": "/3/inputs/steps",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "manual",
+          "target": "/33/inputs/steps",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/33/inputs/steps"
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "3",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "manual",
+          "target": "/3/inputs/cfg",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "manual",
+          "target": "/33/inputs/cfg",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/33/inputs/cfg"
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/sampler_name"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "3",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "manual",
+          "target": "/3/inputs/sampler_name",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/3/inputs/sampler_name"
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "manual",
+          "target": "/33/inputs/sampler_name",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/33/inputs/sampler_name"
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 16,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 3,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/lumina2/lumina2_basic_example.png",
+      "sha256": "2b3aa16174d3c68649cf24df5c57f27f47c1ebbad8f53c7f33f3a25439f0a0c7",
+      "topology_sha256": "473a33c00f70d87df98338266d27e4db1e6c09f3ac43140c2a40c161191fb170",
+      "format": "api",
+      "node_count": 8,
+      "classes": {
+        "KSampler": 1,
+        "CheckpointLoaderSimple": 1,
+        "CLIPTextEncode": 2,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "ModelSamplingAuraFlow": 1,
+        "EmptySD3LatentImage": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/13/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/13/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "absent",
+          "targets": []
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Original connected sampler inputs and native scalar contracts.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "7",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "3",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "3",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "3",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "3",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "3",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "3",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "13",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "13",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "13",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [],
+        "missing": [],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "3",
+          "4",
+          "6",
+          "7",
+          "8",
+          "9",
+          "11",
+          "13"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "prompt": [
+          "/6/inputs/text"
+        ],
+        "negative": [
+          "/7/inputs/text"
+        ],
+        "seed": [
+          "/3/inputs/seed"
+        ],
+        "steps": [
+          "/3/inputs/steps"
+        ],
+        "cfg": [
+          "/3/inputs/cfg"
+        ],
+        "denoise": [
+          "/3/inputs/denoise"
+        ],
+        "sampler": [
+          "/3/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/3/inputs/scheduler"
+        ],
+        "width": [
+          "/13/inputs/width"
+        ],
+        "height": [
+          "/13/inputs/height"
+        ],
+        "batch": [
+          "/13/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/text"
+            ]
+          },
+          "actual": [
+            "/6/inputs/text"
+          ],
+          "ok": true
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [
+            "/7/inputs/text"
+          ],
+          "ok": true
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/3/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/13/inputs/width"
+            ]
+          },
+          "actual": [
+            "/13/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/13/inputs/height"
+            ]
+          },
+          "actual": [
+            "/13/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "absent",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/3/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/3/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/3/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "automatic",
+          "actual_diffs": [
+            "/6/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "prompt",
+              "node": "6",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "automatic",
+          "actual_diffs": [
+            "/7/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "negative",
+              "node": "7",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "3",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/13/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "13",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/13/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "13",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "3",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "3",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/sampler_name"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "3",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 7,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 4,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/hidream/hidream_e1.1_example.png",
+      "sha256": "561b077fb090da021fc178c6f50c9f9d01e8aac677b429eb231441383415e375",
+      "topology_sha256": "e30427e36559a8bd338375d571b160934783d9a2f62bf615d5a3d0da4464b67f",
+      "format": "api",
+      "node_count": 16,
+      "classes": {
+        "CLIPTextEncode": 2,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "LoadImage": 1,
+        "UNETLoader": 1,
+        "QuadrupleCLIPLoader": 1,
+        "VAELoader": 1,
+        "ImageScaleToTotalPixels": 1,
+        "KSamplerSelect": 1,
+        "RandomNoise": 1,
+        "BasicScheduler": 1,
+        "InstructPixToPixConditioning": 1,
+        "DualCFGGuider": 1,
+        "SamplerCustomAdvanced": 1,
+        "CFGNorm": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "manual",
+          "targets": [
+            "/6/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "manual",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/47/inputs/noise_seed"
+          ]
+        },
+        "width": {
+          "mode": "manual",
+          "targets": []
+        },
+        "height": {
+          "mode": "manual",
+          "targets": []
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "auto",
+          "targets": [
+            "/13/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/49/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "manual",
+          "targets": [
+            "/53/inputs/cfg_conds",
+            "/53/inputs/cfg_cond2_negative"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/46/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "DualCFG nested cond1=Instruct output0, cond2=output1, negative=encoder6 which is also image-conditioned positive; abstain conflicting semantic source. Size derived from reference total pixels.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "46",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "47",
+            "field": "noise_seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "49",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "49",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "49",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "prompt",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "7",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "13",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [
+          "prompt",
+          "width",
+          "height"
+        ],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定正提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "prompt"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定宽度；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "width"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定高度；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "height"
+          },
+          {
+            "code": "ambiguous",
+            "severity": "warning",
+            "message": "正提示词有多个候选，请明确选择映射；未自动改写。",
+            "kind": "prompt"
+          },
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "6",
+          "7",
+          "8",
+          "9",
+          "13",
+          "41",
+          "42",
+          "43",
+          "45",
+          "46",
+          "47",
+          "49",
+          "52",
+          "53",
+          "54",
+          "55"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "negative": [
+          "/6/inputs/text"
+        ],
+        "sampler": [
+          "/46/inputs/sampler_name"
+        ],
+        "seed": [
+          "/47/inputs/noise_seed"
+        ],
+        "steps": [
+          "/49/inputs/steps"
+        ],
+        "denoise": [
+          "/49/inputs/denoise"
+        ],
+        "scheduler": [
+          "/49/inputs/scheduler"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/6/inputs/text"
+            ]
+          },
+          "actual": [],
+          "ok": true
+        },
+        "negative": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [
+            "/6/inputs/text"
+          ],
+          "ok": false
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/47/inputs/noise_seed"
+            ]
+          },
+          "actual": [
+            "/47/inputs/noise_seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "manual",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "manual",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/13/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/49/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/49/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/53/inputs/cfg_conds",
+              "/53/inputs/cfg_cond2_negative"
+            ]
+          },
+          "actual": [],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/46/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/46/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "manual",
+          "target": "/6/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/6/inputs/text"
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "automatic",
+          "actual_diffs": [
+            "/6/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "negative",
+              "node": "6",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "manual",
+          "target": "/7/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/7/inputs/text"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/47/inputs/noise_seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "47",
+              "field": "noise_seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/13/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/13/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/49/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "49",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "manual",
+          "target": "/53/inputs/cfg_conds",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/53/inputs/cfg_conds"
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "manual",
+          "target": "/53/inputs/cfg_cond2_negative",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/53/inputs/cfg_cond2_negative"
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "46",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 15,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 5,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/qwen_image/qwen_image_edit_2509_basic_example.png",
+      "sha256": "7ea89d79a4d2f01e0cf96d5488c121e71281c330ecdc7ef321fbfabbcd3e69e7",
+      "topology_sha256": "a9318086d3b83e617986cb33385851eaa0a915f0e4e6d2a062bebca3734bf001",
+      "format": "api",
+      "node_count": 11,
+      "classes": {
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "VAELoader": 1,
+        "UNETLoader": 1,
+        "LoadImage": 1,
+        "CLIPLoader": 1,
+        "KSampler": 1,
+        "EmptySD3LatentImage": 1,
+        "ModelSamplingAuraFlow": 1,
+        "TextEncodeQwenImageEditPlus": 2
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/68/inputs/prompt"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/69/inputs/prompt"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/65/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/66/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/66/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "auto",
+          "targets": [
+            "/41/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/65/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/65/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/65/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Original connected sampler inputs and native scalar contracts.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "68",
+            "field": "prompt",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "69",
+            "field": "prompt",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "65",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "65",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "65",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "65",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "65",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "65",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "66",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "66",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "66",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "ref",
+            "node": "41",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "8",
+          "9",
+          "10",
+          "12",
+          "41",
+          "61",
+          "65",
+          "66",
+          "67",
+          "68",
+          "69"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "prompt": [
+          "/68/inputs/prompt"
+        ],
+        "negative": [
+          "/69/inputs/prompt"
+        ],
+        "seed": [
+          "/65/inputs/seed"
+        ],
+        "steps": [
+          "/65/inputs/steps"
+        ],
+        "cfg": [
+          "/65/inputs/cfg"
+        ],
+        "denoise": [
+          "/65/inputs/denoise"
+        ],
+        "sampler": [
+          "/65/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/65/inputs/scheduler"
+        ],
+        "width": [
+          "/66/inputs/width"
+        ],
+        "height": [
+          "/66/inputs/height"
+        ],
+        "batch": [
+          "/66/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/68/inputs/prompt"
+            ]
+          },
+          "actual": [
+            "/68/inputs/prompt"
+          ],
+          "ok": true
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/69/inputs/prompt"
+            ]
+          },
+          "actual": [
+            "/69/inputs/prompt"
+          ],
+          "ok": true
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/65/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/65/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/66/inputs/width"
+            ]
+          },
+          "actual": [
+            "/66/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/66/inputs/height"
+            ]
+          },
+          "actual": [
+            "/66/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/41/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/65/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/65/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/65/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/65/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/65/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/65/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "automatic",
+          "actual_diffs": [
+            "/68/inputs/prompt"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "prompt",
+              "node": "68",
+              "field": "prompt",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "automatic",
+          "actual_diffs": [
+            "/69/inputs/prompt"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "negative",
+              "node": "69",
+              "field": "prompt",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/65/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "65",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/66/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "66",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/66/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "66",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/41/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/41/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/65/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "65",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/65/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "65",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "65",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 10,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 6,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/sd3/sd3.5_large_canny_controlnet_example.png",
+      "sha256": "4d7330b0682ca7496c58a9baa850fc64a2a3d65e97216ec6282ef471b5c40617",
+      "topology_sha256": "d57b12c05a83631b095e2104ea2ee37b7d15358186892bec1d11edf0d6ea56a0",
+      "format": "api",
+      "node_count": 13,
+      "classes": {
+        "KSampler": 1,
+        "CheckpointLoaderSimple": 1,
+        "CLIPTextEncode": 1,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "EmptySD3LatentImage": 1,
+        "LoadImage": 1,
+        "ControlNetLoader": 1,
+        "Canny": 1,
+        "ImageScale": 1,
+        "PreviewImage": 1,
+        "ConditioningZeroOut": 1,
+        "ControlNetApplyAdvanced": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "absent",
+          "targets": []
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/33/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/33/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "auto",
+          "targets": [
+            "/45/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "ConditioningZeroOut means negative has no independently editable text; changing6 would also alter positive.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "3",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "3",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "3",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "3",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "3",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "3",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "33",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "33",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "33",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "prompt",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "45",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [
+          "prompt",
+          "negative"
+        ],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定正提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "prompt"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定负提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "negative"
+          },
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "3",
+          "4",
+          "6",
+          "8",
+          "9",
+          "33",
+          "45",
+          "46",
+          "47",
+          "48",
+          "50",
+          "51"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [
+          "49"
+        ],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "seed": [
+          "/3/inputs/seed"
+        ],
+        "steps": [
+          "/3/inputs/steps"
+        ],
+        "cfg": [
+          "/3/inputs/cfg"
+        ],
+        "denoise": [
+          "/3/inputs/denoise"
+        ],
+        "sampler": [
+          "/3/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/3/inputs/scheduler"
+        ],
+        "width": [
+          "/33/inputs/width"
+        ],
+        "height": [
+          "/33/inputs/height"
+        ],
+        "batch": [
+          "/33/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/text"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "negative": {
+          "expected": {
+            "mode": "absent",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/3/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/33/inputs/width"
+            ]
+          },
+          "actual": [
+            "/33/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/33/inputs/height"
+            ]
+          },
+          "actual": [
+            "/33/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/45/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/3/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/3/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/3/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "manual",
+          "target": "/6/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/6/inputs/text"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "3",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/33/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "33",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/33/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "33",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/45/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/45/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "3",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "3",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "3",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 12,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 8,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/hunyuan_image/hunyuan_image_example.png",
+      "sha256": "3e25002cb3100e876c2333c9427e7ce730676dd942649b5e2c15273b35edeb67",
+      "topology_sha256": "8b5ae93540f85e22ed45fc735d8f201075c2b0981ebc05186ae4ef3bac1b70fd",
+      "format": "api",
+      "node_count": 9,
+      "classes": {
+        "KSampler": 1,
+        "CLIPTextEncode": 2,
+        "VAEDecode": 1,
+        "UNETLoader": 1,
+        "VAELoader": 1,
+        "DualCLIPLoader": 1,
+        "EmptyHunyuanImageLatent": 1,
+        "SaveImage": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/29/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/29/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/41"
+          ]
+        },
+        "ref": {
+          "mode": "absent",
+          "targets": []
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Original connected sampler inputs and native scalar contracts.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "41",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "7",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "3",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "3",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "3",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "3",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "3",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "3",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "29",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "29",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "29",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [],
+        "missing": [],
+        "output_nodes": [
+          "41"
+        ],
+        "issues": [
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "41"
+        ],
+        "selected_nodes": [
+          "3",
+          "6",
+          "7",
+          "8",
+          "13",
+          "15",
+          "26",
+          "29",
+          "41"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/41"
+        ],
+        "prompt": [
+          "/6/inputs/text"
+        ],
+        "negative": [
+          "/7/inputs/text"
+        ],
+        "seed": [
+          "/3/inputs/seed"
+        ],
+        "steps": [
+          "/3/inputs/steps"
+        ],
+        "cfg": [
+          "/3/inputs/cfg"
+        ],
+        "denoise": [
+          "/3/inputs/denoise"
+        ],
+        "sampler": [
+          "/3/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/3/inputs/scheduler"
+        ],
+        "width": [
+          "/29/inputs/width"
+        ],
+        "height": [
+          "/29/inputs/height"
+        ],
+        "batch": [
+          "/29/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/text"
+            ]
+          },
+          "actual": [
+            "/6/inputs/text"
+          ],
+          "ok": true
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [
+            "/7/inputs/text"
+          ],
+          "ok": true
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/3/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/29/inputs/width"
+            ]
+          },
+          "actual": [
+            "/29/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/29/inputs/height"
+            ]
+          },
+          "actual": [
+            "/29/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/41"
+            ]
+          },
+          "actual": [
+            "/41"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "absent",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/3/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/3/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/3/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "automatic",
+          "actual_diffs": [
+            "/6/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "prompt",
+              "node": "6",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "automatic",
+          "actual_diffs": [
+            "/7/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "negative",
+              "node": "7",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "3",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/29/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "29",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/29/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "29",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "3",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "3",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "3",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 8,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 10,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/flux/flux_fill_outpaint_example.png",
+      "sha256": "df9b766314637d950ebd208a2c3ed7c960017ecf31ac7ff6f2bdfc919082c896",
+      "topology_sha256": "510ee12518aefcd9e0115579fe691a654fa1aab666670d240b7d72fcc40b56e6",
+      "format": "api",
+      "node_count": 13,
+      "classes": {
+        "KSampler": 1,
+        "CLIPTextEncode": 2,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "LoadImage": 1,
+        "FluxGuidance": 1,
+        "UNETLoader": 1,
+        "VAELoader": 1,
+        "DualCLIPLoader": 1,
+        "InpaintModelConditioning": 1,
+        "DifferentialDiffusion": 1,
+        "ImagePadForOutpaint": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/23/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "manual",
+          "targets": []
+        },
+        "height": {
+          "mode": "manual",
+          "targets": []
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "auto",
+          "targets": [
+            "/17/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Pixel-derived outpaint dimensions; no editable canvas width/height scalar; padding is not width.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "3",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "3",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "3",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "3",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "3",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "3",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "prompt",
+            "node": "23",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "23",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "17",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [
+          "prompt",
+          "negative",
+          "width",
+          "height"
+        ],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定正提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "prompt"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定负提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "negative"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定宽度；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "width"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定高度；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "height"
+          },
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "3",
+          "7",
+          "8",
+          "9",
+          "17",
+          "23",
+          "26",
+          "31",
+          "32",
+          "34",
+          "38",
+          "39",
+          "44"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "seed": [
+          "/3/inputs/seed"
+        ],
+        "steps": [
+          "/3/inputs/steps"
+        ],
+        "cfg": [
+          "/3/inputs/cfg"
+        ],
+        "denoise": [
+          "/3/inputs/denoise"
+        ],
+        "sampler": [
+          "/3/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/3/inputs/scheduler"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/23/inputs/text"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/3/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "manual",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "manual",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/17/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/3/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/3/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/3/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "manual",
+          "target": "/23/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/23/inputs/text"
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "manual",
+          "target": "/7/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/7/inputs/text"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "3",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/17/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/17/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "3",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "3",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "3",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 12,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 11,
+      "url": "https://raw.githubusercontent.com/comfyanonymous/ComfyUI_examples/master/controlnet/depth_t2i_adapter.png",
+      "sha256": "c50427ee85e507a2f3c05f296cfdf115b1003f1858dd41c2c5e0f519c87d9d03",
+      "topology_sha256": "ba6c0612aad4ccaa1436b6405aeb8676c07fa1260c5f9c40723da6b093abaea1",
+      "format": "api",
+      "node_count": 10,
+      "classes": {
+        "KSampler": 1,
+        "EmptyLatentImage": 1,
+        "CLIPTextEncode": 2,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "LoadImage": 1,
+        "ControlNetApply": 1,
+        "ControlNetLoader": 1,
+        "CheckpointLoaderSimple": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/24/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/5/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/5/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "auto",
+          "targets": [
+            "/20/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Original connected sampler inputs and native scalar contracts.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "24",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "7",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "3",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "3",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "3",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "3",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "3",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "3",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "5",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "5",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "5",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "control",
+            "node": "20",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "20",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "3",
+          "5",
+          "7",
+          "8",
+          "9",
+          "20",
+          "23",
+          "24",
+          "31",
+          "33"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "prompt": [
+          "/24/inputs/text"
+        ],
+        "negative": [
+          "/7/inputs/text"
+        ],
+        "seed": [
+          "/3/inputs/seed"
+        ],
+        "steps": [
+          "/3/inputs/steps"
+        ],
+        "cfg": [
+          "/3/inputs/cfg"
+        ],
+        "denoise": [
+          "/3/inputs/denoise"
+        ],
+        "sampler": [
+          "/3/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/3/inputs/scheduler"
+        ],
+        "width": [
+          "/5/inputs/width"
+        ],
+        "height": [
+          "/5/inputs/height"
+        ],
+        "batch": [
+          "/5/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/24/inputs/text"
+            ]
+          },
+          "actual": [
+            "/24/inputs/text"
+          ],
+          "ok": true
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [
+            "/7/inputs/text"
+          ],
+          "ok": true
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/3/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/5/inputs/width"
+            ]
+          },
+          "actual": [
+            "/5/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/5/inputs/height"
+            ]
+          },
+          "actual": [
+            "/5/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/20/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/3/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/3/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/3/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "automatic",
+          "actual_diffs": [
+            "/24/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "prompt",
+              "node": "24",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "automatic",
+          "actual_diffs": [
+            "/7/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "negative",
+              "node": "7",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "3",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/5/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "5",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/5/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "5",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/20/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/20/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "3",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "3",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/sampler_name"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "3",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 9,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 13,
+      "url": "https://raw.githubusercontent.com/PanicTitan/ComfyUI-Fooocus-V2-Expansion/main/Fooocus-ComfyUI.json",
+      "sha256": "6195cd7336188cb870114ad33cfb02ee2956106b1440c48243e8c0c9312a1ac7",
+      "topology_sha256": "9b40e8314115cef5402a8ea2663316c9db8b6a37a25231b8e71e5776ac01cba8",
+      "format": "ui",
+      "node_count": 21,
+      "classes": {
+        "easy showAnything": 5,
+        "CLIPTextEncode": 2,
+        "LoraLoader": 1,
+        "CheckpointLoaderSimple": 1,
+        "EmptyLatentImage": 1,
+        "KSampler": 1,
+        "MarkdownNote": 1,
+        "LoadImageOutput": 1,
+        "Load image with metadata [Crystools]": 1,
+        "FooocusV2Expansion": 1,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "easy stylesSelector": 1,
+        "Show Metadata [Crystools]": 1,
+        "CR Prompt Text": 2
+      },
+      "expected": {},
+      "expected_import": "ui_guidance_no_guess",
+      "reason": "Original connected sampler inputs and native scalar contracts.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "ui",
+        "importable": false,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "ui",
+        "importable": false,
+        "compilable": false,
+        "bindings": [],
+        "candidates": [],
+        "missing": [],
+        "output_nodes": [],
+        "issues": [
+          {
+            "code": "ui_format",
+            "severity": "error",
+            "message": "这是 ComfyUI 界面工作流，尚不含可执行的 API 节点。请先在 ComfyUI 打开它，选择「文件 → 导出工作流 (API)」后重新导入；旧版可先在设置中开启开发者模式，再选择「保存 (API Format)」。Mio 不会猜测自定义控件顺序或浏览器脚本生成的连线。",
+            "kind": null
+          },
+          {
+            "code": "ui_overview",
+            "severity": "info",
+            "message": "结构概览：21 个节点、22 条连线，其中 0 个节点被静音或旁路。这里只检查结构，尚未转换为 API 工作流。",
+            "kind": null
+          }
+        ]
+      },
+      "ui_import_rejected": true
+    },
+    {
+      "index": 14,
+      "url": "https://raw.githubusercontent.com/fofr/cog-comfyui-image-merge/main/workflow.json",
+      "sha256": "2980805da834618161217c5075a4c399e64b75d215ae145853e80916423c3c07",
+      "topology_sha256": "f1854fd951279d7d4d099311309f1bb6bc945b027801ee98950872cc98e715b8",
+      "format": "api",
+      "node_count": 32,
+      "classes": {
+        "IPAdapterModelLoader": 1,
+        "Efficient Loader": 1,
+        "CLIPVisionLoader": 1,
+        "KSampler (Efficient)": 1,
+        "SaveImage": 2,
+        "LoadImage": 3,
+        "ControlNetLoader": 3,
+        "PreviewImage": 3,
+        "Control Net Stacker": 3,
+        "Zoe-DepthMapPreprocessor": 1,
+        "MaskPreview+": 2,
+        "SolidMask": 2,
+        "FeatherMask": 1,
+        "MaskComposite": 1,
+        "IPAdapterApply": 2,
+        "InvertMask": 1,
+        "AIO_Preprocessor": 2,
+        "UltimateSDUpscale": 1,
+        "UpscaleModelLoader": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/4/inputs/positive"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/4/inputs/negative"
+          ]
+        },
+        "seed": {
+          "mode": "manual",
+          "targets": [
+            "/8/inputs/seed",
+            "/71/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/4/inputs/empty_latent_width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/4/inputs/empty_latent_height"
+          ]
+        },
+        "output": {
+          "mode": "manual",
+          "targets": [
+            "/9",
+            "/72"
+          ]
+        },
+        "ref": {
+          "mode": "manual",
+          "targets": [
+            "/10/inputs/image",
+            "/20/inputs/image",
+            "/25/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "manual",
+          "targets": [
+            "/8/inputs/steps",
+            "/71/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "manual",
+          "targets": [
+            "/8/inputs/cfg",
+            "/71/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "manual",
+          "targets": [
+            "/8/inputs/sampler_name",
+            "/71/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Efficiency loader semantic literals shared by sampler8 and UltimateUpscale71; seed/stage knobs ambiguous. Two genuine saves retained.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "output",
+            "node": "72",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "8",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "8",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "8",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "8",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "8",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "8",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "56",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "56",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "58",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "58",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "71",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "ref",
+            "node": "10",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "20",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "25",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [
+          "prompt",
+          "negative"
+        ],
+        "output_nodes": [
+          "72",
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定正提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "prompt"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定负提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "negative"
+          },
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "72",
+          "9"
+        ],
+        "selected_nodes": [
+          "1",
+          "4",
+          "6",
+          "8",
+          "9",
+          "10",
+          "18",
+          "20",
+          "25",
+          "30",
+          "31",
+          "56",
+          "57",
+          "58",
+          "59",
+          "61",
+          "62",
+          "63",
+          "64",
+          "67",
+          "70",
+          "71",
+          "72",
+          "73",
+          "76",
+          "78",
+          "79"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [
+          "27",
+          "55",
+          "60",
+          "66",
+          "77"
+        ],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9",
+          "/72"
+        ],
+        "seed": [
+          "/8/inputs/seed",
+          "/71/inputs/seed"
+        ],
+        "steps": [
+          "/8/inputs/steps"
+        ],
+        "cfg": [
+          "/8/inputs/cfg"
+        ],
+        "denoise": [
+          "/8/inputs/denoise"
+        ],
+        "sampler": [
+          "/8/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/8/inputs/scheduler"
+        ],
+        "width": [
+          "/56/inputs/width",
+          "/58/inputs/width"
+        ],
+        "height": [
+          "/56/inputs/height",
+          "/58/inputs/height"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/4/inputs/positive"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/4/inputs/negative"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "seed": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/8/inputs/seed",
+              "/71/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/8/inputs/seed",
+            "/71/inputs/seed"
+          ],
+          "ok": false
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/4/inputs/empty_latent_width"
+            ]
+          },
+          "actual": [
+            "/56/inputs/width",
+            "/58/inputs/width"
+          ],
+          "ok": false
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/4/inputs/empty_latent_height"
+            ]
+          },
+          "actual": [
+            "/56/inputs/height",
+            "/58/inputs/height"
+          ],
+          "ok": false
+        },
+        "output": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/9",
+              "/72"
+            ]
+          },
+          "actual": [
+            "/9",
+            "/72"
+          ],
+          "ok": false
+        },
+        "ref": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/10/inputs/image",
+              "/20/inputs/image",
+              "/25/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": true
+        },
+        "steps": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/8/inputs/steps",
+              "/71/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/8/inputs/steps"
+          ],
+          "ok": false
+        },
+        "cfg": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/8/inputs/cfg",
+              "/71/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/8/inputs/cfg"
+          ],
+          "ok": false
+        },
+        "sampler": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/8/inputs/sampler_name",
+              "/71/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/8/inputs/sampler_name"
+          ],
+          "ok": false
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "manual",
+          "target": "/4/inputs/positive",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/4/inputs/positive"
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "manual",
+          "target": "/4/inputs/negative",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/4/inputs/negative"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/8/inputs/seed",
+            "/71/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "8",
+              "field": "seed",
+              "source": "heuristic"
+            },
+            {
+              "kind": "seed",
+              "node": "71",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "manual",
+          "target": "/8/inputs/seed",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/8/inputs/seed"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "manual",
+          "target": "/71/inputs/seed",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/71/inputs/seed"
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/58/inputs/width",
+            "/56/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "56",
+              "field": "width",
+              "source": "heuristic"
+            },
+            {
+              "kind": "width",
+              "node": "58",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/58/inputs/height",
+            "/56/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "56",
+              "field": "height",
+              "source": "heuristic"
+            },
+            {
+              "kind": "height",
+              "node": "58",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/10/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/10/inputs/image"
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/20/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/20/inputs/image"
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/25/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/25/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/8/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "8",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "manual",
+          "target": "/8/inputs/steps",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/8/inputs/steps"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "manual",
+          "target": "/71/inputs/steps",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/71/inputs/steps"
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/8/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "8",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "manual",
+          "target": "/8/inputs/cfg",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/8/inputs/cfg"
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "manual",
+          "target": "/71/inputs/cfg",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/71/inputs/cfg"
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [
+            "/8/inputs/sampler_name"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "8",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "manual",
+          "target": "/8/inputs/sampler_name",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/8/inputs/sampler_name"
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "manual",
+          "target": "/71/inputs/sampler_name",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": []
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 17,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [
+        {
+          "key": "origin:4:lora_name",
+          "kind": "embedded",
+          "active": true,
+          "supports_independent_toggle": true,
+          "sites": [
+            {
+              "nodeId": "4",
+              "path": "lora_name",
+              "active": true,
+              "reason": ""
+            }
+          ]
+        }
+      ],
+      "lora_item_count": 0
+    },
+    {
+      "index": 15,
+      "url": "https://raw.githubusercontent.com/fofr/cog-material-transfer/main/material_transfer_api.json",
+      "sha256": "832d1ea4a14019e45f88bad2bbc0e628955959573cd1e9faf54a34c2196b40fc",
+      "topology_sha256": "0ceeddbc18a17f845121e54638c9aeae22ce581d5f6b80479f99b5903d435ca4",
+      "format": "api",
+      "node_count": 29,
+      "classes": {
+        "CheckpointLoaderSimple": 1,
+        "CLIPTextEncode": 2,
+        "SaveImage": 1,
+        "KSampler (Efficient)": 1,
+        "LoadImage": 2,
+        "ImageRemoveBackground+": 1,
+        "RemBGSession+": 1,
+        "ZeST: Grayout Subject": 1,
+        "MaskBlur+": 1,
+        "MaskPreview+": 1,
+        "PreviewImage": 4,
+        "InpaintModelConditioning": 1,
+        "IPAdapterUnifiedLoader": 1,
+        "IPAdapterAdvanced": 1,
+        "ImageCrop+": 1,
+        "DifferentialDiffusion": 1,
+        "RescaleCFG": 1,
+        "ControlNetApplyAdvanced": 2,
+        "ControlNetLoaderAdvanced": 2,
+        "DepthAnythingPreprocessor": 1,
+        "LineArtPreprocessor": 1,
+        "ImageResize+": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/10/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "manual",
+          "targets": [
+            "/60/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "manual",
+          "targets": [
+            "/60/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/9"
+          ]
+        },
+        "ref": {
+          "mode": "manual",
+          "targets": [
+            "/11/inputs/image",
+            "/46/inputs/image"
+          ]
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/10/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/10/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/10/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Two LoadImage roles content vs material; size is pixels through ImageResize60 and Inpaint, requires explicit mapping.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "9",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "10",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "10",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "10",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "10",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "10",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "10",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [
+          {
+            "kind": "prompt",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "47",
+            "field": "width",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "47",
+            "field": "height",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "60",
+            "field": "width",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "60",
+            "field": "height",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "11",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          },
+          {
+            "kind": "ref",
+            "node": "46",
+            "field": "image",
+            "qualifier": null,
+            "source": "candidate",
+            "part": null
+          }
+        ],
+        "missing": [
+          "prompt",
+          "negative",
+          "width",
+          "height"
+        ],
+        "output_nodes": [
+          "9"
+        ],
+        "issues": [
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定正提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "prompt"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定负提示词；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "negative"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定宽度；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "width"
+          },
+          {
+            "code": "unbound",
+            "severity": "warning",
+            "message": "未绑定高度；保留工作流原值，Mio 传入的该参数不会生效。",
+            "kind": "height"
+          },
+          {
+            "code": "ambiguous",
+            "severity": "warning",
+            "message": "宽度有多个候选，请明确选择映射；未自动改写。",
+            "kind": "width"
+          },
+          {
+            "code": "ambiguous",
+            "severity": "warning",
+            "message": "高度有多个候选，请明确选择映射；未自动改写。",
+            "kind": "height"
+          },
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "9"
+        ],
+        "selected_nodes": [
+          "4",
+          "6",
+          "7",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "36",
+          "37",
+          "41",
+          "44",
+          "45",
+          "46",
+          "47",
+          "48",
+          "49",
+          "50",
+          "51",
+          "52",
+          "53",
+          "54",
+          "55",
+          "60"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [
+          "39",
+          "40",
+          "56",
+          "57",
+          "58"
+        ],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/9"
+        ],
+        "seed": [
+          "/10/inputs/seed"
+        ],
+        "steps": [
+          "/10/inputs/steps"
+        ],
+        "cfg": [
+          "/10/inputs/cfg"
+        ],
+        "denoise": [
+          "/10/inputs/denoise"
+        ],
+        "sampler": [
+          "/10/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/10/inputs/scheduler"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/text"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [],
+          "ok": false
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/10/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/10/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/60/inputs/width"
+            ]
+          },
+          "actual": [],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/60/inputs/height"
+            ]
+          },
+          "actual": [],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/9"
+            ]
+          },
+          "actual": [
+            "/9"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "manual",
+            "targets": [
+              "/11/inputs/image",
+              "/46/inputs/image"
+            ]
+          },
+          "actual": [],
+          "ok": true
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/10/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/10/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/10/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/10/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/10/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/10/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "manual",
+          "target": "/6/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/6/inputs/text"
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "manual",
+          "target": "/7/inputs/text",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/7/inputs/text"
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/10/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "10",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "manual",
+          "target": "/60/inputs/width",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/60/inputs/width"
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "manual",
+          "target": "/60/inputs/height",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/60/inputs/height"
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/11/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/11/inputs/image"
+          ]
+        },
+        {
+          "kind": "ref",
+          "method": "manual",
+          "target": "/46/inputs/image",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/46/inputs/image"
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/10/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "10",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/10/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "10",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [
+            "/10/inputs/sampler_name"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "10",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [],
+      "diagnostic_counts": {
+        "missing_nodes": 20,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [],
+      "lora_item_count": 0
+    },
+    {
+      "index": 16,
+      "url": "https://raw.githubusercontent.com/chrisgoringe/cg-use-everywhere/HEAD/docs/UE_example.json",
+      "sha256": "0738543e4d3d945994f4fe8e16a9bf178002b0e1b0a3e16e758c86518846ff6e",
+      "topology_sha256": "ec8ab0ba9e6b6b122579bbf0d69384eb825c8d2388a8cc922b11cf87faabe8af",
+      "format": "ui",
+      "node_count": 8,
+      "classes": {
+        "SaveImage": 1,
+        "VAEDecode": 1,
+        "CheckpointLoaderSimple": 1,
+        "Anything Everywhere": 1,
+        "KSampler": 1,
+        "EmptyLatentImage": 1,
+        "CLIPTextEncode": 2
+      },
+      "expected": {},
+      "expected_import": "ui_guidance_no_guess",
+      "reason": "Original connected sampler inputs and native scalar contracts.",
+      "expected_loras": [],
+      "file_route": {
+        "format": "ui",
+        "importable": false,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "ui",
+        "importable": false,
+        "compilable": false,
+        "bindings": [],
+        "candidates": [],
+        "missing": [],
+        "output_nodes": [],
+        "issues": [
+          {
+            "code": "ui_format",
+            "severity": "error",
+            "message": "这是 ComfyUI 界面工作流，尚不含可执行的 API 节点。请先在 ComfyUI 打开它，选择「文件 → 导出工作流 (API)」后重新导入；旧版可先在设置中开启开发者模式，再选择「保存 (API Format)」。Mio 不会猜测自定义控件顺序或浏览器脚本生成的连线。",
+            "kind": null
+          },
+          {
+            "code": "ui_overview",
+            "severity": "info",
+            "message": "结构概览：8 个节点、6 条连线，其中 0 个节点被静音或旁路。这里只检查结构，尚未转换为 API 工作流。",
+            "kind": null
+          },
+          {
+            "code": "frontend_graph",
+            "severity": "warning",
+            "message": "图中含子图、隐式连线或失活节点；请在 ComfyUI 确认当前分支与节点状态后导出 API。依赖浏览器状态的插件还需要适配器，手工映射不能替代其执行协议。",
+            "kind": null
+          }
+        ]
+      },
+      "ui_import_rejected": true
+    },
+    {
+      "index": 17,
+      "url": "https://raw.githubusercontent.com/ydsgangge-ux/yount-AI/main/workflow_api.json",
+      "sha256": "9f667e14b6b2ce4e02e2e7bb5b720de6a221d845f4daf5c639f066860db75020",
+      "topology_sha256": "1fe2d461e7d3462227a286d2d281affdc3b90cf6dca99480353a3479885fda1d",
+      "format": "api",
+      "node_count": 9,
+      "classes": {
+        "CheckpointLoaderSimple": 1,
+        "CLIPSetLastLayer": 1,
+        "CLIPTextEncode": 2,
+        "KSampler": 1,
+        "EmptyLatentImage": 1,
+        "VAEDecode": 1,
+        "SaveImage": 1,
+        "LoraLoader": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/4/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/5/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/8"
+          ]
+        },
+        "ref": {
+          "mode": "absent",
+          "targets": []
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/5/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/5/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/5/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Original connected sampler inputs and native scalar contracts.",
+      "expected_loras": [
+        {
+          "node": "9",
+          "strength": "/9/inputs/strength_model",
+          "clip": "/9/inputs/strength_clip"
+        }
+      ],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "8",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "3",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "4",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "5",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "5",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "5",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "5",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "5",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "5",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "6",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "6",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "6",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [],
+        "missing": [],
+        "output_nodes": [
+          "8"
+        ],
+        "issues": [
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "8"
+        ],
+        "selected_nodes": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/8"
+        ],
+        "prompt": [
+          "/3/inputs/text"
+        ],
+        "negative": [
+          "/4/inputs/text"
+        ],
+        "seed": [
+          "/5/inputs/seed"
+        ],
+        "steps": [
+          "/5/inputs/steps"
+        ],
+        "cfg": [
+          "/5/inputs/cfg"
+        ],
+        "denoise": [
+          "/5/inputs/denoise"
+        ],
+        "sampler": [
+          "/5/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/5/inputs/scheduler"
+        ],
+        "width": [
+          "/6/inputs/width"
+        ],
+        "height": [
+          "/6/inputs/height"
+        ],
+        "batch": [
+          "/6/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/text"
+            ]
+          },
+          "actual": [
+            "/3/inputs/text"
+          ],
+          "ok": true
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/4/inputs/text"
+            ]
+          },
+          "actual": [
+            "/4/inputs/text"
+          ],
+          "ok": true
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/5/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/5/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/width"
+            ]
+          },
+          "actual": [
+            "/6/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/height"
+            ]
+          },
+          "actual": [
+            "/6/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/8"
+            ]
+          },
+          "actual": [
+            "/8"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "absent",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/5/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/5/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/5/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/5/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/5/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/5/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "prompt",
+              "node": "3",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "automatic",
+          "actual_diffs": [
+            "/4/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "negative",
+              "node": "4",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/5/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "5",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [
+            "/6/inputs/width"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "6",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/6/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "6",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [
+            "/5/inputs/steps"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "5",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/5/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "5",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [
+            "/5/inputs/sampler_name"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "5",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [
+        {
+          "group": "origin:9:lora_name",
+          "item": "origin:9:lora_name:f22c3eb40c1c3870",
+          "operation": "negative_strength",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/9/inputs/strength_model"
+          ]
+        },
+        {
+          "group": "origin:9:lora_name",
+          "item": "origin:9:lora_name:f22c3eb40c1c3870",
+          "operation": "disable",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/9/inputs/strength_model",
+            "/9/inputs/strength_clip"
+          ]
+        }
+      ],
+      "diagnostic_counts": {
+        "missing_nodes": 8,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [
+        {
+          "key": "origin:9:lora_name",
+          "kind": "chain",
+          "active": true,
+          "supports_independent_toggle": true,
+          "sites": [
+            {
+              "nodeId": "9",
+              "path": "lora_name",
+              "active": true,
+              "reason": ""
+            }
+          ]
+        }
+      ],
+      "lora_item_count": 1
+    },
+    {
+      "index": 18,
+      "url": "https://raw.githubusercontent.com/fofr/cog-stickers/main/sticker_maker_api.json",
+      "sha256": "b1c8519793d5537dcf0cf88e28827de69eb27962cf8b25d3c556739ee9d2da96",
+      "topology_sha256": "15ebc0b022e59601838ddca95cf2e82af5923f10601321970c585877ee58134f",
+      "format": "api",
+      "node_count": 11,
+      "classes": {
+        "KSampler": 1,
+        "CheckpointLoaderSimple": 1,
+        "EmptyLatentImage": 1,
+        "CLIPTextEncode": 2,
+        "VAEDecode": 1,
+        "PreviewImage": 1,
+        "LayeredDiffusionDecodeRGBA": 1,
+        "SaveImage": 1,
+        "LoraLoader": 1,
+        "LayeredDiffusionApply": 1
+      },
+      "expected": {
+        "prompt": {
+          "mode": "auto",
+          "targets": [
+            "/6/inputs/text"
+          ]
+        },
+        "negative": {
+          "mode": "auto",
+          "targets": [
+            "/7/inputs/text"
+          ]
+        },
+        "seed": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/seed"
+          ]
+        },
+        "width": {
+          "mode": "auto",
+          "targets": [
+            "/5/inputs/width"
+          ]
+        },
+        "height": {
+          "mode": "auto",
+          "targets": [
+            "/5/inputs/height"
+          ]
+        },
+        "output": {
+          "mode": "auto",
+          "targets": [
+            "/48"
+          ]
+        },
+        "ref": {
+          "mode": "absent",
+          "targets": []
+        },
+        "steps": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/steps"
+          ]
+        },
+        "cfg": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/cfg"
+          ]
+        },
+        "sampler": {
+          "mode": "auto",
+          "targets": [
+            "/3/inputs/sampler_name"
+          ]
+        }
+      },
+      "expected_import": "api_exact",
+      "reason": "Final alpha image Save48; Preview20 is intermediate RGB.",
+      "expected_loras": [
+        {
+          "node": "49",
+          "strength": "/49/inputs/strength_model",
+          "clip": "/49/inputs/strength_clip"
+        }
+      ],
+      "file_route": {
+        "format": "mio",
+        "importable": true,
+        "matches_independent": true
+      },
+      "input_immutable": true,
+      "inspection": {
+        "format": "api",
+        "importable": true,
+        "compilable": true,
+        "bindings": [
+          {
+            "kind": "output",
+            "node": "48",
+            "field": null,
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "prompt",
+            "node": "6",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "negative",
+            "node": "7",
+            "field": "text",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "seed",
+            "node": "3",
+            "field": "seed",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "steps",
+            "node": "3",
+            "field": "steps",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "cfg",
+            "node": "3",
+            "field": "cfg",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "denoise",
+            "node": "3",
+            "field": "denoise",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "sampler",
+            "node": "3",
+            "field": "sampler_name",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "scheduler",
+            "node": "3",
+            "field": "scheduler",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "width",
+            "node": "5",
+            "field": "width",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "height",
+            "node": "5",
+            "field": "height",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          },
+          {
+            "kind": "batch",
+            "node": "5",
+            "field": "batch_size",
+            "qualifier": null,
+            "source": "heuristic",
+            "part": null
+          }
+        ],
+        "candidates": [],
+        "missing": [],
+        "output_nodes": [
+          "48"
+        ],
+        "issues": [
+          {
+            "code": "dependencies_unchecked",
+            "severity": "info",
+            "message": "未提供实例节点信息，尚未验证缺失节点与模型；可在保存后选择实例诊断。",
+            "kind": null
+          }
+        ]
+      },
+      "route_import_graph_equal": true,
+      "baseline": {
+        "outputs": [
+          "48"
+        ],
+        "selected_nodes": [
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "14",
+          "36",
+          "48",
+          "49",
+          "56"
+        ],
+        "surviving_nodes_equal": true,
+        "pruned_nodes": [
+          "20"
+        ],
+        "warnings": []
+      },
+      "predicted": {
+        "output": [
+          "/48"
+        ],
+        "prompt": [
+          "/6/inputs/text"
+        ],
+        "negative": [
+          "/7/inputs/text"
+        ],
+        "seed": [
+          "/3/inputs/seed"
+        ],
+        "steps": [
+          "/3/inputs/steps"
+        ],
+        "cfg": [
+          "/3/inputs/cfg"
+        ],
+        "denoise": [
+          "/3/inputs/denoise"
+        ],
+        "sampler": [
+          "/3/inputs/sampler_name"
+        ],
+        "scheduler": [
+          "/3/inputs/scheduler"
+        ],
+        "width": [
+          "/5/inputs/width"
+        ],
+        "height": [
+          "/5/inputs/height"
+        ],
+        "batch": [
+          "/5/inputs/batch_size"
+        ]
+      },
+      "semantics": {
+        "prompt": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/6/inputs/text"
+            ]
+          },
+          "actual": [
+            "/6/inputs/text"
+          ],
+          "ok": true
+        },
+        "negative": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/7/inputs/text"
+            ]
+          },
+          "actual": [
+            "/7/inputs/text"
+          ],
+          "ok": true
+        },
+        "seed": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/seed"
+            ]
+          },
+          "actual": [
+            "/3/inputs/seed"
+          ],
+          "ok": true
+        },
+        "width": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/5/inputs/width"
+            ]
+          },
+          "actual": [
+            "/5/inputs/width"
+          ],
+          "ok": true
+        },
+        "height": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/5/inputs/height"
+            ]
+          },
+          "actual": [
+            "/5/inputs/height"
+          ],
+          "ok": true
+        },
+        "output": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/48"
+            ]
+          },
+          "actual": [
+            "/48"
+          ],
+          "ok": true
+        },
+        "ref": {
+          "expected": {
+            "mode": "absent",
+            "targets": []
+          },
+          "actual": [],
+          "ok": true
+        },
+        "steps": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/steps"
+            ]
+          },
+          "actual": [
+            "/3/inputs/steps"
+          ],
+          "ok": true
+        },
+        "cfg": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/cfg"
+            ]
+          },
+          "actual": [
+            "/3/inputs/cfg"
+          ],
+          "ok": true
+        },
+        "sampler": {
+          "expected": {
+            "mode": "auto",
+            "targets": [
+              "/3/inputs/sampler_name"
+            ]
+          },
+          "actual": [
+            "/3/inputs/sampler_name"
+          ],
+          "ok": true
+        }
+      },
+      "compile_checks": [
+        {
+          "kind": "prompt",
+          "method": "automatic",
+          "actual_diffs": [
+            "/6/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "prompt",
+              "node": "6",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "negative",
+          "method": "automatic",
+          "actual_diffs": [
+            "/7/inputs/text"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "negative",
+              "node": "7",
+              "field": "text",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "seed",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/seed"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "seed",
+              "node": "3",
+              "field": "seed",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "width",
+          "method": "automatic",
+          "actual_diffs": [],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "width",
+              "node": "5",
+              "field": "width",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "height",
+          "method": "automatic",
+          "actual_diffs": [
+            "/5/inputs/height"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "height",
+              "node": "5",
+              "field": "height",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "method": "automatic",
+          "actual_diffs": [],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "steps",
+              "node": "3",
+              "field": "steps",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "cfg",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/cfg"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "cfg",
+              "node": "3",
+              "field": "cfg",
+              "source": "heuristic"
+            }
+          ]
+        },
+        {
+          "kind": "sampler",
+          "method": "automatic",
+          "actual_diffs": [
+            "/3/inputs/sampler_name"
+          ],
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "resolved": [
+            {
+              "kind": "sampler",
+              "node": "3",
+              "field": "sampler_name",
+              "source": "heuristic"
+            }
+          ]
+        }
+      ],
+      "offline_diagnose_exact_missing": true,
+      "lora_checks": [
+        {
+          "group": "origin:49:lora_name",
+          "item": "origin:49:lora_name:2cea05c2df46ceb8",
+          "operation": "negative_strength",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/49/inputs/strength_model"
+          ]
+        },
+        {
+          "group": "origin:49:lora_name",
+          "item": "origin:49:lora_name:2cea05c2df46ceb8",
+          "operation": "disable",
+          "whole_graph_equal": true,
+          "links_equal": true,
+          "actual_diffs": [
+            "/49/inputs/strength_model",
+            "/49/inputs/strength_clip"
+          ]
+        }
+      ],
+      "diagnostic_counts": {
+        "missing_nodes": 9,
+        "missing_models": 0,
+        "invalid_values": 0,
+        "missing_inputs": 0,
+        "invalid_links": 0,
+        "invalid_inputs": 0
+      },
+      "lora_groups": [
+        {
+          "key": "origin:49:lora_name",
+          "kind": "chain",
+          "active": true,
+          "supports_independent_toggle": true,
+          "sites": [
+            {
+              "nodeId": "49",
+              "path": "lora_name",
+              "active": true,
+              "reason": ""
+            }
+          ]
+        }
+      ],
+      "lora_item_count": 1
+    }
+  ]
+}

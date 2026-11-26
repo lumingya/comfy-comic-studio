@@ -1,0 +1,104 @@
+{
+  "schema": "r6-blind-final-seal-v1",
+  "utc": "2026-11-26T10:40:41.016814+00:00",
+  "verdict": "VERIFIED PASS",
+  "scope": "blind role final cross-review; overall delivery not signed",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "repository_clean": true,
+  "initial_seal_sha256": "7022dd2f9cde943cff93b6e2fdc23592d588ebd8adabcfb24151286325b29f6b",
+  "initial_29_artifact_hashes_unchanged": true,
+  "cross_authorization_sha256": "c57861556e6e7214ca75902cea363c4c9620edbd3ae3d0c4ae830de7fc8561d6",
+  "allowed_65_cross_input_hashes_verified": true,
+  "cross_product_imports": 0,
+  "cross_product_calls": 0,
+  "cross_test_build_browser_network_calls": 0,
+  "cross_spawn": 0,
+  "repository_writes_commits_pushes": 0,
+  "severity_totals": {
+    "Blocker": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 2
+  },
+  "original_false_preserved": {
+    "full_contract": 16,
+    "typed": 14,
+    "candidate_pairs": 2
+  },
+  "process_clean_attestation": false,
+  "root_final_cleanup_publication_commit_push_final_ci_pending": true,
+  "publication_allowlist_sha256": "07b8d6832b3eef54ff30bf5a00d75230891f031ded7750106c7a7eafc14b6f48",
+  "public_payloads": [
+    {
+      "file": "report.md",
+      "sha256": "5e1c575aa22fc3d6dcd19d5efffc4f33810ddc64e3447a2b1ca8ccc31ecc21c6",
+      "bytes": 13139
+    },
+    {
+      "file": "results.json",
+      "sha256": "5ad7e545a6d822fea03e75e1f80e872b665bc5cd75d33c749844422764589bd3",
+      "bytes": 206011
+    },
+    {
+      "file": "attribution.json",
+      "sha256": "148d1ea8e58118480bd078de6037adb79980b20629a3527a9ca55da9de32f15b",
+      "bytes": 4398
+    },
+    {
+      "file": "attribution-facts.json",
+      "sha256": "471990c620431eb6acb5b765fe4d28b5762cf8f6c19dbff821ed59e4671c319c",
+      "bytes": 12936
+    },
+    {
+      "file": "assessment.json",
+      "sha256": "174cdaeec33d2cd620f8e533f446f64f067858e582a297048da89236a1f82815",
+      "bytes": 30266
+    },
+    {
+      "file": "preparation-summary.json",
+      "sha256": "13e7a2461fbaa2ae377d3ae02b6d242ae3e516e147550fc048c36aa75d02febf",
+      "bytes": 893
+    },
+    {
+      "file": "initial-seal.json",
+      "sha256": "7022dd2f9cde943cff93b6e2fdc23592d588ebd8adabcfb24151286325b29f6b",
+      "bytes": 5970
+    },
+    {
+      "file": "cross-report.md",
+      "sha256": "4ccf49335f35fff870a3654302ebb09d0e1aad1ce4706abf451ebbbbec94241a",
+      "bytes": 10361
+    },
+    {
+      "file": "cross-facts.json",
+      "sha256": "3a8e2077be47f6b55fc0b1463092f9e66ce1e80a30ec10042112b260fdfe762a",
+      "bytes": 32470
+    },
+    {
+      "file": "cross-verified-inputs.json",
+      "sha256": "28d70d977be911805f295fe6db172e64a35a8480d982d46a819e603fbc729f70",
+      "bytes": 11343
+    },
+    {
+      "file": "final.md",
+      "sha256": "ff8127d07f080ae734851759d8760d5e3759900da0d7230329e62df76e8fc13d",
+      "bytes": 2428
+    },
+    {
+      "file": "selected-provenance-safe.json",
+      "sha256": "263e9dd26904c979ae28eafeefe6c0d90ff31dd4f51c7d45c758838b0e1408fc",
+      "bytes": 38569
+    },
+    {
+      "file": "candidate-provenance-safe.json",
+      "sha256": "7eff250c5252be869e320c37ca114f0f94c379247c21413d3ad63fd8f0acd965",
+      "bytes": 196607
+    },
+    {
+      "file": "acquisition-accounting-safe.json",
+      "sha256": "2b29856401ba7eb5b54d7bca5bc3466c2f5cf602b0918c858b182365e21f40a6",
+      "bytes": 1570
+    }
+  ]
+}

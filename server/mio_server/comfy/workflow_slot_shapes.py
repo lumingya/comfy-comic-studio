@@ -23,13 +23,63 @@ def _first_key(inputs, keys):
     return ""
 
 
+def _mode_stack(inputs):
+    """Recognize complete literal mode/count contracts without node-class rules."""
+    candidates = []
+    for mode_key, count_key, name_template, templates in (
+        ("input_mode", "lora_count", None, ("lora_wt_{}", "model_str_{}", "clip_str_{}")),
+        (
+            "mode",
+            "num_loras",
+            "lora_{}_name",
+            ("lora_{}_strength", "lora_{}_model_strength", "lora_{}_clip_strength"),
+        ),
+    ):
+        if mode_key not in inputs or count_key not in inputs:
+            continue
+        positions = {}
+        for key, value in inputs.items():
+            match = STACK_KEY.match(key)
+            if match and isinstance(value, str):
+                token = match.group(2)
+                if name_template and key != name_template.format(token):
+                    continue
+                paths = [template.format(token) for template in templates]
+                if any(path in inputs for path in paths):
+                    positions[token] = paths
+        if positions:
+            candidates.append((inputs[mode_key], inputs[count_key], positions))
+    if not candidates:
+        return None
+    if len(candidates) != 1:
+        return {}
+    mode, count, positions = candidates[0]
+    if mode not in ("simple", "advanced") or type(count) is not int or count < 0:
+        return {}
+    complete = {
+        token: paths for token, paths in positions.items() if all(path in inputs for path in paths)
+    }
+    return {"mode": mode, "count": count, "positions": complete}
+
+
 def stack_slots(node, workflow):
+    inputs = node["inputs"]
+    # Some flat stacks expose two complete weight sets selected by a literal mode.
+    # Only this full structural contract proves which fields actually affect execution;
+    # writing every apparent mirror would overwrite the other mode's saved values.
+    mode_stack = _mode_stack(inputs)
+    if mode_stack == {}:
+        return []
     slots = []
-    for key, value in node["inputs"].items():
+    for key, value in inputs.items():
         match = STACK_KEY.match(key)
         if not match or _is_link(value, workflow):
             continue
         token = match.group(2)
+        if mode_stack is not None and (
+            token not in mode_stack["positions"] or not 1 <= int(token) <= mode_stack["count"]
+        ):
+            continue
         object_style = isinstance(value, dict)
         if not object_style and not isinstance(value, str):
             continue
@@ -53,6 +103,12 @@ def stack_slots(node, workflow):
             siblings(STACK_CLIP_PREFIXES),
             siblings(STACK_SWITCH_PREFIXES),
         )
+        if mode_stack is not None:
+            shared, model, clip = mode_stack["positions"][token]
+            strength_paths = [shared if mode_stack["mode"] == "simple" else model]
+            clip_paths = [shared if mode_stack["mode"] == "simple" else clip]
+            if any(_is_link(inputs[path], workflow) for path in strength_paths + clip_paths):
+                continue
         slots.append(
             {
                 "index": int(token),
@@ -64,8 +120,9 @@ def stack_slots(node, workflow):
                 "strengthPaths": strength_paths,
                 "clipPaths": clip_paths,
                 "strengthPath": strength_paths[0] if strength_paths else "",
-                "clipPath": clip_paths[0] if clip_paths else "",
+                "clipPath": clip_paths[0] if clip_paths and clip_paths != strength_paths else "",
                 "switchPath": switch_paths[0] if switch_paths else "",
+                **({"preserveEmpty": True} if mode_stack is not None else {}),
             }
         )
     slots.sort(key=lambda s: s["index"])

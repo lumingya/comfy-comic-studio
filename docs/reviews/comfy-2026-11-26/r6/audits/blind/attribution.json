@@ -1,0 +1,118 @@
+{
+  "schema": "r6-blind-attribution-v1",
+  "verdict": "VERIFIED PASS",
+  "verdict_scope": "blind fresh public static input audit; no substantiated Medium or higher product defect",
+  "frozen_assertions_unchanged": true,
+  "raw_contract_mismatches": 16,
+  "typed_mismatches": 14,
+  "warning_only_mismatches": 2,
+  "candidate_pair_mismatches": 2,
+  "product_findings": [
+    {
+      "id": "BL-L1",
+      "severity": "Low",
+      "category": "conservative-automatic-coverage",
+      "requests": [
+        "own-04-automatic-003",
+        "own-04-automatic-005",
+        "own-06-automatic-022",
+        "own-06-automatic-024",
+        "own-06-automatic-027",
+        "own-06-automatic-029",
+        "own-06-automatic-031",
+        "own-17-automatic-063",
+        "own-17-automatic-065",
+        "own-17-automatic-067",
+        "own-17-automatic-073",
+        "final-01-automatic-113",
+        "final-01-automatic-115"
+      ],
+      "actual": "unchanged typed graph and one unbound-value/manual-guidance warning each",
+      "count": 13,
+      "not_reclassified_as_strict_pass": true,
+      "source": [
+        "server/mio_server/comfy/binding_scope.py:101",
+        "server/mio_server/comfy/binding_inference.py:247",
+        "server/mio_server/comfy/binding_inference.py:329",
+        "server/mio_server/comfy/binding_dimensions.py:103",
+        "server/mio_server/comfy/compile.py:343"
+      ],
+      "reason": "unique matching literal is not by itself proof of automatic canvas/stage/geometry ownership; explicit mappings all executed exactly"
+    },
+    {
+      "id": "BL-L2",
+      "severity": "Low",
+      "category": "image-role-guidance-coverage",
+      "sample": "own-04",
+      "pointer": "/1/inputs/image",
+      "actual_roles": [
+        "ref"
+      ],
+      "frozen_missing_roles": [
+        "init",
+        "mask"
+      ],
+      "source": [
+        "server/mio_server/comfy/inspection_candidates.py:261",
+        "server/mio_server/comfy/inspection_candidates.py:286",
+        "server/mio_server/comfy/inspection_candidates.py:321"
+      ],
+      "reason": "direct third-party detailer image use is not labeled init; generic ref candidate remains selectable and explicit init mapping succeeds; mask expectation also has node-only oracle limitation"
+    }
+  ],
+  "oracle_limitations": [
+    {
+      "id": "BL-O1",
+      "requests": [
+        "own-17-conservative-058"
+      ],
+      "strict_false_preserved": true,
+      "actual_target": "/64:61/inputs/text",
+      "category": "global-base-vs-local-region",
+      "reason": "frozen oracle treated all distinct text literals as competing; actual writes only the structurally global base conditioning source and preserves local regional strings; no incorrect region write established"
+    },
+    {
+      "id": "BL-O2",
+      "requests": [
+        "final-01-lora-negative",
+        "final-01-lora-disabled"
+      ],
+      "strict_false_preserved": true,
+      "category": "omitted-write-notice",
+      "reason": "typed graph and complete delta exact; warning-only differences are documented slot write notices from workflow_slot_apply.py:167"
+    },
+    {
+      "id": "BL-O3",
+      "sample": "own-04",
+      "pointer": "/1/inputs/image",
+      "role": "mask",
+      "strict_false_preserved": true,
+      "category": "candidate-oracle-node-only-lineage",
+      "reason": "source image enters detailer output0 canvas path, while generated detailer output3 enters mask processing; node-only reachability does not prove original image is that mask payload"
+    }
+  ],
+  "severity_totals": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 2
+  },
+  "process_conformance": "nonconformant preparation disclosures retained; not a zero-leak attestation",
+  "counts": {
+    "explicit_calls": 184,
+    "compile_requests": 133,
+    "success": 125,
+    "expected_rejections": 8,
+    "expected_rejections_observed": 8,
+    "typed_exact_success": 111,
+    "all_full_contract_exact_success": 109,
+    "closure_exact_success": 125,
+    "outputs_exact_success": 125,
+    "request_document_unchanged_success": 125,
+    "original_document_unchanged_all": 133,
+    "original_graph_unchanged_all": 133,
+    "change_bearing_success": 98
+  },
+  "cross_review_read_before_initial_seal": false,
+  "mio_calls_after_lease_release": 0
+}

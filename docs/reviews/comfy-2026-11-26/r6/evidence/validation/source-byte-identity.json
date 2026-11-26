@@ -1,0 +1,81 @@
+{
+  "schema": "mio.r6.three-source-byte-identity.v1",
+  "candidate_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "tested_worktree_parent": "6122ccab6aae015d1fb20295db4a66158e8f790f",
+  "scope": "Only three explicitly allowed changed Python files. No remaining 404 server files or product-private logs read.",
+  "source_access": "Exact git show candidate:path bytes plus corresponding worktree bytes; no Git status/log/diff query.",
+  "AST_method": "Python stdlib ast.parse and ast.dump(include_attributes=False), isolated -I -B -S, no application imports or execution.",
+  "AST_process_guard": {
+    "affinity_mask": 1,
+    "priority_class": 16384,
+    "verified_before_ast_parse": true,
+    "Mio_imports": 0
+  },
+  "files": [
+    {
+      "path": "server/mio_server/comfy/inspection.py",
+      "worktree_raw_sha256": "6e59f08ed677d22ba5af30be21eca61bcbb6ca182e391f182fda7432fb8727bb",
+      "worktree_raw_git_blob_sha1_calculated": "61489d4457ed499579836cdf0b05d3ec00579e6b",
+      "worktree_bytes": 9151,
+      "worktree_CRLF_sequences": 0,
+      "committed_git_show_sha256": "6e59f08ed677d22ba5af30be21eca61bcbb6ca182e391f182fda7432fb8727bb",
+      "committed_git_blob_sha1_calculated": "61489d4457ed499579836cdf0b05d3ec00579e6b",
+      "committed_bytes": 9151,
+      "committed_CRLF_sequences": 0,
+      "raw_byte_identical": true,
+      "LF_newline_equivalent": true,
+      "tested_formatted_worktree_hash_match": true,
+      "worktree_ast_sha256": "6077b2af7f76f06d623ac9a0bc0b51867b913708be9c88929e599a2c4cff5af6",
+      "committed_ast_sha256": "6077b2af7f76f06d623ac9a0bc0b51867b913708be9c88929e599a2c4cff5af6",
+      "AST_equivalent": true
+    },
+    {
+      "path": "server/mio_server/comfy/inspection_candidates.py",
+      "worktree_raw_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+      "worktree_raw_git_blob_sha1_calculated": "da0e9ad46727338b0d1d0eac7e5ceb6d4105457b",
+      "worktree_bytes": 12808,
+      "worktree_CRLF_sequences": 0,
+      "committed_git_show_sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+      "committed_git_blob_sha1_calculated": "da0e9ad46727338b0d1d0eac7e5ceb6d4105457b",
+      "committed_bytes": 12808,
+      "committed_CRLF_sequences": 0,
+      "raw_byte_identical": true,
+      "LF_newline_equivalent": true,
+      "tested_formatted_worktree_hash_match": true,
+      "worktree_ast_sha256": "cfd193cce8139f512f28163784156d2b48ebee069d8e4661190f1749b61ef4f4",
+      "committed_ast_sha256": "cfd193cce8139f512f28163784156d2b48ebee069d8e4661190f1749b61ef4f4",
+      "AST_equivalent": true
+    },
+    {
+      "path": "server/tests/test_workflow_inspection_candidates.py",
+      "worktree_raw_sha256": "1cd613abbae1be087b4464e189bc4c86851d31227db5038ce4690789450f40fd",
+      "worktree_raw_git_blob_sha1_calculated": "573a12ba6701c4f4a375b110d73054ffb62cf1ab",
+      "worktree_bytes": 20963,
+      "worktree_CRLF_sequences": 0,
+      "committed_git_show_sha256": "1cd613abbae1be087b4464e189bc4c86851d31227db5038ce4690789450f40fd",
+      "committed_git_blob_sha1_calculated": "573a12ba6701c4f4a375b110d73054ffb62cf1ab",
+      "committed_bytes": 20963,
+      "committed_CRLF_sequences": 0,
+      "raw_byte_identical": true,
+      "LF_newline_equivalent": true,
+      "tested_formatted_worktree_hash_match": true,
+      "worktree_ast_sha256": "9feb5a9b9aa0b0c9a2cccf9996acf56a6213d31dab159b28404896857f3a2503",
+      "committed_ast_sha256": "9feb5a9b9aa0b0c9a2cccf9996acf56a6213d31dab159b28404896857f3a2503",
+      "AST_equivalent": true
+    }
+  ],
+  "conclusion": {
+    "raw_byte_identical_files": 3,
+    "LF_newline_equivalent_files": 3,
+    "AST_equivalent_files": 3,
+    "any_raw_difference_within_three_allowed_files": false,
+    "whole_checkout_byte_identity_not_claimed": true,
+    "CI_checkout_bytes_not_independently_read": true,
+    "no_full_CI_claim": true
+  },
+  "product_imports": 0,
+  "product_calls": 0,
+  "test_runs": 0,
+  "network_calls": 0,
+  "repository_writes": 0
+}

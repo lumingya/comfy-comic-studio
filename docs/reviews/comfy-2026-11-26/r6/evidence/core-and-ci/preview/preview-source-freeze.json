@@ -1,0 +1,13 @@
+{
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "runtime": {
+    "count": 218,
+    "aggregate_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487"
+  },
+  "all_server": {
+    "count": 407,
+    "aggregate_sha256": "018c572cec3c9a629b13e4ea3bf6f6b5fd1323b0581c5f696c294007c61f7b32"
+  },
+  "source": "r6-candidate-validation/formatted/frozen-source.json",
+  "state": "prepared_not_started_pending_all_ci"
+}

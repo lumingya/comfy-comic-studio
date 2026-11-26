@@ -1,0 +1,23 @@
+{
+  "schema": "r5-replay-completion-seal-v1",
+  "utc": "2026-11-26T08:15:12.520715+00:00",
+  "files": {
+    "results.json": "9098921c9a9c81be8520bccb06c85f4377d39beef2a37e9bf03c527d88a20409",
+    "provenance-safe.json": "473e3a79bdb003167d1d2748259653310f323e66b3555cfe9ad58677a0069f7a",
+    "assessment-safe.json": "8ef177319b7462a320b3553344232d4ae0fe227edb70899126c29a9916fce98b",
+    "report.md": "97175723cb810063a31345eb069217440e93fbf5141d3067a04aa79b15d72b95",
+    "report-first.md": "85a81db0a65a1042b83137338cd1e657ac3b6729827ea4dd13eb2619485e7515",
+    "pre-call-seal-safe.json": "faf77cb235eb8e512de90d430313eeaebc900fda860adeaa42953afe872a9ca2",
+    "first-source-read-safe.json": "22450b416088da025d276d28a322957d8706b40876909e554781bbe84e91c7b2",
+    "guard-before-product-safe.json": "14e70b000cc2f22ab4c6c8c868975e4d2b3378a0a77bd4a230bd43499f18950a",
+    "replay.py": "1ac4fef9789c51bc4916f5cfae6c236af78ba7f542642a0ccbd51eba08cf2fbd",
+    "assess-readback.py": "fb289215618448cb7f19d915841d9b3b1a8d190da92c96f04edeab6ce1eca2f9",
+    "private-replay.json": "3aff56402e7276f6015e91d86500c8ef75e7bc860e79a4c8c3b9782ae975fd56"
+  },
+  "product_calls_terminated": true,
+  "product_lease_released": true,
+  "original_false_composite_retained": true,
+  "required_candidate_checks_met": 3,
+  "manual_compiles_strictly_met": 5,
+  "new_product_calls_in_assessment": 0
+}

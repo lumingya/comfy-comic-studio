@@ -1,0 +1,18 @@
+{
+  "verified_at_utc": "2026-11-26T06:57:53.818454+00:00",
+  "direct_cdp_connected": true,
+  "browser_pid": 46124,
+  "browser_version": "158.0.8127.37",
+  "browser_mode": "installed_chrome_headless_new",
+  "task_exclusive_browser": true,
+  "fresh_blank_context_created_and_closed": true,
+  "existing_contexts_tabs_profiles_not_enumerated": true,
+  "product_navigation_performed": false,
+  "required_product_origin": "http://127.0.0.1:8797",
+  "candidate_head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "candidate_preview_ready": false,
+  "affinity": "0x1",
+  "priority_class": 16384,
+  "cdp_port": null,
+  "cdp_port_status": "NOT_RECORDED_IN_ALLOWLIST_SOURCE"
+}

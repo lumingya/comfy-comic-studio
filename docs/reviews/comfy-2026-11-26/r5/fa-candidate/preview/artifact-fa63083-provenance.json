@@ -1,0 +1,13 @@
+{
+  "source_head": "fa6308384826fad7629b2c727d70230cc7951d05",
+  "artifact_id": 15093284680,
+  "artifact_name": "web-preview-fa6308384826fad7629b2c727d70230cc7951d05",
+  "run_id": 45768262520,
+  "artifact_created_at": "2026-11-26T06:45:42Z",
+  "artifact_digest": "sha256:4eeffd1d5b2f337506cfd89eae400cd72e2cc9bb1467445056cacaa7b5af7ff0",
+  "archive_digest_verified": true,
+  "archive_bytes": 758554,
+  "local_build_run": false,
+  "index_sha256": "76e359396b1a4a06ff72e21bef3d48c81c82d75ea1115a09755d546aa8373a3a",
+  "file_inventory_count": 81
+}

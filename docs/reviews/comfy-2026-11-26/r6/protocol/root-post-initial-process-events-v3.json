@@ -1,0 +1,17 @@
+{
+  "schema": "mio.r6.root-post-initial-process-events.v3",
+  "utc": "2026-11-26T10:23:49.855203+00:00",
+  "prior_evidence": "root-post-initial-process-events-v2.json",
+  "prior_sha256": "f7b984583000984ac44ac5cbcf6071391324d5fc8f178cac2d6848d97b6f29c7",
+  "additional_event": {
+    "kind": "private_manifest_keys_projected_as_schema",
+    "scope": "root Web sealed-manifest structure readback",
+    "observed": "artifact relative filenames including twelve neutral audit download UUIDs were printed as top-level schema keys",
+    "graph_prompt_asset_credential_echo": false,
+    "user_original_or_user_browser_identifiers_observed": false,
+    "unknown_truncated_output_cleared": false,
+    "recovery": "stop unknown keyed-map projection; verify private manifest and all file hashes entirely in memory; never publish that inventory"
+  },
+  "product_calls": 0,
+  "repo_changes": 0
+}

@@ -1,0 +1,30 @@
+{
+  "utc": "2026-11-26T10:20:52.980935+00:00",
+  "base": "38838ab43cf3d056951f2fc6c52afb737d34e3c6",
+  "head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "head_matches": true,
+  "source_files": 647,
+  "source_files_exact": true,
+  "runtime_files": 218,
+  "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+  "web_source_files": 429,
+  "fixtures_exact": {
+    "api200.json": true,
+    "candidate-source.json": true,
+    "candidate.png": true,
+    "lora32-source.json": true,
+    "lora32.webp": true,
+    "ui200.json": true
+  },
+  "fixture_count": 6,
+  "tracked_or_untracked_status_count": 0,
+  "original_harness_sha256": "a2539d9f4dc1f6b022df7e61f5a8c368e01d7ca43e76f45db0c8ef424242002b",
+  "original_harness_exact": true,
+  "original_freeze_sha256": "59c8e82d29670b417884431b1163563ea9829684de90a08e1fe7f56975a6ed28",
+  "contracts": {
+    "audits/r6/brief-common.md": true,
+    "audits/r6/role-acceptance.md": true,
+    "audits/r6/root-authorization.json": true,
+    "repairs/r6-preview/running-server-r6.json": true
+  }
+}

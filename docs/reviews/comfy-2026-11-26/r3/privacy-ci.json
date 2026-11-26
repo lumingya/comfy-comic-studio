@@ -1,0 +1,681 @@
+[
+  {
+    "run": 45655165365,
+    "event": "push",
+    "head_sha": "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090",
+    "conclusion": "success",
+    "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45655165365",
+    "created_at": "2026-11-25T16:33:31Z",
+    "updated_at": "2026-11-25T16:56:04Z",
+    "actual_checkout_commits": [
+      {
+        "parents": [
+          "6f9bdf2c56994397754f4ec2c782f1ab63bc75a0"
+        ],
+        "sha": "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090"
+      }
+    ],
+    "actual_workflow_configuration": [
+      {
+        "checkout_sha": "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090",
+        "workflow_blob_sha": "b9ea6beb0eb0f2693672508264eff4e9d841699c",
+        "runtime_configuration": [
+          "runs-on: ubuntu-latest",
+          "timeout-minutes: 30",
+          "python-version: '3.13'",
+          "node-version: '20'",
+          "os: [windows-latest, ubuntu-latest]",
+          "runs-on: ${{ matrix.os }}",
+          "timeout-minutes: 30",
+          "python-version: '3.11'",
+          "MIO_LAUNCHER_FULL: '1'"
+        ]
+      }
+    ],
+    "raw_log_bytes": 408783,
+    "raw_log_sha256": "6991845c45696c240be706f279e40cf8aad83b48f823c8d10f8aae4fd7affda4",
+    "jobs": [
+      {
+        "id": 139349765853,
+        "name": "gate",
+        "conclusion": "success",
+        "started_at": "2026-11-25T16:33:34Z",
+        "completed_at": "2026-11-25T16:54:41Z",
+        "checkout_shas": [
+          "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090"
+        ],
+        "python_versions": [
+          "3.13.18"
+        ],
+        "node_versions": [
+          "v20.20.2"
+        ],
+        "unittest_summaries": [
+          {
+            "tests_run": 80,
+            "seconds": 19.319,
+            "outcome": "OK",
+            "timestamp": "2026-11-25T16:34:11.1033788Z"
+          },
+          {
+            "tests_run": 1724,
+            "seconds": 1036.577,
+            "outcome": "OK (skipped=3)",
+            "timestamp": "2026-11-25T16:51:31.3691822Z"
+          }
+        ],
+        "web_summaries": [
+          "Test Files  118 passed (118)",
+          "Tests  964 passed (964)",
+          "Test Files  2 passed (2)",
+          "Tests  34 passed (34)"
+        ],
+        "key_commands": [
+          "python -m unittest discover -s next/tests -t next -q",
+          "ruff check server extensions",
+          "ruff format --check server extensions",
+          "python -m unittest discover -s server/tests -t server -q",
+          "python clients/python/generate.py --check",
+          "ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+          "ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+          "ruff check clients tools",
+          "ruff format --check clients tools",
+          "ruff check --config server/pyproject.toml mio_update_bootstrap.py",
+          "ruff format --check --config server/pyproject.toml mio_update_bootstrap.py",
+          "npm --prefix web run gen:api",
+          "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+          "npm --prefix web run format:check",
+          "npm --prefix web run typecheck",
+          "npm --prefix web test",
+          "npm --prefix web run build",
+          "python tools/check_distribution.py",
+          "python tools/build_distribution.py --check",
+          "git diff --exit-code -- dist",
+          "python tools/build_release.py --out <runner-temp>"
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Run actions/setup-node@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Install Python dependencies",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Spike unit tests (next/)",
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "v4 server (lint + unit tests)",
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "API v2 clients and release tools (generated client current + lint)",
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "v4 web (API types current + format + typecheck + tests + build)",
+            "conclusion": "success"
+          },
+          {
+            "number": 10,
+            "name": "Shipped data manifest",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Standalone assistant extension",
+            "conclusion": "success"
+          },
+          {
+            "number": 12,
+            "name": "v4 release package smoke test",
+            "conclusion": "success"
+          },
+          {
+            "number": 22,
+            "name": "Post Run actions/setup-node@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 23,
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 24,
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 25,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 139349766139,
+        "name": "launchers (windows-latest, Python 3.11)",
+        "conclusion": "success",
+        "started_at": "2026-11-25T16:33:34Z",
+        "completed_at": "2026-11-25T16:56:04Z",
+        "checkout_shas": [
+          "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090"
+        ],
+        "python_versions": [
+          "3.11.9"
+        ],
+        "node_versions": [],
+        "unittest_summaries": [
+          {
+            "tests_run": 31,
+            "seconds": 29.064,
+            "outcome": "OK",
+            "timestamp": "2026-11-25T16:34:25.1005928Z"
+          },
+          {
+            "tests_run": 1724,
+            "seconds": 1292.139,
+            "outcome": "OK",
+            "timestamp": "2026-11-25T16:55:59.4719800Z"
+          }
+        ],
+        "web_summaries": [],
+        "key_commands": [
+          "python -m unittest tests.test_launchers -v",
+          "python -m unittest discover -s server/tests -t server -q"
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Install server dependencies",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "v4 server unit tests",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 12,
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 13,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 139349766432,
+        "name": "launchers (ubuntu-latest, Python 3.11)",
+        "conclusion": "success",
+        "started_at": "2026-11-25T16:33:35Z",
+        "completed_at": "2026-11-25T16:46:47Z",
+        "checkout_shas": [
+          "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090"
+        ],
+        "python_versions": [
+          "3.11.18"
+        ],
+        "node_versions": [],
+        "unittest_summaries": [
+          {
+            "tests_run": 31,
+            "seconds": 14.916,
+            "outcome": "OK",
+            "timestamp": "2026-11-25T16:34:01.0589787Z"
+          },
+          {
+            "tests_run": 1724,
+            "seconds": 761.715,
+            "outcome": "OK (skipped=3)",
+            "timestamp": "2026-11-25T16:46:44.3896122Z"
+          }
+        ],
+        "web_summaries": [],
+        "key_commands": [
+          "python -m unittest tests.test_launchers -v",
+          "python -m unittest discover -s server/tests -t server -q"
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Install server dependencies",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "v4 server unit tests",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 12,
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 13,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "run": 45655190322,
+    "event": "pull_request",
+    "head_sha": "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090",
+    "conclusion": "success",
+    "url": "https://github.com/lumingya/comfy-comic-studio/actions/runs/45655190322",
+    "created_at": "2026-11-25T16:33:39Z",
+    "updated_at": "2026-11-25T17:00:35Z",
+    "actual_checkout_commits": [
+      {
+        "parents": [
+          "766c38b9d602ab43f565bca3a52e813dbd2f488a",
+          "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090"
+        ],
+        "sha": "86cf06010c65c2d838ec11ff9da708023a657aac"
+      }
+    ],
+    "actual_workflow_configuration": [
+      {
+        "checkout_sha": "86cf06010c65c2d838ec11ff9da708023a657aac",
+        "workflow_blob_sha": "0a5aa700a3b93ab5713b38e4dd5725ea82eedc01",
+        "runtime_configuration": [
+          "runs-on: ubuntu-latest",
+          "timeout-minutes: 30",
+          "python-version: '3.13'",
+          "node-version: '20'",
+          "os: [windows-latest, ubuntu-latest]",
+          "runs-on: ${{ matrix.os }}",
+          "timeout-minutes: 60",
+          "python-version: '3.11'",
+          "MIO_LAUNCHER_FULL: '1'"
+        ]
+      }
+    ],
+    "raw_log_bytes": 414955,
+    "raw_log_sha256": "6792d40b42049ad8932ee1263995754db43cff9792a4420068d27e08abd10b0e",
+    "jobs": [
+      {
+        "id": 139349854508,
+        "name": "gate",
+        "conclusion": "success",
+        "started_at": "2026-11-25T16:33:43Z",
+        "completed_at": "2026-11-25T16:50:32Z",
+        "checkout_shas": [
+          "86cf06010c65c2d838ec11ff9da708023a657aac"
+        ],
+        "python_versions": [
+          "3.13.18"
+        ],
+        "node_versions": [
+          "v20.20.2"
+        ],
+        "unittest_summaries": [
+          {
+            "tests_run": 80,
+            "seconds": 18.85,
+            "outcome": "OK",
+            "timestamp": "2026-11-25T16:34:15.3718847Z"
+          },
+          {
+            "tests_run": 1770,
+            "seconds": 821.861,
+            "outcome": "OK (skipped=3)",
+            "timestamp": "2026-11-25T16:47:59.6226720Z"
+          }
+        ],
+        "web_summaries": [
+          "Test Files  120 passed (120)",
+          "Tests  986 passed (986)",
+          "Test Files  2 passed (2)",
+          "Tests  34 passed (34)"
+        ],
+        "key_commands": [
+          "python -m unittest discover -s next/tests -t next -q",
+          "ruff check server extensions",
+          "ruff format --check server extensions",
+          "python -m unittest discover -s server/tests -t server -q",
+          "python clients/python/generate.py --check",
+          "ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+          "ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py",
+          "ruff check clients tools",
+          "ruff format --check clients tools",
+          "ruff check --config server/pyproject.toml mio_update_bootstrap.py",
+          "ruff format --check --config server/pyproject.toml mio_update_bootstrap.py",
+          "npm --prefix web run gen:api",
+          "git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts",
+          "npm --prefix web run format:check",
+          "npm --prefix web run typecheck",
+          "npm --prefix web test",
+          "npm --prefix web run build",
+          "python tools/check_distribution.py",
+          "python tools/build_distribution.py --check",
+          "git diff --exit-code -- dist",
+          "python tools/build_release.py --out <runner-temp>"
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Run actions/setup-node@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Install Python dependencies",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Spike unit tests (next/)",
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "v4 server (lint + unit tests)",
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "API v2 clients and release tools (generated client current + lint)",
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "v4 web (API types current + format + typecheck + tests + build)",
+            "conclusion": "success"
+          },
+          {
+            "number": 10,
+            "name": "Shipped data manifest",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Standalone assistant extension",
+            "conclusion": "success"
+          },
+          {
+            "number": 12,
+            "name": "v4 release package smoke test",
+            "conclusion": "success"
+          },
+          {
+            "number": 22,
+            "name": "Post Run actions/setup-node@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 23,
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 24,
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 25,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 139349854871,
+        "name": "launchers (ubuntu-latest, Python 3.11)",
+        "conclusion": "success",
+        "started_at": "2026-11-25T16:33:43Z",
+        "completed_at": "2026-11-25T16:49:59Z",
+        "checkout_shas": [
+          "86cf06010c65c2d838ec11ff9da708023a657aac"
+        ],
+        "python_versions": [
+          "3.11.18"
+        ],
+        "node_versions": [],
+        "unittest_summaries": [
+          {
+            "tests_run": 31,
+            "seconds": 19.916,
+            "outcome": "OK",
+            "timestamp": "2026-11-25T16:34:13.4999134Z"
+          },
+          {
+            "tests_run": 1770,
+            "seconds": 940.925,
+            "outcome": "OK (skipped=3)",
+            "timestamp": "2026-11-25T16:49:56.6219942Z"
+          }
+        ],
+        "web_summaries": [],
+        "key_commands": [
+          "python -m unittest tests.test_launchers -v",
+          "python -m unittest discover -s server/tests -t server -q"
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Install server dependencies",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "v4 server unit tests",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 12,
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 13,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 139349855162,
+        "name": "launchers (windows-latest, Python 3.11)",
+        "conclusion": "success",
+        "started_at": "2026-11-25T16:33:43Z",
+        "completed_at": "2026-11-25T17:00:34Z",
+        "checkout_shas": [
+          "86cf06010c65c2d838ec11ff9da708023a657aac"
+        ],
+        "python_versions": [
+          "3.11.9"
+        ],
+        "node_versions": [],
+        "unittest_summaries": [
+          {
+            "tests_run": 31,
+            "seconds": 40.655,
+            "outcome": "OK",
+            "timestamp": "2026-11-25T16:34:58.6904468Z"
+          },
+          {
+            "tests_run": 1770,
+            "seconds": 1528.37,
+            "outcome": "OK",
+            "timestamp": "2026-11-25T17:00:30.1197623Z"
+          }
+        ],
+        "web_summaries": [],
+        "key_commands": [
+          "python -m unittest tests.test_launchers -v",
+          "python -m unittest discover -s server/tests -t server -q"
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Install server dependencies",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Launchers (static, bootstrap, real start.bat / start.sh from scratch)",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "v4 server unit tests",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 12,
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 13,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  }
+]

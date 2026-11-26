@@ -1,0 +1,10 @@
+{
+  "source_head": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "ci_sha256": "6ad3b99652352e7819fa4d513de03e0f6c16f98c41a478baee2bdaa5a9150d11",
+  "run_ids": [
+    45779838148,
+    45779847204
+  ],
+  "required_groups": 14,
+  "startup_authorized_after_all_ci_success": true
+}

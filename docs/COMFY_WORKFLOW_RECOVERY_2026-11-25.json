@@ -1,0 +1,188 @@
+{
+  "original_total": 75,
+  "original_recovered": 50,
+  "blind_total": 15,
+  "blind_recovered": 15,
+  "unavailable_reasons": {
+    "Anonymous download requires authentication": 20,
+    "Historical canonical payload unavailable in public downloads; representative HTTP 000": 3,
+    "Public files available but none matches the historical canonical payload ID": 2
+  },
+  "unavailable": [
+    {
+      "id": "6e2108f5c5c8",
+      "source_url": "https://civitai.com/models/128556",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 37,
+      "publisher_family": "Other"
+    },
+    {
+      "id": "331a9f215b60",
+      "source_url": "https://civitai.com/models/1459738",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 80,
+      "publisher_family": "NoobAI"
+    },
+    {
+      "id": "39b3a6d5c462",
+      "source_url": "https://civitai.com/models/1466666",
+      "reason": "Historical canonical payload unavailable in public downloads; representative HTTP 000",
+      "node_count": 23,
+      "publisher_family": "NoobAI"
+    },
+    {
+      "id": "0ad35f95a135",
+      "source_url": "https://civitai.com/models/1513601",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 15,
+      "publisher_family": "SDXL 1.0"
+    },
+    {
+      "id": "25c9bf22bd07",
+      "source_url": "https://civitai.com/models/1598938",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 27,
+      "publisher_family": "Illustrious"
+    },
+    {
+      "id": "56c9b350ef52",
+      "source_url": "https://civitai.com/models/1720275",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 29,
+      "publisher_family": "Flux.1 Kontext"
+    },
+    {
+      "id": "1e6a5ac8a1fc",
+      "source_url": "https://civitai.com/models/1722123",
+      "reason": "Historical canonical payload unavailable in public downloads; representative HTTP 000",
+      "node_count": 16,
+      "publisher_family": "Flux.1 Kontext"
+    },
+    {
+      "id": "e6dde8192e94",
+      "source_url": "https://civitai.com/models/1804319",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 92,
+      "publisher_family": "NoobAI"
+    },
+    {
+      "id": "ceda3d28a8ae",
+      "source_url": "https://civitai.com/models/1910487",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 34,
+      "publisher_family": "Flux.1 Kontext"
+    },
+    {
+      "id": "98eb3bd130bc",
+      "source_url": "https://civitai.com/models/2060113",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 33,
+      "publisher_family": "NoobAI"
+    },
+    {
+      "id": "300a8294a4c6",
+      "source_url": "https://civitai.com/models/2203669",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 15,
+      "publisher_family": "NoobAI"
+    },
+    {
+      "id": "07e1c24ec261",
+      "source_url": "https://civitai.com/models/2503119",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 37,
+      "publisher_family": "SDXL 1.0"
+    },
+    {
+      "id": "97602bb4c7b1",
+      "source_url": "https://civitai.com/models/2539304",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 26,
+      "publisher_family": "NoobAI"
+    },
+    {
+      "id": "c71b819a5a4b",
+      "source_url": "https://civitai.com/models/304986",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 56,
+      "publisher_family": "Other"
+    },
+    {
+      "id": "b4eec9dc0bd7",
+      "source_url": "https://civitai.com/models/333060",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 23,
+      "publisher_family": "SDXL 1.0"
+    },
+    {
+      "id": "afe2274c2bfa",
+      "source_url": "https://civitai.com/models/617451",
+      "reason": "Historical canonical payload unavailable in public downloads; representative HTTP 000",
+      "node_count": 64,
+      "publisher_family": "Flux.1 D"
+    },
+    {
+      "id": "bb51739e9441",
+      "source_url": "https://civitai.com/models/618578",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 123,
+      "publisher_family": "Flux.1 Kontext"
+    },
+    {
+      "id": "7a8566a3be4f",
+      "source_url": "https://civitai.com/models/688735",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 24,
+      "publisher_family": "Flux.1 D"
+    },
+    {
+      "id": "7a637308810f",
+      "source_url": "https://civitai.com/models/698637",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 36,
+      "publisher_family": "Flux.1 D"
+    },
+    {
+      "id": "064440ab88bd",
+      "source_url": "https://civitai.com/models/830300",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 2295,
+      "publisher_family": "Other"
+    },
+    {
+      "id": "c0e0da1fc486",
+      "source_url": "https://civitai.com/models/830300",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 2083,
+      "publisher_family": "Other"
+    },
+    {
+      "id": "c2bb71dbdc77",
+      "source_url": "https://civitai.com/models/871897",
+      "reason": "Public files available but none matches the historical canonical payload ID",
+      "node_count": 12,
+      "publisher_family": "Illustrious"
+    },
+    {
+      "id": "1f05f473353d",
+      "source_url": "https://civitai.com/models/892447",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 43,
+      "publisher_family": "Illustrious"
+    },
+    {
+      "id": "3b0e52c8fc9b",
+      "source_url": "https://civitai.com/models/912123",
+      "reason": "Public files available but none matches the historical canonical payload ID",
+      "node_count": 15,
+      "publisher_family": "Flux.1 D"
+    },
+    {
+      "id": "85a6484314dd",
+      "source_url": "https://civitai.com/models/933018",
+      "reason": "Anonymous download requires authentication",
+      "node_count": 26,
+      "publisher_family": "Flux.1 Kontext"
+    }
+  ]
+}

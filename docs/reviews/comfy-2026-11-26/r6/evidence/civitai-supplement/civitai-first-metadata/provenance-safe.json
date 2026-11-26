@@ -1,0 +1,137 @@
+{
+  "schema": "chrome-bounded-metadata-provenance-v1",
+  "guard": {
+    "pid": 46680,
+    "affinity_read_back": "0x1",
+    "priority_class_read_back": 16384
+  },
+  "browser_before": {
+    "owner_pid": 46124,
+    "port": 59871,
+    "loopback_listener_exact": true,
+    "task_profile_exact": true,
+    "chrome_alive": true,
+    "command_line_sha256": "162350712c5818dd41172b29ff448aa6de74df152bbf4cb54450d685de0f943f",
+    "creation_filetime": 134401491232155198
+  },
+  "browser_after": {
+    "owner_pid": 46124,
+    "port": 59871,
+    "loopback_listener_exact": true,
+    "task_profile_exact": true,
+    "chrome_alive": true,
+    "command_line_sha256": "162350712c5818dd41172b29ff448aa6de74df152bbf4cb54450d685de0f943f",
+    "creation_filetime": 134401491232155198
+  },
+  "old_source_hashes": [
+    {
+      "label": "original_manifest",
+      "before_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+      "after_sha256": "e42c7e492ff7de997ce462cf3a60e4352cb974923a2744a8fdd8cd5f997d6021",
+      "unchanged": true
+    },
+    {
+      "label": "installed_protocol",
+      "before_sha256": "3f6ef9c13ca4e92bc06426a01f2c3198448e949f64f62eb02e2db23146a8d06c",
+      "after_sha256": "3f6ef9c13ca4e92bc06426a01f2c3198448e949f64f62eb02e2db23146a8d06c",
+      "unchanged": true
+    },
+    {
+      "label": "python_failure:results.json",
+      "before_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "after_sha256": "c74ca21a8023766c3fde5d665c451c6d9290033f626d424c52273df5d3fd4ba6",
+      "unchanged": true
+    },
+    {
+      "label": "python_failure:provenance-safe.json",
+      "before_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "after_sha256": "5fe1958dd40f4dde3428a0874389740ec9070e3ce87df6ec9a9e5b4e0a36cdf0",
+      "unchanged": true
+    },
+    {
+      "label": "python_failure:report.md",
+      "before_sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "after_sha256": "d7d27554b850e595a5862b6c014af9e79a12e5364938737a727ec8bdcfa934b0",
+      "unchanged": true
+    },
+    {
+      "label": "chrome_connectivity:results.json",
+      "before_sha256": "8ffae956a6687f0598b111fb7eebe8476bed4b10c241d00e3ba679d4f0042625",
+      "after_sha256": "8ffae956a6687f0598b111fb7eebe8476bed4b10c241d00e3ba679d4f0042625",
+      "unchanged": true
+    },
+    {
+      "label": "chrome_connectivity:provenance-safe.json",
+      "before_sha256": "874da244158217fea3f218eda2c56c7d60604e1304c7eb3bc47f0323f86d3c1c",
+      "after_sha256": "874da244158217fea3f218eda2c56c7d60604e1304c7eb3bc47f0323f86d3c1c",
+      "unchanged": true
+    },
+    {
+      "label": "chrome_connectivity:report.md",
+      "before_sha256": "73afa86222c23ab3cad9293742c720fbd8c13471bbfdf90c12130b43f4927af0",
+      "after_sha256": "73afa86222c23ab3cad9293742c720fbd8c13471bbfdf90c12130b43f4927af0",
+      "unchanged": true
+    }
+  ],
+  "reviewed_local_protocol": {
+    "name": "playwright types/protocol.d.ts",
+    "sha256": "3f6ef9c13ca4e92bc06426a01f2c3198448e949f64f62eb02e2db23146a8d06c",
+    "line_ranges": [
+      [
+        7964,
+        7981
+      ],
+      [
+        8123,
+        8166
+      ],
+      [
+        7686,
+        7739
+      ]
+    ],
+    "semantics": "HeadersReceived pause; sequential IO.read with size maximum and no offset; take stream excludes whole-body get; close stream and cancel request rather than continue unchanged"
+  },
+  "results_sha256": "5584f3f9205090870e02fde0e7b909cb82707d6611434a8d807d0d6e1db945ff",
+  "collector_sha256": "fda96ad60c9327d76fc9a57ea15c9b39ff8ee5dc8c0913f52d59e5468bd7ffa5",
+  "limits": {
+    "one_exact_url_goto": true,
+    "goto_timeout_ms": 15000,
+    "io_chunk_max_bytes": 16384,
+    "cumulative_collected_max_bytes": 524288,
+    "read_call_limit": 64,
+    "content_length_required": false,
+    "whole_response_body_api_used": false,
+    "take_response_stream_only": true,
+    "redirects_or_retries": 0,
+    "login_or_challenge_interaction": false,
+    "existing_contexts_pages_or_profile_enumerated": false,
+    "browser_close_called": false,
+    "raw_response_persisted_or_emitted": false,
+    "assets_or_graphs_downloaded": 0,
+    "source_or_old_artifact_writes": 0,
+    "Mio_imports": 0,
+    "product_http_calls": 0,
+    "tests": 0,
+    "popen_class_preserved": true
+  },
+  "privacy_checks": {
+    "recursive_five_key_and_private_path_guard": "passed",
+    "numeric_stats_allowlist": [
+      "thumbsUpCount",
+      "thumbsDownCount",
+      "favoriteCount",
+      "ratingCount",
+      "rating",
+      "downloadCount",
+      "commentCount",
+      "generationCount",
+      "collectedCount",
+      "heartCount",
+      "likeCount",
+      "laughCount",
+      "cryCount",
+      "dislikeCount"
+    ]
+  }
+}

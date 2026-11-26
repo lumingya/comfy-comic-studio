@@ -1,0 +1,552 @@
+{
+  "rev8_hashes": [
+    {
+      "pointer": "repairs/r5-final-draft/final-report-draft.md",
+      "sha256": "87cd12189c55ea79c31fc22bcb797b15f7b758905d672be8e808563525d06d2f",
+      "matches": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json",
+      "sha256": "4579280f43e45e0d20990c7fbb8d87f6db3266caecd404f811e5eadf97538c6e",
+      "matches": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/classification-calculations.json",
+      "sha256": "f624447cc18a89528df9b3cbf42db29fbd51270f30e67f4b9237607b66cd69af",
+      "matches": true
+    }
+  ],
+  "source_task_hash_matches": true,
+  "requirements_count": 53,
+  "declared_count": 53,
+  "unique_requirement_ids": 53,
+  "states_not_equivalent_to_acceptance": true,
+  "all_53_have_evidence": true,
+  "all_53_have_limits": true,
+  "all_53_not_final_acceptance": true,
+  "ledger_candidate_matches": true,
+  "calc_candidate_matches": true,
+  "source_index_count": 46,
+  "source_index": [
+    {
+      "pointer": "external-temp-evidence/repairs/r5-integration-history-ready/index.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-integration-history-ready/candidate-source.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-integration-history-ready/budget-regression/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-integration-history-ready/ownership-fix/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-integration-history-ready/ownership-fix/validation.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-civitai-public-metadata/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-civitai-public-metadata/results.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-r4-reference-evidence/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-r4-reference-evidence/results.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-ownership-ci/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-ownership-ci/ci-verified.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/generality/final.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/generality/cross.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/compile/final.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/compile/cross.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/blind/final.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/blind/cross-report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/blind/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/web/final.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/web/cross.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/privacy/final.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/privacy/cross-report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r5/privacy/cross-process-supplement.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-civitai-chrome-metadata/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-civitai-chrome-metadata/results.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r5-civitai-chrome-metadata/provenance-safe.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-known-source-metadata/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-known-source-metadata/results.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-known-source-metadata/provenance-safe.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/final-current75-replay/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/final-current75-replay/summary.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/final-current75-replay/provenance-safe.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-candidate-ci/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-candidate-ci/ci-verified.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-r5-finding-replay/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-r5-finding-replay/results.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-r5-finding-replay/provenance-safe.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-r5-finding-replay/assessment-safe.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-r5-finding-replay/completion-seal-safe.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-static-recovery-redirectfix/report.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-static-recovery-redirectfix/results.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-static-recovery-redirectfix/provenance-safe.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/repairs/r6-civitai-static-recovery-redirectfix/execution-plan.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r6/preflight/report-v2.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r6/preflight/report-v3.md",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    },
+    {
+      "pointer": "external-temp-evidence/audits/r6/root-authorization.json",
+      "same_round_role_blocked": false,
+      "exists": true,
+      "hash_matches": true
+    }
+  ],
+  "privacy_requirement_rows": [
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/0",
+      "id_pointer": "S01",
+      "evidence_count": 5,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/1",
+      "id_pointer": "S02",
+      "evidence_count": 7,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/3",
+      "id_pointer": "S04",
+      "evidence_count": 15,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/6",
+      "id_pointer": "S07",
+      "evidence_count": 5,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/14",
+      "id_pointer": "T08",
+      "evidence_count": 11,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/18",
+      "id_pointer": "W01",
+      "evidence_count": 15,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": false,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/20",
+      "id_pointer": "W03",
+      "evidence_count": 18,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/29",
+      "id_pointer": "M02",
+      "evidence_count": 9,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/30",
+      "id_pointer": "G01",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/31",
+      "id_pointer": "G02",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/32",
+      "id_pointer": "G03",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/33",
+      "id_pointer": "G04",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/34",
+      "id_pointer": "G05",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/35",
+      "id_pointer": "G06",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/36",
+      "id_pointer": "G07",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/37",
+      "id_pointer": "G08",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/38",
+      "id_pointer": "G09",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/39",
+      "id_pointer": "G10",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/40",
+      "id_pointer": "A00",
+      "evidence_count": 22,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/43",
+      "id_pointer": "A03",
+      "evidence_count": 14,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/45",
+      "id_pointer": "A05",
+      "evidence_count": 10,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/47",
+      "id_pointer": "C02",
+      "evidence_count": 11,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/48",
+      "id_pointer": "C03",
+      "evidence_count": 13,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/49",
+      "id_pointer": "C04",
+      "evidence_count": 6,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/50",
+      "id_pointer": "C05",
+      "evidence_count": 11,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    },
+    {
+      "pointer": "repairs/r5-final-draft/requirement-evidence-ledger.json#/requirements/51",
+      "id_pointer": "C06",
+      "evidence_count": 46,
+      "not_final_acceptance": true,
+      "state_contains_pending_or_limit": true,
+      "limit_present": true
+    }
+  ],
+  "original_current_boundary": {
+    "original_missing": 25,
+    "current_recovered": 50,
+    "current_supplements": 25,
+    "current75_size": 75,
+    "request_denominator": 230,
+    "manual_boundary": {
+      "fixed_api_graphs": 46,
+      "kinds_per_graph": 5,
+      "fixed_requests": 230,
+      "before_judgment_correct": 27,
+      "after_ed_judgment_correct": 29,
+      "judgment_denominator": 29,
+      "actual_current75_explicit_manual_checks": 0,
+      "not_evidence_of_29_explicit_mappings_or_writes": true,
+      "not_filled_from_r1_20_or_r5_94_manual_checks": true,
+      "origin_candidate_field_present": 15,
+      "origin_candidate_field_missing": 14,
+      "manual_selected_mapping_requests_measured": false,
+      "comparison_uses_python_whole_graph_value_equality": true,
+      "complete_strict_type_aware_deltas_for230_measured": false,
+      "candidate_fe_judgment_correct": 29
+    },
+    "no_recalculation": {
+      "manual_required29_means_unmapped_abstention_not29_explicit_operations": true,
+      "current75_explicit_manual_operations": 0,
+      "legacy_false_and_all_fixed_denominators_unchanged": true
+    }
+  },
+  "publication_count": 71,
+  "final_cleanup_document_commit_push_pending": true,
+  "role_verdicts_pending": true,
+  "root_delivery_not_signed": true,
+  "draft_sha256_stable_readback": true
+}

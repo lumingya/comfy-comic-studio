@@ -1,0 +1,525 @@
+{
+  "schema": "mio.r6-generality-cross-sources.v1",
+  "utc": "2026-11-26T10:37:34.044276+00:00",
+  "candidate": "fe914065c7aafb0672bfe10274361f83179ce7f1",
+  "working_tree_clean": true,
+  "runtime_count": 218,
+  "runtime_sha256": "a00155daa5515501eb3ee117f284c2ae1f8152ac038d7efa7f6208c46b8ad487",
+  "runtime_all_bytes_match_initial": true,
+  "product_imports": 0,
+  "product_calls": 0,
+  "tests": 0,
+  "builds": 0,
+  "browser_calls": 0,
+  "network_calls": 0,
+  "sources": [
+    {
+      "pointer": "server/mio_server/comfy/workflow_graph.py",
+      "sha256": "9d2ec7475710e822f8959b906821d908c52723214b9d32b3e03ba9856523462d",
+      "bytes": 10775,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:19-20",
+          "name": "_same_type"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:31-36",
+          "name": "__init__"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:38-41",
+          "name": "_definition"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:43-47",
+          "name": "output_type"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:49-66",
+          "name": "_node"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:69-76",
+          "name": "_branches"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:78-97",
+          "name": "_identity"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:99-109",
+          "name": "_chosen"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:111-114",
+          "name": "_cached"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:116-164",
+          "name": "_literal"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:166-176",
+          "name": "selection"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:178-197",
+          "name": "route"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:199-200",
+          "name": "input_routes"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:202-236",
+          "name": "literal_origin"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:238-251",
+          "name": "all_reachable"
+        },
+        {
+          "pointer": "server/mio_server/comfy/workflow_graph.py:253-259",
+          "name": "is_active"
+        }
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_scope.py",
+      "sha256": "92d9e2891854d2e90892c47e69b7027e9d27f95a98871c9898793f494676446a",
+      "bytes": 4477,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/binding_scope.py:64-72",
+          "name": "_link"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_scope.py:78-81",
+          "name": "__init__"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_scope.py:83-94",
+          "name": "_inputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_scope.py:96-107",
+          "name": "_role_inputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_scope.py:109-123",
+          "name": "_walk"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_scope.py:125-128",
+          "name": "canvas_sites"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_scope.py:130-142",
+          "name": "primary_sites"
+        }
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_inference.py",
+      "sha256": "3231f44648a7f755323e5f1d7f9ea0ed9da14e7e43096b2d5a487dd656cbc278",
+      "bytes": 17298,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:47-55",
+          "name": "_link"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:58-66",
+          "name": "_ancestors"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:69-94",
+          "name": "image_outputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:333-411",
+          "name": "infer_bindings"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:98-107",
+          "name": "__init__"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:109-110",
+          "name": "inputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:112-136",
+          "name": "scalar"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:138-163",
+          "name": "string_sources"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:165-182",
+          "name": "encoder_sources"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:184-249",
+          "name": "conditioning_sources"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:251-280",
+          "name": "sampling_sites"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:282-283",
+          "name": "primary_sites"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:285-313",
+          "name": "prompt_owners"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_inference.py:315-330",
+          "name": "positive_literals"
+        }
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_dimensions.py",
+      "sha256": "b2313017cea27fd1c6cafb2943d50bbb006ca49c22e8a01c6965d8fb99bc385c",
+      "bytes": 7418,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/binding_dimensions.py:20-28",
+          "name": "_link"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_dimensions.py:31-39",
+          "name": "_ancestors"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_dimensions.py:149-193",
+          "name": "infer_dimension_bindings"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_dimensions.py:43-48",
+          "name": "__init__"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_dimensions.py:50-51",
+          "name": "inputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_dimensions.py:53-101",
+          "name": "dimension_dependencies"
+        },
+        {
+          "pointer": "server/mio_server/comfy/binding_dimensions.py:103-146",
+          "name": "dimension_sources"
+        }
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/binding_stage_scope.py",
+      "sha256": "696bd0ec10d2b86eecdeab8d4173fc0f591840746f3eb4e9fc4d5df7c3f9ffb0",
+      "bytes": 3433,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/binding_stage_scope.py:18-81",
+          "name": "ambiguous_conditioning_stage"
+        }
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/bindings.py",
+      "sha256": "a5a660e779ca3eca7d59fa44d8796ea5dc92e6a62f526d5d8bfbcbda2a48263c",
+      "bytes": 20798,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:103-109",
+          "name": "is_link"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:112-113",
+          "name": "title_of"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:116-118",
+          "name": "parse_tags"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:121-133",
+          "name": "_default_field"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:136-170",
+          "name": "tag_bindings"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:173-176",
+          "name": "_split_pointer"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:179-214",
+          "name": "mapping_bindings"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:217-223",
+          "name": "heuristic_bindings"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:226-256",
+          "name": "rule_bindings"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:259-277",
+          "name": "resolve"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:280-286",
+          "name": "summary"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:289-297",
+          "name": "_value_for"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:300-309",
+          "name": "area_part"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:312-325",
+          "name": "apply_values"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:328-338",
+          "name": "ancestors"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:341-359",
+          "name": "select_variant"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:362-387",
+          "name": "_expand"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:390-412",
+          "name": "apply_overrides"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:415-426",
+          "name": "text_sources"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:434-458",
+          "name": "string_values"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:461-486",
+          "name": "guard_terms"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:489-491",
+          "name": "guard_text"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:494-507",
+          "name": "lint_outputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/bindings.py:441-451",
+          "name": "walk"
+        }
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/compile.py",
+      "sha256": "2141ec096e59d5fda89bde5e1dfc4d7e123d70012301dbe39def736b007fe3f5",
+      "bytes": 18358,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/compile.py:73-78",
+          "name": "builtin_workflows"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:81-82",
+          "name": "asset_value"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:85-89",
+          "name": "_merge"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:92-98",
+          "name": "find_placeholders"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:101-108",
+          "name": "fill_placeholders"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:111-121",
+          "name": "primary_checkpoint"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:124-147",
+          "name": "validate_plan"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:150-201",
+          "name": "_frontend_plan"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:204-215",
+          "name": "validate_outputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:218-271",
+          "name": "_effective_bindings"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:274-290",
+          "name": "_validate_slot_routes"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:293-390",
+          "name": "compile_workflow"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:393-422",
+          "name": "describe"
+        },
+        {
+          "pointer": "server/mio_server/comfy/compile.py:59-70",
+          "name": "to_json"
+        }
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection.py",
+      "sha256": "6e59f08ed677d22ba5af30be21eca61bcbb6ca182e391f182fda7432fb8727bb",
+      "bytes": 9151,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/inspection.py:102-227",
+          "name": "inspect"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection.py:230-244",
+          "name": "_candidates"
+        }
+      ]
+    },
+    {
+      "pointer": "server/mio_server/comfy/inspection_candidates.py",
+      "sha256": "e9a50786e9beeb38810feb096e4d6a28bda2c1639eca567dd755c580aedbd4ae",
+      "bytes": 12808,
+      "functions": [
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:105-134",
+          "name": "text_candidates"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:137-202",
+          "name": "_linked_text_sources"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:322-335",
+          "name": "image_candidates"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:48-50",
+          "name": "__init__"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:52-54",
+          "name": "definition"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:56-67",
+          "name": "inputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:69-76",
+          "name": "input"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:78-85",
+          "name": "multiline"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:87-97",
+          "name": "outputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:99-102",
+          "name": "has_output"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:142-147",
+          "name": "text_input"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:149-150",
+          "name": "link"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:206-210",
+          "name": "__init__"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:212-215",
+          "name": "link"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:217-224",
+          "name": "input_kind"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:226-233",
+          "name": "payload_inputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:235-245",
+          "name": "source_fields"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:247-252",
+          "name": "routed_inputs"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:254-284",
+          "name": "dependencies"
+        },
+        {
+          "pointer": "server/mio_server/comfy/inspection_candidates.py:286-319",
+          "name": "roles"
+        }
+      ]
+    },
+    {
+      "pointer": "web/src/pages/settings/WorkflowMappings.tsx",
+      "sha256": "dbf14df38ed65c4f424fe46cd3f38c6874d327ebc8deddff4b8937af4c767031",
+      "bytes": 13542
+    },
+    {
+      "pointer": "web/src/pages/settings/WorkflowInspection.tsx",
+      "sha256": "17f9913b1699aed195b36e763c37cd5e50afa13f542d1a3ec2ba96fd50dec4ed",
+      "bytes": 13682
+    },
+    {
+      "pointer": "web/src/pages/settings/ConfigurationParts.tsx",
+      "sha256": "1317ce99e56c5291feb17d9d3cf2c73debf5ee78ebe9cf21751d96e97f35f73a",
+      "bytes": 4386
+    },
+    {
+      "pointer": "web/src/pages/settings/WorkflowsSection.tsx",
+      "sha256": "752eefdb5325e80b9dd8c1ce08b1d9520e142382d9d159da1dfd8d713c7a8232",
+      "bytes": 15585
+    },
+    {
+      "pointer": "web/src/api/client.ts",
+      "sha256": "482d7ce1d379ce058838bac19663920ba758667fec67c240dc5931162076b89f",
+      "bytes": 4428
+    }
+  ]
+}

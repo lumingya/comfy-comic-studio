@@ -1,0 +1,636 @@
+{
+  "audit": "Wave4-R3-CrossAudit-2-WildBlindTest",
+  "commit": "50bb3fad2189b54f45f4cc0e0c6d2071d2e73090",
+  "date": "2026-11-26",
+  "verdict": "REQUEST CHANGES",
+  "initial_independent_verdict": "REQUEST CHANGES",
+  "cross_check_completed": true,
+  "sample_count": 15,
+  "containers": {
+    "json": 10,
+    "png_metadata": 5
+  },
+  "formats": {
+    "api": 11,
+    "ui_only": 4
+  },
+  "node_totals": {
+    "api": 377,
+    "ui": 914
+  },
+  "max_nodes": {
+    "api": 153,
+    "ui": 683
+  },
+  "source_and_topology_new": true,
+  "deduplication": {
+    "old_source_url_count": 182,
+    "old_file_count": 126,
+    "old_topology_count": 104,
+    "historical_unrecoverable_ui": 25
+  },
+  "observed_checks": {
+    "raw_decode_exact": "15/15",
+    "api_import_exact": "11/11",
+    "api_dry_compile_returned": "11/11",
+    "ui_actionable_rejection": "4/4",
+    "auto_selected_target_write_precision": "11/11",
+    "manual_scalar_and_explicit_asset_whole_graph_precision": "11/11",
+    "surviving_original_nodes_unchanged_without_values": "11/11",
+    "real_standard_chain_negative_disable_precision": "6/6",
+    "real_mode_controlled_stack_negative_disable_precision": "0/20",
+    "source_immutability": "15/15"
+  },
+  "real_lora_coverage": {
+    "api_samples_with_selected_entries": 3,
+    "actual_effective_entries": 13,
+    "mode_controlled_stack_entries": 10,
+    "standard_chain_entries": 3,
+    "empty_stack_structure_not_counted_as_real_entries": true
+  },
+  "boundaries": [
+    "Dry compilation and static declarations only; no GPU/model/service execution or installed dependency certification.",
+    "Four UI-only graphs are successful actionable rejections, not executable imports.",
+    "One author API retains unresolved frontend broadcasts; partial authoritative schemas report six missing model/clip inputs.",
+    "Global seed fan-out differs from prewritten first-stage oracle on two samples. Frozen expectations remain unchanged; documented global-seed policy makes this a contract-difference observation, not a newly established defect or automatic-recognition success.",
+    "Historical 25 unavailable UI originals prevent full historical topology deduplication.",
+    "Real source sample contains a generic mask-duplication utility from a video-named suite; no video load/combine or video model path was selected."
+  ],
+  "findings": [
+    {
+      "id": "B-H1",
+      "severity": "High",
+      "origin": "independent real blind sample",
+      "samples": [
+        "R3-01"
+      ],
+      "title": "Mode/count-controlled flat stacks are treated as simultaneous mirror weights",
+      "evidence": {
+        "effective_entries": 10,
+        "reported_entries": 12,
+        "wrong_clip_entries": 7,
+        "negative_and_disable_exact_graph_failures": 20,
+        "links_preserved": true
+      },
+      "locations": [
+        "server/mio_server/comfy/workflow_slot_shapes.py:26-75",
+        "server/mio_server/comfy/workflow_slot_values.py:19-53",
+        "server/mio_server/comfy/workflow_slot_writers.py:178-274"
+      ]
+    },
+    {
+      "id": "B-M1",
+      "severity": "Medium",
+      "origin": "independent real blind sample",
+      "samples": [
+        "R3-03"
+      ],
+      "title": "Preset-controlled dimensions are falsely exposed as effective numeric dimensions",
+      "evidence": {
+        "before": [
+          1152,
+          896
+        ],
+        "after": [
+          1152,
+          896
+        ],
+        "requested": [
+          768,
+          640
+        ],
+        "written_scalars": [
+          768,
+          640
+        ],
+        "preset_unchanged": true,
+        "effective_output_unchanged": true,
+        "method_has_calls": false
+      },
+      "locations": [
+        "server/mio_server/comfy/binding_dimensions.py:98-130"
+      ]
+    },
+    {
+      "id": "X-H1",
+      "severity": "High",
+      "origin": "current-round cross-confirmation",
+      "title": "Generated reference/control sampling is selected as main generation",
+      "cases": [
+        "generated_control_reference",
+        "generated_style_reference"
+      ]
+    },
+    {
+      "id": "X-M1",
+      "severity": "Medium",
+      "origin": "current-round cross-confirmation",
+      "title": "Undeclared selector auxiliary output inherits payload branch selection",
+      "cases": [
+        "undeclared_auxiliary_output"
+      ]
+    },
+    {
+      "id": "X-M2",
+      "severity": "Medium",
+      "origin": "current-round cross-confirmation",
+      "title": "Partial object/text mirrors acquire unrequested other-item tags",
+      "cases": [
+        "partial_object_text_mirror"
+      ]
+    },
+    {
+      "id": "X-M3",
+      "severity": "Medium",
+      "origin": "current-round cross-confirmation",
+      "title": "Clip-only override changes accepted numeric-string model strength",
+      "cases": [
+        "numeric_string_clip_only"
+      ]
+    }
+  ],
+  "cross_checks": [
+    {
+      "case": "generated_control_reference",
+      "main_target_changed": false,
+      "auxiliary_target_changed": true,
+      "changed_pointers": [
+        "/aux_z/inputs/width",
+        "/aux_t/inputs/text",
+        "/aux_s/inputs/steps"
+      ],
+      "warnings": [],
+      "compilable": true,
+      "immutable": true
+    },
+    {
+      "case": "generated_style_reference",
+      "main_target_changed": false,
+      "auxiliary_target_changed": true,
+      "changed_pointers": [
+        "/aux_z/inputs/width",
+        "/aux_t/inputs/text",
+        "/aux_s/inputs/steps"
+      ],
+      "warnings": [],
+      "compilable": true,
+      "immutable": true
+    },
+    {
+      "case": "undeclared_auxiliary_output",
+      "route_reason": "undeclared-output-port",
+      "changed_pointers": [
+        "/left_z/inputs/width",
+        "/left_t/inputs/text"
+      ],
+      "warnings": []
+    },
+    {
+      "case": "partial_object_text_mirror",
+      "changed_pointers": [
+        "/stack/inputs/loras",
+        "/stack/inputs/text_a",
+        "/stack/inputs/text_b"
+      ],
+      "unrequested_cross_field_tag": true
+    },
+    {
+      "case": "numeric_string_clip_only",
+      "unrequested_model_before": "0.7",
+      "unrequested_model_after": 1,
+      "changed_pointers": [
+        "/lora/inputs/strength_model",
+        "/lora/inputs/strength_clip"
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "id": "R3-01",
+      "source_repository": "inf-monkeys/Comfyfile",
+      "format": "api",
+      "nodes": 153,
+      "category": "api-heavy-poster",
+      "raw_hash": "7270ae258c3dc9b4cd3ae683356e832d8ed668d26be28aa4a123c79c65aba109",
+      "topology_hash": "9d5d07ee22da9177df97c72b3518dfab83ec292337b0d5192aff9b0f2daa650d",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "ambiguous",
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-02",
+      "source_repository": "inf-monkeys/Comfyfile",
+      "format": "api",
+      "nodes": 28,
+      "category": "api-identity-control-LoRA",
+      "raw_hash": "d5365526f6442891693660525c48497d970651a36ac95a4f3d384ffcb3c30bb3",
+      "topology_hash": "e60bb5b689f94dcbe44733741c4bb1584afe44c24de6bd11bc6c97a9b5021847",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-03",
+      "source_repository": "inf-monkeys/Comfyfile",
+      "format": "api",
+      "nodes": 27,
+      "category": "api-multiref-LoRA-fusion",
+      "raw_hash": "755d891fc26f0b09cb6d5cdb776bd97c654917a51544ce133a9d9aa50ad72358",
+      "topology_hash": "e78221b6dbcf670a5170e0da159141dd7d33340d0c967deaa6e03dadcd569370",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-04",
+      "source_repository": "inf-monkeys/Comfyfile",
+      "format": "api",
+      "nodes": 37,
+      "category": "api-multicontrol-upscale",
+      "raw_hash": "3e9de97dbdf65ec79687efbadad17e238fea57c9fc78f440a9a681e0f615fa9e",
+      "topology_hash": "be8967cf7ce154e304933a51d950adc251dac54430f88ef72b051113d33b0215",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "ambiguous",
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-05",
+      "source_repository": "inf-monkeys/Comfyfile",
+      "format": "api",
+      "nodes": 32,
+      "category": "api-identity-text-assembly",
+      "raw_hash": "188f92ea9367d38add75c18d4aabdb45bb47f4a69aa1af1669cf009c184913f6",
+      "topology_hash": "8c187be1abaf87b217ffdba2e90fe17825d08f46aaca2e42a96de34cb7a4fd17",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-06",
+      "source_repository": "inf-monkeys/Comfyfile",
+      "format": "api",
+      "nodes": 25,
+      "category": "api-inpaint-adapter",
+      "raw_hash": "37f868c35aa77d920d27d1aae6660c842fea1e8c54644d2e88c80863394b39e8",
+      "topology_hash": "8804e4788c1cf3e25ad9812d0bf9b27dd665c025d577d17575b22f7b8d3bbd61",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-07",
+      "source_repository": "comfyanonymous/ComfyUI_examples",
+      "format": "api",
+      "nodes": 15,
+      "category": "metadata-dual-stage-edit",
+      "raw_hash": "d1f18d43ad9260eb34d500eeb2d5e5d45fd193c658a67cc46aa32fb6095e13d7",
+      "topology_hash": "3cf6e5197e2f19cf9674df1b9922165fd9f5ed513a03dab914b3232131973f2f",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-08",
+      "source_repository": "comfyanonymous/ComfyUI_examples",
+      "format": "api",
+      "nodes": 20,
+      "category": "metadata-reference-latents",
+      "raw_hash": "f1941f6ddc8b5b81c2e0a68aba8d0868beacc8079f5ee300c731ae0d9b55c88e",
+      "topology_hash": "832bfff7a883614aa60f3e3e4db6636397985e6ace9d3029f021b08e7b50b633",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "ambiguous",
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-09",
+      "source_repository": "comfyanonymous/ComfyUI_examples",
+      "format": "api",
+      "nodes": 12,
+      "category": "metadata-image-edit",
+      "raw_hash": "6a7df3f38f896c33e58cec8202cacca525631dfe72475dcc1529c37e978c9c3e",
+      "topology_hash": "c8a7d274d2d55aaea51cf76a5029bfa13f4ff98702502b9f54de9ebc5141abb6",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-10",
+      "source_repository": "comfyanonymous/ComfyUI_examples",
+      "format": "api",
+      "nodes": 19,
+      "category": "metadata-multireference-split",
+      "raw_hash": "1d162b86d699af56e2d10b2ed72c50ed5fea43f6897fa528d49cb0571b7dd9e9",
+      "topology_hash": "881be2fe18315b35f6abe88995ed18db951928ecad23e32f63f384876aacdea1",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "dependencies_unchecked",
+        "unbound"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-11",
+      "source_repository": "comfyanonymous/ComfyUI_examples",
+      "format": "api",
+      "nodes": 9,
+      "category": "metadata-LoRA-distillation",
+      "raw_hash": "95c66904d6c909874c8145c269fadd8b0424be386ad3c207a32232b4cab3b36c",
+      "topology_hash": "22d1fa1318bffe3aedf50f80ca19fbfc69f5c1ed98c78e1e9f43813c17948c1c",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "import_exact": true,
+        "empty_catalog_not_runnable": true,
+        "auto_whole_graph_exact": true,
+        "auto_links_exact": true,
+        "stored_source_immutable": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true,
+        "manual_explicit_asset_whole_graph_exact": true,
+        "manual_links_exact": true,
+        "baseline_surviving_nodes_unchanged": true
+      },
+      "manual_followup": true,
+      "boundary_issue_codes": [
+        "dependencies_unchecked"
+      ],
+      "initial_manual_harness_note": "Raw string-to-asset conversion expectation was corrected in focused follow-up; original private result retained."
+    },
+    {
+      "id": "R3-12",
+      "source_repository": "asagi4/comfyui-prompt-control",
+      "format": "ui",
+      "nodes": 30,
+      "category": "ui-regional-hook-compare",
+      "raw_hash": "27da43b1f1680b67dfa3fbe261108fad98835603c8c5b94ef0ab44f28a445da5",
+      "topology_hash": "3489db6a96622fd1a2ffbb71d5e49b7bd0d28badd44fb34eb8fc144669413c3b",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "ui_not_imported": true,
+        "ui_actionable": true,
+        "ui_import_rejected": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true
+      },
+      "manual_followup": null,
+      "boundary_issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ]
+    },
+    {
+      "id": "R3-13",
+      "source_repository": "juddisjudd/ComfyUI-BawkNodes",
+      "format": "ui",
+      "nodes": 9,
+      "category": "ui-LoRA-sets",
+      "raw_hash": "277d02991b8736766827ad908e348dab177dd917c621d5758081005eca2595c5",
+      "topology_hash": "d26a3859dab51c7b8b04891769c1c49f56f2ae3337af332317c7036d9d995fe6",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "ui_not_imported": true,
+        "ui_actionable": true,
+        "ui_import_rejected": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true
+      },
+      "manual_followup": null,
+      "boundary_issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ]
+    },
+    {
+      "id": "R3-14",
+      "source_repository": "GizmoR13/PG-Nodes",
+      "format": "ui",
+      "nodes": 192,
+      "category": "ui-large-implicit-switch",
+      "raw_hash": "f52880f2df279161bcf470c2f049b0fbeac01aafcf4c6734b0d20623a6d6de83",
+      "topology_hash": "76d4a345d6a7e11a691939c5d323313aad6dc3910731cae01999e621521dced2",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "ui_not_imported": true,
+        "ui_actionable": true,
+        "ui_import_rejected": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true
+      },
+      "manual_followup": null,
+      "boundary_issue_codes": [
+        "ui_format",
+        "ui_overview"
+      ]
+    },
+    {
+      "id": "R3-15",
+      "source_repository": "diodiogod/Comfy-Inpainting-Works",
+      "format": "ui",
+      "nodes": 683,
+      "category": "ui-giant-control-inpaint",
+      "raw_hash": "bd34c5c4110d182b1e97345237128766e702a448377692257073c94187a39019",
+      "topology_hash": "913fbe51d4cd7c3e1f714a090da3a9511d9e12de1de34a6c8fe074e4cd3ab217",
+      "check_summary": {
+        "raw_decoder_exact": true,
+        "inspect_file_matches_inspect": true,
+        "format_correct": true,
+        "ui_not_imported": true,
+        "ui_actionable": true,
+        "ui_import_rejected": true,
+        "input_source_immutable": true,
+        "file_source_immutable": true
+      },
+      "manual_followup": null,
+      "boundary_issue_codes": [
+        "frontend_graph",
+        "ui_format",
+        "ui_overview"
+      ]
+    }
+  ]
+}
