@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import asdict
 from typing import Any, Literal
 
@@ -13,6 +12,7 @@ from . import bindings as B
 from . import compile as C
 from . import slot_adapters as SA
 from .diagnostics import MODEL_FILE, diagnose
+from .inspection_candidates import image_candidates, text_candidates
 from .workflow_import import (
     WorkflowDecodeError,
     normalize_workflow,
@@ -20,7 +20,6 @@ from .workflow_import import (
     validate_finite_numbers,
 )
 
-_IMAGE_FILE = re.compile(r"\.(png|jpe?g|webp|bmp|tiff?)(?:\s*\[input\])?$", re.I)
 _KINDS = {
     "prompt": "正提示词",
     "negative": "负提示词",
@@ -190,7 +189,9 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
                 message=f"未绑定{_KINDS.get(kind, kind)}；保留工作流原值，Mio 传入的该参数不会生效。",
             )
         )
-    candidates = _candidates(selected, set(result.missing), request.object_info)
+    candidates = _candidates(
+        selected, set(result.missing), request.object_info, roots=result.output_nodes
+    )
     result.candidates = [BindingTarget(**asdict(b)) for b in candidates]
     for kind in result.missing:
         if len([b for b in candidates if b.kind == kind]) > 1:
@@ -226,12 +227,10 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
     return result
 
 
-def _candidates(graph: dict, missing: set[str], object_info: dict | None) -> list[B.Binding]:
-    found = []
-    for node, field, _ in B.text_sources(graph):
-        for kind in ("prompt", "negative"):
-            if kind in missing and field in B.TEXT_FIELDS:
-                found.append(B.Binding(kind, node, field, source="candidate"))
+def _candidates(
+    graph: dict, missing: set[str], object_info: dict | None, *, roots=()
+) -> list[B.Binding]:
+    found = text_candidates(graph, missing, object_info or {})
     for node_id, node in graph.items():
         for kind in ("seed", "width", "height"):
             field = B._default_field(kind, node["inputs"])
@@ -241,41 +240,5 @@ def _candidates(graph: dict, missing: set[str], object_info: dict | None) -> lis
             "output_node"
         ):
             found.append(B.Binding("output", node_id, source="candidate"))
-    found.extend(_image_candidates(graph, object_info or {}))
+    found.extend(image_candidates(graph, object_info or {}, roots))
     return list(dict.fromkeys(found))
-
-
-def _image_candidates(graph: dict, object_info: dict) -> list[B.Binding]:
-    """Offer source-image roles for manual review; never collapse distinct images to ref:1."""
-    consumers: dict[str, list[tuple[str, dict]]] = {}
-    for node in graph.values():
-        for field, value in node["inputs"].items():
-            if B.is_link(value):
-                consumers.setdefault(value[0], []).append((field.lower(), node["inputs"]))
-    found = []
-    for node_id, node in graph.items():
-        outputs = object_info.get(node["class_type"], {}).get("output", [])
-        image_output = isinstance(outputs, (list, tuple)) and any(
-            value in ("IMAGE", "MASK") for value in outputs
-        )
-        for field, value in node["inputs"].items():
-            if not isinstance(value, str) or field.lower() not in ("image", "mask", "filename"):
-                continue
-            if not image_output and not _IMAGE_FILE.search(value):
-                continue
-            roles = {"ref"}
-            if field.lower() == "mask" or outputs == ["MASK"]:
-                roles = {"mask"}
-            for target, inputs in consumers.get(node_id, []):
-                if "mask" in target:
-                    roles.add("mask")
-                if "control" in target or any(
-                    name.lower() in ("control_net", "controlnet") for name in inputs
-                ):
-                    roles.add("control")
-                if target == "pixels":
-                    roles.add("init")
-            found.extend(
-                B.Binding(role, node_id, field, source="candidate") for role in sorted(roles)
-            )
-    return found
