@@ -145,6 +145,8 @@ def serve(port: int, data: Path) -> None:
 
     FakeLLM.edit = revise
     FakeVLM.identity = 2
+    FakeVLM.dialogue_score = 2
+    FakeVLM.dialogue_note = "The visible calm conflicts with the dialogue's urgency <unsafe>."
     ctx = AppContext.create(
         data,
         autostart=False,

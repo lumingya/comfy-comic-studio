@@ -34,6 +34,12 @@ const messages = {
     noMatches: "没有符合当前筛选条件的候选。",
     noReport: "尚未评审",
     noVotes: "评审跳过了角色一致性；无综合评分。",
+    incomplete: "评审不完整",
+    dialogueScore: (score, votes) => `台词契合度：${score}/5 · ${votes} 有效票`,
+    dialogueNotAssessed: "台词契合度：未评估（无台词）",
+    dialogueUnknown: (votes) =>
+      `台词契合度：未知 · ${votes} 有效票（评审不完整）`,
+    dialogueMissing: "没有可用的台词契合评审结果。",
     passed: "通过",
     failed: "待复核",
     adopted: "已采用",
@@ -111,6 +117,13 @@ const messages = {
     noMatches: "No candidates match this filter.",
     noReport: "Not reviewed",
     noVotes: "Character review was skipped; no overall score.",
+    incomplete: "Review incomplete",
+    dialogueScore: (score, votes) =>
+      `Dialogue fit: ${score}/5 · ${votes} valid vote(s)`,
+    dialogueNotAssessed: "Dialogue fit: Not assessed (no dialogue)",
+    dialogueUnknown: (votes) =>
+      `Dialogue fit: Unknown · ${votes} valid vote(s) (review incomplete)`,
+    dialogueMissing: "No usable dialogue-fit assessment is available.",
     passed: "Pass",
     failed: "Review",
     adopted: "Adopted",
@@ -321,18 +334,57 @@ function applyAppearance(value) {
   }
 }
 
+function dialogueAssessment(qa) {
+  const votes =
+    Number.isInteger(qa.dialogue_votes) && qa.dialogue_votes >= 0
+      ? qa.dialogue_votes
+      : 0;
+  const note =
+    typeof qa.dialogue_note === "string" ? qa.dialogue_note.trim() : "";
+  if (
+    qa.dialogue_status === "assessed" &&
+    Number.isInteger(qa.dialogue_score) &&
+    qa.dialogue_score >= 1 &&
+    qa.dialogue_score <= 5 &&
+    note &&
+    votes > 0
+  )
+    return { status: "assessed", score: qa.dialogue_score, note, votes };
+  if (qa.dialogue_status === "not_assessed" && qa.dialogue_score == null)
+    return { status: "not_assessed", note: "", votes: 0 };
+  return { status: "unknown", note, votes };
+}
+
+function renderDialogue(assessment, target) {
+  const row = element(
+    "li",
+    assessment.status === "assessed"
+      ? t.dialogueScore(assessment.score, assessment.votes)
+      : assessment.status === "not_assessed"
+        ? t.dialogueNotAssessed
+        : t.dialogueUnknown(assessment.votes),
+    target,
+    "dialogue-result",
+  );
+  row.dataset.dialogueStatus = assessment.status;
+  if (assessment.status !== "not_assessed")
+    element("p", assessment.note || t.dialogueMissing, row, "dialogue-note");
+}
+
 function renderScore(qa, target) {
   if (!qa) {
     element("p", t.noReport, target, "muted");
     return;
   }
+  const dialogue = dialogueAssessment(qa);
   if (!qa.votes) {
     element("p", t.noVotes, target, "muted");
+    renderDialogue(dialogue, element("ul", undefined, target));
     return;
   }
   element(
     "p",
-    `${qa.passed ? t.passed : t.failed} · ${t.score} ${Math.round(qa.score * 100)}/100 · ${qa.votes} ${t.votes}`,
+    `${dialogue.status === "unknown" ? t.incomplete : qa.passed ? t.passed : t.failed} · ${t.score} ${Math.round(qa.score * 100)}/100 · ${qa.votes} ${t.votes}`,
     target,
     "score",
   );
@@ -355,6 +407,7 @@ function renderScore(qa, target) {
   ]) {
     if (field in qa) element("li", t.metric(title, qa[field]), list);
   }
+  renderDialogue(dialogue, list);
   for (const issue of qa.issues ?? []) element("li", issue, list);
   const meta = [
     qa.model ? `${t.model}: ${qa.model}` : "",

@@ -156,8 +156,25 @@
               </li>
               <li>
                 <code>qa-review</code>: select candidates for assessment, then
-                inspect per-panel scores and issues. It never automatically
-                adopts or rejects images.
+                inspect character consistency, composition, dialogue fit and
+                issues for each panel. Composition and image quality are still
+                assessed without dialogue or reference images. Dialogue fit uses
+                the scene's actual speaker, dialogue type and text to check
+                whether the image's emotion, action and setting support the
+                dialogue. It does not require captions or speech bubbles in the
+                image. Dialogue is
+                assessed even without characters or reference images; identity
+                checks cover only characters with a reference image. The card
+                shows the model's 1–5 score, comment and valid vote count.
+                With dialogue, this score contributes 20% of the overall score
+                and must reach 3 to pass. Without dialogue, dialogue fit is
+                marked as not assessed and does not reduce the other scores.
+                Refusals, missing or invalid results, no majority of valid votes
+                and older reports
+                are marked as unknown; a panel with dialogue cannot pass with
+                an unknown result. Review the image, then explicitly adopt or
+                reject candidates. The panel never automatically adopts or
+                rejects images.
               </li>
               <li>
                 <code>finalize-studio</code>: select adopted drafts and a

@@ -1,8 +1,8 @@
 # Mio 旗舰续作：Wave 1–5 验收记录
 
-记录日期：2026-11-26。状态：**R2 整体 NOT VERIFIED PASS：新增 QA-DIALOGUE-M01 Medium 未关闭；QA 修复、全量门禁与完整新五席 R3 待完成**。
+记录日期：2026-11-26。状态：**R2 历史 NOT VERIFIED PASS 保留；QA 全部分支已实现并完成最新定向验证，即将冻结全量，新完整后端、CI 与完整五席 R3 待完成**。
 
-本文对照原始 `ai_studio_code (4).txt` 的 Wave 1–5 要求。R2 绑定冻结 HEAD `5569dc294fd16c7478abbd31317da7e9055c3be7` 及 ECD 构建：该候选本机完整后端 1738 项 / 1273.729 秒、前端 127 files / 1076 tests 和其余基础门禁通过，CI `45745955229` 三作业均 success，来源与口径见 §5.3。R1 的 8 个领域修复已原子 commit + push。R2 终盘只读覆盖审计新增真实 Medium `QA-DIALOGUE-M01`，架构席已独立确认并改签 `NOT VERIFIED PASS`；性能实测及两宽实际 TTS 点击补证已结束，但不能抵消 QA 能力缺口。QA 实现于 2026-11-26 12:12（UTC+8）获准开始，尚未完成，也没有新修复构建的门禁结论。R1 原 12 项 Medium、独立追加 `CS-M01` 和全部早期失败历史保留，R2 新增项另计；后续须修复、重跑全量基础门禁并完成新的完整五席 R3。
+本文对照原始 `ai_studio_code (4).txt` 的 Wave 1–5 要求。R2 绑定冻结 HEAD `5569dc294fd16c7478abbd31317da7e9055c3be7` 及 ECD 构建：该候选本机完整后端 1738 项 / 1273.729 秒、前端 127 files / 1076 tests 和其余基础门禁通过，CI `45745955229` 三作业均 success，来源与口径见 §5.3。R1 的 8 个领域修复已原子 commit + push。R2 终盘新增真实 Medium `QA-DIALOGUE-M01`，独立确认后整体 NOT VERIFIED PASS，七份归档文档已以 `196660f` 提交并推送。12:12（UTC+8）之后的 QA 主体和提交前补核发现的纯场景残留均已实现，最新 47 后端＋3 契约＋7 DOM 定向通过，即将冻结全量。原 45 项 PASS 仍只作第一版阶段记录；新完整后端、CI 与完整五席 R3 尚无通过结论，详见 §7.5。R1 原 12 项 Medium、独立追加 `CS-M01`、R2 新增项和全部早期失败历史分开保留，旧冻结构建结果不代替后续修复验证。
 
 产品方向与待办见[路线图](ROADMAP.md)，操作说明见 [README](../README.md)及[中英离线教程入口](../server/mio_server/manual/index.html)。以下浏览器专项由本机已安装 Chrome 158.0.8127.37 执行，使用隔离工作区和中性夹具；不是物理手机测试，也未调用真实 GPU 出图或付费模型服务。
 
@@ -278,7 +278,7 @@ R2 终盘覆盖审计新增的真实 Medium 单列如下，不改变 R1 原 12 �
 
 | 轮次与 finding ID | 严重度与独立核定 | 缺口与证据 | 修复及验证状态 |
 | --- | --- | --- | --- |
-| R2 / QA-DIALOGUE-M01 | Medium；架构席于 12:09:38 对冻结 5569 只读补核确认 | panel 已有 dialogue 的 speaker / kind / text，但 VLM judge prompt 未传入，结果解析、QAResult、aggregate 与评分卡 UI 均无台词契合度维度；无带参考图的 anchored characters 时还会直接 votes=0 跳过。动作、场景或镜头匹配不能替代用户要求的台词契合度 | 12:12 获准开始实现，尚未完成；未填修复 SHA，不记新门禁或新构建 PASS。R2 整体 NOT VERIFIED PASS，修复后须全量基础门禁及完整新五席 R3 |
+| R2 / QA-DIALOGUE-M01 | Medium；架构席于 12:09:38 对冻结 5569 只读补核确认 | 冻结代码中 panel 已有 dialogue 的 speaker / kind / text，但 VLM judge prompt 未传入，结果解析、QAResult、aggregate 与评分卡 UI 均无台词契合度维度；无带参考图的 anchored characters 时直接 votes=0 跳过。动作、场景或镜头匹配不能替代用户要求的台词契合度 | 台词及纯场景补充分支已实现，最新 47 后端＋3 契约＋7 DOM 定向通过，见 §7.5；原 45 项仅保留为第一版记录。修复 SHA 待本轮提交，新完整后端 / CI / R3 未记 PASS；R2 原结论与 Medium 待独立关闭状态保留 |
 
 任何 Blocker、High 或明确的 Medium 真实缺陷都须修复，重跑**全量基础门禁＋受影响独立复核**；不能只跑窄测，也不能把工具等待问题与产品缺陷混为一谈。真实 B/H/M 导致该轮不能通过，修复和门禁完成后须进行新的完整五席审计。只有连续完整一轮五位全部签发、无未决中高严重度问题、本机后端全量、Windows launcher 及对应修复提交 CI 均有通过证据，才可关闭本轮验收。
 
@@ -312,7 +312,27 @@ R2 基于上述冻结 HEAD 和已完成的本机完整门禁启动，对应 CI �
 
 TTS 补证绑定相同 5569/ECD：1440×900、390×844 两宽分别用真实 trusted click 调用原生 `speechSynthesis.speak` 一次，`SpeechSynthesisUtterance` 文本为“凌晨两点。”、`zh-CN`、本机 Microsoft Huihui voice、rate 约 0.95、pitch=1、volume=1。实际收到 trusted start→boundary→end，无 error / 外联，speaking 由 true→false，UI 恢复“台词试听完成。”。之前只有 voices=6 的证据不足仍保留；本轮未录音，不声称音质、用户扬声器音量或物理可听性。手感席自有 Chrome / fixture 于 12:11:37 全关，12:11:52 的 CIM 查询为 0。新增 TTS TEMP `mio-cross-feel-r2-tts-2b713e` 的 38 文件 / 621,966 B 已全删，目录不存在；原 summary 已合并原生调用、事件与关闭记录，当前仅留该 57,284 B 文件，SHA-256 为 `3338343a2f43eeb0f84c73861daba6614822cc910009331e518120e11fd199ca`。
 
-R2 五席实测及文字互核均已完成，无跨席证据冲突；架构与手感席均因同一个 QA-DIALOGUE-M01 签发 NOT VERIFIED PASS，按一项 Medium 去重，其余席本范围 PASS 不能冲抵它。因此 R2 整体保持 **NOT VERIFIED PASS**。后续 QA 修复尚未完成，**新的全量基础门禁及完整五席 R3 均待进行**；全轮最终清理待总控收口，不将旧冻结候选结果写成新实现 PASS。
+R2 五席实测及文字互核均已完成，无跨席证据冲突；架构与手感席均因同一个 QA-DIALOGUE-M01 签发 NOT VERIFIED PASS，按一项 Medium 去重，其余席本范围 PASS 不能冲抵它。R2 整体 **NOT VERIFIED PASS** 已随七文归档提交 `196660f` 推送，后续实现不回写该轮为通过。QA 修复及补充分支已完成最新定向验证，另列 §7.5；新完整后端、CI、完整五席 R3 及全轮最终清理仍待完成。
+
+### 7.5 QA-DIALOGUE-M01 修复实现与下一轮门禁快照
+
+以下属于 12:12 之后的新实现，不属于 5569/ECD 的 R2 浏览器采样。台词 speaker / kind / text 已进入 judge prompt；模型返回严格接受带解释的 1–5 整数评分，不把字符串、布尔值或越界值转成有效证据。多票须有效评审严格过半，台词项占总分 20%，最低 3/5；未知或未获过半不通过。即使没有带参考图的 anchored characters，只要存在非空台词仍调用评审；空台词保留未评审状态。解析、聚合、QAResult 与中英评分卡同步该维度，不能用动作 / 场景分数替代。
+
+提交前独立检查曾进一步发现：没有角色参考、也没有台词的纯场景路径直接给满分，不符合 R2 架构席的关闭标准；此问题计入原 QA-DIALOGUE-M01，不新增或冲减计数。该残留现已修正并完成最新定向验证：**所有显式 QA 候选都经过 judge＋aggregate**；无参考时 identity 为空、基础 scene / quality 按 50/50 的真实评分聚合，不再虚造 60% 的身份满分；无台词时 dialogue 为 not_assessed。视觉有效分严格为原生整数 1–5、有效票须过半，未知贡献为 0 且不能通过，quality<3 也阻止通过。原先 45 项后端定向仅保留为第一版记录，最新结果单列如下，不把它们当作完整后端或 R3。
+
+| 新实现的验证项 | 已取得的阶段事实 | 仍未取得的证据或限制 |
+| --- | --- | --- |
+| 第一版受影响定向 | 45 项后端＋3 项契约＋7 项 DOM 曾全部 PASS | 未覆盖提交前确认的纯场景满分捷径，仅保留为第一版阶段记录，不充当补充分支最终验证 |
+| 残留修正后最新定向 | 47 项后端 / 18.227 秒、3 项包契约 / 7.344 秒、7 项 DOM 均 PASS；DOM 工具 wall time 为 1.1717803 秒 | wall time 不等于测试框架报告的 DOM 执行时长；新增方法与真实 jobs 子情景不重复累加计数。定向仍不替代完整后端、CI 或 R3 |
+| 补充分支窄静态检查 | 涉及 5 个 Python 文件的 Ruff / 格式，以及 UTF-8 / diff 检查均退出 0 | 此处 diff 检查退出 0 不表示工作树没有源码变更 |
+| 完整前端 | 本轮 format:check、typecheck、Vitest、build 的完整命令均退出 0 | Vitest 新摘要被截断，不填写未经取得的新 files / tests 计数或耗时；不能沿用 R2 的 49.14 秒作为本轮耗时 |
+| Python 静态与配置 | 全量 Ruff 460 files 及配置检查 11 项 PASS | 不由静态绿色推导新完整后端绿色 |
+| Spike | 80 项 / 19.069 秒 PASS | 本轮结果与 R2 的历史计数、耗时分开 |
+| 扩展与生成物 | 21 个 offline 面板脚本、25 包 CTK、生成物 check 均 PASS | 不以离线模拟或生成物一致性代替真实模型质量或独立审计 |
+| 文档链接 | 205 份文档、1420 个链接，0 broken；58 notices | notices 保留，不改写成零提示 |
+| 新完整后端 / 新 CI / R3 | **待完成，即将冻结全量** | 纯场景补充分支已实现并完成上列定向验证；不填修复提交 SHA、后端终态、最新远端 CI 通过或独立签发，由主控冻结后继续核对 |
+
+独立只读 `qa_completion_boundary_check` 已复核纯场景分支实质关闭、权重与严格结果处理未见明显错误，当前具备冻结条件；这是定向边界复核，不是完整 R3 签发。全部分支实现与最新定向通过不关闭验收层面的 QA-DIALOGUE-M01，也不勾选全验收；冻结后仍须对修复后的精确提交完成全量基础门禁＋受影响独立复核，并开展新的完整五席 R3。
 
 ## 8. 已发生的专项 finding 与修复记录
 
@@ -335,7 +355,7 @@ R2 五席实测及文字互核均已完成，无跨席证据冲突；架构与�
 | 上轮后端全量/编码 | 写文件依赖平台默认编码                                                           | 显式使用 UTF-8，源文件编码专项 2 项通过                                                                                                                                   | 跨平台编码修复，专项通过           |
 | 上轮后端全量/Git  | Windows `patch.dict(os.environ)` 恢复空值后，原生环境丢失 VALUE，子 Git 退出 128 | 记录前后 rc 与显式环境对照；runner 只清理自身客户端 COUNT / KEY / VALUE，保留 global / system，失败诊断脱敏且不重试；模块 7 项通过；持久化候选完整 1719 项随后通过，见 §5.2 | 测试进程环境隔离，原失败历史保留   |
 | R2 原生失焦探针 | headless / Playwright headed focus 仿真不足，默认 focus emulation 曾使两页均 hasFocus=true | 改用 pure CDP 原生 OS focus，两宽真→假→真、blur 时 hidden=false / paused=true、固定 3 秒 decoded0；不把原初探写成通过，不外推整 browser 零绘制 | 探针补证，旧轮次保留 |
-| R2 终盘 QA 覆盖 | 台词契合度全链未实现，无 anchored characters 时还会 votes=0 跳过 | 架构席独立确认 QA-DIALOGUE-M01 为真实 Medium，R2 整体 NOT VERIFIED PASS；12:12 起实现中，修复与新的完整门禁 / R3 尚无结论 | 新增产品 Medium，未关闭 |
+| R2 终盘 QA 覆盖 | 冻结 5569 中台词契合度全链未实现，无 anchored characters 时还会 votes=0 跳过 | 架构席独立确认 QA-DIALOGUE-M01 为真实 Medium，R2 整体 NOT VERIFIED PASS；后续台词主体和提交前发现的纯场景满分捷径均已修正，最新 47 后端＋3 契约＋7 DOM 定向通过。第一版 45 项记录不替代此轮，新完整后端 / CI / R3 仍待 | 新增产品 Medium，待完整独立复验关闭 |
 
 ## 9. 收口清单
 
@@ -348,7 +368,8 @@ R2 五席实测及文字互核均已完成，无跨席证据冲突；架构与�
 - [x] 取得 R1 修复后完整门禁证据：本机 1738 项 / 1273.729 秒、skipped=8、exit 0；前端 127 files / 1076 tests 及其余基础项通过，未用基线替代。
 - [x] 核对 R2 冻结 HEAD 的 CI `45745955229`：三作业均 success，后端各自耗时和 skip 数单独记录；R1 的 8 个领域修复已原子 commit + push。此项不覆盖 12:12 后 QA 修改。
 - [x] 保留 R2 终盘未通过结论：QA-DIALOGUE-M01 为独立确认的新增 Medium；R1 原 12 项与独立追加 CS-M01 计数不变。性能实测与两宽实际 TTS 点击补证已结束，旧失败历史未抹去。
-- [ ] 完成 QA-DIALOGUE-M01 修复，重跑全量基础门禁＋受影响独立复核，并开展新的完整五席 R3；实现刚开始，未记完成或新门禁通过。
+- [x] 完成 QA-DIALOGUE-M01 全部分支实现与最新定向：每个显式候选 judge＋aggregate，无参考 scene / quality 真实 50/50，无假身份分；原生整数评分、有效票过半、未知为 0 不通过及 quality<3 阻止通过。47 后端＋3 包契约＋7 DOM PASS；原 45 项仅保留第一版历史。此项不是 Medium 独立关闭或全验收通过。
+- [ ] 取得 QA 修复后新完整后端、新 CI 与其余全量基础门禁收口证据，完成受影响独立复核并开展完整五席 R3；不以 R2 冻结构建或第一版定向代替。
 - [x] 归档 R2 性能终盘分层指标、C4-M01 实际新构建关闭及五席无冲突互核；性能仅留 269,667 B summary，截图 0，自有实例已关闭。其它席范围 PASS 未冲抵 QA Medium。
 - [ ] 收口全轮最终临时资源清理；77 份旧中间文件及各席自有资源的已清理事实分别保留，性能 / TTS 自有实例已关闭。指定 recovery 目录 12 文件 / 81,794 B 由用户明确接手手动处理，是不再代理删除的例外；私人运行数据仍受保护。
 

@@ -122,7 +122,7 @@ macOS / Linux 将最后一行换成 `./start.sh`。开发界面时另开终端�
 | 扩展                                               | 能力                           |
 | -------------------------------------------------- | ------------------------------ |
 | [单格精修](extensions/panel-retouch/README.md)     | 支持键盘的蒙版修图、外扩与指令编辑 |
-| [质检与挑图](extensions/qa-review/README.md)       | VLM 评审、逐格复核与显式采纳   |
+| [质检与挑图](extensions/qa-review/README.md)       | VLM 评审、台词契合度、逐格复核与显式采纳；无台词或参考图仍评构图与画面质量 |
 | [成品精修](extensions/finalize-studio/README.md)   | 已采用草稿的批量精修与回退     |
 | [变体工坊](extensions/variant-workshop/README.md)  | 角色、服装、场景、画风四轴组合与比较 |
 | [剧本助手](extensions/script-assistant/README.md)  | 剧本和节奏建议的逐项审阅       |

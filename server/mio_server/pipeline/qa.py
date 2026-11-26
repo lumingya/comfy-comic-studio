@@ -19,6 +19,7 @@ from .refs import pick_character_ref
 from .story import to_story
 
 PASS_SCORE = 0.7
+PASS_DIALOGUE = 3
 
 
 def aggregate(story: dict, panel: dict, runs: list[dict], model: str = "") -> QAResult:
@@ -53,6 +54,10 @@ def aggregate(story: dict, panel: dict, runs: list[dict], model: str = "") -> QA
 
     def med(key):
         vals = [r[key] for r in runs if isinstance(r.get(key), int)]
+        if key in {"scene", "quality"}:
+            vals = [value for value in vals if type(value) is int and 1 <= value <= 5]
+            if len(vals) * 2 <= len(runs):
+                return None
         return statistics.median_low(vals) if vals else None
 
     extra, scene, quality = med("extra_people"), med("scene"), med("quality")
@@ -62,21 +67,80 @@ def aggregate(story: dict, panel: dict, runs: list[dict], model: str = "") -> QA
         issues.append(f"多出 {extra} 个无关人物")
     if shot_ok is False:
         issues.append(f"镜头 / 场景不符（{scene}/5）")
+    if scene is None:
+        issues.append("镜头 / 场景未获得过半有效评分")
+    if quality is None:
+        issues.append("画面质量未获得过半有效评分")
     if quality is not None and quality <= 2:
         issues.append(f"画面质量差（{quality}/5）")
-    parts = [c.score / 5 for c in identity] or [1.0]
-    score = sum(parts) / len(parts) * 0.6
-    score += (scene or 3) / 5 * 0.2 + (quality or 3) / 5 * 0.2
+    # Unreferenced characters have no identity evidence, not a free perfect identity.
+    # In that case normalize the two assessed visual dimensions to equal weights.
+    parts = [c.score / 5 for c in identity]
+    score = sum(parts) / len(parts) * 0.6 if parts else 0
+    visual_weight = 0.2 if parts else 0.5
+    score += (scene or 0) / 5 * visual_weight + (quality or 0) / 5 * visual_weight
     if characters_ok is False:
         score *= 0.8
+    dialogue_score, dialogue_note, dialogue_votes = None, "", 0
+    dialogue_status = "not_assessed"
+    if J.dialogue_lines(panel):
+        valid = [
+            r
+            for r in runs
+            if r.get("dialogue_status") == "assessed"
+            and type(r.get("dialogue_score")) is int
+            and 1 <= r["dialogue_score"] <= 5
+            and isinstance(r.get("dialogue_note"), str)
+            and r["dialogue_note"].strip()
+        ]
+        dialogue_votes = len(valid)
+        # A strict majority must assess the lines; a lone confident answer cannot
+        # hide refusals. Keep the original score policy unchanged when no lines exist.
+        if dialogue_votes * 2 > len(runs):
+            dialogue_score = statistics.median_low([r["dialogue_score"] for r in valid])
+            dialogue_note = next(
+                r["dialogue_note"].strip() for r in valid if r["dialogue_score"] == dialogue_score
+            )
+            dialogue_status = "assessed"
+            if dialogue_score < PASS_DIALOGUE:
+                issues.append(f"台词契合度不符（{dialogue_score}/5）：{dialogue_note}")
+        else:
+            dialogue_status = "unknown"
+            notes = list(
+                dict.fromkeys(
+                    r["dialogue_note"].strip()
+                    for r in runs
+                    if isinstance(r.get("dialogue_note"), str) and r["dialogue_note"].strip()
+                )
+            )
+            dialogue_note = f"有效评分 {dialogue_votes}/{len(runs)}，未超过半数"
+            if notes:
+                dialogue_note += "：" + "；".join(notes)
+            issues.append(f"台词契合度未知：{dialogue_note}")
+        # Dialogue contributes 20%; 3/5 means broadly compatible and is the pass
+        # floor. Unknown contributes nothing, is labelled incomplete, and cannot pass.
+        score = score * 0.8 + (dialogue_score / 5 * 0.2 if dialogue_score is not None else 0)
     score = round(max(0.0, min(1.0, score)), 3)
-    passed = all_ok and characters_ok is not False and shot_ok is not False and score >= PASS_SCORE
+    passed = (
+        all_ok
+        and characters_ok is not False
+        and shot_ok is True
+        and quality is not None
+        and quality >= 3
+        and score >= PASS_SCORE
+    )
+    if dialogue_status != "not_assessed":
+        passed = passed and dialogue_score is not None and dialogue_score >= PASS_DIALOGUE
     return QAResult(
         passed=passed,
         score=score,
         identity=identity,
         shot_ok=shot_ok,
         characters_ok=characters_ok,
+        dialogue_score=dialogue_score,
+        dialogue_note=dialogue_note,
+        dialogue_status=dialogue_status,
+        dialogue_votes=dialogue_votes,
         issues=issues,
         votes=len(runs),
         model=model,
@@ -161,7 +225,11 @@ class QAService:
                 )
                 if pick:
                     anchors[pc.character_id] = pick[0].asset_id
-            pv = {**pv, "characters": [c for c in pv["characters"] if c["id"] in anchors]}
+            pv = {
+                **pv,
+                "expected_characters": pv["characters"],
+                "characters": [c for c in pv["characters"] if c["id"] in anchors],
+            }
             specs.append(
                 ItemSpec(
                     input={
@@ -201,23 +269,16 @@ class QAService:
         try:
             for _ in range(max(1, inp["votes"])):
                 ctx.raise_if_cancelled()
-                if inp["panel"]["characters"]:
-                    run = J.judge_panel(llm, inp["story"], inp["panel"], anchors, image)
-                    model = run.get("model") or model
-                    runs.append(run)
+                run = J.judge_panel(llm, inp["story"], inp["panel"], anchors, image)
+                model = run.get("model") or model
+                runs.append(run)
             faces = []
             if inp.get("faces"):
                 size = tuple(inp["size"]) if all(inp["size"]) else (1, 1)
                 faces = J.locate_faces(llm, inp["story"], inp["panel"], image, size)
         except Exception as exc:  # VLM calls are read-only and cheap to repeat: a plain failure
             raise ExecError(f"VLM 质检失败：{exc}", kind="vlm_error", sent=False) from None
-        qa = (
-            aggregate(inp["story"], inp["panel"], runs, model)
-            if inp["panel"]["characters"]
-            else QAResult(
-                passed=True, score=1.0, issues=["无角色格：跳过一致性检查"], votes=0, model=model
-            )
-        )
+        qa = aggregate(inp["story"], inp["panel"], runs, model)
         return {"qa": qa.model_dump(), "faces": faces}
 
     def on_complete(self, job: dict, item: dict, result: dict) -> None:

@@ -10467,6 +10467,40 @@
       "title": "Checked At",
       "type": "string"
      },
+     "dialogue_note": {
+      "default": "",
+      "title": "Dialogue Note",
+      "type": "string"
+     },
+     "dialogue_score": {
+      "anyOf": [
+       {
+        "maximum": 5.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Dialogue Score"
+     },
+     "dialogue_status": {
+      "default": "unknown",
+      "enum": [
+       "assessed",
+       "not_assessed",
+       "unknown"
+      ],
+      "title": "Dialogue Status",
+      "type": "string"
+     },
+     "dialogue_votes": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Dialogue Votes",
+      "type": "integer"
+     },
      "identity": {
       "items": {
        "$ref": "#/components/schemas/IdentityCheck"
@@ -10520,6 +10554,10 @@
      "shot_ok",
      "characters_ok",
      "action_ok",
+     "dialogue_score",
+     "dialogue_note",
+     "dialogue_status",
+     "dialogue_votes",
      "issues",
      "votes",
      "model",

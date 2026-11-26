@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -24,12 +25,23 @@ from .test_jobs import drain
 
 class FakeVLM:
     identity = 5
+    dialogue_score = 4
+    dialogue_note = "The visible mood and setting support the line."
 
     def vision_json(self, text, images):
         if text.startswith("Locate"):
             return {"faces": [{"name": "unknown", "box": [100, 100, 400, 400]}]}, SimpleNamespace(
                 model="vlm", seconds=0
             )
+        dialogue = json.loads(
+            text.split("<dialogue_data>\n", 1)[1].split("\n</dialogue_data>", 1)[0]
+        )
+        note = (
+            f"{FakeVLM.dialogue_note} "
+            f"({dialogue[0]['speaker']}/{dialogue[0]['kind']}: {dialogue[0]['text']})"
+            if dialogue
+            else ""
+        )
         return (
             {
                 "characters": [
@@ -38,6 +50,7 @@ class FakeVLM:
                 "extra_people": 0,
                 "scene": 4,
                 "quality": 4,
+                "dialogue": {"score": FakeVLM.dialogue_score if dialogue else None, "note": note},
             },
             SimpleNamespace(model="vlm", seconds=0.1),
         )
@@ -248,6 +261,36 @@ class RenderTests(Harness):
 
 
 class QATests(Harness):
+    def test_nonidentity_assessment_does_not_award_unassessed_identity_or_visual_scores(self):
+        story = make_story(4)
+        panel = {"id": "p01", "characters": [], "dialogue": []}
+        for scene, quality, expected_score, passed in [
+            (4, 4, 0.8, True),
+            (2, 4, 0.6, False),
+            (4, 2, 0.6, False),
+            (5, None, 0.5, False),
+            (None, 5, 0.5, False),
+            (True, 5, 0.5, False),
+            (5, 0, 0.5, False),
+        ]:
+            with self.subTest(scene=scene, quality=quality):
+                run = {"verdicts": [], "extra_people": 0, "scene": scene, "quality": quality}
+                qa = Q.aggregate(story, panel, [run])
+                self.assertEqual((qa.score, qa.passed), (expected_score, passed))
+                self.assertEqual(qa.identity, [])
+                self.assertEqual(qa.dialogue_status, "not_assessed")
+                self.assertEqual(qa.votes, 1)
+                if not passed:
+                    self.assertTrue(qa.issues)
+        runs = [
+            {"verdicts": [], "extra_people": 0, "scene": scene, "quality": 5}
+            for scene in (5, None, None)
+        ]
+        qa = Q.aggregate(story, panel, runs)
+        self.assertFalse(qa.passed)
+        self.assertIsNone(qa.shot_ok)
+        self.assertEqual(qa.score, 0.5)
+
     def test_aggregate_median_and_majority(self):
         story = make_story(4)
         panel = {"id": "p02", "characters": [{"id": "lin"}]}
@@ -284,6 +327,11 @@ class QATests(Harness):
         ep = self.run_job(self.render.render(self.episode.id, ["p02"], candidates=2))
         ep = self.run_job(self.qa.submit(self.episode.id, votes=2))
         self.assertTrue(all(t.qa and t.qa.passed for t in ep.takes))
+        self.assertTrue(all(t.qa.dialogue_status == "assessed" for t in ep.takes))
+        self.assertTrue(
+            all(t.qa.dialogue_score == 4 and t.qa.dialogue_votes == 2 for t in ep.takes)
+        )
+        self.assertIn("lin/speech: 又是你啊。", ep.takes[0].qa.dialogue_note)
         self.assertEqual(len(ep.takes[0].faces), 1)
         adopted = ep.adopted("p02")
         self.assertIsNotNone(adopted)

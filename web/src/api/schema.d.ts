@@ -6831,6 +6831,24 @@ export interface components {
             characters_ok: boolean | null;
             /** Action Ok */
             action_ok: boolean | null;
+            /** Dialogue Score */
+            dialogue_score: number | null;
+            /**
+             * Dialogue Note
+             * @default
+             */
+            dialogue_note: string;
+            /**
+             * Dialogue Status
+             * @default unknown
+             * @enum {string}
+             */
+            dialogue_status: "assessed" | "not_assessed" | "unknown";
+            /**
+             * Dialogue Votes
+             * @default 0
+             */
+            dialogue_votes: number;
             /** Issues */
             issues: string[];
             /**

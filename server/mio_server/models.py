@@ -395,6 +395,10 @@ class QAResult(StrictModel):
     shot_ok: bool | None = None
     characters_ok: bool | None = None
     action_ok: bool | None = None
+    dialogue_score: int | None = Field(default=None, ge=1, le=5, strict=True)
+    dialogue_note: str = ""
+    dialogue_status: Literal["assessed", "not_assessed", "unknown"] = "unknown"
+    dialogue_votes: int = Field(default=0, ge=0)
     issues: list[str] = Field(default_factory=list)
     votes: int = 1
     model: str = ""

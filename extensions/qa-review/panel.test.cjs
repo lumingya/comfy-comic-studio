@@ -40,6 +40,10 @@ function fixture() {
           shot_ok: true,
           characters_ok: true,
           action_ok: false,
+          dialogue_status: "assessed",
+          dialogue_score: 2,
+          dialogue_note: "The expression conflicts with the line.",
+          dialogue_votes: 2,
           model: "vlm-a",
           checked_at: "today",
         },
@@ -60,6 +64,10 @@ function fixture() {
           shot_ok: true,
           characters_ok: true,
           action_ok: true,
+          dialogue_status: "assessed",
+          dialogue_score: 4,
+          dialogue_note: "The calm expression supports the line.",
+          dialogue_votes: 3,
         },
       },
       {
@@ -387,6 +395,209 @@ async function verifyAppearanceAndScoring() {
   );
 }
 
+async function verifyDialogueScoringAndLocales() {
+  const value = fixture();
+  const note =
+    'The smile conflicts with the warning. <img id="dialogue-injection" src="x" onerror="window.dialogueInjected=true">';
+  value.takes[0].qa.dialogue_note = note;
+  const p = await createPanel(
+    async (message) =>
+      message.request_id === "episode"
+        ? { data: structuredClone(value) }
+        : { data: {} },
+    { locale: "en" },
+  );
+  const candidate = (id) =>
+    p.w.document
+      .querySelector(`input[data-take-id="${id}"]`)
+      .closest(".candidate");
+  try {
+    await p.click("load");
+    let row = candidate("low").querySelector(".dialogue-result");
+    assert.equal(row.dataset.dialogueStatus, "assessed");
+    assert.match(row.textContent, /Dialogue fit: 2\/5 · 2 valid vote\(s\)/);
+    assert.equal(row.querySelector(".dialogue-note").textContent, note);
+    assert.equal(p.w.document.getElementById("dialogue-injection"), null);
+    assert.equal(p.w.dialogueInjected, undefined);
+    assert.match(
+      candidate("high").querySelector(".dialogue-result").textContent,
+      /Dialogue fit: 4\/5 · 3 valid vote\(s\)/,
+    );
+    assert.match(
+      candidate("high").querySelector(".score").textContent,
+      /^Pass/,
+    );
+    p.send("mio:panel:appearance", { appearance: { locale: "zh-CN" } });
+    row = candidate("low").querySelector(".dialogue-result");
+    assert.match(row.textContent, /台词契合度：2\/5 · 2 有效票/);
+    assert.equal(row.querySelector(".dialogue-note").textContent, note);
+    assert.match(
+      candidate("high").querySelector(".score").textContent,
+      /^通过/,
+    );
+    assert.equal(p.w.document.getElementById("dialogue-injection"), null);
+  } finally {
+    p.close();
+  }
+  console.log(
+    "Native dialogue scores, evidence, votes, locale updates and safe text PASS",
+  );
+}
+
+async function verifyDialogueUnknownAndNotAssessed() {
+  const value = fixture();
+  const legacy = { passed: true, score: 0.92, votes: 3, action_ok: true };
+  const unknownNote =
+    'Cannot assess <script id="dialogue-script">bad()</script>';
+  const cases = [
+    ["legacy", legacy],
+    ["zero-votes", { ...legacy, score: 1, votes: 0 }],
+    [
+      "refusal",
+      {
+        ...legacy,
+        passed: false,
+        score: 0.64,
+        dialogue_status: "unknown",
+        dialogue_score: null,
+        dialogue_note: unknownNote,
+        dialogue_votes: 1,
+      },
+    ],
+    ...[null, "5", true, 6].map((score, index) => [
+      `invalid-${index}`,
+      {
+        ...legacy,
+        dialogue_status: "assessed",
+        dialogue_score: score,
+        dialogue_note: "This malformed score is not evidence.",
+        dialogue_votes: 3,
+      },
+    ]),
+    [
+      "no-dialogue",
+      {
+        ...legacy,
+        dialogue_status: "not_assessed",
+        dialogue_score: null,
+        dialogue_note: "Do not show a hallucinated assessment for empty lines.",
+        dialogue_votes: 0,
+      },
+    ],
+    ["not-reviewed", null],
+  ];
+  value.takes = cases.map(([id, qa]) => ({
+    id,
+    panel_id: "p1",
+    stage: "draft",
+    status: "candidate",
+    qa,
+  }));
+  const p = await createPanel(
+    async (message) =>
+      message.request_id === "episode"
+        ? { data: structuredClone(value) }
+        : { data: {} },
+    { locale: "en" },
+  );
+  const candidate = (id) =>
+    p.w.document
+      .querySelector(`input[data-take-id="${id}"]`)
+      .closest(".candidate");
+  try {
+    await p.click("load");
+    for (const [id] of cases.filter(
+      ([id]) => id !== "no-dialogue" && id !== "not-reviewed",
+    )) {
+      const card = candidate(id);
+      const row = card.querySelector(".dialogue-result");
+      assert.equal(row.dataset.dialogueStatus, "unknown", id);
+      assert.match(row.textContent, /Dialogue fit: Unknown/, id);
+      assert.doesNotMatch(row.textContent, /Dialogue fit: [0-5]\/5/, id);
+      if (id === "zero-votes") {
+        assert.equal(card.querySelector(".score"), null);
+        assert.doesNotMatch(card.textContent, /100\/100/);
+      } else {
+        assert.match(
+          card.querySelector(".score").textContent,
+          /^Review incomplete/,
+          id,
+        );
+      }
+    }
+    assert.match(
+      candidate("legacy").textContent,
+      /No usable dialogue-fit assessment/,
+    );
+    assert.equal(
+      candidate("refusal").querySelector(".dialogue-note").textContent,
+      unknownNote,
+    );
+    assert.equal(p.w.document.getElementById("dialogue-script"), null);
+    let row = candidate("no-dialogue").querySelector(".dialogue-result");
+    assert.equal(row.dataset.dialogueStatus, "not_assessed");
+    assert.equal(row.textContent, "Dialogue fit: Not assessed (no dialogue)");
+    assert.equal(row.querySelector(".dialogue-note"), null);
+    assert.match(
+      candidate("no-dialogue").querySelector(".score").textContent,
+      /^Pass/,
+    );
+    assert.equal(
+      candidate("not-reviewed").querySelector(".dialogue-result"),
+      null,
+    );
+    assert.match(candidate("not-reviewed").textContent, /Not reviewed/);
+    p.send("mio:panel:appearance", { appearance: { locale: "zh-CN" } });
+    assert.match(
+      candidate("legacy").querySelector(".dialogue-result").textContent,
+      /台词契合度：未知/,
+    );
+    assert.match(
+      candidate("legacy").querySelector(".score").textContent,
+      /^评审不完整/,
+    );
+    row = candidate("no-dialogue").querySelector(".dialogue-result");
+    assert.equal(row.textContent, "台词契合度：未评估（无台词）");
+    assert.match(candidate("zero-votes").textContent, /台词契合度：未知/);
+  } finally {
+    p.close();
+  }
+  console.log(
+    "Unknown/refused/legacy/invalid dialogue evidence, zero votes and not-assessed states PASS",
+  );
+}
+
+async function verifyDialogueEmptyAndErrorStates() {
+  let value = { id: "ep", panels: [], takes: [] };
+  let failRead = true;
+  const p = await createPanel(
+    async (message) => {
+      if (message.request_id === "episode" && failRead)
+        return { status: 503, data: { detail: "review unavailable" } };
+      return { data: structuredClone(value) };
+    },
+    { locale: "en" },
+  );
+  try {
+    await p.click("load");
+    assert.match(p.$("status").textContent, /503.*review unavailable/);
+    assert.equal(p.$("takes").querySelector(".dialogue-result"), null);
+    failRead = false;
+    await p.click("load");
+    assert.match(p.$("takes").textContent, /This episode has no panels/);
+    assert.equal(p.$("review-episode").disabled, true);
+    assert.equal(p.$("review-selected").disabled, true);
+    assert.equal(p.$("takes").querySelector(".dialogue-result"), null);
+    value = { id: "ep", panels: [{ id: "p1", order: 0 }], takes: [] };
+    await p.click("load");
+    assert.match(p.$("takes").textContent, /No candidate images/);
+    assert.equal(p.$("takes").querySelector(".dialogue-result"), null);
+  } finally {
+    p.close();
+  }
+  console.log("Empty and failed reads do not invent dialogue score cards PASS");
+}
+
 async function verifyReviewActionsAndBatchAdoption() {
   let value = fixture();
   const p = await createPanel(
@@ -597,6 +808,9 @@ async function verifyErrorsAndImageBridge() {
 (async () => {
   await verifyManifest();
   await verifyAppearanceAndScoring();
+  await verifyDialogueScoringAndLocales();
+  await verifyDialogueUnknownAndNotAssessed();
+  await verifyDialogueEmptyAndErrorStates();
   await verifyReviewActionsAndBatchAdoption();
   await verifyErrorsAndImageBridge();
 })().catch((error) => {

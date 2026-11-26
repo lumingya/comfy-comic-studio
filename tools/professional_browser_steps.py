@@ -259,9 +259,22 @@ def qa(page, frame, origin, _downloads, _folder):
     frame.locator("#confirm-action").click()
     job = wait_job(page, origin, ids, "qa.check")
     assert job["snapshot"]["auto_adopt"] is False
+    result = job["items"][0]["result"]["qa"]
+    lines = job["items"][0]["input"]["panel"]["dialogue"]
+    assert lines and lines[0]["speaker"] == "lin" and lines[0]["kind"] == "speech"
+    assert result["dialogue_status"] == "assessed"
+    assert result["dialogue_score"] == 2 and result["dialogue_votes"] == 3
+    assert lines[0]["text"] in result["dialogue_note"]
+    assert result["passed"] is False
+    assert any("台词契合度" in issue for issue in result["issues"])
     frame.locator("#refresh-job").click()
     expect(frame.locator("#job")).to_contain_text("1/1")
     expect(frame.locator("#takes")).to_contain_text(re.compile("一致性 2/5|identity 2/5", re.I))
+    expect(frame.locator("#takes")).to_contain_text(result["dialogue_note"])
+    expect(frame.locator("#takes")).to_contain_text(
+        re.compile("台词契合度.*2/5|dialogue fit.*2/5", re.I)
+    )
+    expect(frame.locator("#takes unsafe")).to_have_count(0)
     frame.locator("#issues button").filter(
         has_text=re.compile("一致性|identity", re.I)
     ).first.click()
@@ -277,6 +290,9 @@ def qa(page, frame, origin, _downloads, _folder):
     frame.locator("#severity-filter").select_option("all")
     return {
         "structured_score": True,
+        "native_dialogue_score": result["dialogue_score"],
+        "dialogue_votes": result["dialogue_votes"],
+        "dialogue_explanation_from_model": result["dialogue_note"],
         "issue_location": True,
         "auto_adopt": False,
         "severity_filter": True,
