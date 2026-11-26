@@ -13,6 +13,9 @@ import { readImageDimensions } from './imageHeader';
 
 export const PANEL_REQUEST_LIMIT = BRIDGE.panel.limits.requestBytes;
 export const PANEL_RESPONSE_LIMIT = BRIDGE.panel.limits.responseBytes;
+// JSON calls are server-bounded at 30 s; leave time before the shortest SDK's 30 s timeout
+// to abort the transport, reclaim its slot and deliver the correlated failure over the port.
+export const PANEL_REQUEST_TIMEOUT_MS = 29_000;
 const MAX_CONCURRENT = BRIDGE.panel.limits.concurrent;
 const MAX_REQUEST_IDS = BRIDGE.panel.limits.requestIds;
 
@@ -61,7 +64,10 @@ export function createPanelBridge(options: {
 }) {
   const { panel, session, context } = options;
   let appearance = options.appearance;
-  const pending = new Map<string, AbortController>();
+  const pending = new Map<
+    string,
+    { controller: AbortController; timer: ReturnType<typeof setTimeout> }
+  >();
   const seen = new Set<string>();
   const media = createPanelMedia(options.onDownloadChange);
   let disposed = false;
@@ -150,7 +156,17 @@ export function createPanelBridge(options: {
     }
     seen.add(rid);
     const controller = new AbortController();
-    pending.set(rid, controller);
+    const timer = setTimeout(() => {
+      // Ending the transport does not roll back a server-side mutation or retry the operation.
+      controller.abort();
+      pending.delete(rid);
+      error(
+        rid,
+        504,
+        'Panel request timed out. The operation may have completed; check its result before retrying.',
+      );
+    }, PANEL_REQUEST_TIMEOUT_MS);
+    pending.set(rid, { controller, timer });
     // Shape validation remains at the typed HTTP bridge; the frame supplies no headers or URL.
     const request = message as Extract<PanelFromFrame, { type: typeof BRIDGE.panel.types.request }>;
     const body: PanelCall = {
@@ -240,11 +256,17 @@ export function createPanelBridge(options: {
         const failure = cause as { status?: number; message?: string };
         error(rid, failure.status ?? 500, failure.message ?? 'Panel request failed.');
       })
-      .finally(() => pending.delete(rid));
+      .finally(() => {
+        clearTimeout(timer);
+        pending.delete(rid);
+      });
   };
 
   const abort = () => {
-    for (const controller of pending.values()) controller.abort();
+    for (const { controller, timer } of pending.values()) {
+      clearTimeout(timer);
+      controller.abort();
+    }
     pending.clear();
     media.clear();
   };

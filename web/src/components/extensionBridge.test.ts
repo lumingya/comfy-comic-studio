@@ -1,12 +1,15 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ExtensionPanel } from '../api/open';
 import { BRIDGE } from '../api/extensionProtocol';
+import * as imageHeader from './imageHeader';
 import {
   createPanelBridge,
   PANEL_REQUEST_LIMIT,
+  PANEL_REQUEST_TIMEOUT_MS,
   PANEL_RESPONSE_LIMIT,
   type PanelCall,
   type PanelResult,
+  type PanelUploadCall,
 } from './extensionBridge';
 
 const panel: ExtensionPanel = {
@@ -49,7 +52,12 @@ function setup(
     }),
   );
   const download = vi.fn();
-  const uploadRequest = vi.fn(async () => ({ status: 201, data: { id: 'asset' } }));
+  const uploadRequest = vi.fn(
+    async (_body: PanelUploadCall, _blob: Blob, _signal: AbortSignal) => ({
+      status: 201,
+      data: { id: 'asset' },
+    }),
+  );
   const bridge = createPanelBridge({
     panel,
     session: 'nonce',
@@ -118,6 +126,233 @@ function png(width = 4096, height = 4096, bytes = 33): Blob {
 }
 
 describe('sandbox panel bridge', () => {
+  describe('request deadlines', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    it('aborts all occupied transports at the deadline and immediately accepts a new request', async () => {
+      vi.useFakeTimers();
+      const s = setup(() => new Promise(() => {}));
+      try {
+        s.ready();
+        for (let i = 0; i < 4; i++) s.call(`pending-${i}`);
+        s.call('limited');
+        expect(s.request).toHaveBeenCalledTimes(4);
+        expect(s.postMessage).toHaveBeenLastCalledWith(
+          expect.objectContaining({ rid: 'limited', status: 429 }),
+        );
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS - 1);
+        expect(s.request.mock.calls.every(([, signal]) => !signal.aborted)).toBe(true);
+        s.call('still-limited');
+        expect(s.postMessage).toHaveBeenLastCalledWith(
+          expect.objectContaining({ rid: 'still-limited', status: 429 }),
+        );
+
+        await vi.advanceTimersByTimeAsync(1);
+        expect(s.request.mock.calls.every(([, signal]) => signal.aborted)).toBe(true);
+        for (let i = 0; i < 4; i++)
+          expect(s.postMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ rid: `pending-${i}`, status: 504, ok: false }),
+          );
+        expect(vi.getTimerCount()).toBe(0);
+        s.request.mockResolvedValueOnce({ status: 200, data: { recovered: true } });
+        s.call('recovered');
+        await vi.advanceTimersByTimeAsync(0);
+        expect(s.postMessage).toHaveBeenLastCalledWith(
+          expect.objectContaining({ rid: 'recovered', status: 200, ok: true }),
+        );
+        expect(s.request).toHaveBeenCalledTimes(5);
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        s.bridge.dispose();
+      }
+    });
+
+    it('recovers after two timed-out read rounds and ignores their late results', async () => {
+      vi.useFakeTimers();
+      const resolve: ((result: PanelResult) => void)[] = [];
+      const s = setup(() => new Promise((done) => resolve.push(done)));
+      try {
+        s.ready();
+        for (let round = 0; round < 2; round++) {
+          s.call(`episode-${round}`);
+          s.call(`profiles-${round}`);
+          expect(s.request).toHaveBeenCalledTimes((round + 1) * 2);
+          await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS);
+        }
+        s.request.mockResolvedValueOnce({ status: 200, data: { id: 'ep' } });
+        s.call('restored');
+        await vi.advanceTimersByTimeAsync(0);
+        expect(s.postMessage).toHaveBeenLastCalledWith(
+          expect.objectContaining({ rid: 'restored', status: 200 }),
+        );
+        s.call('episode-0');
+        expect(s.postMessage).toHaveBeenLastCalledWith(
+          expect.objectContaining({ rid: 'episode-0', status: 409 }),
+        );
+        const replies = s.postMessage.mock.calls.length;
+        for (const done of resolve) done({ status: 200, data: { stale: true } });
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS);
+        expect(s.postMessage).toHaveBeenCalledTimes(replies);
+        expect(s.request).toHaveBeenCalledTimes(5);
+        expect(s.mutation).not.toHaveBeenCalled();
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        s.bridge.dispose();
+      }
+    });
+
+    it('clears deadlines after success, returned failures and thrown failures', async () => {
+      vi.useFakeTimers();
+      const s = setup();
+      try {
+        s.ready();
+        s.request.mockResolvedValueOnce({ status: 200, data: null });
+        s.request.mockResolvedValueOnce({ status: 403, data: { detail: 'Denied' } });
+        s.request.mockRejectedValueOnce(new Error('Offline'));
+        s.call('success');
+        s.call('denied');
+        s.call('offline');
+        await vi.advanceTimersByTimeAsync(0);
+        expect(vi.getTimerCount()).toBe(0);
+        expect(s.request.mock.calls.every(([, signal]) => !signal.aborted)).toBe(true);
+        for (const [rid, status] of [
+          ['success', 200],
+          ['denied', 403],
+          ['offline', 500],
+        ])
+          expect(s.postMessage).toHaveBeenCalledWith(expect.objectContaining({ rid, status }));
+        const replies = s.postMessage.mock.calls.length;
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS);
+        expect(s.postMessage).toHaveBeenCalledTimes(replies);
+      } finally {
+        s.bridge.dispose();
+      }
+    });
+
+    it('clears deadlines on navigation abort and disposal without timeout replies', async () => {
+      vi.useFakeTimers();
+      const s = setup(() => new Promise(() => {}));
+      try {
+        s.ready();
+        s.call('navigated');
+        s.bridge.abort();
+        expect(s.request.mock.calls[0][1].aborted).toBe(true);
+        expect(vi.getTimerCount()).toBe(0);
+        s.call('disposed');
+        const replies = s.postMessage.mock.calls.length;
+        s.bridge.dispose();
+        expect(s.request.mock.calls[1][1].aborted).toBe(true);
+        expect(vi.getTimerCount()).toBe(0);
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS);
+        expect(s.postMessage).toHaveBeenCalledTimes(replies);
+        expect(s.port.close).toHaveBeenCalledOnce();
+      } finally {
+        s.bridge.dispose();
+      }
+    });
+
+    it('aborts an overdue write once, warns to check its result and never retries it', async () => {
+      vi.useFakeTimers();
+      let resolve!: (result: PanelResult) => void;
+      const s = setup(() => new Promise((done) => (resolve = done)));
+      try {
+        s.ready();
+        s.call('write', { request_id: 'run', body: { value: 1 } });
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS);
+        expect(s.request.mock.calls[0][1].aborted).toBe(true);
+        expect(s.postMessage).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            rid: 'write',
+            status: 504,
+            data: {
+              detail:
+                'Panel request timed out. The operation may have completed; check its result before retrying.',
+            },
+          }),
+        );
+        const replies = s.postMessage.mock.calls.length;
+        resolve({ status: 201, data: { job_id: 'already-created' } });
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS * 2);
+        expect(s.request).toHaveBeenCalledOnce();
+        expect(s.postMessage).toHaveBeenCalledTimes(replies);
+        expect(s.mutation).not.toHaveBeenCalled();
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        s.bridge.dispose();
+      }
+    });
+
+    it('bounds binary and upload transports without creating late media or retrying writes', async () => {
+      vi.useFakeTimers();
+      vi.spyOn(imageHeader, 'readImageDimensions').mockResolvedValue({ width: 2, height: 2 });
+      const s = setup();
+      let resolveBinary!: (binary: { blob: Blob; filename: string }) => void;
+      let resolveUpload!: (result: { status: number; data: { id: string } }) => void;
+      s.binaryRequest.mockImplementation(() => new Promise((done) => (resolveBinary = done)));
+      s.uploadRequest.mockImplementation(() => new Promise((done) => (resolveUpload = done)));
+      try {
+        s.ready();
+        s.call('binary', { request_id: 'file' });
+        s.send({
+          type: 'mio:panel:upload',
+          rid: 'upload',
+          request_id: 'mask',
+          filename: 'mask.png',
+          blob: png(2, 2),
+        });
+        await vi.advanceTimersByTimeAsync(0);
+        expect(s.uploadRequest).toHaveBeenCalledOnce();
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS);
+        expect(s.binaryRequest.mock.calls[0][2].aborted).toBe(true);
+        expect(s.uploadRequest.mock.calls[0][2].aborted).toBe(true);
+        for (const rid of ['binary', 'upload'])
+          expect(s.postMessage).toHaveBeenCalledWith(expect.objectContaining({ rid, status: 504 }));
+        const replies = s.postMessage.mock.calls.length;
+        resolveBinary({ blob: png(2, 2), filename: 'late.png' });
+        resolveUpload({ status: 201, data: { id: 'late-asset' } });
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS);
+        expect(s.binaryRequest).toHaveBeenCalledOnce();
+        expect(s.uploadRequest).toHaveBeenCalledOnce();
+        expect(s.download).not.toHaveBeenCalled();
+        expect(s.mutation).not.toHaveBeenCalled();
+        expect(s.postMessage).toHaveBeenCalledTimes(replies);
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        s.bridge.dispose();
+      }
+    });
+
+    it('includes image header reads in the upload deadline', async () => {
+      vi.useFakeTimers();
+      const read = vi.spyOn(FileReader.prototype, 'readAsArrayBuffer').mockImplementation(() => {});
+      const abort = vi.spyOn(FileReader.prototype, 'abort');
+      const s = setup();
+      try {
+        s.ready();
+        s.send({
+          type: 'mio:panel:upload',
+          rid: 'header',
+          request_id: 'mask',
+          filename: 'mask.png',
+          blob: png(2, 2),
+        });
+        expect(read).toHaveBeenCalledOnce();
+        await vi.advanceTimersByTimeAsync(PANEL_REQUEST_TIMEOUT_MS);
+        expect(abort).toHaveBeenCalledOnce();
+        expect(s.uploadRequest).not.toHaveBeenCalled();
+        expect(s.postMessage).toHaveBeenLastCalledWith(
+          expect.objectContaining({ rid: 'header', status: 504 }),
+        );
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        s.bridge.dispose();
+      }
+    });
+  });
+
   it('requires the actual frame, nonce, version and handshake without automatically calling APIs', () => {
     const s = setup();
     s.call();
