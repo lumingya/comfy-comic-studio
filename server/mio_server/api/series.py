@@ -25,6 +25,7 @@ from ..pipeline import assistant as A
 from ..pipeline import variables as V
 from ..pipeline.compiler import preview as prompt_preview
 from ..pipeline.refs import select_references
+from ..pipeline.story import apply_variant
 from ..storage import Conflict, NotFound
 from .deps import Ctx
 from .operations import Router as APIRouter
@@ -165,6 +166,9 @@ def append_variants(ctx: Ctx, series_id: str, body: VariantAppend) -> Series:
                 if any(item != variant for item in existing):
                     raise Conflict("variant ID already exists with different content")
             else:
+                if variant.style_id and series.bible.style(variant.style_id) is None:
+                    raise ValueError("variant style target no longer exists")
+                apply_variant(series.bible, variant)
                 additions.append(variant)
                 known[variant.id] = [variant]
         series.variants.extend(additions)
@@ -471,7 +475,14 @@ def panel_prompt(ctx: Ctx, episode_id: str, panel_id: str, variant_id: str | Non
     if panel is None:
         raise NotFound(f"panel not found: {panel_id}")
     variant = next((v for v in series.variants if v.id == variant_id), None)
-    refs = [r.to_json() for r in select_references(series.bible, panel)]
+    refs = [
+        r.to_json()
+        for r in select_references(
+            apply_variant(series.bible, variant),
+            panel,
+            style_id=variant.style_id if variant else None,
+        )
+    ]
     profile = ctx.render.profile(
         panel.overrides.profile_id or (variant.profile_id if variant else None), series
     )

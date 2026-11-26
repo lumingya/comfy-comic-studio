@@ -112,7 +112,7 @@ def compile_panel(
         if ch:
             loras.extend(l.model_dump() for l in ch.loras)
     style_negative = ", ".join(style.negative) if style else ""
-    table = V.table(series, panel, bible, style.id if style else None)
+    table = V.table(series, panel, bible, style.id if style else None, variant)
     texts = [
         ov.raw_prompt or "",
         ov.raw_negative or "",

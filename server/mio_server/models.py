@@ -198,14 +198,52 @@ class Bible(StrictModel):
 class VariantSet(StrictModel):
     """Batch variant (the old "character matrix"): the same script rendered with another bible set.
 
-    ``characters`` maps a character id to a partial Character patch (appearance, tags, loras…).
+    Character appearance, outfit slots, locations and template variables are independent.
+    Omitted entries inherit the work; an empty list/string explicitly clears that value.
     """
 
     id: str = Field(default_factory=lambda: new_id("var"))
     name: str
     characters: dict[str, dict] = Field(default_factory=dict)
+    outfits: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    locations: dict[str, dict] = Field(default_factory=dict)
+    variables: dict[str, str] = Field(default_factory=dict)
     style_id: str | None = None
     profile_id: str | None = None
+
+    @field_validator("outfits")
+    @classmethod
+    def outfit_slots(cls, value: dict[str, dict[str, list[str]]]):
+        for character_id, slots in value.items():
+            if not character_id.strip() or character_id != character_id.strip():
+                raise ValueError("variant outfit requires a character ID")
+            if any(not slot.strip() or slot != slot.strip() for slot in slots):
+                raise ValueError("variant outfit requires a nonempty slot")
+        return value
+
+    @field_validator("locations")
+    @classmethod
+    def location_patches(cls, value: dict[str, dict]):
+        for location_id, patch in value.items():
+            if not location_id.strip() or location_id != location_id.strip() or "id" in patch:
+                raise ValueError("variant location requires an unchanged location ID")
+            Location.model_validate({"id": location_id, "name": "Variant location", **patch})
+        return value
+
+    @field_validator("variables")
+    @classmethod
+    def variable_names(cls, value: dict[str, str]):
+        if any(not re.fullmatch(r"[^\s{}]{1,64}", key) for key in value):
+            raise ValueError("variant variable name is invalid")
+        return value
+
+    @model_validator(mode="after")
+    def finite_values(self):
+        try:
+            json.dumps(self.model_dump(mode="python"), allow_nan=False)
+        except (TypeError, ValueError):
+            raise ValueError("variants require finite JSON values") from None
+        return self
 
 
 # ------------------------------------------------------------------------- episode

@@ -31,14 +31,27 @@ ROMAN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
 def apply_variant(bible: Bible, variant: VariantSet | None) -> Bible:
-    """Batch variants: patch characters (appearance / tags / loras …) for one render set."""
-    if variant is None or not variant.characters:
+    """Apply independent appearance, outfit-slot and location patches without mutating a bible."""
+    if variant is None or not (variant.characters or variant.outfits or variant.locations):
         return bible
     data = bible.model_dump()
+    characters = {ch["id"]: ch for ch in data["characters"]}
+    locations = {loc["id"]: loc for loc in data["locations"]}
+    if (variant.characters.keys() | variant.outfits.keys()) - characters.keys():
+        raise ValueError("variant character target no longer exists")
+    if variant.locations.keys() - locations.keys():
+        raise ValueError("variant location target no longer exists")
     for ch in data["characters"]:
         patch = variant.characters.get(ch["id"])
         if patch:
             ch.update({k: copy.deepcopy(v) for k, v in patch.items() if k != "id"})
+        if ch["id"] in variant.outfits:
+            ch["outfits"] = {
+                **Character.model_validate(ch).outfits,
+                **copy.deepcopy(variant.outfits[ch["id"]]),
+            }
+    for loc in data["locations"]:
+        loc.update(copy.deepcopy(variant.locations.get(loc["id"], {})))
     return Bible.model_validate(data)
 
 

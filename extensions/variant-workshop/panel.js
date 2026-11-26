@@ -6,7 +6,23 @@
     zh: {
       eyebrow: "创作工具 · 变体",
       title: "批量变体矩阵",
-      lead: "从角色与画风预设组合版本。生成前会展示幕数、候选数与预计工作量；候选需明确采用。",
+      lead: "将角色、服装、场景与画风独立组合。先预览矩阵与任务总量，再明确选择要保存和生成的子集。",
+      source: "预设来源",
+      sourcePresets: "分镜预设变量",
+      sourceBible: "结构化设定集",
+      sourceHint: "变量来源只取每个预设中对应的一项，不覆盖其他变量或绑定。空值明确清空，不选则沿用。逐幕局部值优先。",
+      variable: "变量",
+      targetOutfit: "目标服装槽",
+      targetLocation: "替换的场景",
+      outfitsLegend: "服装预设（不选则沿用）",
+      scenesLegend: "场景预设（不选则沿用）",
+      dimensionOutfit: "服装",
+      dimensionScene: "场景",
+      emptyValue: "（明确清空）",
+      affected: (n) => `提示词中使用：${n} 幕`,
+      matrixSubset: (selected, total) => `已勾选 ${selected}/${total} 个不同组合。保存不会生成图片。`,
+      group: (n) => `对照组 ${n} · 其他三轴相同`,
+      matrixSelection: "变体矩阵子集",
       load: "读取作品",
       deriveTitle: "派生版本",
       prefix: "名称前缀",
@@ -14,7 +30,7 @@
       target: "替换外观的角色",
       stylesLegend: "画风预设（不选则沿用）",
       charactersLegend: "角色外观预设（不选则沿用）",
-      derive: "保存派生版本",
+      derive: "保存勾选组合",
       generateTitle: "生成与进度",
       panelsToRender: "要生成的分幕",
       selectAll: "全选",
@@ -30,7 +46,7 @@
       dimensionStyle: "画风",
       dimensionAppearance: "角色外观",
       show: "读取候选",
-      compareHint: "可同时打开两张原图并排比较。采用只影响此分幕与此版本。",
+      compareHint: "选定一个基准版本与维度后，固定其他三轴横向比较；选择所有版本则按其他轴分组。变量模式使用上方绑定键。可打开两张原图。",
       exportTitle: "导出当前版本",
       exportHint: "只有已采用的分幕会进入导出成品。",
       format: "格式",
@@ -50,8 +66,8 @@
       noPanelSelected: "先选择要生成的分幕。",
       estimate: (variants, panels, pairs, images) =>
         `${variants} 个版本 × ${panels} 幕 = ${pairs} 个分幕任务 · ${images} 张候选图`,
-      matrixEstimate: (styles, characters, total, names, more) =>
-        `将派生 ${styles} 种画风 × ${characters} 组角色外观，共 ${total} 个版本（每次最多 24 个）。${names}${more ? ` 等 ${more} 个组合` : ""}`,
+      matrixEstimate: (counts, total, selected, panels, images) =>
+        `角色 ${counts[0]} × 服装 ${counts[1]} × 场景 ${counts[2]} × 画风 ${counts[3]} → ${total} 个不同版本（最多 24 个）。已选 ${selected} 版本 × ${panels} 幕 = ${selected * panels} 个分幕任务 · ${images} 张候选图。`,
       candidateLimit: "每幕候选须为 1–16 张。",
       deriveLimit: "组合超过 24 个版本，请减少预设。",
       chooseVersions: "先勾选要生成的版本。",
@@ -80,7 +96,23 @@
     en: {
       eyebrow: "CREATION TOOL · VARIANTS",
       title: "Variant matrix",
-      lead: "Combine character and style presets into variants. Review panel and candidate totals before rendering; candidates are adopted explicitly.",
+      lead: "Combine character, outfit, scene and style independently. Preview the matrix and workload, then explicitly select the combinations to save and render.",
+      source: "Preset source",
+      sourcePresets: "Storyboard preset variables",
+      sourceBible: "Structured work bible",
+      sourceHint: "Each axis reads only its mapped preset entry, without changing other variables or bindings. Empty values clear; unselected axes inherit. Panel-local values take priority.",
+      variable: "Variable",
+      targetOutfit: "Target outfit slot",
+      targetLocation: "Location to replace",
+      outfitsLegend: "Outfit presets (none inherits)",
+      scenesLegend: "Scene presets (none inherits)",
+      dimensionOutfit: "Outfit",
+      dimensionScene: "Scene",
+      emptyValue: "(explicitly clear)",
+      affected: (n) => `Used by prompts: ${n} panels`,
+      matrixSubset: (selected, total) => `Selected ${selected}/${total} distinct combinations. Saving does not render images.`,
+      group: (n) => `Comparison group ${n} · the other three axes match`,
+      matrixSelection: "Variant matrix subset",
       load: "Load work",
       deriveTitle: "Create variants",
       prefix: "Name prefix",
@@ -88,7 +120,7 @@
       target: "Character to replace",
       stylesLegend: "Style presets (none keeps current style)",
       charactersLegend: "Character appearance presets (none keeps current appearance)",
-      derive: "Save variants",
+      derive: "Save selected combinations",
       generateTitle: "Render and progress",
       panelsToRender: "Panels to render",
       selectAll: "Select all",
@@ -104,7 +136,7 @@
       dimensionStyle: "Style",
       dimensionAppearance: "Character appearance",
       show: "Load candidates",
-      compareHint: "Load up to two source images side by side. Adoption affects only this panel and variant.",
+      compareHint: "Choose a baseline variant and axis to keep the other three axes fixed. All variants are grouped by the remaining axes. Variable comparisons use the mappings above. Load up to two source images.",
       exportTitle: "Export this variant",
       exportHint: "Only adopted panels are included in the exported album.",
       format: "Format",
@@ -124,8 +156,8 @@
       noPanelSelected: "Select the panels to render first.",
       estimate: (variants, panels, pairs, images) =>
         `${variants} variants × ${panels} panels = ${pairs} panel jobs · ${images} candidate images`,
-      matrixEstimate: (styles, characters, total, names, more) =>
-        `Creates ${styles} styles × ${characters} character looks = ${total} variants (limit 24 per batch). ${names}${more ? ` and ${more} more` : ""}`,
+      matrixEstimate: (counts, total, selected, panels, images) =>
+        `Character ${counts[0]} × outfit ${counts[1]} × scene ${counts[2]} × style ${counts[3]} → ${total} distinct variants (limit 24). Selected ${selected} variants × ${panels} panels = ${selected * panels} panel jobs · ${images} candidate images.`,
       candidateLimit: "Candidates per panel must be 1–16.",
       deriveLimit: "This creates more than 24 variants. Reduce the preset selection.",
       chooseVersions: "Select the variants to render first.",
@@ -156,11 +188,36 @@
   let context = null;
   let episode = null;
   let series = null;
+  let presets = [];
+  let matrix = [];
+  let matrixSignature = null;
   let currentJob = null;
   let renderIntent = null;
   let deriveIntent = null;
   let busy = false;
   const media = new Map();
+  const axisContainers = { character: "characters", outfit: "outfits", scene: "scenes", style: "styles" };
+  const bindings = () => Object.fromEntries(variantModel.axes.map((axis) => [axis, $(`key-${axis}`).value]));
+  const matrixSelection = () => ({
+    mode: $("source").value,
+    bindings: bindings(),
+    ...Object.fromEntries(variantModel.axes.map((axis) => [axis, chosen(axisContainers[axis])])),
+    targetCharacter: $("target").value,
+    targetOutfit: $("target-outfit").value,
+    targetLocation: $("target-location").value,
+    prefix: $("prefix").value,
+  });
+  const modelError = (message) => lang() === "en" ? message : ({
+    "Preset changed. Reload the work.": "预设已改变，请重新读取作品。",
+    "The selected variable is not used by this episode’s prompts.": "本话提示词未使用所选变量，请核对绑定键。",
+    "Choose at least one preset.": "请至少选择一项预设。",
+    "Each selected axis needs a different valid variable name.": "各轴须绑定不同的有效变量名（不可含空白或花括号）。",
+    "Choose a character used by a compiled panel.": "请选择本话结构化分幕中使用的角色。",
+    "Choose an outfit slot used by the target character.": "请选择本话目标角色实际使用的服装槽。",
+    "Choose a location used by a compiled panel.": "请选择本话结构化分幕中使用的场景。",
+    "Use template variables for raw-prompt storyboards.": "原始提示词分镜请使用「分镜预设变量」来源。",
+    "Choose fewer presets: at most 24 combinations per batch.": "组合超过 24 个，请减少预设。",
+  }[message] ?? message);
   const lang = () => (context?.appearance?.locale === "en" ? "en" : "zh");
   const t = (key, ...values) => {
     const value = copy[lang()][key];
@@ -205,14 +262,14 @@
         if (value) node.setAttribute("placeholder", value);
       });
       $("format").setAttribute("aria-label", t("format"));
+      $("matrix-rows").setAttribute("aria-label", t("matrixSelection"));
       if (series && episode) {
         const versionIds = chosen("versions");
         const panelIds = selectedPanelIds();
         const selectedPanel = $("panel").value;
         const selectedVersion = $("version").value;
-        $("target").replaceChildren(option("", t("noTarget")), ...series.bible.characters.map((character) => option(character.id, character.name)));
-        buildChoices("styles", series.bible.styles, chosen("styles"));
-        buildChoices("characters", series.bible.characters, chosen("characters"));
+        buildTargets();
+        buildSources(true);
         buildVersions(versionIds);
         buildPanels(panelIds);
         if ([...$("panel").options].some((item) => item.value === selectedPanel)) $("panel").value = selectedPanel;
@@ -235,11 +292,12 @@
     try {
       await action();
     } catch (error) {
-      notify(error?.message || t("error"), true);
+      notify(modelError(error?.message) || t("error"), true);
     } finally {
       busy = false;
       for (const [item, disabled] of controls) if (item.isConnected) item.disabled = disabled;
       updateRenderEstimate();
+      updateMatrixEstimate();
     }
   };
   const chosen = (id) => selected(id);
@@ -255,6 +313,7 @@
       input.type = "checkbox";
       input.value = item.id;
       input.checked = selectedIds.includes(item.id);
+      input.disabled = item.affected === 0;
       input.addEventListener("change", () => {
         if (id === "versions") renderIntent = null;
         updateMatrixEstimate();
@@ -262,9 +321,45 @@
       });
       const name = document.createElement("span");
       name.textContent = item.name;
+      if ("value" in item) {
+        const detail = document.createElement("small");
+        detail.textContent = `${item.value || t("emptyValue")} · ${t("affected", item.affected)}`;
+        name.append(detail);
+      }
+      if (id === "matrix-rows" && Object.keys(item.variables ?? {}).length) {
+        const values = document.createElement("small");
+        values.textContent = Object.entries(item.variables).map(([key, value]) => `${key}: ${value || t("emptyValue")}`).join(" · ");
+        name.append(values);
+      }
       label.append(input, name);
       $(id).append(label);
     }
+  };
+  const buildOutfitSlots = () => {
+    const previous = $("target-outfit").value;
+    const character = series.bible.characters.find((item) => item.id === $("target").value);
+    const slots = [...new Set([
+      ...Object.keys(character?.outfits ?? {}),
+      ...episode.panels.flatMap((panel) => (panel.characters ?? []).filter((item) => item.character_id === character?.id).map((item) => item.outfit)),
+    ])];
+    $("target-outfit").replaceChildren(...slots.map((slot) => option(slot, slot)));
+    if (slots.includes(previous)) $("target-outfit").value = previous;
+  };
+  const buildTargets = () => {
+    const character = $("target").value;
+    const location = $("target-location").value;
+    $("target").replaceChildren(option("", t("noTarget")), ...series.bible.characters.map((item) => option(item.id, item.name)));
+    $("target-location").replaceChildren(option("", t("noTarget")), ...(series.bible.locations ?? []).map((item) => option(item.id, item.name)));
+    $("target").value = character;
+    $("target-location").value = location;
+    buildOutfitSlots();
+  };
+  const buildSources = (preserve = false) => {
+    const mode = $("source").value;
+    const choices = variantModel.options(series, episode, presets, mode, bindings());
+    for (const axis of variantModel.axes) buildChoices(axisContainers[axis], choices[axis], preserve ? chosen(axisContainers[axis]) : []);
+    document.querySelectorAll(".bible-target").forEach((node) => { node.hidden = mode !== "bible"; });
+    document.querySelectorAll(".variable-binding").forEach((node) => { node.hidden = mode !== "presets"; });
   };
   const buildVersions = (selectedIds = chosen("versions")) => {
     const all = [{ id: "__base__", name: t("original") }, ...(series.variants ?? [])];
@@ -278,6 +373,7 @@
       input.addEventListener("change", () => {
         renderIntent = null;
         updateRenderEstimate();
+        updateMatrixEstimate();
       });
       const name = document.createElement("span");
       name.textContent = item.name;
@@ -310,6 +406,7 @@
       input.addEventListener("change", () => {
         renderIntent = null;
         updateRenderEstimate();
+        updateMatrixEstimate();
       });
       const name = document.createElement("span");
       name.textContent = `${index + 1} · ${panel.description || t("noPanel")}`;
@@ -320,28 +417,32 @@
   const selectedVariantIds = () => chosen("versions").map((id) => id === "__base__" ? null : id);
   const selectedPanelIds = () => chosen("render-panels");
   const updateMatrixEstimate = () => {
-    if (!series) return;
-    const styleIds = chosen("styles");
-    const characterIds = chosen("characters");
-    const styles = Math.max(1, styleIds.length);
-    const characters = Math.max(1, characterIds.length);
-    const count = styles * characters;
-    const missingTarget = characterIds.length > 0 && !$("target").value;
-    const combinations = missingTarget || count > 24 ? [] : variantModel.derive(
-      series,
-      styleIds,
-      characterIds,
-      $("target").value,
-      $("prefix").value,
-      (index) => `preview-${index}`,
-    );
-    const preview = combinations.slice(0, 6).map((variant) => variant.name).filter(Boolean).join(" · ");
-    const more = Math.max(0, combinations.length - 6);
-    $("matrix-preview").textContent = missingTarget
-      ? t("chooseTarget")
-      : t("matrixEstimate", styles, characters, count, preview, more);
-    $("derive").disabled = count > 24 || missingTarget;
-    $("matrix-preview").dataset.overflow = String(count > 24);
+    if (!series || !episode) return;
+    const selection = matrixSelection();
+    const signature = JSON.stringify(selection);
+    try {
+      if (matrixSignature !== signature) {
+        let index = 0;
+        matrix = variantModel.derive(series, episode, presets, selection, () => `preview-${index++}`);
+        matrixSignature = signature;
+        deriveIntent = null;
+        buildChoices("matrix-rows", matrix, matrix.map((variant) => variant.id));
+      }
+      const count = chosen("matrix-rows").length;
+      const panels = selectedPanelIds().length;
+      const candidates = Number($("candidates").value);
+      const images = Number.isInteger(candidates) && candidates >= 1 && candidates <= 16 ? variantModel.estimate(panels, count, candidates) : "—";
+      $("matrix-preview").textContent = t("matrixEstimate", variantModel.axes.map((axis) => Math.max(1, selection[axis].length)), matrix.length, count, panels, images);
+      $("derive").disabled = count === 0 || busy;
+      $("matrix-preview").dataset.overflow = "false";
+    } catch (error) {
+      matrix = [];
+      matrixSignature = null;
+      $("matrix-rows").replaceChildren();
+      $("matrix-preview").textContent = modelError(error.message);
+      $("derive").disabled = true;
+      $("matrix-preview").dataset.overflow = String(variantModel.axes.reduce((total, axis) => total * Math.max(1, selection[axis].length), 1) > 24);
+    }
   };
   const updateRenderEstimate = () => {
     if (!episode || !series) return;
@@ -375,10 +476,14 @@
   const readWork = () => run(async () => {
     clearMedia();
     await readEpisode();
+    const available = await request("presets");
+    const frozen = series.presets ?? [];
+    presets = [...frozen, ...available.filter((item) => !frozen.some((snapshot) => snapshot.id === item.id))];
     deriveIntent = null;
-    $("target").replaceChildren(option("", t("noTarget")), ...series.bible.characters.map((character) => option(character.id, character.name)));
-    buildChoices("styles", series.bible.styles);
-    buildChoices("characters", series.bible.characters);
+    matrixSignature = null;
+    $("source").value = episode.panels.some((panel) => panel.overrides?.raw_prompt != null) ? "presets" : "bible";
+    buildTargets();
+    buildSources();
     buildVersions([]);
     buildPanels();
     $("workspace").hidden = false;
@@ -387,15 +492,14 @@
     updateRenderEstimate();
   });
   const derive = () => run(async () => {
-    const styleIds = chosen("styles");
-    const characterIds = chosen("characters");
-    const targetId = $("target").value;
-    const prefix = $("prefix").value;
-    const signature = JSON.stringify([styleIds, characterIds, targetId, prefix]);
+    const chosenIds = new Set(chosen("matrix-rows"));
+    const subset = matrix.filter((variant) => chosenIds.has(variant.id));
+    if (!subset.length) throw new Error(t("chooseVersions"));
+    const signature = JSON.stringify(subset);
     if (deriveIntent?.signature !== signature)
       deriveIntent = {
         signature,
-        additions: variantModel.derive(series, styleIds, characterIds, targetId, prefix),
+        additions: subset.map((variant) => ({ ...structuredClone(variant), id: `var_${crypto.randomUUID().replaceAll("-", "")}` })),
       };
     const additions = deriveIntent.additions;
     series = await request("variants", { path_params: { series_id: series.id }, body: { variants: additions } });
@@ -458,17 +562,30 @@
   const candidatesForSelection = () => {
     const version = $("version").value;
     const dimension = $("dimension").value;
-    if (version !== "*") return variantModel.candidates(episode, $("panel").value, version || null);
-    let allowedVariants = series.variants ?? [];
-    if (dimension !== "all") allowedVariants = variantModel.variantsForDimension(allowedVariants, dimension);
+    if (dimension === "all" && version !== "*") return variantModel.candidates(episode, $("panel").value, version || null);
+    const all = [{ id: null, name: t("original") }, ...(series.variants ?? [])];
+    const baseline = version === "*" ? null : version ? variantById(version) : all[0];
+    const allowedVariants = variantModel.variantsForDimension(all, dimension, baseline, bindings());
     const allowed = new Set(allowedVariants.map((variant) => variant.id));
-    return (episode.takes ?? []).filter((take) => take.panel_id === $("panel").value && (!take.variant_id || allowed.has(take.variant_id)));
+    return (episode.takes ?? []).filter((take) => take.panel_id === $("panel").value && allowed.has(take.variant_id ?? null)).sort((a, b) => allowedVariants.findIndex((variant) => variant.id === (a.variant_id ?? null)) - allowedVariants.findIndex((variant) => variant.id === (b.variant_id ?? null)));
   };
   const show = () => {
     clearMedia();
     $("takes").replaceChildren();
     const takes = candidatesForSelection();
+    let previousGroup = null;
+    let groupCount = 0;
     for (const take of takes) {
+      if ($("dimension").value !== "all") {
+        const key = variantModel.comparisonKey(variantById(take.variant_id) ?? {}, $("dimension").value, bindings());
+        if (key !== previousGroup) {
+          const heading = document.createElement("h3");
+          heading.className = "compare-group";
+          heading.textContent = t("group", ++groupCount);
+          $("takes").append(heading);
+          previousGroup = key;
+        }
+      }
       const row = document.createElement("div");
       row.className = "take";
       const label = document.createElement("label");
@@ -509,9 +626,14 @@
 
   $("load").addEventListener("click", readWork);
   $("derive").addEventListener("click", derive);
-  $("styles").addEventListener("change", updateMatrixEstimate);
-  $("characters").addEventListener("change", updateMatrixEstimate);
-  $("target").addEventListener("change", updateMatrixEstimate);
+  $("source").addEventListener("change", () => { buildSources(); updateMatrixEstimate(); });
+  for (const axis of variantModel.axes) {
+    $(axisContainers[axis]).addEventListener("change", updateMatrixEstimate);
+    $(`key-${axis}`).addEventListener("input", () => { buildSources(true); updateMatrixEstimate(); clearMedia(); $("takes").replaceChildren(); });
+  }
+  $("target").addEventListener("change", () => { buildOutfitSlots(); updateMatrixEstimate(); });
+  $("target-outfit").addEventListener("change", updateMatrixEstimate);
+  $("target-location").addEventListener("change", updateMatrixEstimate);
   $("prefix").addEventListener("input", updateMatrixEstimate);
   $("render").addEventListener("click", renderSelected);
   $("refresh").addEventListener("click", refresh);
@@ -520,13 +642,15 @@
     $("render-panels").querySelectorAll("input[type=checkbox]").forEach((input) => { input.checked = true; });
     renderIntent = null;
     updateRenderEstimate();
+    updateMatrixEstimate();
   });
   $("clear-panels").addEventListener("click", () => {
     $("render-panels").querySelectorAll("input[type=checkbox]").forEach((input) => { input.checked = false; });
     renderIntent = null;
     updateRenderEstimate();
+    updateMatrixEstimate();
   });
-  $("candidates").addEventListener("input", () => { renderIntent = null; updateRenderEstimate(); });
+  $("candidates").addEventListener("input", () => { renderIntent = null; updateRenderEstimate(); updateMatrixEstimate(); });
   $("version").addEventListener("change", () => { clearMedia(); $("takes").replaceChildren(); });
   $("dimension").addEventListener("change", () => { clearMedia(); $("takes").replaceChildren(); });
   $("panel").addEventListener("change", () => { clearMedia(); $("takes").replaceChildren(); });

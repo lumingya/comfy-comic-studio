@@ -16,6 +16,7 @@ function contractTest() {
   assert.equal(panel.slot, "episode");
   const requests = Object.fromEntries(panel.requests.map((request) => [request.id, request]));
   assert.deepEqual([requests.variants.method, requests.variants.path, requests.variants.scope], ["POST", "/series/{series_id}/variants", "write"]);
+  assert.deepEqual([requests.presets.method, requests.presets.path, requests.presets.scope], ["GET", "/workshop/presets", "read"]);
   assert.deepEqual([requests.render.method, requests.render.path, requests.render.scope], ["POST", "/episodes/{episode_id}/render", "render"]);
   assert.deepEqual([requests["take-image"].method, requests["take-image"].response, requests["take-image"].scope], ["GET", "image", "read"]);
   assert.deepEqual([requests["export-album"].response, requests["export-pdf"].response], ["download", "download"]);
@@ -25,7 +26,7 @@ function contractTest() {
   }
 }
 
-async function setup({ failEpisode = false } = {}) {
+async function setup({ failEpisode = false, raw = false } = {}) {
   const dom = new JSDOM(fs.readFileSync(path.join(dir, "panel.html"), "utf8"), {
     url: "https://local.invalid/#mio-session=fixture",
     runScripts: "outside-only",
@@ -38,17 +39,19 @@ async function setup({ failEpisode = false } = {}) {
     id: "ep",
     series_id: "series",
     panels: [
-      { id: "p1", order: 0, description: "First" },
-      { id: "p2", order: 1, description: "Second" },
+      { id: "p1", order: 0, description: "First", characters: [{ character_id: "hero", outfit: "default" }], location_id: "room", overrides: { raw_prompt: raw ? "{character}, {outfit}, {scene}, {style}" : null } },
+      { id: "p2", order: 1, description: "Second", characters: [{ character_id: "hero", outfit: "default" }], location_id: "room", overrides: { raw_prompt: raw ? "{character}, {outfit}, {scene}, {style}" : null } },
     ],
     takes: [{ id: "take-base", panel_id: "p1", variant_id: null, status: "candidate" }],
   };
   const series = {
     id: "series",
     variants: [],
+    variables: {},
     bible: {
       styles: [{ id: "ink", name: "Ink" }],
-      characters: [{ id: "hero", name: "Hero", appearance: ["red coat"] }],
+      characters: [{ id: "hero", name: "Hero", appearance: ["red coat"], outfits: { default: ["coat"] } }],
+      locations: [{ id: "room", name: "Room", tags: ["quiet room"] }],
     },
   };
   const panelBridge = {
@@ -58,6 +61,7 @@ async function setup({ failEpisode = false } = {}) {
       if (requestId === "episode" && failEpisode) throw new Error("Service unavailable");
       if (requestId === "episode") return structuredClone(episode);
       if (requestId === "series") return structuredClone(series);
+      if (requestId === "presets") return ["a", "b"].map((id) => ({ id, title: `Preset ${id}`, entries: ["character", "outfit", "scene", "style"].map((key) => ({ key, value: `${key}-${id}` })) }));
       if (requestId === "variants") {
         series.variants.push(...payload.body.variants);
         episode.takes.push({ id: "take-variant", panel_id: "p1", variant_id: payload.body.variants[0].id, status: "candidate" });
@@ -76,7 +80,8 @@ async function setup({ failEpisode = false } = {}) {
   };
   w.panelBridge = panelBridge;
   w.structuredClone = structuredClone;
-  w.crypto.randomUUID = () => "fixed-id";
+  let nextId = 0;
+  w.crypto.randomUUID = () => `fixed-id-${++nextId}`;
   vm.runInContext(fs.readFileSync(path.join(dir, "model.js"), "utf8"), dom.getInternalVMContext());
   vm.runInContext(fs.readFileSync(path.join(dir, "panel.js"), "utf8"), dom.getInternalVMContext());
   await flush();
@@ -98,7 +103,7 @@ async function interactionTest() {
     assert.equal(p.$("load").disabled, false);
     assert.equal(p.w.document.documentElement.style.getPropertyValue("--bg"), "#111111");
     await p.click("load");
-    assert.equal(p.calls.map((call) => call.request_id).join(","), "episode,series");
+    assert.equal(p.calls.map((call) => call.request_id).join(","), "episode,series,presets");
     assert.equal(p.$("workspace").hidden, false);
     assert.match(p.$("render-estimate").textContent, /No variants to render/);
 
@@ -134,7 +139,8 @@ async function interactionTest() {
     p.$("target").value = "hero";
     p.$("target").dispatchEvent(new p.w.Event("change"));
     assert.equal(p.$("derive").disabled, false);
-    assert.match(p.$("matrix-preview").textContent, /Ink · Hero/);
+    assert.equal(p.$("matrix-rows").querySelectorAll("input:checked").length, 1);
+    assert.match(p.$("matrix-rows").textContent, /Hero · Ink/);
     await p.click("derive");
     const append = p.calls.find((call) => call.request_id === "variants");
     assert.equal(append.body.variants.length, 1);
@@ -163,6 +169,55 @@ async function interactionTest() {
   }
 }
 
+async function fourAxisInteractionTest() {
+  const p = await setup({ raw: true });
+  try {
+    await p.click("load");
+    assert.equal(p.$("source").value, "presets");
+    for (const container of ["characters", "outfits", "scenes", "styles"]) {
+      for (const input of p.$(container).querySelectorAll("input")) {
+        input.checked = true;
+        input.dispatchEvent(new p.w.Event("change", { bubbles: true }));
+      }
+    }
+    let rows = [...p.$("matrix-rows").querySelectorAll("input")];
+    assert.equal(rows.length, 16);
+    assert.match(p.$("matrix-preview").textContent, /16 distinct variants/);
+    assert.match(p.$("matrix-preview").textContent, /32 panel jobs · 32 candidate images/);
+    rows.forEach((input, index) => { input.checked = [0, 1, 2].includes(index); });
+    rows[0].dispatchEvent(new p.w.Event("change", { bubbles: true }));
+    assert.match(p.$("matrix-preview").textContent, /Selected 3 variants × 2 panels = 6 panel jobs/);
+    await p.click("derive");
+    const append = p.calls.find((call) => call.request_id === "variants");
+    assert.equal(append.body.variants.length, 3);
+    assert.equal(new Set(append.body.variants.map((variant) => variant.id)).size, 3);
+    assert.deepEqual(Object.keys(append.body.variants[0].variables).sort(), ["character", "outfit", "scene", "style"]);
+    assert.equal(p.calls.filter((call) => call.request_id === "render").length, 0, "saving a matrix never renders");
+    const panel = p.$("render-panels").querySelector('input[value="p2"]');
+    panel.checked = false;
+    panel.dispatchEvent(new p.w.Event("change", { bubbles: true }));
+    p.$("candidates").value = "2";
+    p.$("candidates").dispatchEvent(new p.w.Event("input"));
+    assert.match(p.$("render-estimate").textContent, /3 variants × 1 panels = 3 panel jobs · 6 candidate images/);
+    await p.click("render");
+    const render = p.calls.find((call) => call.request_id === "render");
+    assert.deepEqual(Array.from(render.body.panel_ids), ["p1"]);
+    assert.deepEqual(Array.from(render.body.variant_ids), Array.from(append.body.variants, (variant) => variant.id));
+    assert.equal(render.body.candidates, 2);
+    assert.equal(render.body.adopt_first, false);
+    p.$("version").value = append.body.variants[0].id;
+    p.$("dimension").value = "style";
+    await p.click("show");
+    assert.equal(p.$("takes").querySelectorAll(".take").length, 1, "baseline comparison excludes the unrelated original");
+    p.$("key-outfit").value = "character";
+    p.$("key-outfit").dispatchEvent(new p.w.Event("input"));
+    assert.equal(p.$("derive").disabled, true, "conflicting axis bindings do not save a matrix");
+    p.appearanceListeners.forEach((listener) => listener({ locale: "zh-CN", theme: "light" }));
+    assert.equal(p.$("key-outfit").value, "character");
+    assert.match(p.$("matrix-preview").textContent, /不同的有效变量名/);
+  } finally { p.close(); }
+}
+
 async function errorTest() {
   const p = await setup({ failEpisode: true });
   try {
@@ -176,7 +231,7 @@ async function errorTest() {
 }
 
 contractTest();
-interactionTest().then(errorTest).then(() => {
+interactionTest().then(fourAxisInteractionTest).then(errorTest).then(() => {
   console.log("variant-workshop: manifest, inert launch, estimates, panel subset, API body, progress, live appearance, error states PASS");
 }).catch((error) => {
   console.error(error);

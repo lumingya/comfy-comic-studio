@@ -3,18 +3,29 @@
 from __future__ import annotations
 
 from ..comfy.bindings import BindingError
-from ..models import Series, coerce_binding
+from ..models import Series, VariantSet, coerce_binding
 from . import variables as V
+from .story import apply_variant
 
 
-def node_overrides(series: Series, panel) -> dict:
+def node_overrides(series: Series, panel, variant: VariantSet | None = None) -> dict:
     """JSON Pointer → value for this frame: the album's preset bindings (legacy 预设「LoRA / 节点
     输入绑定」, later presets win), then the frame's own node overrides on top.  A binding to an
     empty variable keeps the workflow's value."""
     own = dict(panel.overrides.node_overrides) if panel else {}
     if series.kind == "workshop" or not any(p.bindings for p in series.presets):
         return own
-    table = V.table(series, panel) if panel else dict(series.variables)
+    table = (
+        V.table(
+            series,
+            panel,
+            apply_variant(series.bible, variant),
+            variant.style_id if variant else None,
+            variant,
+        )
+        if panel
+        else {**series.variables, **(variant.variables if variant else {})}
+    )
     out: dict = {}
     for preset in series.presets:
         for b in preset.bindings:

@@ -68,6 +68,29 @@ class VariantAppendTests(ApiCase):
         saved = self.ctx.store.get_series(self.series.id)
         self.assertEqual([value.id for value in saved.variants], ["var_original", "var_once"])
 
+    def test_new_axis_defaults_are_idempotent_and_variable_snapshot_is_immutable(self):
+        variant = {"id": "var_axes", "name": "Axes", "variables": {"outfit": "", "scene": "beach"}}
+        self.ok(self.append([variant]))
+        self.ok(
+            self.append(
+                [
+                    {
+                        **variant,
+                        "outfits": {},
+                        "locations": {},
+                        "characters": {},
+                        "style_id": None,
+                        "profile_id": None,
+                    }
+                ]
+            )
+        )
+        variant["variables"]["scene"] = "changed"
+        saved = self.ctx.store.get_series(self.series.id).variants[-1]
+        self.assertEqual(saved.variables, {"outfit": "", "scene": "beach"})
+        self.assertEqual(len(self.ctx.store.get_series(self.series.id).variants), 2)
+        self.assertEqual(self.ctx.engine.list(), [])
+
     def test_same_id_different_content_conflicts_without_replacing_the_winner(self):
         responses = self.concurrent(
             {"id": "var_race", "name": "First"},

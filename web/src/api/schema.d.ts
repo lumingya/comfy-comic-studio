@@ -8252,7 +8252,8 @@ export interface components {
          * VariantSet
          * @description Batch variant (the old "character matrix"): the same script rendered with another bible set.
          *
-         *     ``characters`` maps a character id to a partial Character patch (appearance, tags, loras…).
+         *     Character appearance, outfit slots, locations and template variables are independent.
+         *     Omitted entries inherit the work; an empty list/string explicitly clears that value.
          */
         "VariantSet-Input": {
             /** Id */
@@ -8263,6 +8264,20 @@ export interface components {
             characters?: {
                 [key: string]: Record<string, unknown>;
             };
+            /** Outfits */
+            outfits?: {
+                [key: string]: {
+                    [key: string]: string[];
+                };
+            };
+            /** Locations */
+            locations?: {
+                [key: string]: Record<string, unknown>;
+            };
+            /** Variables */
+            variables?: {
+                [key: string]: string;
+            };
             /** Style Id */
             style_id?: string | null;
             /** Profile Id */
@@ -8272,7 +8287,8 @@ export interface components {
          * VariantSet
          * @description Batch variant (the old "character matrix"): the same script rendered with another bible set.
          *
-         *     ``characters`` maps a character id to a partial Character patch (appearance, tags, loras…).
+         *     Character appearance, outfit slots, locations and template variables are independent.
+         *     Omitted entries inherit the work; an empty list/string explicitly clears that value.
          */
         "VariantSet-Output": {
             /** Id */
@@ -8282,6 +8298,20 @@ export interface components {
             /** Characters */
             characters: {
                 [key: string]: Record<string, unknown>;
+            };
+            /** Outfits */
+            outfits: {
+                [key: string]: {
+                    [key: string]: string[];
+                };
+            };
+            /** Locations */
+            locations: {
+                [key: string]: Record<string, unknown>;
+            };
+            /** Variables */
+            variables: {
+                [key: string]: string;
             };
             /** Style Id */
             style_id: string | null;

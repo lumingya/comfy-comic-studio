@@ -2,7 +2,7 @@
   "id": "variant-workshop",
   "name": "批量变体工坊",
   "version": "1.0.0",
-  "description": "从设定集角色与画风派生原生版本，明确生成、对比采用与导出。",
+  "description": "将角色、服装、场景与画风独立组成原生变体矩阵，预览总量、选择子集并按轴比较。",
   "contributes": {
     "panels": [
       {
@@ -11,6 +11,12 @@
         "title": "变体工坊",
         "entry": "panel.html",
         "requests": [
+          {
+            "id": "presets",
+            "method": "GET",
+            "path": "/workshop/presets",
+            "scope": "read"
+          },
           {
             "id": "episode",
             "method": "GET",

@@ -7,7 +7,7 @@ stage compiler and cloud route. Candidate selection remains explicit in the resu
 from __future__ import annotations
 
 from ..jobs import COMFY, ItemSpec
-from ..models import Episode, Series
+from ..models import Episode, Series, VariantSet
 from ..queue import default_window
 from ..render_models import RenderProfile
 from . import variables as V
@@ -19,10 +19,20 @@ from .render_edits import RenderError
 from .story import apply_variant
 
 
-def panel_values(series: Series, panel) -> dict:
+def panel_values(series: Series, panel, variant: VariantSet | None = None) -> dict:
     """Panel ``values`` plus ``var.<name>`` for every {变量} (legacy variable bindings)."""
-    table = V.table(series, panel)
-    names = set(series.variables) | {k[1:] for k in panel.overrides.values if k.startswith("$")}
+    table = V.table(
+        series,
+        panel,
+        apply_variant(series.bible, variant),
+        variant.style_id if variant else None,
+        variant,
+    )
+    names = (
+        set(series.variables)
+        | set(variant.variables if variant else {})
+        | {k[1:] for k in panel.overrides.values if k.startswith("$")}
+    )
     out = {f"var.{n}": V.expand(str(table[n]), table) for n in sorted(names)}
     out.update({k: v for k, v in panel.overrides.values.items() if not k.startswith("$")})
     return out
@@ -48,7 +58,7 @@ class DraftPlanningMixin:
             style_id=variant.style_id if variant else None,
         )
         ref_values = reference_values(refs)
-        extra = panel_values(series, panel)
+        extra = panel_values(series, panel, variant)
         prepared = None
         for k in range(candidates):
             pp = compile_panel(
@@ -97,7 +107,7 @@ class DraftPlanningMixin:
                 profile.draft,
                 base,
                 later,
-                node_overrides(series, panel),
+                node_overrides(series, panel, variant),
                 pp.loras,
                 panel.overrides.slot_overrides,
             )

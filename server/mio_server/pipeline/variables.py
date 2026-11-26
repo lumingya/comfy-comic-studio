@@ -3,8 +3,9 @@
 Resolution order for ``{name}``:
 
 1. panel-local variables (``PanelOverrides.values`` entries whose key starts with ``$``);
-2. series variables (``Series.variables``, imported from legacy presets);
-3. built-ins derived from the panel:
+2. the selected variant's variable snapshot;
+3. series variables (``Series.variables``, imported from legacy presets);
+4. built-ins derived from the panel:
    ``{character}`` / ``{角色}`` – tags of every character on stage,
    ``{char1}`` … ``{char4}`` – one character's tags,
    ``{<character name or id>}`` – that character's tags,
@@ -19,7 +20,7 @@ from __future__ import annotations
 
 import re
 
-from ..models import Bible, Panel, Series
+from ..models import Bible, Panel, Series, VariantSet
 
 PATTERN = re.compile(r"\{\{|\}\}|\{([^{}\s][^{}]{0,63})\}")
 MAX_DEPTH = 4
@@ -56,10 +57,16 @@ def builtins(bible: Bible, panel: Panel, style_id: str | None = None) -> dict[st
 
 
 def table(
-    series: Series, panel: Panel, bible: Bible | None = None, style_id: str | None = None
+    series: Series,
+    panel: Panel,
+    bible: Bible | None = None,
+    style_id: str | None = None,
+    variant: VariantSet | None = None,
 ) -> dict[str, str]:
     values = builtins(bible or series.bible, panel, style_id)
     values.update(series.variables)
+    if variant:
+        values.update(variant.variables)
     values.update({k[1:]: str(v) for k, v in panel.overrides.values.items() if k.startswith("$")})
     return values
 

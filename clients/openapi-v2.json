@@ -14285,7 +14285,7 @@
    },
    "VariantSet-Input": {
     "additionalProperties": false,
-    "description": "Batch variant (the old \"character matrix\"): the same script rendered with another bible set.\n\n``characters`` maps a character id to a partial Character patch (appearance, tags, loras…).",
+    "description": "Batch variant (the old \"character matrix\"): the same script rendered with another bible set.\n\nCharacter appearance, outfit slots, locations and template variables are independent.\nOmitted entries inherit the work; an empty list/string explicitly clears that value.",
     "properties": {
      "characters": {
       "additionalProperties": {
@@ -14298,9 +14298,29 @@
       "title": "Id",
       "type": "string"
      },
+     "locations": {
+      "additionalProperties": {
+       "type": "object"
+      },
+      "title": "Locations",
+      "type": "object"
+     },
      "name": {
       "title": "Name",
       "type": "string"
+     },
+     "outfits": {
+      "additionalProperties": {
+       "additionalProperties": {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       "type": "object"
+      },
+      "title": "Outfits",
+      "type": "object"
      },
      "profile_id": {
       "anyOf": [
@@ -14323,6 +14343,13 @@
        }
       ],
       "title": "Style Id"
+     },
+     "variables": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Variables",
+      "type": "object"
      }
     },
     "required": [
@@ -14333,7 +14360,7 @@
    },
    "VariantSet-Output": {
     "additionalProperties": false,
-    "description": "Batch variant (the old \"character matrix\"): the same script rendered with another bible set.\n\n``characters`` maps a character id to a partial Character patch (appearance, tags, loras…).",
+    "description": "Batch variant (the old \"character matrix\"): the same script rendered with another bible set.\n\nCharacter appearance, outfit slots, locations and template variables are independent.\nOmitted entries inherit the work; an empty list/string explicitly clears that value.",
     "properties": {
      "characters": {
       "additionalProperties": {
@@ -14346,9 +14373,29 @@
       "title": "Id",
       "type": "string"
      },
+     "locations": {
+      "additionalProperties": {
+       "type": "object"
+      },
+      "title": "Locations",
+      "type": "object"
+     },
      "name": {
       "title": "Name",
       "type": "string"
+     },
+     "outfits": {
+      "additionalProperties": {
+       "additionalProperties": {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       "type": "object"
+      },
+      "title": "Outfits",
+      "type": "object"
      },
      "profile_id": {
       "anyOf": [
@@ -14371,12 +14418,22 @@
        }
       ],
       "title": "Style Id"
+     },
+     "variables": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Variables",
+      "type": "object"
      }
     },
     "required": [
      "id",
      "name",
      "characters",
+     "outfits",
+     "locations",
+     "variables",
      "style_id",
      "profile_id"
     ],

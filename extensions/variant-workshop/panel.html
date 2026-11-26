@@ -19,7 +19,7 @@
       <button id="load" disabled data-i18n="load">读取作品</button>
     </header>
     <p class="lead" data-i18n="lead">
-      从角色与画风预设组合版本。生成前会展示幕数、候选数与预计工作量；候选需明确采用。
+      将角色、服装、场景与画风独立组合。先预览矩阵与任务总量，再明确选择要保存和生成的子集。
     </p>
     <p id="status" class="status" role="status" aria-live="polite">正在连接面板…</p>
     <main id="workspace" hidden>
@@ -30,26 +30,55 @@
         </div>
         <div class="derive-controls">
           <label>
+            <span data-i18n="source">预设来源</span>
+            <select id="source">
+              <option value="presets" data-i18n="sourcePresets">分镜预设变量</option>
+              <option value="bible" data-i18n="sourceBible">结构化设定集</option>
+            </select>
+          </label>
+          <label>
             <span data-i18n="prefix">名称前缀</span>
             <input id="prefix" maxlength="40" data-i18n-placeholder="prefixPlaceholder" placeholder="本轮" />
           </label>
-          <label>
+          <label class="bible-target" hidden>
             <span data-i18n="target">替换外观的角色</span>
             <select id="target"></select>
           </label>
+          <label class="bible-target" hidden>
+            <span data-i18n="targetOutfit">目标服装槽</span>
+            <select id="target-outfit"></select>
+          </label>
+          <label class="bible-target" hidden>
+            <span data-i18n="targetLocation">替换的场景</span>
+            <select id="target-location"></select>
+          </label>
         </div>
+        <p class="muted" data-i18n="sourceHint">变量来源只取每个预设中对应的一项，不覆盖其他变量或绑定。空值明确清空，不选则沿用。逐幕局部值优先。</p>
         <div class="choices">
           <fieldset>
-            <legend data-i18n="stylesLegend">画风预设（不选则沿用）</legend>
-            <div id="styles" class="check-list"></div>
+            <legend data-i18n="charactersLegend">角色预设（不选则沿用）</legend>
+            <label class="variable-binding"><span data-i18n="variable">变量</span><input id="key-character" value="character" maxlength="64" /></label>
+            <div id="characters" class="check-list"></div>
           </fieldset>
           <fieldset>
-            <legend data-i18n="charactersLegend">角色外观预设（不选则沿用）</legend>
-            <div id="characters" class="check-list"></div>
+            <legend data-i18n="outfitsLegend">服装预设（不选则沿用）</legend>
+            <label class="variable-binding"><span data-i18n="variable">变量</span><input id="key-outfit" value="outfit" maxlength="64" /></label>
+            <div id="outfits" class="check-list"></div>
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="scenesLegend">场景预设（不选则沿用）</legend>
+            <label class="variable-binding"><span data-i18n="variable">变量</span><input id="key-scene" value="scene" maxlength="64" /></label>
+            <div id="scenes" class="check-list"></div>
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="stylesLegend">画风预设（不选则沿用）</legend>
+            <label class="variable-binding"><span data-i18n="variable">变量</span><input id="key-style" value="style" maxlength="64" /></label>
+            <div id="styles" class="check-list"></div>
           </fieldset>
         </div>
         <div id="matrix-preview" class="matrix-preview" aria-live="polite"></div>
-        <button id="derive" class="primary" data-i18n="derive">保存派生版本</button>
+        <div id="matrix-rows" class="version-list" aria-label="变体矩阵子集"></div>
+        <button id="derive" class="primary" data-i18n="derive">保存勾选组合</button>
       </section>
 
       <section aria-labelledby="generate-title">
@@ -97,12 +126,14 @@
             <select id="dimension">
               <option value="all" data-i18n="dimensionAll">所有版本</option>
               <option value="style" data-i18n="dimensionStyle">画风</option>
-              <option value="appearance" data-i18n="dimensionAppearance">角色外观</option>
+              <option value="character" data-i18n="dimensionAppearance">角色外观</option>
+              <option value="outfit" data-i18n="dimensionOutfit">服装</option>
+              <option value="scene" data-i18n="dimensionScene">场景</option>
             </select>
           </label>
           <button id="show" data-i18n="show">读取候选</button>
         </div>
-        <p class="muted" data-i18n="compareHint">可同时打开两张原图并排比较。采用只影响此分幕与此版本。</p>
+        <p class="muted" data-i18n="compareHint">选定一个基准版本与维度后，固定其他三轴横向比较；选择所有版本则按其他轴分组。变量模式使用上方绑定键。可打开两张原图。</p>
         <div id="takes" class="take-list"></div>
         <div id="comparison" class="comparison" aria-live="polite"></div>
       </section>
