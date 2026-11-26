@@ -22,6 +22,21 @@
   padding: clamp(12px, 2vw, 20px);
 }
 
+/* Reading and editing overlays must hide competing artwork and text below them. */
+:root[data-theme-dynamic-background='true']
+  :is(
+    .dialog,
+    .drawer,
+    .command-dialog,
+    dialog#modal,
+    dialog#guide-dialog,
+    dialog.template-dialog,
+    dialog.album-preview-dialog,
+    #reader .presentation-drawer
+  ) {
+  background: var(--wallpaper-surface);
+}
+
 /* Preserve contrast without re-blurring the moving wallpaper beneath these surfaces. */
 :root[data-theme-dynamic-background='true'] .command-dialog::backdrop {
   background: rgb(var(--shadow-rgb) / 0.62);
