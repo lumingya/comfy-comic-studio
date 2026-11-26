@@ -8,12 +8,18 @@
     "reparse_points": 0
   },
   "attempt_scope": "Recursive deletion of the exact task-owned temporary root, guarded by resolved absolute path, reparse-point and stopped-listener checks.",
-  "execution_result": "REJECTED_BEFORE_PROCESS_START_BY_AUTOMATIC_APPROVAL_POLICY",
-  "deletion_executed": false,
-  "cleanup_complete": false,
+  "execution_result": "COMPLETED_AFTER_EXACT_PATH_RECHECK_AND_APPROVED_ELEVATED_EXECUTION",
+  "deletion_executed": true,
+  "cleanup_complete": true,
+  "observed_after_attempt": {
+    "root_exists": false,
+    "exact_owned_root_absent": true,
+    "reparse_points": 0,
+    "task_port_listeners": 0
+  },
   "bypass_attempted": false,
   "outside_owned_roots_deleted": false,
-  "receipt_write_followup": "A read-only verification and receipt-writing command that quoted the rejected command was also rejected before starting. This file records the bounded outcome without executing a deletion.",
-  "remaining_condition": "The automatic approval review blocked recursive deletion of the task-owned temporary cache. No approval override is available in this session. Keep cleanup unmet until an authorized deletion is actually verified.",
+  "receipt_write_followup": "A later exact-path deletion was authorized, executed with the same guards, and verified that the owned root no longer exists.",
+  "remaining_condition": null,
   "previous_owned_hunt_root_absent_at_preflight": true
 }

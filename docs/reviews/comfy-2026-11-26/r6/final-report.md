@@ -132,7 +132,7 @@ Web四格实际完成252动作、30张本人查看截图：原237/28，焦点小
 
 [隐私终审](audits/privacy/final.md)保留上述扫描范围及过程披露。出版收尾新增的有限输出事件另见[交付过程记录](protocol/root-delivery-process-events.json)；其已知文件名／路径投影不被重复发布，也不据此签零回显。两个工作区已记录的65份data原hash、64个skip-worktree标记及staged/unstaged digest均匹配。但原工作区HEAD前进3个descendant commits、untracked数5→1，因此不能称原工作区整体未变，也不能无证归因本任务；不读未知untracked内容、不重置用户工作。
 
-最新[工作区保护回执](protocol/protected-workspaces-delivery.json)继续支持这两组 data／标记及原工作区 staged／unstaged 摘要的有限事实；[任务进程清理回执](protocol/owned-process-cleanup.json)记录仅关闭已验证所有权的隔离预览和 headless Chrome、两个任务端口已无 listener。缓存目录是否实际删除仍须查收尾回执，进程关闭不代替缓存清理。
+最新[工作区保护回执](protocol/protected-workspaces-delivery.json)继续支持这两组 data／标记及原工作区 staged／unstaged 摘要的有限事实；[任务进程清理回执](protocol/owned-process-cleanup.json)记录仅关闭已验证所有权的隔离预览和 headless Chrome、两个任务端口已无 listener。[缓存清理回执](protocol/cache-cleanup.json)已核实任务缓存目录删除后不存在；进程关闭与缓存清理分别保留独立证据。
 
 ## 适配与历史证据限制
 

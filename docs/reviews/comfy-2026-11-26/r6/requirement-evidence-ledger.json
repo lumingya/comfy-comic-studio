@@ -5609,7 +5609,7 @@
       "id": "C04",
       "task_section": "交付",
       "requirement": "清理所有野生JSON/PNG/WebP缓存与临时脚本",
-      "state": "PENDING_ACTUAL_FINAL_CLEANUP",
+      "state": "VERIFIED_FINAL_CLEANUP",
       "revision9_state_historical_only": "REVIEW_CLEANUP_OR_DELIVERY_PENDING",
       "evidence": [
         "docs/COMFY_WORKFLOW_COMPATIBILITY_2026-11-21.md",
@@ -5624,7 +5624,7 @@
       "current_round_evidence": "external-temp-evidence/audits/r6/root-round-acceptance.json",
       "current_round_sha256": "3ccc62958d27a854b83c38403e0a55baa0047ae9ce59d55e1417248dee46382f",
       "not_a_whole_goal_completion_claim": true,
-      "direct_final_delivery_action_pending": true,
+      "direct_final_delivery_action_pending": false,
       "final_delivery_relation_pending": true,
       "evidence_resolution": [
         {
@@ -5676,8 +5676,9 @@
           "published_sha256": "22b0830c6c2b523adf140a73df4cf9a78bc20062ecc2c593c30465b7536a7d1d"
         }
       ],
-      "current_round_published_evidence": "protocol/root-round-acceptance.json",
-      "current_round_sha256_kind": "sealed_source_sha256; published-byte relation is in publication-source-map.json",
+      "current_round_published_evidence": "protocol/cache-cleanup.json",
+      "current_round_sha256": "21ad421ddaa6d27f81f47fdc7919d3b5e9ae9fabf755c4956a9c8d94188a33ff",
+      "current_round_sha256_kind": "published_protocol_sha256; final cleanup observed after the formal round",
       "delivery_receipt_predicates": {
         "cleanup": "delivery-receipt.md records actual absence of the exact owned raw-cache/script root and closure of only owned preview/browser processes",
         "protection": "delivery-receipt.md records final protected-data hashes/skip flags and the separately disclosed original-workspace drift"
@@ -6324,7 +6325,7 @@
     "VERIFIED_CURRENT75_COMPARISON_ORIGINAL_COHORT_LIMIT": 1,
     "VERIFIED_AT_FROZEN_CANDIDATE_FINAL_DELIVERY_RELATION_PENDING": 11,
     "VERIFIED_BOUNDED_PRIVACY_CI_FINAL_HYGIENE_PENDING": 1,
-    "PENDING_ACTUAL_FINAL_CLEANUP": 1,
+    "VERIFIED_FINAL_CLEANUP": 1,
     "PENDING_FINAL_PUBLICATION_COMMIT_PUSH_CLEAN_STATUS": 1,
     "VERIFIED_REPORT_CONTENT_FINAL_DELIVERY_RECEIPT_REQUIRED": 1,
     "NO_NEW_FULL_COMPILE_REGRESSION_PRIVATE_STATE_LIMIT": 1
@@ -6374,7 +6375,6 @@
   ],
   "actual_root_receipts_pending": [
     "actual_safe_publication_git_blob_and_links",
-    "actual_wild_cache_and_temporary_script_cleanup",
     "final_specific_file_commit_push_remote_head_and_clean_status",
     "final_delivery_head_source_identity_and_green_ci_relation"
   ],
