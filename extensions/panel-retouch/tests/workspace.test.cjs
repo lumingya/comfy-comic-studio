@@ -100,8 +100,12 @@ async function handshakeAndAppearance() {
     h.send({ type: "mio:panel:init", version: 1 });
     assert.equal(h.sent.length, 0);
     assert.equal(h.api.text("title"), "单格精修");
+    assert.match(h.api.text("maskHint"), /Space\/Enter/);
+    assert.match(h.api.text("maskCursor", { tool: "画笔", x: 2, y: 3, width: 320, height: 160, state: "就绪" }), /画笔游标：2, 3 \/ 320 × 160 px。就绪/);
     h.init({ locale: "en-US", theme: "dark", tokens: { accent: "#123456", text: "#fefefe", bg: "#111111" } });
     assert.equal(h.api.text("title"), "Panel retouch");
+    assert.match(h.api.text("maskIdle"), /Shift\+arrows move 10 px/);
+    assert.match(h.api.text("maskDrawing"), /Esc cancels/);
     assert.equal(h.root.dataset.theme, "dark");
     assert.equal(h.root.lang, "en");
     assert.equal(h.styles.get("--accent"), "#123456", "appearance uses unprefixed protocol token names");

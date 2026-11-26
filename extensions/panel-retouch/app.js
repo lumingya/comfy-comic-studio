@@ -4,7 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const elements = {
     status: $("status"), series: $("series"), episodeSelect: $("episode"), load: $("load"), empty: $("empty"), take: $("take"),
-    image: $("source-image"), stage: $("source-stage"), canvas: $("mask-canvas"), kind: $("kind"), profile: $("profile"), profileInfo: $("profile-info"),
+    image: $("source-image"), stage: $("source-stage"), canvas: $("mask-canvas"), position: $("mask-position"), kind: $("kind"), profile: $("profile"), profileInfo: $("profile-info"),
     inpaint: $("inpaint-fields"), outpaint: $("outpaint-fields"), instructionFields: $("instruction-fields"), direction: $("direction"), padding: $("padding"),
     instruction: $("instruction"), channel: $("channel"), prompt: $("prompt"), negative: $("negative"), denoise: $("denoise"), seed: $("seed"), feather: $("feather"), invert: $("invert"),
     brushSize: $("brush-size"), brushSizeValue: $("brush-size-value"), featherValue: $("feather-value"), undo: $("undo"), redo: $("redo"), clear: $("clear-mask"),
@@ -86,7 +86,8 @@
     }
   };
   const maskEditor = new window.MioMaskEditor(elements.image, elements.canvas, elements.stage, {
-    undo: elements.undo, redo: elements.redo, clear: elements.clear, invert: elements.invert
+    undo: elements.undo, redo: elements.redo, clear: elements.clear, invert: elements.invert,
+    position: elements.position, text: api.text
   });
   const fillSeries = () => {
     const previous = elements.series.value;
@@ -264,11 +265,13 @@
       item.setAttribute("aria-pressed", String(active));
     });
     elements.canvas.style.cursor = maskEditor.mode === "eraser" ? "cell" : maskEditor.mode === "brush" ? "crosshair" : "crosshair";
+    maskEditor.render();
   }));
   elements.brushSize.addEventListener("input", () => {
     maskEditor.brushSize = Number(elements.brushSize.value);
     elements.brushSizeValue.value = `${maskEditor.brushSize} px`;
     elements.brushSizeValue.textContent = `${maskEditor.brushSize} px`;
+    maskEditor.render();
   });
   elements.feather.addEventListener("input", () => {
     elements.featherValue.value = `${elements.feather.value} px`;
@@ -337,7 +340,7 @@
     if (!elements.watch.checked) window.MioJobTracker.stop();
     else window.MioJobTracker.refresh().catch(() => {});
   });
-  document.addEventListener("mio-context", () => { api.localize(); status("chooseEpisode"); });
+  document.addEventListener("mio-context", () => { api.localize(); maskEditor.render(); status("chooseEpisode"); });
   addEventListener("pagehide", () => { finishAdoption(false); window.MioJobTracker.stop(); revoke(sourceUrl); for (const url of previewUrls) revoke(url); });
   window.MioJobApp = Object.freeze({ init, loadEpisode, createJob, status, onJobComplete });
   init();

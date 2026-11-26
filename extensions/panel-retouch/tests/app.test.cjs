@@ -58,7 +58,7 @@ function harness(mode = "loaded") {
     release: (url) => calls.released.push(url)
   };
   window.MioMaskEditor = class {
-    constructor() { this.drawing = false; this.revision = 2; this.mode = "brush"; }
+    constructor(image, canvas, stage, controls) { this.drawing = false; this.revision = 2; this.mode = "brush"; calls.maskControls = controls; }
     reset() {} resize() {} render() {} undo() {} redo() {} clear() {}
     async blob(feather, invert) { calls.mask = { feather, invert }; return new window.Blob(["mask"], { type: "image/png" }); }
   };
@@ -85,6 +85,14 @@ async function main() {
   const { window, $, calls } = test;
   try {
     await flush();
+    assert.equal($("mask-canvas").getAttribute("aria-describedby"), "mask-hint mask-position");
+    assert.equal($("mask-position").getAttribute("role"), "status");
+    assert.equal(calls.maskControls.position, $("mask-position"), "mask editor receives the visible keyboard position/status output");
+    assert.equal(calls.maskControls.text, window.MioRetouch.text, "cursor and gesture status use the active locale");
+    const hover = [...window.document.styleSheets].flatMap((sheet) => [...sheet.cssRules])
+      .find((rule) => rule.selectorText === "button.primary:not(:disabled):hover");
+    assert.equal(hover?.style.background, "var(--accent)", "primary hover retains an opaque accent background");
+    assert.equal(hover?.style.color, "var(--accent-ink)");
     assert.equal($("status").textContent, "chooseEpisode");
     $("load").click();
     await flush();

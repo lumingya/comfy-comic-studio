@@ -49,7 +49,7 @@
           </div>
           <div class="stage" id="source-stage">
             <img id="source-image" data-i18n-alt="sourceImageAlt" alt="当前编辑的原图" />
-            <canvas id="mask-canvas" data-i18n-alt="maskCanvasAlt" aria-label="蒙版绘制画布" tabindex="0"></canvas>
+            <canvas id="mask-canvas" data-i18n-alt="maskCanvasAlt" aria-label="蒙版绘制画布" aria-describedby="mask-hint mask-position" tabindex="0"></canvas>
             <p id="image-placeholder" class="placeholder" data-i18n="imagePlaceholder">选择候选图后显示原图</p>
           </div>
           <div class="tool-row" role="toolbar" aria-label="蒙版工具">
@@ -69,7 +69,8 @@
             </label>
             <label class="check-label"><input id="invert" type="checkbox" disabled /><span data-i18n="invert">反选蒙版区域</span></label>
           </div>
-          <p class="hint" data-i18n="maskHint">浅色区域将重绘。拖动画笔或矩形；橡皮擦可擦除区域。Ctrl/Cmd+Z 撤销，Ctrl/Cmd+Shift+Z 重做。</p>
+          <p id="mask-hint" class="hint" data-i18n="maskHint">浅色区域将重绘。可拖动画笔或矩形，或聚焦画布后用方向键移动游标（Shift 加速），Space/Enter 开始与完成，Esc 取消，Tab 完成并移出。Ctrl/Cmd+Z 撤销，Ctrl/Cmd+Shift+Z 重做。</p>
+          <p id="mask-position" class="hint" role="status" aria-live="polite" aria-atomic="true"></p>
         </section>
 
         <section class="card edit-card" aria-labelledby="edit-title">

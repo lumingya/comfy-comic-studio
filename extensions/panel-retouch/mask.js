@@ -13,6 +13,10 @@
       this.anchor = null;
       this.current = null;
       this.activeBefore = null;
+      this.strokeSource = null;
+      this.cursor = null;
+      this.focused = false;
+      this.keyboardCursor = false;
       this.history = [];
       this.redoStack = [];
       this.revision = 0;
@@ -23,6 +27,17 @@
       this.canvas.addEventListener("pointerup", (event) => this.pointerUp(event));
       this.canvas.addEventListener("pointercancel", () => this.cancelStroke());
       this.canvas.addEventListener("keydown", (event) => this.keydown(event));
+      this.canvas.addEventListener("focus", () => {
+        this.focused = true;
+        this.keyboardCursor = true;
+        this.cursorPoint();
+        this.render();
+      });
+      this.canvas.addEventListener("blur", () => {
+        if (this.strokeSource === "keyboard") this.finishStroke(this.cursor);
+        this.focused = false;
+        this.render();
+      });
       new ResizeObserver(() => this.resize()).observe(stage);
       this.render();
     }
@@ -84,10 +99,16 @@
     pointerDown(event) {
       if (!this.canEdit || event.button !== 0) return;
       event.preventDefault();
+      this.cancelStroke();
       this.canvas.focus({ preventScroll: true });
       this.canvas.setPointerCapture?.(event.pointerId);
+      this.keyboardCursor = false;
+      this.beginStroke(this.point(event), "pointer");
+    }
+    beginStroke(point, source) {
+      this.strokeSource = source;
       this.drawing = true;
-      this.start = this.point(event);
+      this.start = point;
       this.anchor = this.start;
       this.current = this.start;
       this.activeBefore = this.snapshot();
@@ -97,7 +118,7 @@
       this.render();
     }
     pointerMove(event) {
-      if (!this.drawing) return;
+      if (this.strokeSource !== "pointer") return;
       this.current = this.point(event);
       if (this.mode === "rectangle") this.render();
       else this.paintSegment(this.start, this.current);
@@ -105,18 +126,22 @@
       if (this.mode !== "rectangle") this.render();
     }
     pointerUp(event) {
+      if (this.strokeSource === "pointer") this.finishStroke(this.point(event));
+    }
+    finishStroke(end) {
       if (!this.drawing) return;
-      const end = this.point(event);
       if (this.mode === "rectangle") {
         this.ensureMask();
         const context = this.mask.getContext("2d");
         context.fillStyle = "#fff";
-        context.fillRect(Math.min(this.anchor.x, end.x), Math.min(this.anchor.y, end.y), Math.abs(end.x - this.anchor.x), Math.abs(end.y - this.anchor.y));
+        const edge = this.strokeSource === "keyboard" ? 1 : 0;
+        context.fillRect(Math.min(this.anchor.x, end.x), Math.min(this.anchor.y, end.y), Math.abs(end.x - this.anchor.x) + edge, Math.abs(end.y - this.anchor.y) + edge);
       } else {
         this.paintSegment(this.start, end);
       }
       this.commitStroke();
       this.drawing = false;
+      this.strokeSource = null;
       this.start = null;
       this.anchor = null;
       this.current = null;
@@ -128,6 +153,7 @@
       this.mask = this.activeBefore;
       this.activeBefore = null;
       this.drawing = false;
+      this.strokeSource = null;
       this.start = null;
       this.anchor = null;
       this.current = null;
@@ -159,6 +185,7 @@
       context.restore();
     }
     undo() {
+      if (this.drawing) { this.cancelStroke(); return; }
       if (!this.history.length) return;
       this.redoStack.push(this.snapshot());
       this.mask = this.history.pop();
@@ -167,6 +194,7 @@
       this.updateHistory();
     }
     redo() {
+      if (this.drawing) { this.cancelStroke(); return; }
       if (!this.redoStack.length) return;
       this.history.push(this.snapshot());
       this.mask = this.redoStack.pop();
@@ -175,6 +203,7 @@
       this.updateHistory();
     }
     clear() {
+      this.cancelStroke();
       if (!this.hasPaint()) return;
       this.record();
       this.mask = null;
@@ -187,9 +216,67 @@
         this.cancelStroke();
         return;
       }
-      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z") return;
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        if (event.shiftKey) this.redo(); else this.undo();
+        return;
+      }
+      if (!this.canEdit || event.ctrlKey || event.metaKey || event.altKey) return;
+      const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
+      if (!direction && event.key !== " " && event.key !== "Enter") return;
       event.preventDefault();
-      if (event.shiftKey) this.redo(); else this.undo();
+      if (this.strokeSource === "pointer") return;
+      this.keyboardCursor = true;
+      this.cursorPoint();
+      if (direction) {
+        const step = event.shiftKey ? 10 : 1;
+        this.cursor = {
+          x: Math.max(0, Math.min(this.width - 1, this.cursor.x + direction[0] * step)),
+          y: Math.max(0, Math.min(this.height - 1, this.cursor.y + direction[1] * step))
+        };
+        if (this.drawing) {
+          this.current = this.cursor;
+          if (this.mode !== "rectangle") this.paintSegment(this.start, this.current);
+          this.start = this.current;
+        }
+      } else if (!event.repeat) {
+        if (this.drawing) this.finishStroke(this.cursor);
+        else this.beginStroke(this.cursor, "keyboard");
+      }
+      this.render();
+    }
+    cursorPoint() {
+      this.cursor = {
+        x: Math.max(0, Math.min(this.width - 1, this.cursor?.x ?? Math.floor(this.width / 2))),
+        y: Math.max(0, Math.min(this.height - 1, this.cursor?.y ?? Math.floor(this.height / 2)))
+      };
+      return this.cursor;
+    }
+    renderCursor(rect) {
+      const visible = this.canEdit && this.focused && this.keyboardCursor;
+      if (this.controls.position) this.controls.position.textContent = visible ? this.controls.text("maskCursor", {
+        tool: this.controls.text(this.mode), x: this.cursor.x + 1, y: this.cursor.y + 1,
+        width: this.width, height: this.height,
+        state: this.controls.text(this.drawing ? "maskDrawing" : "maskIdle")
+      }) : "";
+      if (!visible) return;
+      const x = this.cursor.x * rect.width / this.width;
+      const y = this.cursor.y * rect.height / this.height;
+      const radius = this.mode === "rectangle" ? 7 : Math.max(3, this.brushSize * rect.width / this.width / 2);
+      this.ctx.save();
+      this.ctx.setLineDash([]);
+      for (const [color, width] of [["#000", 4], ["#fff", 2]]) {
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = width;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+        this.ctx.moveTo(x - 5, y);
+        this.ctx.lineTo(x + 5, y);
+        this.ctx.moveTo(x, y - 5);
+        this.ctx.lineTo(x, y + 5);
+        this.ctx.stroke();
+      }
+      this.ctx.restore();
     }
     render() {
       const rect = this.canvas.getBoundingClientRect();
@@ -226,6 +313,7 @@
         );
         this.ctx.setLineDash([]);
       }
+      this.renderCursor(rect);
     }
     reset() {
       this.history = [];
@@ -233,6 +321,10 @@
       this.mask = null;
       this.revision += 1;
       this.drawing = false;
+      this.strokeSource = null;
+      this.start = this.anchor = this.current = this.activeBefore = null;
+      this.cursor = null;
+      if (this.focused) this.cursorPoint();
       this.render();
       this.updateHistory();
     }

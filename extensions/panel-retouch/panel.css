@@ -23,6 +23,7 @@ button:not(:disabled):hover { border-color: var(--accent); background: color-mix
 button:disabled { opacity: .48; cursor: not-allowed; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, canvas:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 button.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+button.primary:not(:disabled):hover { background: var(--accent); color: var(--accent-ink); }
 button.quiet { border-color: transparent; color: var(--muted); }
 .page-head { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(150px, .38fr) minmax(150px, .38fr) auto; gap: 14px; align-items: end; margin-bottom: 16px; }
 .page-head h1 { margin: 0; font: 500 clamp(24px, 3vw, 34px)/1.2 Georgia, serif; letter-spacing: -.025em; }
@@ -50,6 +51,8 @@ output { color: var(--ink); font-variant-numeric: tabular-nums; }
 .stage canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
 .stage:not(.ready) canvas { display: none; }
 .stage:not(.ready) img { visibility: hidden; }
+.stage:has(canvas:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; box-shadow: 0 0 0 4px var(--surface); }
+#mask-position:empty { display: none; }
 .placeholder { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 20px; color: var(--muted); text-align: center; }
 .stage.ready .placeholder { display: none; }
 .tool-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin: 12px 0; }
