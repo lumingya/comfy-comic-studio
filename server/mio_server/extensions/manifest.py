@@ -263,6 +263,10 @@ def read_manifest(folder: Path) -> Manifest:
     for surface in manifest.contributes.floating_surfaces:
         if not inside(folder, surface.entry).is_file():
             raise ManifestError(f"floating surface entry is not an HTML file: {surface.entry}")
+    try:
+        _reject_symlinked_directories(folder)
+    except OSError as exc:
+        raise ManifestError(str(exc)) from None
     return manifest
 
 
@@ -280,7 +284,18 @@ def inside(folder: Path, rel: str) -> Path:
     return target
 
 
+def _reject_symlinked_directories(folder: Path) -> None:
+    for current, directories, names in os.walk(folder):
+        directories[:] = [name for name in directories if name not in SKIP_DIRS]
+        for name in directories:
+            path = Path(current) / name
+            if path.is_symlink():
+                rel = path.relative_to(folder).as_posix()
+                raise OSError(f"extension package contains a symlinked directory: {rel}")
+
+
 def files(folder: Path) -> list[Path]:
+    _reject_symlinked_directories(folder)
     out = []
     for current, directories, names in os.walk(folder):
         directories[:] = [name for name in directories if name not in SKIP_DIRS]

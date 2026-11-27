@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from mio_server.extensions.manifest import digest, read_manifest
+from mio_server.extensions.manifest import ManifestError, digest, read_manifest
 
 from .api_harness import ApiCase
 
@@ -114,6 +114,37 @@ class SurfaceDigestTests(ApiCase):
                     self.assertEqual(self.directories(), ([], []))
                 finally:
                     target.write_bytes(original)
+
+    def test_symlinked_child_module_cannot_keep_the_reviewed_digest(self):
+        folder = self.package("review-panel", panels=False)
+        reviewed = digest(folder)
+        target = Path(self.tmp) / "linked-extension-module"
+        target.mkdir()
+        module = target / "child.py"
+        module.write_text("VALUE = 'reviewed'\n", encoding="utf-8")
+        link = folder / "modules"
+        try:
+            link.symlink_to(target, target_is_directory=True)
+        except OSError:
+            # Some Windows hosts disallow creating symlinks without elevated privileges.
+            # Keep the regression active by simulating the filesystem's symlink report.
+            link.mkdir()
+        is_symlink = Path.is_symlink
+        symlink_report = patch.object(
+            Path,
+            "is_symlink",
+            new=lambda path: path == link or is_symlink(path),
+        )
+
+        with symlink_report:
+            with self.assertRaisesRegex(ManifestError, "symlinked directory"):
+                read_manifest(folder)
+            with self.assertRaisesRegex(OSError, "symlinked directory"):
+                digest(folder)
+            module.write_text("VALUE = 'unreviewed'\n", encoding="utf-8")
+            with self.assertRaisesRegex(OSError, "symlinked directory"):
+                digest(folder)
+        self.assertEqual(len(reviewed), 64)
 
     def test_changed_host_slot_declaration_cannot_pollute_output(self):
         folder = self.package("review-panel", enabled=True)
