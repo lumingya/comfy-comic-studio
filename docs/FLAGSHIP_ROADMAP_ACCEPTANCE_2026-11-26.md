@@ -543,6 +543,8 @@ Windows 文件系统复核发现目录 junction 可能不是 `Path.is_symlink()`
 
 该矩阵为当前扩展回调完整性守卫提供了全视口/主题/语言的交互与生命周期证据。它使用 headless Chrome，不能替代 §9 要求的有头桌面 pan/divider 性能或 native blur / OS 原生失焦验证；完整后端测试仍按用户要求未运行。
 
+同一当前代码另运行扩展操作、扩展摘要、Comfy adapter contract 与 Comfy client 四个相关后端模块：`python -m unittest tests.test_operation_extensions tests.test_extension_surface_digest tests.test_comfy_adapter_contracts tests.test_comfy_client -q`，55 项 / 38.528 秒，exit 0 / OK。输出中有一条测试夹具主动触发的 `ValueError("activation failed")` 预期日志；它没有令测试失败。未运行完整后端套件。
+
 ## 8. 已发生的专项 finding 与修复记录
 
 本节索引实施、专项及独立审计阶段发生的真实问题；最终轮次以第 7 节为准，不因在此重复列出而另加轮次或重复计数。尚未收口到最终提交的项目不虚填提交号。
