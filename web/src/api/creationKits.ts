@@ -44,10 +44,14 @@ export function useImportCreationKit() {
   });
 }
 
-export function exportCreationKit(body: components['schemas']['KitSelection']) {
+export function exportCreationKit(
+  body: components['schemas']['KitSelection'],
+  signal?: AbortSignal,
+) {
   return downloadPost(
     '/api/creation-kits/export',
     body,
     `${body.title || 'creation-kit'}.mio-kit.zip`,
+    signal,
   );
 }

@@ -36,10 +36,17 @@ export function PresentationDrawer(props: PresentationDrawerProps) {
   const [canceling, setCanceling] = useState(false);
   const ticket = useRef<{ signature: string; key: string; id?: string } | null>(null);
   const waiting = useRef<AbortController | null>(null);
+  const mounted = useRef(false);
   const progress = useLive((state) =>
     exportJob ? state.progress[`${exportJob.id}:0`] : undefined,
   );
-  useEffect(() => () => waiting.current?.abort(), []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      waiting.current?.abort();
+    };
+  }, []);
   const [studio, setStudio] = useState(false);
   const [trialReading, setTrialReading] = useState(false);
   const [kitTitle, setKitTitle] = useState<string | null>(null);
@@ -139,14 +146,21 @@ export function PresentationDrawer(props: PresentationDrawerProps) {
       const title = props.title.slice(0, 120);
       let result: Response;
       if (format === 'source')
-        result = await download(`/api/series/${props.seriesId}/bundle`, `${name}.mio.zip`);
+        result = await download(
+          `/api/series/${props.seriesId}/bundle`,
+          `${name}.mio.zip`,
+          controller.signal,
+        );
       else if (format === 'kit')
-        result = await exportCreationKit({
-          series_id: props.seriesId!,
-          episode_ids: selectedEpisodes,
-          preset_ids: presetSelection,
-          title: (kitTitle ?? props.title.slice(0, 120)).trim(),
-        });
+        result = await exportCreationKit(
+          {
+            series_id: props.seriesId!,
+            episode_ids: selectedEpisodes,
+            preset_ids: presetSelection,
+            title: (kitTitle ?? props.title.slice(0, 120)).trim(),
+          },
+          controller.signal,
+        );
       else if (format === 'html')
         result = await background(
           'album',
@@ -206,7 +220,7 @@ export function PresentationDrawer(props: PresentationDrawerProps) {
         ['canceled', 'blocked', 'paused'].includes(message) ? t(`jobs.states.${message}`) : message,
       );
     } finally {
-      if (waiting.current === controller) {
+      if (mounted.current && waiting.current === controller) {
         waiting.current = null;
         setBusy(false);
       }

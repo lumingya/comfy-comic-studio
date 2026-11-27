@@ -68,9 +68,15 @@ export async function uploadAsset(file: Blob, filename = ''): Promise<{ id: stri
 }
 
 /** Trigger a browser download for a GET endpoint that answers with an attachment. */
-export async function download(path: string, fallbackName: string): Promise<Response> {
-  const response = await raw(path);
-  await saveResponse(response, fallbackName);
+export async function download(
+  path: string,
+  fallbackName: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  signal?.throwIfAborted();
+  const response = await raw(path, { signal });
+  await saveResponse(response, fallbackName, signal);
+  signal?.throwIfAborted();
   return response;
 }
 
@@ -105,13 +111,17 @@ export async function downloadPost(
   path: string,
   body: unknown,
   fallbackName: string,
+  signal?: AbortSignal,
 ): Promise<Response> {
+  signal?.throwIfAborted();
   const response = await raw(path, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
+    signal,
   });
-  await saveResponse(response, fallbackName);
+  await saveResponse(response, fallbackName, signal);
+  signal?.throwIfAborted();
   return response;
 }
 
@@ -121,13 +131,23 @@ function responseFilename(response: Response, fallbackName: string): string {
   return match ? decodeURIComponent(match[1]) : fallbackName;
 }
 
-async function saveResponse(response: Response, fallbackName: string): Promise<void> {
+async function saveResponse(
+  response: Response,
+  fallbackName: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  signal?.throwIfAborted();
   const blob = await response.blob();
+  signal?.throwIfAborted();
   const name = responseFilename(response, fallbackName);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  try {
+    signal?.throwIfAborted();
+    a.click();
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
 }

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch } from '../test/utils';
-import { api, ApiError, assetUrl, data, downloadFile, raw } from './client';
+import { api, ApiError, assetUrl, data, download, downloadFile, downloadPost, raw } from './client';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -111,6 +111,61 @@ describe('api client', () => {
     await expect(
       downloadFile('/api/export/jobs/job_1/file', 'album.pdf', controller.signal),
     ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(click).not.toHaveBeenCalled();
+  });
+
+  it('propagates cancellation signals through buffered GET and POST downloads', async () => {
+    const controller = new AbortController();
+    const signals: (AbortSignal | null | undefined)[] = [];
+    vi.stubGlobal(
+      'URL',
+      Object.assign(URL, {
+        createObjectURL: vi.fn(() => 'blob:download'),
+        revokeObjectURL: vi.fn(),
+      }),
+    );
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      signals.push(init?.signal);
+      return new Response(new Blob(['archive']), {
+        headers: { 'Content-Disposition': 'attachment; filename="archive.zip"' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await download('/api/source', 'source.zip', controller.signal);
+    await downloadPost('/api/kit', { title: 'kit' }, 'kit.zip', controller.signal);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(signals).toEqual([controller.signal, controller.signal]);
+  });
+
+  it('does not save a buffered file when cancellation happens during body reading', async () => {
+    const controller = new AbortController();
+    let finishBlob!: (blob: Blob) => void;
+    const response = new Response();
+    vi.spyOn(response, 'blob').mockReturnValue(
+      new Promise((resolve) => {
+        finishBlob = resolve;
+      }),
+    );
+    const createObjectURL = vi.fn(() => 'blob:download');
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => response),
+    );
+
+    const pending = downloadPost('/api/kit', {}, 'kit.zip', controller.signal);
+    await vi.waitFor(() => expect(finishBlob).toBeDefined());
+    controller.abort();
+    finishBlob(new Blob(['archive']));
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    expect(createObjectURL).not.toHaveBeenCalled();
     expect(click).not.toHaveBeenCalled();
   });
 });

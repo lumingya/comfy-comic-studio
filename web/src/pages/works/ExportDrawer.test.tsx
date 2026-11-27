@@ -70,6 +70,7 @@ function mount(overrides: Partial<ComponentProps<typeof PresentationDrawer>> = {
   return {
     onPlatform,
     onClose,
+    unmount: view.unmount,
     rerender: (patch: typeof overrides) => {
       current = { ...current, ...patch };
       view.rerender(<Harness />);
@@ -216,6 +217,28 @@ it('downloads the entire editable source without requiring a selected episode', 
     { method: 'GET', url: '/api/series/ser_1/bundle', body: undefined },
   ]);
   expect(calls.some((call) => call.method === 'POST')).toBe(false);
+});
+
+it('aborts an editable source download when the drawer unmounts', async () => {
+  let bundleSignal: AbortSignal | null | undefined;
+  const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input).includes('/bundle')) {
+      bundleSignal = init?.signal;
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true });
+      });
+    }
+    return Promise.resolve(
+      new Response(JSON.stringify([]), { headers: { 'content-type': 'application/json' } }),
+    );
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  const view = mount({ episodeId: undefined, episodes: [] });
+  choose('source');
+  run();
+  await waitFor(() => expect(bundleSignal).toBeDefined());
+  view.unmount();
+  expect(bundleSignal?.aborted).toBe(true);
 });
 
 it('includes only selected storyboards and presets in a creation kit, including later pages', async () => {
