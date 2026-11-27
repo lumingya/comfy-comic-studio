@@ -537,6 +537,12 @@ Windows 文件系统复核发现目录 junction 可能不是 `Path.is_symlink()`
 
 这些是 headless Chrome 的 rAF 回调调度间隔，不是实体显示器上的帧时、GPU / 合成器性能或主观响应度；本轮没有桌面显示刷新同步，极低间隔不能外推为更高刷新率的渲染保证。它们补充了多轮尾部样本，但不关闭 §9 的宽泛性能签发；native blur 与 OS 原生失焦仍待有头桌面实测。
 
+### 7.19 当前树六专业面板 84 格矩阵复验（2026-11-27）
+
+在当前代码运行完整 `python tools/check_professional_browser.py`：真实 Chrome 158.0.8127.37、六个官方扩展、1440/390 两种宽度、light/dark/dynamic 三种主题、zh-CN/en 两种语言，面板交互与每格卸载生命周期共 84/84 通过、failed=0。`web/dist/index.html` SHA-256 为 `c3ecfd33c45820b923f3b91e524c9b7af9ce9472f41fd61e7de07c654abcfa2f`；无截图输出，隔离工作区已由脚本清理。使用本地 FakeLLM/FakeVLM/FakeComfy，不触达付费模型或真实 GPU。
+
+该矩阵为当前扩展回调完整性守卫提供了全视口/主题/语言的交互与生命周期证据。它使用 headless Chrome，不能替代 §9 要求的有头桌面 pan/divider 性能或 native blur / OS 原生失焦验证；完整后端测试仍按用户要求未运行。
+
 ## 8. 已发生的专项 finding 与修复记录
 
 本节索引实施、专项及独立审计阶段发生的真实问题；最终轮次以第 7 节为准，不因在此重复列出而另加轮次或重复计数。尚未收口到最终提交的项目不虚填提交号。
