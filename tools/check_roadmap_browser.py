@@ -92,6 +92,71 @@ def exercise_candidate_compare(page, origin, shots, name, evidence):
     page.mouse.up()
     dragged_divider = float(handle.get_attribute("aria-valuenow"))
     assert 30 <= dragged_divider <= 40, dragged_divider
+
+    page.evaluate(
+        """() => {
+          const probe = {active:false, intervals:[]};
+          let previous = performance.now();
+          const tick = now => {
+            if (probe.active) probe.intervals.push(now - previous);
+            previous = now;
+            requestAnimationFrame(tick);
+          };
+          window.__roadmapFrameProbe = probe;
+          requestAnimationFrame(tick);
+        }"""
+    )
+
+    def measure_frames(action):
+        start = page.evaluate(
+            "() => { const p = window.__roadmapFrameProbe; p.active = true; return p.intervals.length; }"
+        )
+        action()
+        return page.evaluate(
+            """async start => {
+              const p = window.__roadmapFrameProbe;
+              await new Promise(requestAnimationFrame);
+              p.active = false;
+              await new Promise(requestAnimationFrame);
+              return p.intervals.splice(start);
+            }""",
+            start,
+        )
+
+    def frame_summary(samples):
+        values = sorted(samples)
+        assert values, "The browser did not produce animation-frame samples during input"
+        count = len(values)
+        median = (
+            values[count // 2] if count % 2 else (values[count // 2 - 1] + values[count // 2]) / 2
+        )
+        p95 = values[(95 * count + 99) // 100 - 1]
+        return {
+            "cycles": 20,
+            "samples": count,
+            "median_ms": round(median, 3),
+            "p95_ms": round(p95, 3),
+            "max_ms": round(values[-1], 3),
+            "over_50ms": sum(value > 50 for value in values),
+        }
+
+    divider_intervals = []
+    for target in [70, 30] * 10:
+
+        def drag_to_target(target=target):
+            knob = handle.bounding_box()
+            assert knob
+            y = knob["y"] + knob["height"] / 2
+            start_x = knob["x"] + knob["width"] / 2
+            end_x = bounds["x"] + bounds["width"] * target / 100
+            page.mouse.move(start_x, y)
+            page.mouse.down()
+            page.mouse.move(end_x, y, steps=8)
+            page.mouse.up()
+
+        divider_intervals.extend(measure_frames(drag_to_target))
+    divider_frame_metrics = frame_summary(divider_intervals)
+
     zoom = dialog.locator('.board-split-controls input[aria-label="同步缩放"]')
     zoom.press("Home")
     for _ in range(10):
@@ -110,6 +175,20 @@ def exercise_candidate_compare(page, origin, shots, name, evidence):
     page.mouse.up()
     panned = frames.evaluate_all("items => items.map(item => item.style.transform)")
     assert panned[0] == panned[1] and panned[0] != transforms[0], panned
+
+    pan_intervals = []
+    for dx, dy in [(24, 16), (-24, -16)] * 10:
+
+        def pan_by(dx=dx, dy=dy):
+            x = bounds["x"] + bounds["width"] * 0.75
+            y = bounds["y"] + bounds["height"] * 0.35
+            page.mouse.move(x, y)
+            page.mouse.down()
+            page.mouse.move(x + dx, y + dy, steps=6)
+            page.mouse.up()
+
+        pan_intervals.extend(measure_frames(pan_by))
+    pan_frame_metrics = frame_summary(pan_intervals)
     screenshot(page, shots, name + "-split")
     zoom.press("Home")
     expect(frames.nth(0)).to_have_attribute("style", "transform: translate(0px, 0px) scale(1);")
@@ -132,7 +211,9 @@ def exercise_candidate_compare(page, origin, shots, name, evidence):
     return {
         "divider_keyboard": [52, 62, 0, 100, 50],
         "divider_mouse": dragged_divider,
+        "divider_rAF_intervals": divider_frame_metrics,
         "sync_pan": panned,
+        "sync_pan_rAF_intervals": pan_frame_metrics,
         "adopt_writes": 1,
         "escape_focus_restored": True,
         "dialog_bounds": bounds,
