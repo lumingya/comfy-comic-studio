@@ -266,7 +266,7 @@ Job / Attempt：统一任务引擎
   - [x] CI 增加全体扩展/主题 CTK、6 个离线面板脚本、文档链接和新适配器风格门禁，保留原有门禁及 AI 辅助/壁纸主题必需包检查；本机静态验证 19 包通过。
   - [x] 剧本提案的设定集修改与分镜 CAS 改为同一事务；过期、异常与外层事务回滚回归 9 项通过。
 
-### 创作效率与离线出版续作（2026-11-25，进行中）
+### 创作效率与离线出版续作（2026-11-25—28，本地验收完成，待推送）
 
 - [x] 五套旗舰模板真实 Chrome 极端矩阵 200/200：两种尺寸、浅深偏好、60/120 幕、长标题、纯图、宽高极端图与 XSS 文本；页面错误和外部请求均为零。
 - [x] Zine 支持条漫、左翻与右翻，覆盖键盘、触屏和双页顺序；Contact Sheet 整格点击及 Enter/Space 可进入灯箱并恢复焦点。修复超长页脚溢出及末格跳转被滚动监听覆盖。
@@ -277,11 +277,12 @@ Job / Attempt：统一任务引擎
 - [x] R2 冻结代码全量门禁核对：HEAD `5569dc2` 的本机后端真实发现并完整执行 1738 项，1273.729 秒、skipped=8、exit 0；前端 127 files / 1076 tests、类型、格式、构建及其余基础门禁通过。[CI `45745955229`](https://github.com/lumingya/comfy-comic-studio/actions/runs/45745955229) 主 gate、Windows / Ubuntu launcher 三作业全部 success。原失败与无结果历史保留，随包校验仍采用 64 个 HEAD 提交文件的隔离发行视图，原运行目录的 3 个私人差异受保护；此证据不覆盖后续 QA 修复。
 - [x] QA 台词契合度及补充分支（R2 新增 `QA-DIALOGUE-M01`，指定缺口已在 e7a4 的 R3 独立复核关闭）：已补台词 prompt、严格 1–5 原生整数评分、多票有效评审过半、20% 权重和 3/5 门槛、解析 / 聚合 / QAResult / 中英评分卡。所有显式 QA 候选均 judge＋aggregate，无参考 identity 为空、基础 scene / quality 真实 50/50，无台词 not_assessed；未知贡献 0 不通过，quality<3 阻止通过。冻结前 45→47 后端、3 包契约、7 DOM 及纯场景残留历史保留在验收报告；R3 架构与手感的新 UI→API→SQLite / prompt / aggregate 链证明指定缺口已关闭，不回写 R2 为通过。
 - [x] QA 修复后 e7a4 完整基础门禁：本地实际 1754 tests / 1311.031 秒 / skipped=8，2026-11-26 14:04:18—14:26:19（UTC+8）；前端 127 files / 1076 tests / 59.40 秒，build 6.54 秒，format / type、Ruff 460＋额外 11 files、generated API / extension contracts、21 Node 面板脚本、CTK 25、Spike 80 / 19.118 秒、205 docs / 1420 links / 0 broken、HEAD 65（64 data＋manifest）分发检查均过。[同 SHA CI `45765549054`](https://github.com/lumingya/comfy-comic-studio/actions/runs/45765549054) 三作业 success；gate / Ubuntu / Windows 分别 1754 项 / 938.343 / 1240.074 / 1920.937 秒、skip 3 / 3 / 0，不替代本地 8 skip 边界，详见验收报告。
-- [ ] R3 新视觉 Medium `VIS-R3-M01` 与 R4：动态壁纸下 `#prompt-completion` 背景 alpha=0.68，两宽静定 1600ms、动画 0 后仍与底层文字竞争，区别于 R1 VIS-M03。opaque 白名单＋CSSOM 已补；修复后新前端 127 files / 1078 tests、Vitest 46.45 秒、Vite build 6.18 秒及 format / type 已过，Ruff / Spike / 面板 Node / assistant 等阶段通过，e7a4 旧 1076 / 59.40 秒不改写。新完整后端 / 生成物 / CI、修复后独立复验与全新完整五席 R4 仍待，未填修复 SHA 或新全门禁 PASS。
-- [ ] R4 前需求映射 `SPEC-CMP-01`：W1.4 默认应为“当前采纳 vs 选中候选”，现有比较却固定所选图再开相邻图，12 图 candidate 夹具未覆盖非相邻 adopted 基准。当前 `6ed78255` 上正修为同幕有非本图 adopted 时固定 adopted / 保留所选右图，并新增“固定浏览候选为基准”原生按钮保留任意两张 candidate 比较；本图 adopted / 无 adopted 沿用 fallback，补非相邻基准、键盘 repin、浏览 / 采纳 / Esc 焦点回归。此为提交前静态需求缺口，尚未浏览器定级，不计 R3 新 Medium。CSS 阶段的 1078 项前端、生成物 / 契约 / CTK 及 210 docs / 1428 links 检查通过不能替代 compare 编辑后的全套；旧候选后端因被替换于 15:56:33 主动停止，`incomplete` / exit `4294967295`、无最终 Ran / OK、已执行数未知，不记通过或产品失败。两个 UI 修复完成后集中 targeted、完整基础门禁、新 CI 与全新完整 R4 均待；这是本次计划编辑完成前阶段快照，详见[验收记录 §7.7](FLAGSHIP_ROADMAP_ACCEPTANCE_2026-11-26.md#77-r4-前需求映射spec-cmp-01-与计划编辑完成前快照)。
-- [ ] 五位全新、未参与实现的独立审计官交叉复审闭环：R1 原 12 项 Medium 与独立追加 CS-M01、R2 QA-DIALOGUE-M01 和两轮 NOT VERIFIED PASS 历史保留。e7a4 的 R3 四席运行时实测与四向互核完成，QA 指定缺口关闭，但新增 VIS-R3-M01，整体 NOT VERIFIED PASS；性能席未获排他窗口，Chrome / 服务 / 动态样本均 0，明确 NOT VERIFIED，不能用 R2 同字节资产冒充 R3 新性能 PASS。两个 Low、R4 和全轮最终清理待办保留；总控核看后视觉最后 4 PNG 已删、689 图像全部清空，TEMP 仅留 315,416 B summary，用户接手的旧 recovery 例外不动。
+- [x] 关闭 R3 视觉 Medium `VIS-R3-M01`：补全层加入不透明白名单和 CSSOM 回归，动态主题两宽实际渲染及独立目视复验通过；历史 R3 未通过状态保留。最终视觉席另发现长来源名挤掉变量名，`c609c6a` 约束网格来源列并保留完整名称；组件 9/9、三主题两宽真实 Chrome 回归及独立复核通过。
+- [x] 关闭需求映射 `SPEC-CMP-01`：`b78de84` 默认比较当前采纳与所选候选，保留无 adopted 等 fallback 及任意两候选固定；非相邻基准、键盘、采纳、Escape 回焦点及两轮共 320 次 pan/divider 实测通过。旧未完成测试与各轮历史结果见[验收记录](FLAGSHIP_ROADMAP_ACCEPTANCE_2026-11-26.md)。
+- [x] 原始范围五席独立复审最终均签发 VERIFIED PASS：0 Blocker、0 High、0 未决 Medium，保留宿主英文入口标题与 QA 拒绝后焦点两项 Low。动态日常页及五模板矩阵 12/12、32 张目视检查，桌面 Folio 截图就绪另经定向复查；六面板 84/84 / 72 张代表截图、浅深日常 24/24 / 40 张截图及五模板 200/200 证据沿用有效范围，未伪装重复全测。
+- [ ] 最新本地提交推送：自动审批此前拒绝 `git push`，仅返回 `blocked by policy`；没有绕过或重试。当前提交无新远端 CI 结果，不能写成全部远端交付完成。
 
-2026-11-26 证据更新：壁纸闲置暂停当前默认 30 秒，关闭 / 30 / 60 / 180 秒均验证保存；两个尺寸实际等待 30 秒后，5 秒采样窗口视频帧增量及 paint / raster / composite / swap 分类时长均为零，指针活动后恢复。记录另含长篇滚动、同步比较及独立 iframe JS 堆采样；不是 GPU 占用、VRAM、瓦数或整机能耗测量。各 Wave 的要求、证据、修复、限制和待核门禁见[旗舰续作验收记录](FLAGSHIP_ROADMAP_ACCEPTANCE_2026-11-26.md)。本节仍为进行中。
+2026-11-28 收口：R2 已有两宽 30/60/180 秒真实闲置与原生失焦证据；本轮追加 60/180 秒真实等待，180.005 秒暂停、零解码帧，指针唤醒首帧 5.7ms。120 幕 / 1,440 候选保留完整 DOM 的离屏绘制优化后，桌面滚动 p95 8.4ms，窄屏重复样本 8.3/4.7ms，保留少量 rAF 尾间隔，不宣称稳定物理帧率。前端整批曾以两 worker 通过 127 文件 / 1097 项，之后窄屏修复只重跑受影响测试与浏览器；按用户要求不重跑完整后端。发行清单以 Git HEAD 隔离视图 64/64 通过，私人 seed 不动。各 Wave、五席签发、门禁范围、性能前后数据及推送 / 用户接手 recovery 例外见[验收记录 §7.31](FLAGSHIP_ROADMAP_ACCEPTANCE_2026-11-26.md#731-原始范围最终复核与交付例外2026-11-28)。
 
 ### 扩展与主题平台加固（2026-11-19）
 
