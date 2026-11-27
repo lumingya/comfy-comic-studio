@@ -545,6 +545,12 @@ Windows 文件系统复核发现目录 junction 可能不是 `Path.is_symlink()`
 
 同一当前代码另运行扩展操作、扩展摘要、Comfy adapter contract 与 Comfy client 四个相关后端模块：`python -m unittest tests.test_operation_extensions tests.test_extension_surface_digest tests.test_comfy_adapter_contracts tests.test_comfy_client -q`，55 项 / 38.528 秒，exit 0 / OK。输出中有一条测试夹具主动触发的 `ValueError("activation failed")` 预期日志；它没有令测试失败。未运行完整后端套件。
 
+### 7.20 扩展市场读取与卸载竞态定向复核（2026-11-27）
+
+针对 7.13 的市场接口异常，当前代码审查确认风险来自目录响应读取扩展安装快照时与卸载删除目录并发：`Marketplace.catalog()` 现于 `engine.hold_operation()` 内取得 `extensions.list()` 快照；专门回归 `test_catalog_reads_installed_extensions_under_operation_lock` 断言读取发生时锁确实持有，本轮单项 1/1 通过。当前树六面板真实 Chrome 全矩阵也为 84/84，未复现接口错误。
+
+旧 83/84 轮次没有保留 400 响应正文或精确并发时序，因此本记录只认定竞态防护已有实现、回归和当前矩阵证据，不把该竞态写成旧请求确切异常栈的证明，也不改写旧失败记录。
+
 ## 8. 已发生的专项 finding 与修复记录
 
 本节索引实施、专项及独立审计阶段发生的真实问题；最终轮次以第 7 节为准，不因在此重复列出而另加轮次或重复计数。尚未收口到最终提交的项目不虚填提交号。
