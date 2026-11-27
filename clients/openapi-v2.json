@@ -15390,7 +15390,46 @@
      "200": {
       "content": {
        "application/json": {
-        "schema": {}
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "application/octet-stream": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/gif": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/jpeg": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/png": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/svg+xml": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/webp": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -16040,8 +16079,11 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "application/zip": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -16438,8 +16480,11 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "application/zip": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -17374,8 +17419,41 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "application/pdf": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "application/zip": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/jpeg": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/png": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/webp": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "text/html": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -19058,8 +19136,11 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "image/png": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -19398,7 +19479,46 @@
      "200": {
       "content": {
        "application/json": {
-        "schema": {}
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "application/octet-stream": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/gif": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/jpeg": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/png": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/svg+xml": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/webp": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -19572,8 +19692,11 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "text/html": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -19857,8 +19980,41 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "application/pdf": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "application/zip": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/jpeg": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/png": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/webp": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "text/html": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -19907,8 +20063,11 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "text/html": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -19957,8 +20116,17 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "application/pdf": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "application/zip": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -23319,8 +23487,11 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "application/zip": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"
@@ -25367,8 +25538,53 @@
     "responses": {
      "200": {
       "content": {
-       "application/json": {
-        "schema": {}
+       "image/avif": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/gif": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/jpeg": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/png": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "image/webp": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "video/mp4": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "video/ogg": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "video/webm": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
        }
       },
       "description": "Successful Response"

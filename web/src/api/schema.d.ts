@@ -10624,7 +10624,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "image/png": string;
                 };
             };
             /** @description Validation Error */
@@ -10661,7 +10661,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "image/png": string;
+                    "image/jpeg": string;
+                    "image/webp": string;
+                    "application/zip": string;
+                    "application/pdf": string;
+                    "text/html": string;
                 };
             };
             /** @description Validation Error */
@@ -10837,7 +10842,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "image/png": string;
+                    "image/jpeg": string;
+                    "image/webp": string;
+                    "image/gif": string;
+                    "image/svg+xml": string;
+                    "application/octet-stream": string;
+                    "application/json": string;
                 };
             };
             /** @description Validation Error */
@@ -12243,7 +12254,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "image/png": string;
+                    "image/jpeg": string;
+                    "image/webp": string;
+                    "image/gif": string;
+                    "image/svg+xml": string;
+                    "application/octet-stream": string;
+                    "application/json": string;
                 };
             };
             /** @description Validation Error */
@@ -13176,7 +13193,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/zip": string;
                 };
             };
             /** @description Validation Error */
@@ -14244,7 +14261,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/gif": string;
+                    "image/webp": string;
+                    "image/avif": string;
+                    "video/mp4": string;
+                    "video/webm": string;
+                    "video/ogg": string;
                 };
             };
             /** @description Validation Error */
@@ -14563,7 +14587,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "text/html": string;
                 };
             };
             /** @description Validation Error */
@@ -14596,7 +14620,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/zip": string;
+                    "application/pdf": string;
                 };
             };
             /** @description Validation Error */
@@ -14750,7 +14775,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "image/png": string;
+                    "image/jpeg": string;
+                    "image/webp": string;
+                    "application/zip": string;
+                    "application/pdf": string;
+                    "text/html": string;
                 };
             };
             /** @description Validation Error */
@@ -15229,7 +15259,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/zip": string;
                 };
             };
             /** @description Validation Error */
@@ -15295,7 +15325,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "text/html": string;
                 };
             };
             /** @description Validation Error */
@@ -15997,7 +16027,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/zip": string;
                 };
             };
             /** @description Validation Error */

@@ -11,6 +11,7 @@ from ..album import media as M
 from ..album import templates as T
 from ..storage import NotFound
 from .deps import Ctx
+from .library import binary_responses
 from .operations import Router as APIRouter
 
 router = APIRouter(tags=["album"])
@@ -113,13 +114,21 @@ def delete_template(ctx: Ctx, template_id: str) -> None:
     ctx.registry.unregister("album_template", template_id)
 
 
-@router.post("/export/album")
+@router.post(
+    "/export/album",
+    response_class=Response,
+    responses=binary_responses("text/html"),
+)
 def export_album(ctx: Ctx, body: AlbumExport) -> Response:
     """Self-contained offline HTML album from an immutable document snapshot."""
     return ctx.exports.response("album", body.model_dump())
 
 
-@router.post("/export/portable")
+@router.post(
+    "/export/portable",
+    response_class=Response,
+    responses=binary_responses("application/zip", "application/pdf"),
+)
 def export_portable(ctx: Ctx, body: PortableExport) -> Response:
     """Write panel images to a ZIP or PDF without retaining every decoded page."""
     return ctx.exports.response("portable", body.model_dump())

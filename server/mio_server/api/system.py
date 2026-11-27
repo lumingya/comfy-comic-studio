@@ -17,7 +17,7 @@ from ..models import now_iso
 from ..pipeline.providers import public_cloud_adapter
 from ..storage import Conflict
 from .deps import Ctx
-from .library import BINARY_BODY, read_body
+from .library import BINARY_BODY, binary_responses, read_body
 from .operations import Router as APIRouter
 
 router = APIRouter(tags=["system"])
@@ -120,7 +120,11 @@ def expire(ctx: Ctx) -> dict:
 
 
 # ----------------------------------------------------------------- bundles
-@router.get("/series/{series_id}/bundle")
+@router.get(
+    "/series/{series_id}/bundle",
+    response_class=Response,
+    responses=binary_responses("application/zip"),
+)
 def export_bundle(ctx: Ctx, series_id: str) -> Response:
     series = ctx.store.get_series(series_id)
     data = B.export_series(ctx.store, ctx.assets, series_id)

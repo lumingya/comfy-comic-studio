@@ -22,7 +22,7 @@ from ..backups.models import (
     RestoreScheduled,
 )
 from .deps import Ctx
-from .library import BINARY_BODY
+from .library import BINARY_BODY, binary_responses
 from .operations import Router as APIRouter
 
 router = APIRouter(tags=["workspace-backups"])
@@ -105,7 +105,11 @@ def get_workspace_backup(ctx: Ctx, backup_id: str):
     return Backups(ctx).get(backup_id)
 
 
-@router.get("/backups/{backup_id}/download")
+@router.get(
+    "/backups/{backup_id}/download",
+    response_class=FileResponse,
+    responses=binary_responses("application/zip"),
+)
 def download_workspace_backup(ctx: Ctx, backup_id: str):
     return FileResponse(
         Backups(ctx).download(backup_id),

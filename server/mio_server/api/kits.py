@@ -9,7 +9,7 @@ from ..creation_kits.archive import MAX_ARCHIVE
 from ..creation_kits.models import KitAssembly, KitImport, KitImported, KitInspection, KitSelection
 from ..models import Series
 from .deps import Ctx
-from .library import BINARY_BODY, read_body
+from .library import BINARY_BODY, binary_responses, read_body
 from .operations import Router as APIRouter
 from .workshop import Assembled, PreviewRequest
 
@@ -21,7 +21,11 @@ def list_creation_kits(ctx: Ctx):
     return [series for series in ctx.store.list_series() if series.kind == "kit"]
 
 
-@router.post("/creation-kits/export")
+@router.post(
+    "/creation-kits/export",
+    response_class=Response,
+    responses=binary_responses("application/zip"),
+)
 def export_creation_kit(ctx: Ctx, body: KitSelection):
     return Response(
         K.export_kit(ctx, body),

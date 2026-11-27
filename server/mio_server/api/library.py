@@ -47,6 +47,42 @@ BINARY_BODY = {
     }
 }
 
+BINARY_SCHEMA = {"type": "string", "format": "binary"}
+
+
+def binary_responses(*media_types: str) -> dict:
+    """Describe raw file responses without letting FastAPI invent ``application/json``."""
+    return {200: {"content": {media_type: {"schema": BINARY_SCHEMA} for media_type in media_types}}}
+
+
+ASSET_RESPONSES = binary_responses(
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+    "application/octet-stream",
+    "application/json",
+)
+EXPORT_RESPONSES = binary_responses(
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "application/zip",
+    "application/pdf",
+    "text/html",
+)
+THEME_MEDIA_RESPONSES = binary_responses(
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/avif",
+    "video/mp4",
+    "video/webm",
+    "video/ogg",
+)
+
 
 class WorkflowImport(BaseModel):
     name: str
@@ -420,7 +456,7 @@ def _is_svg(data: bytes) -> bool:
     return head.startswith(b"<svg") or (head.startswith(b"<?xml") and b"<svg" in head)
 
 
-@router.get("/assets/{asset_id}")
+@router.get("/assets/{asset_id}", response_class=Response, responses=ASSET_RESPONSES)
 def get_asset(ctx: Ctx, asset_id: str, thumb: int = 0) -> Response:
     asset = ctx.store.get_asset(asset_id)
     data = ctx.assets.read(asset_id)

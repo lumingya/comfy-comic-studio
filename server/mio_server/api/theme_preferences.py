@@ -39,6 +39,7 @@ from ..theme_media import (
     supports_background,
 )
 from .deps import Ctx
+from .library import THEME_MEDIA_RESPONSES
 from .operations import Router as APIRouter
 from .uploads import multipart_uploads
 
@@ -374,7 +375,11 @@ async def upload_theme_wallpaper(ctx: Ctx, theme_id: str, request: Request) -> d
             await upload.close()
 
 
-@router.get("/themes/{theme_id}/wallpapers/{wallpaper_id}/file")
+@router.get(
+    "/themes/{theme_id}/wallpapers/{wallpaper_id}/file",
+    response_class=FileResponse,
+    responses=THEME_MEDIA_RESPONSES,
+)
 def serve_theme_wallpaper(ctx: Ctx, theme_id: str, wallpaper_id: str) -> FileResponse:
     _registered_theme(ctx, theme_id)
     record, path, _metadata = _find_record(ctx.data_dir, theme_id, wallpaper_id)

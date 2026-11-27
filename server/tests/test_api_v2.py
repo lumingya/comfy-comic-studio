@@ -146,6 +146,30 @@ class ApiV2Tests(ApiCase):
         ui = self.ok(self.client.get("/openapi.json"))
         self.assertFalse(any(p.startswith("/api/v2") for p in ui["paths"]))
 
+    def test_file_endpoints_describe_binary_responses(self):
+        schema = self.ok(self.client.get("/api/v2/openapi.json"))
+        expected = {
+            ("GET", "/assets/{asset_id}"),
+            ("GET", "/backups/{backup_id}/download"),
+            ("POST", "/creation-kits/export"),
+            ("GET", "/episodes/{episode_id}/strip.png"),
+            ("GET", "/episodes/{episode_id}/export"),
+            ("GET", "/episodes/{episode_id}/takes/{take_id}/image"),
+            ("POST", "/export/album"),
+            ("GET", "/export/jobs/{job_id}/file"),
+            ("POST", "/export/motion"),
+            ("POST", "/export/portable"),
+            ("GET", "/series/{series_id}/bundle"),
+            ("GET", "/themes/{theme_id}/wallpapers/{wallpaper_id}/file"),
+        }
+        for method, path in expected:
+            content = schema["paths"][path][method.lower()]["responses"]["200"]["content"]
+            self.assertNotEqual(set(content), {"application/json"}, (method, path))
+            for media, response in content.items():
+                self.assertEqual(
+                    response["schema"], {"type": "string", "format": "binary"}, (path, media)
+                )
+
     def test_cloud_refinement_is_explicit_in_profiles_and_v2(self):
         admin = self.token("admin", "read", "write")
         for prefix in ("/api", "/api/v2"):

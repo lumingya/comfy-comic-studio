@@ -6,6 +6,7 @@ from pydantic import Field
 from ..models import StrictModel
 from .album import AlbumExport, PortableExport
 from .deps import Ctx
+from .library import EXPORT_RESPONSES
 from .operations import Router
 
 router = Router(tags=["exports"])
@@ -52,7 +53,11 @@ def submit_portable_export(ctx: Ctx, body: PortableExportJob) -> dict:
     )
 
 
-@router.get("/export/jobs/{job_id}/file")
+@router.get(
+    "/export/jobs/{job_id}/file",
+    response_class=FileResponse,
+    responses=EXPORT_RESPONSES,
+)
 def download_export(ctx: Ctx, job_id: str) -> FileResponse:
     path, result = ctx.exports.result(job_id)
     return FileResponse(

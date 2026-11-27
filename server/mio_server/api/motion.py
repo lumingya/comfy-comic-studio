@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from ..motion.export import MotionOptions, episode_motion
 from ..motion.plan import MOVES, TRANSITIONS, plan_episode
 from .deps import Ctx
+from .library import binary_responses
 from .operations import Router as APIRouter
 
 router = APIRouter(tags=["motion"])
@@ -85,7 +86,11 @@ def motion_plan(ctx: Ctx, episode_id: str, variant_id: str | None = None) -> Mot
     }
 
 
-@router.post("/export/motion")
+@router.post(
+    "/export/motion",
+    response_class=Response,
+    responses=binary_responses("text/html"),
+)
 def export_motion(ctx: Ctx, body: MotionExport) -> Response:
     """Self-contained offline motion-comic player (one HTML file, no network needed)."""
     opts = MotionOptions(

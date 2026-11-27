@@ -14,6 +14,7 @@ from ..pipeline import export as X
 from ..pipeline import strip as SP
 from ..storage import NotFound
 from .deps import Ctx
+from .library import ASSET_RESPONSES, EXPORT_RESPONSES, binary_responses
 from .operations import Router as APIRouter
 
 router = APIRouter(tags=["production"])
@@ -168,7 +169,11 @@ def save_strip(
     return strip
 
 
-@router.get("/episodes/{episode_id}/strip.png")
+@router.get(
+    "/episodes/{episode_id}/strip.png",
+    response_class=Response,
+    responses=binary_responses("image/png"),
+)
 def strip_png(
     ctx: Ctx,
     episode_id: str,
@@ -181,7 +186,11 @@ def strip_png(
     )
 
 
-@router.get("/episodes/{episode_id}/export")
+@router.get(
+    "/episodes/{episode_id}/export",
+    response_class=Response,
+    responses=EXPORT_RESPONSES,
+)
 def export(
     ctx: Ctx,
     episode_id: str,
@@ -263,7 +272,11 @@ def apply(ctx: Ctx, episode_id: str, body: ApplyRequest) -> dict:
     return A.apply(ctx.store, episode_id, body.ops, body.accepted, body.base_revision)
 
 
-@router.get("/episodes/{episode_id}/takes/{take_id}/image")
+@router.get(
+    "/episodes/{episode_id}/takes/{take_id}/image",
+    response_class=Response,
+    responses=ASSET_RESPONSES,
+)
 def take_image(ctx: Ctx, episode_id: str, take_id: str) -> Response:
     take = ctx.store.get_episode(episode_id).take(take_id)
     if take is None:
