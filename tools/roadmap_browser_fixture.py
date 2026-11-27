@@ -3,17 +3,23 @@
 from __future__ import annotations
 
 import copy
+import json
 import sys
 from pathlib import Path
 
+from creative_browser_common import WORKSHOP_ID
 from creative_browser_fixture import NeutralComfy, seed_workspace
 
 ROOT = Path(__file__).resolve().parents[1]
 SHELF_IDS = tuple(f"roadmap-shelf-{index}" for index in range(3))
+THEME = "roadmap-neutral-dynamic"
+LONG_PRESET_TITLE = "长篇角色预设设定集LongPresetTitle" * 4
+LONG_PRESET_KEY = "layout_probe"
 
 
 def serve(port: int, data_dir: Path) -> None:
     import uvicorn
+    from PIL import Image
 
     if data_dir.exists() and any(data_dir.iterdir()):
         raise RuntimeError("The synthetic fixture requires an empty disposable data directory")
@@ -23,9 +29,44 @@ def serve(port: int, data_dir: Path) -> None:
     from mio_server.collection_models import CollectionLibrary
     from mio_server.context import AppContext
     from mio_server.extensions import manager as extension_manager
-    from mio_server.models import Episode, Panel, Series, Take
+    from mio_server.models import Episode, Panel, Preset, PresetEntry, Series, Take
 
     extension_manager.BUILTIN_ROOT = data_dir / "empty-bundled-extensions"
+    theme = data_dir / "themes" / THEME
+    (theme / "assets").mkdir(parents=True)
+    (theme / "mio-theme.json").write_text(
+        json.dumps(
+            {
+                "id": THEME,
+                "name": "Neutral roadmap fixture",
+                "version": "1.0.0",
+                "author": "Fixture",
+                "description": "Synthetic neutral local wallpaper",
+                "theme_file": "theme.json",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (theme / "theme.json").write_text(
+        json.dumps(
+            {
+                "id": THEME,
+                "name": "Neutral roadmap fixture",
+                "mode": "dark",
+                "background": {"kind": "image", "file": "assets/neutral.gif", "opacity": 0.3},
+            }
+        ),
+        encoding="utf-8",
+    )
+    with Image.new("RGB", (48, 48), "#35454a") as first:
+        with Image.new("RGB", (48, 48), "#455253") as second:
+            first.save(
+                theme / "assets/neutral.gif",
+                save_all=True,
+                append_images=[second],
+                duration=500,
+                loop=0,
+            )
     ctx = AppContext.create(
         data_dir, autostart=False, seed_instance=False, comfy_client_factory=NeutralComfy
     )
@@ -33,6 +74,17 @@ def serve(port: int, data_dir: Path) -> None:
         ctx.updater.startup_check = lambda _feed: None
         ctx.legacy_root = data_dir / "no-personal-data"
         baseline = seed_workspace(ctx)
+
+        def long_preset(workshop):
+            workshop.presets.append(
+                Preset(
+                    id="roadmap-long-title-preset",
+                    title=LONG_PRESET_TITLE,
+                    entries=[PresetEntry(key=LONG_PRESET_KEY, value="Neutral layout marker")],
+                )
+            )
+
+        ctx.store.update_series(WORKSHOP_ID, long_preset)
         asset = next(iter(baseline.values())).takes[0].asset_id
         for index, title in enumerate(("合集验收甲册", "合集验收乙册", "合集验收丙册")):
             identifier = SHELF_IDS[index]

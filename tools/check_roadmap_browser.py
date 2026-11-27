@@ -3,6 +3,7 @@
 Build web/dist first. No packages or browsers are installed and external requests are blocked.
 Use --report and --screenshots with temporary paths, inspect images, then delete those images.
 Every scenario uses real browser input; API requests only seed/reset or observe fixture state.
+The default light/dark matrix is unchanged; use --theme dynamic for the local animated theme.
 """
 
 from __future__ import annotations
@@ -19,9 +20,10 @@ import time
 import traceback
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlsplit
 
-from creative_browser_common import Evidence, screenshot
-from roadmap_browser_fixture import serve
+from creative_browser_common import Evidence, assert_fit, screenshot
+from roadmap_browser_fixture import LONG_PRESET_KEY, LONG_PRESET_TITLE, THEME, serve
 
 ROOT = Path(__file__).resolve().parents[1]
 SUITES = (
@@ -220,13 +222,52 @@ def exercise_candidate_compare(page, origin, shots, name, evidence):
     }
 
 
+def check_long_completion_source(page, shots, name):
+    from playwright.sync_api import expect
+
+    prompt = page.locator("#workshop-frame-prompt")
+    saved = prompt.input_value()
+    prompt.fill("{" + LONG_PRESET_KEY)
+    popup = page.get_by_role("listbox", name="变量补全", exact=True)
+    option = popup.get_by_role("option")
+    expect(option).to_have_count(1)
+    expect(option.locator(".key")).to_have_text("{" + LONG_PRESET_KEY + "}")
+    source = option.locator(".source")
+    expect(source).to_have_text(LONG_PRESET_TITLE)
+    expect(source).to_have_attribute("title", LONG_PRESET_TITLE)
+    menu = assert_fit(page, "#prompt-completion")
+    measurements = option.evaluate(
+        """option => {
+          const rect = node => {
+            const r = node.getBoundingClientRect();
+            return {left:r.left,right:r.right,width:r.width};
+          };
+          const source = option.querySelector('.source');
+          return {option:rect(option),key:rect(option.querySelector('.key')),
+            source:rect(source),sourceScrollWidth:source.scrollWidth};
+        }"""
+    )
+    key, source_box, option_box = (
+        measurements["key"],
+        measurements["source"],
+        measurements["option"],
+    )
+    assert key["width"] > 0, measurements
+    assert source_box["width"] > 0, measurements
+    assert key["right"] <= source_box["left"] + 1, measurements
+    assert source_box["left"] >= option_box["left"] - 1, measurements
+    assert source_box["right"] <= option_box["right"] + 1, measurements
+    screenshot(page, shots, name + "-long-source")
+    prompt.press("Escape")
+    expect(popup).to_have_count(0)
+    prompt.fill(saved)
+    return {"menu": menu, **measurements, "full_source_title_retained": True}
+
+
 def open_quick_start(page):
     from playwright.sync_api import expect
 
-    for _ in range(3):
-        if not page.locator("dialog[open], [role=dialog]").count():
-            break
-        page.keyboard.press("Escape")
+    expect(page.locator("dialog[open], [role=dialog]")).to_have_count(0)
     page.locator('#topbar button[aria-haspopup="dialog"]').click()
     page.locator("#help-drawer").get_by_role("button", name="快速开始教程", exact=True).click()
     guide = page.locator("#guide-dialog[open]")
@@ -236,6 +277,18 @@ def open_quick_start(page):
         "items => items.map(item => item.dataset.check)"
     ) == ["service", "workflow", "reader", "create"]
     return guide
+
+
+def close_quick_start_layers(page, guide):
+    from playwright.sync_api import expect
+
+    page.keyboard.press("Escape")
+    expect(guide).to_have_count(0)
+    drawer = page.locator("#help-drawer[open]")
+    if drawer.count():
+        page.keyboard.press("Escape")
+        expect(drawer).to_have_count(0)
+    expect(page.locator("dialog[open], [role=dialog]")).to_have_count(0)
 
 
 def exercise_onboarding(page, origin, shots, name, evidence):
@@ -257,6 +310,18 @@ def exercise_onboarding(page, origin, shots, name, evidence):
         else:
             expect(page).to_have_url(origin + "/workshop/story")
         actions.append({"step": step, "path": page.url.removeprefix(origin)})
+        if step == "workflow":
+            # The route settles before the lazy assembly dialog mounts.
+            modal = page.locator("dialog#modal[open]")
+            expect(modal).to_be_visible()
+            modal.locator(".modal-head button").click()
+            expect(modal).to_have_count(0)
+        elif step == "reader":
+            reader = page.locator("dialog#reader[open]")
+            expect(reader).to_be_visible()
+            reader.locator(".room-head > button").first.click()
+            expect(reader).to_have_count(0)
+        close_quick_start_layers(page, guide)
     guide = open_quick_start(page)
     expect(guide.locator('[data-check="reader"]')).to_have_class(re.compile("is-done"))
     expect(guide.locator('[data-check="reader"]')).to_contain_text("已打开这本示例画册")
@@ -266,10 +331,84 @@ def exercise_onboarding(page, origin, shots, name, evidence):
     return {"steps": actions, "reader_completion_visible": True, "generation_submitted": False}
 
 
-def exercise_template(page, origin, shots, name, evidence):
+def exercise_flagship_previews(page, origin, shots, name):
+    from playwright.sync_api import expect
+
+    def render_digest(document):
+        nonce = re.search(r"script-src 'nonce-([a-f0-9]+)'", document)
+        assert nonce, "Rendered preview is missing its CSP nonce"
+        normalized = document.replace(nonce.group(1), "__render_nonce__")
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    response = page.request.get(origin + "/api/album-templates")
+    assert response.ok, response.status
+    titles = {item["id"]: item["title"] for item in response.json()}
+    previews = []
+    for edition in ("monograph", "nocturne", "folio", "zine", "contact-sheet"):
+        identifier = "export-" + edition
+        page.locator(".export-template-card").filter(has_text=titles[identifier]).click()
+        with page.expect_response(
+            lambda result, selected=identifier: (
+                result.request.method == "POST"
+                and urlsplit(result.url).path == "/api/export/album"
+                and result.request.post_data_json.get("template_id") == selected
+                and result.request.post_data_json.get("image_profile") == "preview"
+                and result.request.post_data_json.get("max_width") == 1600
+            )
+        ) as exported:
+            page.locator(".export-template-picker-head").get_by_role(
+                "button", name="全屏试读", exact=True
+            ).click()
+        assert exported.value.ok, exported.value.status
+        dialog = page.locator("dialog.album-preview-dialog[open]")
+        expect(dialog).to_be_visible()
+        iframe = dialog.locator("iframe")
+        frame = page.frame_locator("dialog.album-preview-dialog[open] iframe")
+        marker = ".contact-book" if edition == "contact-sheet" else ".book." + edition
+        expect(frame.locator(marker)).to_have_count(1)
+        expected_digest = render_digest(exported.value.text())
+        actual_digest = render_digest(iframe.get_attribute("srcdoc") or "")
+        assert actual_digest == expected_digest, {
+            "template_id": identifier,
+            "expected_html_sha256_without_nonce": expected_digest,
+            "actual_html_sha256_without_nonce": actual_digest,
+        }
+        image = frame.locator(".cc-image").first
+        assert image.evaluate("image => image.decode().then(() => image.naturalWidth)") > 0
+        expect(iframe).to_be_visible()
+        expect(frame.locator(".edition-heading h1").first).to_be_visible()
+        expect(image).to_be_visible()
+        frame.locator("html").evaluate(
+            """async () => {
+              await document.fonts.ready;
+              await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            }"""
+        )
+        dimensions = frame.locator("html").evaluate(
+            "html => ({width:innerWidth,scrollWidth:html.scrollWidth})"
+        )
+        assert dimensions["scrollWidth"] <= dimensions["width"] + 1, dimensions
+        bounds = assert_fit(page, "dialog.album-preview-dialog[open]")
+        screenshot(page, shots, name + "-" + edition)
+        page.keyboard.press("Escape")
+        expect(dialog).to_have_count(0)
+        previews.append(
+            {
+                "template_id": identifier,
+                "edition_marker": marker,
+                "html_sha256_without_nonce": actual_digest,
+                "dialog": bounds,
+                "document": dimensions,
+            }
+        )
+    return previews
+
+
+def exercise_template(page, origin, shots, name, evidence, flagship_previews=False):
     from playwright.sync_api import expect
 
     page.goto(origin + "/gallery/roadmap-shelf-0/export", wait_until="networkidle")
+    editions = exercise_flagship_previews(page, origin, shots, name) if flagship_previews else []
     page.locator(".export-template-card").filter(has_text="典藏画集").click()
     page.get_by_text("自定义与导入版式", exact=True).click()
     page.locator(".presentation-tools").get_by_role("button", name="自定义", exact=True).click()
@@ -317,7 +456,7 @@ def exercise_template(page, origin, shots, name, evidence):
         if item["body"].get("template", {}).get("options", {}).get("subtitle") == subtitle
     ]
     assert previews, "Live preview must use the edited template in a real preview request"
-    return {
+    result = {
         "subtitle": subtitle,
         "focal_position": "24% 76%",
         "chapter_header_hidden": True,
@@ -325,10 +464,13 @@ def exercise_template(page, origin, shots, name, evidence):
         "mobile_preview": True,
         "preview_requests": len(previews),
     }
+    if flagship_previews:
+        result["flagship_previews"] = editions
+    return result
 
 
 def run(browser_path=None, shots=None, widths=None, themes=None, suites=None, headed=False):
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import expect, sync_playwright
 
     from roadmap_browser_steps import (
         exercise_collections,
@@ -399,23 +541,43 @@ def run(browser_path=None, shots=None, widths=None, themes=None, suites=None, he
                     for width in widths or (1440, 390):
                         for theme in themes or ("light", "dark"):
                             for suite in suites or SUITES:
+                                ui_state = {
+                                    "theme": "system",
+                                    "reduceMotion": True,
+                                    "worksView": "grid",
+                                    "shelfSort": "createdAt",
+                                }
+                                if theme == "dynamic":
+                                    ui_state.update(
+                                        theme=THEME,
+                                        reduceMotion=False,
+                                        wallpaperIdleTimeout=0,
+                                        pauseWallpaperWhenUnfocused=False,
+                                    )
                                 context = browser.new_context(
                                     viewport={
                                         "width": width,
                                         "height": 900 if width == 1440 else 844,
                                     },
-                                    color_scheme=theme,
+                                    color_scheme="dark" if theme == "dynamic" else theme,
                                     locale="zh-CN",
-                                    reduced_motion="reduce",
+                                    reduced_motion="no-preference"
+                                    if theme == "dynamic"
+                                    else "reduce",
                                     has_touch=width == 390,
                                     is_mobile=width == 390,
                                 )
                                 context.add_init_script(
                                     "if (window === window.top) {"
                                     "localStorage.setItem('i18nextLng','zh-CN');"
-                                    "localStorage.setItem('mio.ui',JSON.stringify({version:2,"
-                                    "state:{theme:'system',reduceMotion:true,worksView:'grid',shelfSort:'createdAt'}}));"
-                                    "}"
+                                    "localStorage.setItem('mio.ui',JSON.stringify("
+                                    + json.dumps(
+                                        {
+                                            "version": 3 if theme == "dynamic" else 2,
+                                            "state": ui_state,
+                                        }
+                                    )
+                                    + "));}"
                                 )
                                 page = context.new_page()
                                 page.set_default_timeout(8000)
@@ -434,6 +596,21 @@ def run(browser_path=None, shots=None, widths=None, themes=None, suites=None, he
                                         origin + "/__roadmap_fixture/reset"
                                     )
                                     assert response.ok, response.status
+                                    if theme == "dynamic":
+                                        page.goto(origin, wait_until="networkidle")
+                                        expect(page.locator("html")).to_have_attribute(
+                                            "data-theme", "dark"
+                                        )
+                                        expect(page.locator("html")).to_have_attribute(
+                                            "data-theme-dynamic-background", "true"
+                                        )
+                                        expect(
+                                            page.locator(".theme-backdrop img")
+                                        ).to_have_js_property("naturalWidth", 48)
+                                        case["dynamic_background"] = {
+                                            "theme": THEME,
+                                            "animated_gif_width": 48,
+                                        }
                                     if suite == "collections":
                                         value = exercise_collections(
                                             page, origin, shots, name, evidence
@@ -441,6 +618,9 @@ def run(browser_path=None, shots=None, widths=None, themes=None, suites=None, he
                                     elif suite == "completion":
                                         value = exercise_completion(
                                             page, origin, shots, name, evidence
+                                        )
+                                        value["long_source_layout"] = check_long_completion_source(
+                                            page, shots, name
                                         )
                                     elif suite == "story-import":
                                         value = exercise_story_import(
@@ -457,7 +637,12 @@ def run(browser_path=None, shots=None, widths=None, themes=None, suites=None, he
                                             )
                                             if suite == "onboarding"
                                             else exercise_template(
-                                                page, origin, shots, name, evidence
+                                                page,
+                                                origin,
+                                                shots,
+                                                name,
+                                                evidence,
+                                                theme == "dynamic",
                                             )
                                         )
                                     case.update(status="passed", facts=value)
@@ -512,7 +697,7 @@ def main():
     parser.add_argument("--screenshots", type=Path)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--width", type=int, choices=(1440, 390), action="append")
-    parser.add_argument("--theme", choices=("light", "dark"), action="append")
+    parser.add_argument("--theme", choices=("light", "dark", "dynamic"), action="append")
     parser.add_argument("--suite", choices=SUITES, action="append")
     parser.add_argument("--serve", type=int, help=argparse.SUPPRESS)
     parser.add_argument("--data", type=Path, help=argparse.SUPPRESS)
