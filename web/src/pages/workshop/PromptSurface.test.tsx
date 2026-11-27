@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { createEvent, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import {
@@ -127,6 +127,27 @@ describe('<PromptSurface>', () => {
     fireEvent.keyDown(area, { key: 'Enter' });
     expect(area).toHaveValue('1girl, {style}');
     expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('leaves Enter to an active IME composition even while completion is open', () => {
+    render(<Harness />);
+    const area = document.getElementById('p') as HTMLTextAreaElement;
+    fireEvent.change(area, { target: { value: '{' } });
+    expect(screen.getByRole('listbox', { name: '变量补全' })).toBeInTheDocument();
+
+    const composingEnter = createEvent.keyDown(area, {
+      key: 'Enter',
+      code: 'Enter',
+      keyCode: 229,
+      which: 229,
+      isComposing: true,
+    });
+    expect((composingEnter as KeyboardEvent).keyCode).toBe(229);
+    fireEvent(area, composingEnter);
+
+    expect(composingEnter.defaultPrevented).toBe(false);
+    expect(area).toHaveValue('{');
+    expect(screen.getByRole('listbox', { name: '变量补全' })).toBeInTheDocument();
   });
 
   it('filters by prefix and closes on Escape without touching the text', () => {

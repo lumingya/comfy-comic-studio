@@ -191,8 +191,7 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: blur(3px);
+  background: var(--bg);
 }
 
 .work-status.status-active {

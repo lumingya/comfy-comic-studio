@@ -203,8 +203,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: color-mix(in srgb, var(--bg-deep) 85%, transparent);
-  backdrop-filter: blur(4px);
+  background: var(--bg-deep);
 }
 
 .reader-page {

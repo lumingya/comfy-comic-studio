@@ -1,7 +1,9 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import type { AlbumTemplateDoc } from '../../api/open';
+import type { AlbumTemplateDoc, AlbumTemplateInfo } from '../../api/open';
+import { mockFetch, renderWithProviders } from '../../test/utils';
 import { TemplateEditorFields } from './TemplateEditorFields';
+import { TemplateStudio } from './TemplateStudio';
 
 const template: AlbumTemplateDoc = {
   id: 'export-monograph',
@@ -66,4 +68,53 @@ it('edits subtitle, focal crop and chapter header as template options', () => {
     ...template,
     options: { ...template.options, cover_focal_y: 76 },
   });
+});
+
+it('refreshes the unsaved live preview after a design edit without saving the template', async () => {
+  const calls = mockFetch({
+    'GET /api/album-templates/export-monograph': template,
+    'POST /api/export/album': (body: unknown) => {
+      const draft = (body as { template: AlbumTemplateDoc }).template;
+      return new Response(`<!doctype html><p>${draft.options.subtitle}</p>`);
+    },
+  });
+  const onSaved = vi.fn();
+  renderWithProviders(
+    <TemplateStudio
+      templates={[{ ...template, source: 'builtin', layout_name: 'Gallery' } as AlbumTemplateInfo]}
+      initialId={template.id}
+      preview={{ episodeId: 'episode', lettered: true, captions: false }}
+      onSaved={onSaved}
+      onClose={vi.fn()}
+    />,
+  );
+
+  await waitFor(() =>
+    expect(
+      calls.filter((call) => call.method === 'POST' && call.url === '/api/export/album'),
+    ).toHaveLength(1),
+  );
+  fireEvent.change(document.getElementById('et-subtitle')!, {
+    target: { value: '暮色专刊' },
+  });
+
+  await waitFor(() =>
+    expect(
+      calls.filter((call) => call.method === 'POST' && call.url === '/api/export/album'),
+    ).toHaveLength(2),
+  );
+  const previewCalls = calls.filter(
+    (call) => call.method === 'POST' && call.url === '/api/export/album',
+  );
+  expect((previewCalls[1].body as { template: AlbumTemplateDoc }).template.options.subtitle).toBe(
+    '暮色专刊',
+  );
+  await waitFor(() =>
+    expect(document.getElementById('template-preview')).toHaveAttribute(
+      'srcdoc',
+      expect.stringContaining('暮色专刊'),
+    ),
+  );
+  expect(calls.some((call) => call.method === 'POST' && call.url.includes('/import'))).toBe(false);
+  expect(onSaved).not.toHaveBeenCalled();
 });

@@ -1,7 +1,21 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// @ts-expect-error Vitest runs in Node; the browser app intentionally omits Node type declarations.
+import { readFileSync } from 'node:fs';
 import { ThemeBackdrop } from './themeBackdrop';
 import { useWallpaperOcclusion } from './wallpaperOcclusion';
+
+function styleBlock(stylesheet: string, selector: string): string {
+  const start = stylesheet.indexOf(selector);
+  expect(start, `expected a CSS rule for ${selector}`).toBeGreaterThanOrEqual(0);
+  const open = stylesheet.indexOf('{', start);
+  const close = stylesheet.indexOf('}', open);
+  return stylesheet.slice(open, close);
+}
+
+const classicStyles = readFileSync('src/styles/classic.css', 'utf8');
+const pagesStyles = readFileSync('src/styles/pages.css', 'utf8');
+const studioStyles = readFileSync('src/styles/studio.css', 'utf8');
 
 beforeEach(() => {
   vi.spyOn(document, 'hasFocus').mockReturnValue(true);
@@ -13,6 +27,18 @@ afterEach(() => {
 });
 
 describe('theme image motion', () => {
+  it('keeps high-frequency chip, status, and reader surfaces free of backdrop blur', () => {
+    const highFrequencyRules = [
+      styleBlock(classicStyles, '.glass-chip,'),
+      styleBlock(pagesStyles, '.work-status'),
+      styleBlock(studioStyles, '.reader-tools'),
+    ];
+
+    for (const rule of highFrequencyRules) {
+      expect(rule).not.toMatch(/backdrop-filter\s*:/i);
+    }
+  });
+
   it('pauses animated images while preserving static image backgrounds', () => {
     const { rerender } = render(
       <ThemeBackdrop

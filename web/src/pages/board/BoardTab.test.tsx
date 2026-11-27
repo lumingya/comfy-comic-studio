@@ -332,6 +332,33 @@ describe('candidate board updates', () => {
     expect(document.querySelectorAll('.board-split-frame')).toHaveLength(2);
     for (const frame of document.querySelectorAll('.board-split-frame'))
       expect(frame).toHaveStyle({ transform: 'translate(0px, 0px) scale(2)' });
+
+    const comparisonViewport = document.querySelector<HTMLElement>('.board-split-viewport')!;
+    vi.spyOn(comparisonViewport, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 1000,
+      bottom: 500,
+      width: 1000,
+      height: 500,
+      toJSON: () => ({}),
+    } as DOMRect);
+    const pointerEvent = (type: string, init: MouseEventInit) => {
+      const event = new MouseEvent(type, { ...init, bubbles: true });
+      Object.defineProperty(event, 'pointerId', { value: 7 });
+      return event;
+    };
+    fireEvent(
+      comparisonViewport,
+      pointerEvent('pointerdown', { button: 0, clientX: 800, clientY: 250 }),
+    );
+    fireEvent(comparisonViewport, pointerEvent('pointermove', { clientX: 840, clientY: 275 }));
+    fireEvent(comparisonViewport, pointerEvent('pointerup', {}));
+    for (const frame of document.querySelectorAll('.board-split-frame'))
+      expect(frame).toHaveStyle({ transform: 'translate(40px, 25px) scale(2)' });
+
     fireEvent.click(
       screen.getByRole('button', { name: /采用.*固定候选|board\.adopt.*board\.compareReference/ }),
     );
