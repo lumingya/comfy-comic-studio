@@ -2,14 +2,16 @@
 
 Uses installed Chrome through Python Playwright and an existing local ffmpeg encoder.
 No browser or dependency is installed.
-The 30-second threshold uses the native wall clock, never fake timers. CDP timeline
-durations describe renderer/compositor work, NOT GPU utilization, energy, or watts.
+The selected wallpaper-idle timeout uses the native wall clock, never fake timers;
+only that selected value is real-waited. CDP timeline durations describe
+renderer/compositor work, NOT GPU utilization, energy, or watts.
 Raw trace events stay in memory and are discarded after aggregation.
 
 Run the power/interaction matrix after the coordinated web build, or select a phase:
     python tools/check_roadmap_power.py --report TEMP_REPORT.json
     python tools/check_roadmap_power.py --only interactions --theme dynamic
     python tools/check_roadmap_power.py --only extensions --theme dark
+    python tools/check_roadmap_power.py --idle-timeout-seconds 180
 """
 
 from __future__ import annotations
@@ -151,8 +153,9 @@ def sample(page, cdp, seconds):
     return result
 
 
-def install_state(context, state):
+def install_state(context, state, idle_timeout_seconds):
     context.add_init_script(TIMER_OBSERVER)
+    state["wallpaperIdleTimeout"] = idle_timeout_seconds
     context.add_init_script(
         "if(window===top&&!localStorage.getItem('mio.ui')){"
         "localStorage.setItem('mio.locale','en');localStorage.setItem('mio.ui',JSON.stringify("
@@ -179,7 +182,7 @@ def timer_rows(page):
     return page.evaluate("() => window.__powerTimers.filter(row=>row.delay>=30000)")
 
 
-def settings(page, origin):
+def settings(page, origin, idle_timeout_seconds):
     page.goto(origin + "/settings?tab=appearance")
     control = page.get_by_role("combobox", name="Pause animated wallpaper when idle", exact=True)
     control.wait_for()
@@ -213,17 +216,22 @@ def settings(page, origin):
     ), changed
     assert any(r["delay"] == 60000 and r["cleared"] is None for r in changed), changed
     results.append({"reschedule_30_to_60": "old timer cancelled; new native 60000ms timer active"})
-    control.select_option("30")
+    control.select_option(str(idle_timeout_seconds))
+    page.wait_for_timeout(150)
     return results
 
 
-def freeze(page, cdp, seconds):
+def freeze(page, cdp, seconds, idle_timeout_seconds):
     wait_video(page)
     page.evaluate(
         """() => {
           window.__powerActivity=0;window.__powerPaused=0;
           window.addEventListener('pointermove',()=>window.__powerActivity=performance.now());
-          document.querySelector('video').addEventListener('pause',()=>window.__powerPaused=performance.now());
+          const video=document.querySelector('video');
+          video.addEventListener('pause',()=>{
+            window.__powerPaused=performance.now();
+            window.__powerPauseFrames=video.getVideoPlaybackQuality().totalVideoFrames;
+          });
         }"""
     )
     page.mouse.move(22, 22)
@@ -231,15 +239,25 @@ def freeze(page, cdp, seconds):
     foreground = sample(page, cdp, seconds)
     assert foreground["video"]["decoded_frame_delta"] > seconds * 10, foreground
     elapsed = time.monotonic() - started
-    page.wait_for_timeout(max(0, 28 - elapsed) * 1000)
+    pre_expiry_margin_seconds = 1
+    page.wait_for_timeout(max(0, idle_timeout_seconds - pre_expiry_margin_seconds - elapsed) * 1000)
     before_threshold = page.evaluate(VIDEO_STATE)
     observed_before_elapsed = time.monotonic() - started
     assert not before_threshold["paused"], before_threshold
-    page.wait_for_function("() => document.querySelector('video').paused", timeout=6000)
+    assert observed_before_elapsed < idle_timeout_seconds, observed_before_elapsed
+    page.wait_for_function("() => document.querySelector('video').paused", timeout=5000)
     actual = page.evaluate("() => (window.__powerPaused-window.__powerActivity)/1000")
-    assert 29.8 <= actual <= 32, actual
+    timing_tolerance_seconds = 1.5
+    assert (
+        idle_timeout_seconds - timing_tolerance_seconds
+        <= actual
+        <= idle_timeout_seconds + timing_tolerance_seconds
+    ), actual
+    pause_frames = page.evaluate("() => window.__powerPauseFrames")
     frozen = sample(page, cdp, seconds)
-    assert frozen["video"]["decoded_frame_delta"] <= 1, frozen
+    decoded_frames_after_pause = frozen["video"]["after"]["totalFrames"] - pause_frames
+    assert frozen["video"]["decoded_frame_delta"] == 0, frozen
+    assert decoded_frames_after_pause == 0, (pause_frames, frozen)
     assert frozen["video"]["after"]["paused"], frozen
     page.evaluate(
         """() => {window.__powerResumeStart=0;window.__powerResumeFrame=0;
@@ -255,9 +273,11 @@ def freeze(page, cdp, seconds):
     assert not page.evaluate(VIDEO_STATE)["paused"]
     return {
         "foreground": foreground,
-        "frozen_after_real_30_seconds": frozen,
+        "idle_timeout_seconds": idle_timeout_seconds,
+        "frozen_after_real_idle_timeout": frozen,
         "threshold_elapsed_seconds": round(actual, 3),
         "still_playing_at_elapsed_seconds": round(observed_before_elapsed, 3),
+        "decoded_frames_after_pause": decoded_frames_after_pause,
         "pointer_to_first_video_frame_ms": round(resume, 3),
     }
 
@@ -480,7 +500,7 @@ def extension_memory(page, cdp, origin, folder):
     return result
 
 
-def run_case(browser, origin, width, theme, seconds, only, folder):
+def run_case(browser, origin, width, theme, seconds, only, folder, idle_timeout_seconds):
     context = browser.new_context(
         viewport={"width": width, "height": 900 if width == 1440 else 844},
         color_scheme="light" if theme == "light" else "dark",
@@ -492,9 +512,9 @@ def run_case(browser, origin, width, theme, seconds, only, folder):
             "theme": THEME if theme == "dynamic" else "system",
             "reduceMotion": False,
             "pauseWallpaperWhenUnfocused": False,
-            "wallpaperIdleTimeout": 30,
             "homeGuideHidden": True,
         },
+        idle_timeout_seconds,
     )
     page = context.new_page()
     page.set_default_timeout(10000)
@@ -524,8 +544,8 @@ def run_case(browser, origin, width, theme, seconds, only, folder):
         elif only == "extensions":
             case["extensions"] = extension_memory(page, cdp, origin, folder)
         elif theme == "dynamic":
-            case["settings"] = settings(page, origin)
-            case["app_idle"] = freeze(page, cdp, seconds)
+            case["settings"] = settings(page, origin, idle_timeout_seconds)
+            case["app_idle"] = freeze(page, cdp, seconds, idle_timeout_seconds)
             page.goto(origin + "/__power_fixture/clean")
             wait_video(page)
             page.wait_for_timeout(500)
@@ -620,6 +640,7 @@ def run(args):
                             args.sample_seconds,
                             args.only,
                             Path(tmp),
+                            args.idle_timeout_seconds,
                         )
                         for width in args.width or (1440, 390)
                         for theme in args.theme or ("light", "dark", "dynamic")
@@ -639,14 +660,18 @@ def run(args):
         "headless": not args.headed,
         "only": args.only,
         "sample_count_per_state": 1,
-        "real_30_second_timeout_tested": args.only is None
-        and (args.theme is None or "dynamic" in args.theme),
+        "selected_idle_timeout_seconds": args.idle_timeout_seconds,
+        "real_wall_clock_idle_timeout_seconds_tested": (
+            args.idle_timeout_seconds
+            if args.only is None and (args.theme is None or "dynamic" in args.theme)
+            else None
+        ),
         "real_wall_clock": True,
         "measurement": "Renderer CDP/trace/video decode counters; not watts or GPU utilization",
         "video_fixture": "Local ffmpeg H.264 1280x720 30fps 8-second loop",
         "data_boundary": "Temporary neutral generated assets only; no user data or remote services",
-        "long_timeout_boundary": (
-            "60/180-second settings persisted and native timer schedule observed; not real-waited"
+        "idle_timeout_boundary": (
+            "Only selected timeout real-waited; other values persisted and native timer schedule observed, not real-waited"
             if args.only is None and (args.theme is None or "dynamic" in args.theme)
             else "Wallpaper timeout assertions are outside this selected phase"
         ),
@@ -666,6 +691,7 @@ def main():
     parser.add_argument("--width", type=int, choices=(1440, 390), action="append")
     parser.add_argument("--theme", choices=("light", "dark", "dynamic"), action="append")
     parser.add_argument("--sample-seconds", type=float, default=5)
+    parser.add_argument("--idle-timeout-seconds", type=int, choices=(30, 60, 180), default=30)
     parser.add_argument("--only", choices=("interactions", "extensions"))
     parser.add_argument("--report", type=Path)
     parser.add_argument("--serve", type=int, help=argparse.SUPPRESS)
