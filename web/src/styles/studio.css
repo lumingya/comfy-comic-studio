@@ -29,6 +29,12 @@
   padding-top: 12px;
 }
 
+.board-row {
+  /* Preserve the full DOM for cross-row selection without rendering distant rows. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 36.3rem;
+}
+
 .board-row-head {
   display: flex;
   align-items: center;
