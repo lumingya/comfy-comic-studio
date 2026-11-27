@@ -589,6 +589,12 @@ Windows 文件系统复核发现目录 junction 可能不是 `Path.is_symlink()`
 
 仅运行原生面板专项：`node extensions/panel-retouch/tests/mask.test.cjs` 通过，覆盖鼠标/键盘笔刷、矩形、橡皮、撤销重做、取消、边界、缩放与反选羽化蒙版导出；`node extensions/qa-review/panel.test.cjs` 通过，覆盖确认/取消/Escape、单幕与整话审核、显式采纳/拒绝、按幕最高分批采纳、刷新及错误状态。两个进程均 exit 0；这关闭对应 DOM/业务专项缺口，不替代实体绘板或屏幕阅读器实测。
 
+补充运行 `node extensions/panel-retouch/tests/app.test.cjs`（exit 0），确认上传/API、幂等及单项采纳确认链。画笔尺寸 UI、橡皮/反选控件的端到端操作、真实羽化边缘像素仍未由这些桩测试证明；QA 批量流只用一个可采纳候选，无键盘触发、平分或部分失败矩阵。
+
+### 7.26 书架、分割比较和五模板回导定向用例（2026-11-28）
+
+Web 定向 Vitest 七文件、65 项通过：分割比较键盘滑杆/两侧选择/缩放平移与关闭恢复焦点，书架批量归类失败保持选择并可撤销，五模板阅读器矩阵及 Zine / Contact Sheet 导航。另在 `server/` 分别运行 `test_five_native_exports_reimport_every_projected_field_and_rgba_pixel` 与 `test_five_templates_round_trip_extreme_frames_and_pixels`，各 1 项通过；覆盖五模板投影字段和 RGBA 像素回导。它们不是完整真实浏览器拖拽/读屏流程，也不补足 HTML 导出 UI 对全部五模板的导入体验。
+
 ## 8. 已发生的专项 finding 与修复记录
 
 本节索引实施、专项及独立审计阶段发生的真实问题；最终轮次以第 7 节为准，不因在此重复列出而另加轮次或重复计数。尚未收口到最终提交的项目不虚填提交号。
@@ -639,6 +645,6 @@ Windows 文件系统复核发现目录 junction 可能不是 `Path.is_symlink()`
 - [x] 复核五模板 XSS wrapper 的 exit 15 收尾：当前 HEAD 后续 20/20 case 已以 exit 0 正常完成；R4 历史报告中的异常收尾仍保留为历史证据，不再作为当前阻断项。
 - [ ] 完成最终临时资源清理：总控 shell 对已知七个报告路径返回 `Test-Path=False`，但未执行删除，也不足以证明实际主机目录已清理；旧 bridge recovery 目录由用户接手，代理不再次请求或绕过删除，私人运行数据仍受保护。
 
-本轮新增的浏览器截图、两处隔离 fixture 和测试临时 DOM 均已关闭或清理；不改变上项中历史 TEMP 路径与用户接手目录仍未核实的状态。
+本轮新增的浏览器截图、两处隔离 fixture 和测试临时 DOM 均已关闭或清理；定向测试没有运行完整后端套件。不改变上项中历史 TEMP 路径与用户接手目录仍未核实的状态。
 
 在这些待核项关闭之前，本报告保持“专项通过、综合 NOT VERIFIED PASS”。
