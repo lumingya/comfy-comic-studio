@@ -185,14 +185,18 @@ class AssistantBackupTests(unittest.TestCase):
             self.service.apply(plan.id, self.command(plan))
 
     def test_capture_blocks_conversation_edits_until_snapshot_is_complete(self):
+        from mio_server.backups import participants as backup_participants
+
+        from ..core.backup import PARTICIPANT
+
         entered, release, saving = (
             threading.Event(),
             threading.Event(),
             threading.Event(),
         )
-        original = snapshot.copy_data
+        original = snapshot.logical_head
 
-        def copy(*args, **kwargs):
+        def capture_head(*args, **kwargs):
             entered.set()
             self.assertTrue(release.wait(3))
             return original(*args, **kwargs)
@@ -203,7 +207,8 @@ class AssistantBackupTests(unittest.TestCase):
 
         with (
             ThreadPoolExecutor(max_workers=2) as pool,
-            patch.object(snapshot, "copy_data", side_effect=copy),
+            patch.object(backup_participants, "participants", return_value=[PARTICIPANT]),
+            patch.object(snapshot, "logical_head", side_effect=capture_head),
         ):
             exporting = pool.submit(self.export)
             try:
