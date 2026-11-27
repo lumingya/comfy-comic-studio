@@ -225,6 +225,21 @@ def exercise_collections(page, origin: str, shots: Path | None, name: str, evide
     assert [entry["series_id"] for entry in keyboard_change] == [visible_ids[2]]
     assert keyboard_change[0]["after"]["collection_id"] == collections["短篇"]
     expect(selected).to_have_count(1)
+    page.keyboard.press("Escape")
+    expect(selected).to_have_count(0)
+
+    before_order = [item.get_attribute("data-shelf-id") for item in cards.all()]
+    grabbed = page.locator(f'[data-shelf-id="{before_order[0]}"]')
+    grabbed.focus()
+    expect(grabbed).to_have_attribute("aria-keyshortcuts", re.compile(r"Shift\+Space"))
+    grabbed.press("Shift+Space")
+    expect(page.locator("[data-shelf-reorder-status]")).to_be_visible()
+    grabbed.press("ArrowRight")
+    grabbed.press("Shift+Space")
+    expect(grabbed).to_be_focused()
+    after_order = [item.get_attribute("data-shelf-id") for item in cards.all()]
+    assert after_order == [before_order[1], before_order[0], *before_order[2:]]
+    expect(page.locator("[data-shelf-reorder-status]")).to_have_count(0)
     screenshot(page, shots, name + "-collection-keyboard")
     return {
         "collections": 2,
@@ -238,6 +253,7 @@ def exercise_collections(page, origin: str, shots: Path | None, name: str, evide
         "touch_swipe_without_move": True,
         "touch_scroll_delta": scroll_delta,
         "explicit_keyboard_move": True,
+        "explicit_keyboard_reorder": True,
         "selection_mode": "touch-bulk" if coarse else "desktop-multiselect",
         "viewport": page.viewport_size,
     }

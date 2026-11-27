@@ -128,7 +128,7 @@ macOS / Linux 将最后一行换成 `./start.sh`。开发界面时另开终端�
 | [剧本助手](extensions/script-assistant/README.md)  | 剧本和节奏建议的逐项审阅       |
 | [动态漫工作台](extensions/motion-studio/README.md) | 镜头、转场、配音试听与离线导出 |
 
-六个工作台都是独立、默认停用的沙箱面板。到「扩展 → 已安装」审阅内容摘要并启用，再从具体话的「扩展」菜单打开；打开面板不会提交生成任务。停用会撤除入口和后续请求，已提交任务需另行停止。包内容改变后须重新审阅；异常时用 `MIO_SAFE_MODE=1` 启动可跳过全部扩展。[离线教程](server/mio_server/manual/chapters/zh/start.html#optional-workspaces)列有逐项操作步骤。
+六个工作台都是独立、默认停用的可选扩展。普通面板页面运行在受限 iframe 中；含 Python 或受信工作区代码的扩展拥有应用权限，启用前应审阅来源与内容摘要。到「扩展 → 已安装」审阅摘要并启用，再从具体话的「扩展」菜单打开；打开面板不会提交生成任务。停用会撤除入口和后续请求，已提交任务需另行停止。包内容改变后须重新审阅；异常时用 `MIO_SAFE_MODE=1` 启动可跳过全部扩展。[离线教程](server/mio_server/manual/chapters/zh/start.html#optional-workspaces)列有逐项操作步骤。
 
 变体工坊可选「分镜预设变量」或「结构化设定集」，未选轴沿用原值。先预览最多 24 个组合并保存勾选子集，再选择版本、分幕和每幕候选数，核对任务与图片总量后生成；保存组合不会出图。
 
