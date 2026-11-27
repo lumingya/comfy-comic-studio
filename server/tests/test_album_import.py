@@ -184,6 +184,96 @@ class HTMLAlbumImportTests(ApiCase):
                     )
                     self.assert_pixels(take.asset_id, data)
 
+    def test_five_templates_round_trip_extreme_frames_and_pixels(self):
+        from .test_album_matrix import sample_books
+
+        cases = (
+            "single",
+            "sixty",
+            "one_twenty",
+            "long_title",
+            "image_only",
+            "mixed",
+            "xss",
+            "missing",
+        )
+        templates = [template for template in builtin_templates() if template.id in CURATED]
+        self.assertEqual({template.id for template in templates}, CURATED)
+
+        for template in templates:
+            for case in cases:
+                with self.subTest(template=template.id, case=case):
+                    books = sample_books(case)
+                    if case == "image_only":
+                        # The interchange contract requires a book title; the panels remain text-free.
+                        books[0].title = "Image-only fixture"
+                    elif case == "long_title":
+                        # The separate whitespace test covers trailing spaces; keep this long title
+                        # within the persisted title's normalized form.
+                        books[0].title = books[0].title.rstrip()
+                    document = render_album(
+                        template,
+                        books,
+                        AlbumOptions(
+                            include_source_data=True,
+                            show_captions=True,
+                            show_prompts=True,
+                        ),
+                    )
+                    original = Extract(document)
+                    result = self.upload(document)
+
+                    expected_frames = sum(len(book.frames) for book in books)
+                    self.assertTrue(result["source_data_used"])
+                    self.assertEqual(result["imported_frames"], expected_frames)
+                    restored_series = [
+                        self.ctx.store.get_series(series_id) for series_id in result["series_ids"]
+                    ]
+                    self.assertEqual(len(restored_series), len(books))
+
+                    for book_index, book in enumerate(books):
+                        exported = original.payload["sourceData"]["books"][book_index]
+                        series = restored_series[book_index]
+                        episode = self.ctx.store.get_episode(result["episode_ids"][book_index])
+                        self.assertEqual(series.title, exported["title"])
+                        self.assertEqual(episode.title, exported["storyTitle"] or exported["title"])
+                        self.assertEqual(episode.synopsis, exported["synopsis"])
+                        self.assertEqual(
+                            episode.album_source.character_name, exported["characterName"]
+                        )
+                        self.assertEqual(len(episode.panels), len(exported["frames"]))
+
+                        for panel, frame in zip(episode.panels, exported["frames"], strict=True):
+                            exact = panel.album_source.model_dump(
+                                by_alias=True,
+                                exclude={
+                                    "mapped_description",
+                                    "mapped_caption",
+                                    "mapped_prompt",
+                                    "mapped_asset_id",
+                                },
+                                exclude_none=True,
+                            )
+                            self.assertEqual(exact, frame)
+                            self.assertEqual(panel.description, frame["name"])
+                            self.assertEqual(
+                                panel.dialogues[0].text if panel.dialogues else "",
+                                frame["caption"],
+                            )
+                            self.assertEqual(panel.overrides.raw_prompt, frame["prompt"])
+
+                            take = episode.adopted(panel.id)
+                            image = frame["image"]
+                            if not image:
+                                self.assertIsNone(take)
+                                continue
+
+                            self.assertIsNotNone(take)
+                            data = base64.b64decode(
+                                original.assets[image["$mioImage"]].split(",", 1)[1]
+                            )
+                            self.assert_pixels(take.asset_id, data)
+
     def test_explicit_source_keeps_hidden_text_default_legacy_warns(self):
         book = Book("Book", [Frame(url(png()), caption="private caption", prompt="private prompt")])
         template = next(t for t in builtin_templates() if t.id == "export-monograph")
