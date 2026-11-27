@@ -471,12 +471,12 @@ JSON 文件部分，原字节放进 `image` 部分，发送到 `POST /api/extens
 
 | 包 | 职责与写入规则 |
 | --- | --- |
-| [panel-retouch](../../../examples/extensions/panel-retouch/README.md) | 局部重绘、外扩和指令编辑；新增候选，不替换原采用图，停用阶段拒绝执行 |
-| [qa-review](../../../examples/extensions/qa-review/README.md) | VLM 评分与逐幕问题定位；固定不自动采用 |
-| [finalize-studio](../../../examples/extensions/finalize-studio/README.md) | 已采用草稿的多阶段成品管线；明确确认后沿用原成品接替语义，保留原图 |
-| [variant-workshop](../../../examples/extensions/variant-workshop/README.md) | 原生版本的原子追加、冻结生成、跨版本对比、明确采用与导出 |
-| [script-review](../../../examples/extensions/script-review/README.md) | 按结构化操作审阅 Diff，携带 base_revision 应用明确接受的修改 |
-| [motion-studio](../../../examples/extensions/motion-studio/README.md) | 保存带修订号的镜头设置，预览运动并通过宿主按钮下载离线播放器 |
+| [panel-retouch](../../../extensions/panel-retouch/README.md) | 局部重绘、外扩和指令编辑；新增候选，不替换原采用图，停用阶段拒绝执行 |
+| [qa-review](../../../extensions/qa-review/README.md) | VLM 评分与逐幕问题定位；固定不自动采用 |
+| [finalize-studio](../../../extensions/finalize-studio/README.md) | 已采用草稿的多阶段成品管线；明确确认后沿用原成品接替语义，保留原图 |
+| [variant-workshop](../../../extensions/variant-workshop/README.md) | 原生版本的原子追加、冻结生成、跨版本对比、明确采用与导出 |
+| [script-assistant](../../../extensions/script-assistant/README.md) | 按结构化操作审阅 Diff，携带 base_revision 应用明确接受的修改 |
+| [motion-studio](../../../extensions/motion-studio/README.md) | 保存带修订号的镜头设置，预览运动并通过宿主按钮下载离线播放器 |
 
 复杂节点包使用已有 `workflow_slot_adapter`、`workflow_binding`、`comfy_output_adapter`，
 特定节点名和协议判断全部留在[独立参考包](../../../examples/extensions/comfy-complex-adapters/README.md)。

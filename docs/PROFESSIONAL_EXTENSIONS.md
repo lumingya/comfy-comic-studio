@@ -4,12 +4,12 @@
 
 | 工具与独立包                                                                     | 怎样使用                                                       | 写入与采用行为                                                           | 业务权限            |
 | -------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------- |
-| [单格精修](../examples/extensions/panel-retouch/README.md) `panel-retouch`       | 选候选，画矩形或多边形蒙版、填写外扩像素或修改指令，再明确提交 | 新图成为候选并保留原图；不替换已采用图                                   | read、render        |
-| [智能质检](../examples/extensions/qa-review/README.md) `qa-review`               | 勾选候选后提交 VLM 评审，逐幕查看评分、问题和位置              | 固定 `auto_adopt:false`；不自动采用或淘汰，缺失评分不当满分              | read、render        |
-| [成品精修](../examples/extensions/finalize-studio/README.md) `finalize-studio`   | 选择已采用草稿，核对现有成品阶段和参数，确认后批量执行         | 成品完成时接替仍被采用的原草稿；原图保留。期间已换图时不覆盖新的选择     | read、render        |
-| [批量变体](../examples/extensions/variant-workshop/README.md) `variant-workshop` | 用设定集的画风和角色外观派生版本，明确生成、对比、采用与导出   | 保存派生版本不出图；生成不自动采用；采用仅作用于该分幕、该版本           | read、write、render |
-| [剧本审阅](../examples/extensions/script-review/README.md) `script-review`       | 生成结构化提案，按分幕、字段和逐句对白审阅，再勾选应用         | 默认不接受任何修改；锁定项不能选择，旧修订提案不能覆盖新稿               | read、render、write |
-| [动态漫](../examples/extensions/motion-studio/README.md) `motion-studio`         | 调整镜头运动与时长，保存后导出离线播放器                       | 修改默认版本的镜头设置，不生成图片、不更换采用图；语音取决于本机可用声音 | read、write         |
+| [单格精修](../extensions/panel-retouch/README.md) `panel-retouch`       | 选候选，画矩形或多边形蒙版、填写外扩像素或修改指令，再明确提交 | 新图成为候选并保留原图；不替换已采用图                                   | read、render、write |
+| [智能质检](../extensions/qa-review/README.md) `qa-review`               | 勾选候选后提交 VLM 评审，逐幕查看评分、问题和位置              | 固定 `auto_adopt:false`；不自动采用或淘汰，缺失评分不当满分              | read、render、write |
+| [成品精修](../extensions/finalize-studio/README.md) `finalize-studio`   | 选择已采用草稿，核对现有成品阶段和参数，确认后批量执行         | 成品完成时接替仍被采用的原草稿；原图保留。期间已换图时不覆盖新的选择     | read、render、write |
+| [批量变体](../extensions/variant-workshop/README.md) `variant-workshop` | 用设定集的画风和角色外观派生版本，明确生成、对比、采用与导出   | 保存派生版本不出图；生成不自动采用；采用仅作用于该分幕、该版本           | read、write、render |
+| [剧本助手](../extensions/script-assistant/README.md) `script-assistant` | 生成结构化提案，按分幕、字段和逐句对白审阅，再勾选应用         | 默认不接受任何修改；锁定项不能选择，旧修订提案不能覆盖新稿               | read、render、write |
+| [动态漫](../extensions/motion-studio/README.md) `motion-studio`         | 调整镜头运动与时长，保存后导出离线播放器                       | 修改默认版本的镜头设置，不生成图片、不更换采用图；语音取决于本机可用声音 | read、write         |
 
 权限列指开放 API 的实际操作权限；面板桥入口还需要 `read`。远程安装、启停和卸载需要 `admin`。本机界面沿用本机同源保护，不要求把令牌交给面板。
 

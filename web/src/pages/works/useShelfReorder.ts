@@ -232,8 +232,8 @@ export function useShelfReorder(options: {
   };
 
   const onBlurCapture = (e: ReactFocusEvent<HTMLElement>) => {
-    if (keyboardGesture.current && !e.currentTarget.contains(e.relatedTarget as Node | null))
-      finishKeyboard(false);
+    const active = keyboardGesture.current;
+    if (active && !active.source.contains(e.relatedTarget as Node | null)) finishKeyboard(false);
   };
 
   const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {

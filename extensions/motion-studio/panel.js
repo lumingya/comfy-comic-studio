@@ -214,7 +214,6 @@
       button.className = "shot";
       button.type = "button";
       button.dataset.id = item.panel_id;
-      button.setAttribute("role", "listitem");
       button.setAttribute("aria-pressed", String(current === item.panel_id));
       const title = document.createElement("strong");
       title.textContent = `${t("shotNumber", { n: item.index + 1 })}${drafts.has(item.panel_id) ? " · " + t("unsaved") : ""}`;

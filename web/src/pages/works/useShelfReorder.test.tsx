@@ -351,6 +351,22 @@ describe('useShelfReorder', () => {
     expect(document.querySelector('[data-shelf-reorder-status]')).toBeNull();
   });
 
+  it('cancels when Tab moves focus to another card', () => {
+    const onDrop = vi.fn();
+    let controller: Controller;
+    render(<Shelf onDrop={onDrop} controller={(value) => (controller = value)} />);
+    card().focus();
+    fireEvent.keyDown(card(), { key: ' ', shiftKey: true });
+    expect(controller!.isDragging()).toBe(true);
+
+    card('b').focus();
+
+    expect(controller!.isDragging()).toBe(false);
+    expect(card()).not.toHaveAttribute('aria-grabbed');
+    expect(document.querySelector('[data-shelf-reorder-status]')).toBeNull();
+    expect(onDrop).not.toHaveBeenCalled();
+  });
+
   it('supports a pen, ignores other pointers, and cleans up pointer cancellation and blur', () => {
     const onCollectionDrop = vi.fn();
     render(<Shelf onCollectionDrop={onCollectionDrop} />);

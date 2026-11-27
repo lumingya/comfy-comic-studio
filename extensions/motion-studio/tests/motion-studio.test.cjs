@@ -196,6 +196,13 @@ test("loads, saves camera/timing/transition, and requests the real offline expor
     "A street at night",
   );
   const firstShot = window.document.querySelector('[data-id="p1"]');
+  assert.equal(firstShot.tagName, "BUTTON");
+  assert.equal(firstShot.getAttribute("role"), null, "timeline items retain the native button role");
+  assert.equal(firstShot.tabIndex, 0, "timeline buttons remain keyboard-focusable");
+  assert.equal(firstShot.getAttribute("aria-pressed"), "true");
+  assert.equal(window.document.querySelector('[data-id="p2"]').getAttribute("aria-pressed"), "false");
+  firstShot.focus();
+  assert.equal(window.document.activeElement, firstShot);
   firstShot.dispatchEvent(
     new window.KeyboardEvent("keydown", {
       key: "ArrowRight",
