@@ -327,7 +327,7 @@ def exercise_template(page, origin, shots, name, evidence):
     }
 
 
-def run(browser_path=None, shots=None, widths=None, themes=None, suites=None):
+def run(browser_path=None, shots=None, widths=None, themes=None, suites=None, headed=False):
     from playwright.sync_api import sync_playwright
 
     from roadmap_browser_steps import (
@@ -391,7 +391,9 @@ def run(browser_path=None, shots=None, widths=None, themes=None, suites=None):
             else:
                 raise RuntimeError("Fixture did not become ready")
             with sync_playwright() as playwright:
-                browser = playwright.chromium.launch(executable_path=executable, headless=True)
+                browser = playwright.chromium.launch(
+                    executable_path=executable, headless=not headed
+                )
                 browser_version = browser.version
                 try:
                     for width in widths or (1440, 390):
@@ -490,6 +492,7 @@ def run(browser_path=None, shots=None, widths=None, themes=None, suites=None):
     return {
         "browser": executable,
         "browser_version": browser_version,
+        "headless": not headed,
         "dist": dist,
         "dist_unchanged": dist == dist_fingerprint(),
         "real_browser": True,
@@ -505,6 +508,7 @@ def run(browser_path=None, shots=None, widths=None, themes=None, suites=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--browser")
+    parser.add_argument("--headed", action="store_true")
     parser.add_argument("--screenshots", type=Path)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--width", type=int, choices=(1440, 390), action="append")
@@ -518,7 +522,7 @@ def main():
             parser.error("Fixture server requires a parent-owned --data directory")
         serve(args.serve, args.data)
         return 0
-    report = run(args.browser, args.screenshots, args.width, args.theme, args.suite)
+    report = run(args.browser, args.screenshots, args.width, args.theme, args.suite, args.headed)
     output = json.dumps(report, ensure_ascii=False, indent=2)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
