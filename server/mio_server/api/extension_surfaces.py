@@ -20,6 +20,7 @@ from ..extensions.panel_bridge import (
 )
 from ..extensions.panel_upload import UPLOAD_BODY, upload_panel_image
 from ..extensions.protocol import client_constants
+from ..registry import InactiveContributionError
 from ..storage import NotFound
 from .deps import Ctx
 from .operations import Router as APIRouter
@@ -145,12 +146,14 @@ def extension_surfaces(ctx: Ctx) -> dict:
         loaded = manager.loaded.get(identifier)
         if loaded is None or loaded.api.digest != info.digest:
             continue
-        value = contribution.value() if callable(contribution.value) else contribution.value
-        entry = value.get("entry", info.manifest.workspace.entry)
-        if entry != info.manifest.workspace.entry:
-            continue
-        items.append(
-            {
+
+        def describe_surface():
+            value = contribution.value
+            value = value() if callable(value) else value
+            entry = value.get("entry", info.manifest.workspace.entry)
+            if entry != info.manifest.workspace.entry:
+                return None
+            return {
                 "extension_id": identifier,
                 "activation": loaded.api.activation_id,
                 "digest": loaded.api.digest,
@@ -159,7 +162,13 @@ def extension_surfaces(ctx: Ctx) -> dict:
                 "mode": "page" if value.get("mode") == "page" else "floating",
                 "url": f"/api/extensions/{identifier}/workspace/{entry}",
             }
-        )
+
+        try:
+            item = contribution.invoke(describe_surface)
+        except InactiveContributionError:
+            continue
+        if item is not None:
+            items.append(item)
     for identifier, info in reviewed.items():
         if info is None or info.manifest is None:
             continue

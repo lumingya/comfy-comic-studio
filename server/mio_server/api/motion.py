@@ -102,7 +102,7 @@ def export_motion(ctx: Ctx, body: MotionExport) -> Response:
         max_width=body.max_width,
     )
     timeline = episode_motion(ctx, body.episode_id, body.variant_id, opts)
-    data = ctx.registry.get("exporter", "motion")(timeline, opts).encode("utf-8")
+    data = ctx.registry.invoke("exporter", "motion", timeline, opts).encode("utf-8")
     filename = f"{timeline['series']}_{timeline['title']}_动态漫.html"
     ctx.hooks.action(
         "episode.exported",

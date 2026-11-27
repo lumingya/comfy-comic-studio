@@ -66,7 +66,7 @@ class ExtensionSlotAdapter:
     def inspect(self, node_id, workflow, model_ids):
         adapter = self.contribution
         node = workflow[node_id]
-        indicated = adapter.value.inspect(json_copy(node))
+        indicated = adapter.invoke_method(adapter.value, "inspect", json_copy(node))
         if indicated is None:
             return None
         slot = SlotDescription.model_validate(indicated)
@@ -88,8 +88,12 @@ class ExtensionSlotAdapter:
         node_id = writer["nodeId"]
         adapter = self.contribution
         inputs = graph[node_id]["inputs"]
-        updated = adapter.value.write(
-            json_copy(graph[node_id]), json_copy(writer["slot"]), json_copy(loras)
+        updated = adapter.invoke_method(
+            adapter.value,
+            "write",
+            json_copy(graph[node_id]),
+            json_copy(writer["slot"]),
+            json_copy(loras),
         )
         if not isinstance(updated, dict) or set(updated) - set(inputs):
             raise ValueError(f"LoRA slot adapter {adapter.id} must return existing input changes")

@@ -235,7 +235,7 @@ class EngineRuntime:
                 )
             ctx.raise_if_cancelled()
             entered_executor = True
-            result = executor.execute(ctx)
+            result = ctx.executor_binding.invoke("execute", ctx)
             try:
                 self._finish(
                     ctx.job_id,
@@ -387,12 +387,12 @@ class EngineRuntime:
                     )
                     self._aggregate(job_id)
                 return
-            hook = getattr(executor, "on_complete", None)
-            if hook:
+            if binding.has_method("on_complete"):
                 self._applying_jobs.add(job_id)
                 try:
                     with self._callback_scope():
-                        hook(
+                        binding.invoke(
+                            "on_complete",
                             job,
                             {
                                 **self._item_dict(row),

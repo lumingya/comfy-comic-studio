@@ -4,6 +4,7 @@ import io
 import shutil
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.exceptions import ResponseValidationError
 from fastapi.testclient import TestClient
@@ -12,6 +13,9 @@ from starlette.requests import HTTPConnection
 
 from mio_server.api import create_app
 from mio_server.api.extension_routes import extension_guard
+from mio_server.comfy import contracts
+from mio_server.comfy.bindings import BindingError
+from mio_server.comfy.compile import validate_plan
 from mio_server.models import Episode, Panel, Series, Take
 from mio_server.registry import Registry, RegistryError
 from mio_server.storage import NotFound
@@ -71,6 +75,32 @@ def activate(mio):
         plain = self.ok(self.client.post("/api/series", json={"title": "Plain"}), 201)
         self.assertEqual(plain["title"], "Plain")
 
+    def test_wrapper_is_rechecked_after_operation_snapshot(self):
+        folder = self.activate(
+            """
+calls = []
+def activate(mio):
+    @mio.operation("POST /series")
+    async def prefix(next, ctx, payload):
+        calls.append("called")
+        result = await next(payload=payload)
+        return result.model_copy(update={"title": "Wrapped " + result.title})
+"""
+        ).folder
+        loaded = self.ctx.extensions.loaded["operations"]
+        original_check = self.ctx.registry.activation_check
+
+        def change_then_check(contribution):
+            if contribution.point == "operation":
+                (folder / "main.py").write_text("# changed after snapshot\n", encoding="utf-8")
+            return original_check(contribution)
+
+        with patch.object(self.ctx.registry, "activation_check", side_effect=change_then_check):
+            result = self.ok(self.client.post("/api/series", json={"title": "Plain"}), 201)
+
+        self.assertEqual(result["title"], "Plain")
+        self.assertEqual(loaded.module.calls, [])
+
     def test_wrappers_compose_and_failure_does_not_retry_core(self):
         calls = []
 
@@ -84,8 +114,8 @@ def activate(mio):
             raise ValueError("postprocessing failed")
 
         reg = self.ctx.registry
-        reg.register("operation", "POST /series", first, source="ext:first")
-        reg.register("operation", "POST /series", second, source="ext:second", replace=True)
+        reg.register("operation", "POST /series", first, source="test:first")
+        reg.register("operation", "POST /series", second, source="test:second", replace=True)
         self.assertEqual(self.client.post("/api/series", json={"title": "Once"}).status_code, 400)
         self.assertEqual(calls, ["second", "first"])
         self.assertEqual(len(self.ctx.store.list_series()), 1)
@@ -94,12 +124,235 @@ def activate(mio):
             await next()
             return await next()
 
-        reg.unregister_source("ext:second")
-        reg.register("operation", "POST /series", twice, source="ext:twice", replace=True)
+        reg.unregister_source("test:second")
+        reg.register("operation", "POST /series", twice, source="test:twice", replace=True)
         self.assertEqual(
             self.client.post("/api/series", json={"title": "Still once"}).status_code, 400
         )
         self.assertEqual(len(self.ctx.store.list_series()), 2)
+
+    def test_stale_lazy_import_callbacks_are_skipped_until_reenabled(self):
+        folder = self.ctx.extensions.root / "operations"
+        folder.mkdir(parents=True)
+        (folder / "helper.py").write_text('MARKER = "approved"\n', encoding="utf-8")
+        self.activate(
+            """
+def activate(mio):
+    @mio.operation("POST /series")
+    async def tag_series(next, **arguments):
+        from .helper import MARKER
+        result = await next()
+        return result.model_copy(update={"title": result.title + "-" + MARKER})
+
+    @mio.hook("prompt.compiled")
+    def tag_prompt(value, **context):
+        from .helper import MARKER
+        return {**value, "positive": value["positive"] + "-" + MARKER}
+
+    @mio.hook("take.created")
+    def tag_action(payload):
+        from .helper import MARKER
+        payload["markers"].append(MARKER)
+"""
+        )
+
+        def create_series(title):
+            response = self.client.post("/api/series", json={"title": title})
+            self.assertEqual(response.status_code, 201)
+            return response.json()["title"]
+
+        def compiled_prompt():
+            return self.ctx.hooks.filter("prompt.compiled", {"positive": "base"})
+
+        def action_markers():
+            payload = {"markers": []}
+            self.ctx.hooks.action("take.created", payload)
+            return payload["markers"]
+
+        old_operation = next(
+            item
+            for item in self.ctx.extensions.operation_layers("POST /series")
+            if item.source == "ext:operations"
+        )
+        old_hook = next(
+            handler
+            for handler in self.ctx.hooks.handlers("prompt.compiled")
+            if handler.source == "ext:operations"
+        )
+        old_action = next(
+            handler
+            for handler in self.ctx.hooks.handlers("take.created")
+            if handler.source == "ext:operations"
+        )
+        self.assertEqual(create_series("First"), "First-approved")
+        self.assertEqual(compiled_prompt(), {"positive": "base-approved"})
+        self.assertEqual(action_markers(), ["approved"])
+
+        (folder / "helper.py").write_text('MARKER = "changed"\n', encoding="utf-8")
+        self.assertEqual(self.ctx.extensions.info("operations").status, "changed")
+        self.assertFalse(self.ctx.extensions.is_live_activation(old_operation))
+        self.assertFalse(self.ctx.extensions.is_live_activation(old_hook))
+        self.assertFalse(self.ctx.extensions.is_live_activation(old_action))
+        self.assertEqual(create_series("Changed"), "Changed")
+        self.assertEqual(compiled_prompt(), {"positive": "base"})
+        self.assertEqual(action_markers(), [])
+
+        info = self.ctx.extensions.info("operations")
+        reviewed_digest = info.digest
+        self.assertEqual(self.ctx.extensions.enable("operations", info.digest).status, "active")
+        self.assertFalse(self.ctx.extensions.is_live_activation(old_operation))
+        self.assertFalse(self.ctx.extensions.is_live_activation(old_hook))
+        self.assertFalse(self.ctx.extensions.is_live_activation(old_action))
+        new_operation = next(
+            item
+            for item in self.ctx.extensions.operation_layers("POST /series")
+            if item.source == "ext:operations"
+        )
+        new_hook = next(
+            handler
+            for handler in self.ctx.hooks.handlers("prompt.compiled")
+            if handler.source == "ext:operations"
+        )
+        new_action = next(
+            handler
+            for handler in self.ctx.hooks.handlers("take.created")
+            if handler.source == "ext:operations"
+        )
+        self.assertTrue(self.ctx.extensions.is_live_activation(new_operation))
+        self.assertTrue(self.ctx.extensions.is_live_activation(new_hook))
+        self.assertTrue(self.ctx.extensions.is_live_activation(new_action))
+        self.assertEqual(create_series("Reviewed"), "Reviewed-changed")
+        self.assertEqual(compiled_prompt(), {"positive": "base-changed"})
+        self.assertEqual(action_markers(), ["changed"])
+
+        self.ctx.extensions.disable("operations")
+        self.assertFalse(self.ctx.extensions.is_live_activation(new_operation))
+        self.assertFalse(self.ctx.extensions.is_live_activation(new_hook))
+        self.assertFalse(self.ctx.extensions.is_live_activation(new_action))
+        self.assertEqual(create_series("Disabled"), "Disabled")
+        self.assertEqual(compiled_prompt(), {"positive": "base"})
+        self.assertEqual(action_markers(), [])
+
+        self.ctx.extensions.enable("operations", reviewed_digest)
+        self.assertFalse(self.ctx.extensions.is_live_activation(new_operation))
+        self.assertFalse(self.ctx.extensions.is_live_activation(new_hook))
+        self.assertFalse(self.ctx.extensions.is_live_activation(new_action))
+        self.assertEqual(create_series("Reenabled"), "Reenabled-changed")
+        self.assertEqual(compiled_prompt(), {"positive": "base-changed"})
+        self.assertEqual(action_markers(), ["changed"])
+
+    def test_live_guard_fails_closed_when_extension_files_cannot_be_hashed(self):
+        self.activate(
+            """
+def activate(mio):
+    @mio.operation("POST /series")
+    async def tag_series(next, **arguments):
+        return await next()
+"""
+        )
+        operation = next(
+            item
+            for item in self.ctx.extensions.operation_layers("POST /series")
+            if item.source == "ext:operations"
+        )
+
+        with patch("mio_server.extensions.manager.digest", side_effect=OSError("unreadable")):
+            self.assertFalse(self.ctx.extensions.is_live_activation(operation))
+
+    def test_cached_layout_callback_is_rejected_after_extension_files_change(self):
+        folder = self.activate(
+            """
+calls = []
+def layout(*args, **kwargs):
+    calls.append("ran")
+    return "layout", {}
+def activate(mio):
+    mio.contribute("layout", "test.live-layout", layout)
+""",
+            ext="live-layout",
+        ).folder
+        contribution = self.ctx.registry.contribution("layout", "test.live-layout")
+        self.assertEqual(contribution.invoke(contribution.value), ("layout", {}))
+        calls = contribution.value.__globals__["calls"]
+        self.assertEqual(calls, ["ran"])
+
+        (folder / "main.py").write_text("# changed after approval\n", encoding="utf-8")
+        with self.assertRaises(RegistryError):
+            contribution.invoke(contribution.value)
+        self.assertEqual(calls, ["ran"])
+
+    def test_cached_job_executor_is_rejected_after_extension_files_change(self):
+        from mio_server.jobs import ItemSpec
+
+        from .test_jobs import drain
+
+        folder = self.activate(
+            """
+lookups = []
+class Executor:
+    @property
+    def execute(self):
+        lookups.append("execute")
+        return lambda ctx: {"ok": True}
+
+def activate(mio):
+    mio.job_executor("test.live-executor", Executor())
+""",
+            ext="live-executor",
+        ).folder
+        module = self.ctx.extensions.loaded["live-executor"].module
+        job = self.ctx.engine.submit("test.live-executor", [ItemSpec(input={})])
+        lookups_before_dispatch = list(module.lookups)
+
+        (folder / "main.py").write_text("# changed after approval\n", encoding="utf-8")
+        done = drain(self.ctx.engine, job["id"])
+
+        self.assertEqual(done["state"], "failed")
+        self.assertEqual(module.lookups, lookups_before_dispatch)
+
+    def test_stale_comfy_state_adapter_becomes_a_binding_error(self):
+        folder = self.activate(
+            """
+calls = []
+class Adapter:
+    def validate(self, state, *, nonempty=False):
+        calls.append("validate")
+        if not isinstance(state, dict) or (nonempty and not state):
+            raise ValueError("expected object")
+
+    def change(self, state, changes):
+        return {**state, **changes}
+
+    def capture(self, client, node):
+        return {}
+
+    def push(self, client, node, state):
+        pass
+
+def activate(mio):
+    mio.contribute("comfy_state_adapter", "test.live-state", Adapter())
+""",
+            ext="live-state",
+        ).folder
+        ref = contracts.select(self.ctx.registry, "comfy_state_adapter", "test.live-state")
+        graph = {"1": {"class_type": "CustomNode", "inputs": {}}}
+        plan = {
+            "1": {
+                "adapter": ref,
+                "class_type": "CustomNode",
+                "saved": {"old": True},
+                "changes": {"new": True},
+                "desired": {"old": True, "new": True},
+            }
+        }
+        validate_plan(graph, plan, self.ctx.registry)
+        calls = self.ctx.extensions.loaded["live-state"].module.calls
+        self.assertEqual(calls, ["validate", "validate"])
+        (folder / "main.py").write_text("# changed after approval\n", encoding="utf-8")
+
+        with self.assertRaises(BindingError):
+            validate_plan(graph, plan, self.ctx.registry)
+        self.assertEqual(calls, ["validate", "validate"])
 
     def test_replacement_responses_are_validated_and_failed_activation_restores_core(self):
         self.ctx.registry.register("operation", "GET /series", lambda next, **kw: "wrong")

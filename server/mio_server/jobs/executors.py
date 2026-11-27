@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
@@ -37,10 +38,19 @@ class ExecutorBinding:
     ref: ExecutorRef
     executor: object
     resources: tuple[str, ...]
+    contribution: object | None = None
 
     @property
     def replay_safe(self):
-        return getattr(self.executor, "replay_safe", False) is True
+        return inspect.getattr_static(self.executor, "replay_safe", False) is True
+
+    def invoke(self, method, *args, **kwargs):
+        if self.contribution is None:
+            return getattr(self.executor, method)(*args, **kwargs)
+        return self.contribution.invoke_method(self.executor, method, *args, **kwargs)
+
+    def has_method(self, method):
+        return callable(inspect.getattr_static(self.executor, method, None))
 
 
 def binding_of(contribution) -> ExecutorBinding | None:
@@ -52,6 +62,7 @@ def binding_of(contribution) -> ExecutorBinding | None:
         ),
         contribution.value,
         tuple(contribution.meta["resources"]),
+        contribution,
     )
 
 

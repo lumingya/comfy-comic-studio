@@ -474,6 +474,13 @@ class ParsingTests(unittest.TestCase):
     def test_describe_prompt_error_handles_garbage(self):
         self.assertIsNone(describe_prompt_error("oops"))
         self.assertIsNone(describe_prompt_error({}))
+        for detail in (
+            {"error": "bad request"},
+            {"node_errors": "bad request"},
+            {"node_errors": {"1": {"errors": ["bad request"]}}},
+        ):
+            with self.subTest(detail=detail):
+                self.assertIsNone(describe_prompt_error(detail))
 
 
 if __name__ == "__main__":

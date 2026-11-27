@@ -538,12 +538,12 @@ class JobEngine(
             return self.retry(job_id, indexes=[idx], confirm_uncertain=True)
         if action == "reconcile":
             job = self.get(job_id, items=False)
-            executor = self.job_executor(job_id, required=True).executor
-            if not executor or not hasattr(executor, "reconcile"):
+            binding = self.job_executor(job_id, required=True)
+            if not binding or not binding.has_method("reconcile"):
                 raise JobError("this job kind cannot reconcile automatically")
             ctx = self._context(job, row, self.pool.instance(row["instance_id"]))
             with self._callback_scope():
-                result = executor.reconcile(ctx)
+                result = binding.invoke("reconcile", ctx)
             if result is None:
                 self._event(job_id, idx, "reconcile_miss", {"upstream": row["upstream"]})
                 return self.get(job_id)
@@ -575,8 +575,8 @@ class JobEngine(
                 record = self.state_leases.get(job_id, idx)
                 if record is None:
                     raise JobConflict("this item has no endpoint state to restore")
-                executor = self.job_executor(job_id, required=True).executor
-                if not hasattr(executor, "recover_state"):
+                binding = self.job_executor(job_id, required=True)
+                if not binding.has_method("recover_state"):
                     raise JobError("this job kind cannot restore endpoint state")
                 instance = InstanceSlot(row["instance_id"] or "", record["base_url"])
                 ctx = self._context(job, row, instance)
@@ -584,7 +584,7 @@ class JobEngine(
             if discard_result:
                 options["discard_result"] = True
             with self._callback_scope():
-                report = executor.recover_state(ctx, record, **options)
+                report = binding.invoke("recover_state", ctx, record, **options)
             if not report.get("restored"):
                 return report
             # Cancellation is allowed to retain ownership; cleanup must never adopt its result.

@@ -429,13 +429,19 @@ def describe_prompt_error(detail) -> str | None:
     if not isinstance(detail, dict):
         return None
     lines = []
-    err = detail.get("error") or {}
-    if err.get("message"):
+    err = detail.get("error")
+    if isinstance(err, dict) and err.get("message"):
         lines.append(
             str(err["message"]) + (f"：{err.get('details')}" if err.get("details") else "")
         )
-    for node_id, info in (detail.get("node_errors") or {}).items():
-        for e in info.get("errors") or []:
+    node_errors = detail.get("node_errors")
+    for node_id, info in node_errors.items() if isinstance(node_errors, dict) else ():
+        if not isinstance(info, dict):
+            continue
+        errors = info.get("errors")
+        for e in errors if isinstance(errors, list) else ():
+            if not isinstance(e, dict):
+                continue
             lines.append(
                 f"节点 {node_id}（{info.get('class_type')}）：{e.get('message')} {e.get('details', '')}".strip()
             )

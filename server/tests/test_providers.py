@@ -394,7 +394,7 @@ class FakeKind:
 class ChannelExecutorTests(ApiCase):
     def test_cloud_edit_uses_the_requested_extension_channel(self):
         FakeKind.calls = []
-        self.ctx.registry.register("cloud_adapter", "fake", FakeKind, source="ext:demo")
+        self.ctx.registry.register("cloud_adapter", "fake", FakeKind, source="test:demo")
         ch = {"id": "mine", "kind": "fake"}
         self.ok(self.client.patch("/api/settings", json={"image_channels": [ch]}))
         _, ep = self.make_episode()

@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 from pathlib import Path, PurePosixPath
 from typing import Annotated, Literal
 
@@ -288,17 +289,24 @@ def _reject_symlinked_directories(folder: Path) -> None:
     for current, directories, names in os.walk(folder):
         directories[:] = [name for name in directories if name not in SKIP_DIRS]
         for name in directories:
-            path = Path(current) / name
-            if path.is_symlink():
-                rel = path.relative_to(folder).as_posix()
-                raise OSError(f"extension package contains a symlinked directory: {rel}")
+            _reject_symlinked_directory(folder, Path(current) / name)
+
+
+def _reject_symlinked_directory(folder: Path, path: Path) -> None:
+    metadata = path.lstat()
+    attributes = getattr(metadata, "st_file_attributes", 0)
+    reparse_point = attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    if stat.S_ISLNK(metadata.st_mode) or reparse_point:
+        rel = path.relative_to(folder).as_posix()
+        raise OSError(f"extension package contains a symlinked directory or junction: {rel}")
 
 
 def files(folder: Path) -> list[Path]:
-    _reject_symlinked_directories(folder)
     out = []
     for current, directories, names in os.walk(folder):
         directories[:] = [name for name in directories if name not in SKIP_DIRS]
+        for name in directories:
+            _reject_symlinked_directory(folder, Path(current) / name)
         for name in names:
             path = Path(current) / name
             if path.is_file():

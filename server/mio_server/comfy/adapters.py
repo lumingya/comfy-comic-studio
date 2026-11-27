@@ -91,17 +91,25 @@ def _adapter(class_type, ref=None, registry=None):
     return resolve(registry, ref) if ref else ADAPTERS[class_type]
 
 
+def _call(adapter, method, *args, registry=None, ref=None, **kwargs):
+    if ref and registry:
+        from .contracts import invoke
+
+        return invoke(registry, ref, method, *args, **kwargs)
+    return getattr(adapter, method)(*args, **kwargs)
+
+
 def desired_state(class_type: str, saved, changes: dict, *, ref=None, registry=None):
     adapter = _adapter(class_type, ref, registry)
     if not isinstance(saved, (dict, list)) or not _json_value(saved):
         raise ComfyError("插件状态必须是有效的 JSON 对象或列表")
-    adapter.validate(saved, nonempty=True)
+    _call(adapter, "validate", saved, registry=registry, ref=ref, nonempty=True)
     if not isinstance(changes, dict) or not _json_value(changes):
         raise ComfyError("参数面板覆盖值必须是有效的 JSON 对象")
-    result = adapter.change(saved, copy.deepcopy(changes))
+    result = _call(adapter, "change", saved, copy.deepcopy(changes), registry=registry, ref=ref)
     if not _json_value(result):
         raise ComfyError("插件目标状态必须是有效的 JSON")
-    adapter.validate(result, nonempty=True)
+    _call(adapter, "validate", result, registry=registry, ref=ref, nonempty=True)
     return result
 
 
@@ -123,11 +131,14 @@ def prepare_plan(client, plan: dict, journal_callback, registry=None) -> list[di
     for node_id, item in plan.items():
         adapter = _adapter(item["class_type"], item.get("adapter"), registry)
         desired = copy.deepcopy(item["desired"])
-        adapter.validate(desired, nonempty=True)
-        before = copy.deepcopy(adapter.capture(client, node_id))
+        ref = item.get("adapter")
+        _call(adapter, "validate", desired, registry=registry, ref=ref, nonempty=True)
+        before = copy.deepcopy(
+            _call(adapter, "capture", client, node_id, registry=registry, ref=ref)
+        )
         if not _json_value(before):
             raise ComfyError("插件原状态必须是有效的 JSON")
-        adapter.validate(before)
+        _call(adapter, "validate", before, registry=registry, ref=ref)
         entries.append(
             {
                 "node_id": node_id,
@@ -148,8 +159,26 @@ def prepare_plan(client, plan: dict, journal_callback, registry=None) -> list[di
         entry.update(write_intent=True, status="applying")
         journal_callback(copy.deepcopy(entries))
         adapter = _adapter(entry["class_type"], entry.get("adapter"), registry)
-        adapter.push(client, entry["node_id"], copy.deepcopy(entry["desired"]))
-        if adapter.capture(client, entry["node_id"]) != entry["desired"]:
+        _call(
+            adapter,
+            "push",
+            client,
+            entry["node_id"],
+            copy.deepcopy(entry["desired"]),
+            registry=registry,
+            ref=entry.get("adapter"),
+        )
+        if (
+            _call(
+                adapter,
+                "capture",
+                client,
+                entry["node_id"],
+                registry=registry,
+                ref=entry.get("adapter"),
+            )
+            != entry["desired"]
+        ):
             raise ComfyError(f"节点 {entry['node_id']} 参数面板写入后校验失败")
         entry["status"] = "applied"
         journal_callback(copy.deepcopy(entries))
@@ -172,15 +201,40 @@ def restore_plan(client, entries: list[dict], journal_callback, registry=None) -
         issue = None
         try:
             adapter = _adapter(entry["class_type"], entry.get("adapter"), registry)
-            current = adapter.capture(client, entry["node_id"])
+            current = _call(
+                adapter,
+                "capture",
+                client,
+                entry["node_id"],
+                registry=registry,
+                ref=entry.get("adapter"),
+            )
             if current == entry["before"]:
                 entry["status"] = "restored"
             elif current != entry["desired"]:
                 entry["status"] = "conflict"
                 issue = {"kind": "conflict", "error": "参数面板已被其他客户端修改，保留当前值"}
             else:
-                adapter.push(client, entry["node_id"], copy.deepcopy(entry["before"]))
-                if adapter.capture(client, entry["node_id"]) != entry["before"]:
+                _call(
+                    adapter,
+                    "push",
+                    client,
+                    entry["node_id"],
+                    copy.deepcopy(entry["before"]),
+                    registry=registry,
+                    ref=entry.get("adapter"),
+                )
+                if (
+                    _call(
+                        adapter,
+                        "capture",
+                        client,
+                        entry["node_id"],
+                        registry=registry,
+                        ref=entry.get("adapter"),
+                    )
+                    != entry["before"]
+                ):
                     raise ComfyError("参数面板恢复后校验失败")
                 entry["status"] = "restored"
         except Exception as exc:
@@ -207,9 +261,9 @@ def capture(client, graph: dict, choices=None, registry=None) -> dict:
             registry, "comfy_state_adapter", (choices or {}).get(nid, "parameter-control-panel")
         )
         adapter = resolve(registry, ref)
-        state = adapter.capture(client, nid)
+        state = _call(adapter, "capture", client, nid, registry=registry, ref=ref)
         try:
-            adapter.validate(state)
+            _call(adapter, "validate", state, registry=registry, ref=ref)
         except (ValueError, ComfyError) as exc:
             raise ComfyError(f"节点 {nid} 状态不可用：{exc}") from exc
         result[nid] = {"class_type": cls, "state": state}

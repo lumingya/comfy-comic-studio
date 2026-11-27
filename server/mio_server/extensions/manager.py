@@ -157,6 +157,48 @@ class ExtensionManager:
         self._bytecode_policy = False
         self._catalog_transitions = 0
         self.apps = []
+        self.ctx.registry.activation_check = self.is_live_activation
+        self.ctx.registry.hooks.activation_check = self.is_live_activation
+
+    def is_live_activation(self, registration) -> bool:
+        """Check the reviewed package and current registration before dispatch."""
+        source = getattr(registration, "source", "")
+        if not isinstance(source, str) or not source.startswith("ext:"):
+            return True
+
+        ext_id = source.removeprefix("ext:")
+        loaded = self.loaded.get(ext_id)
+        if loaded is None:
+            return False
+        api = loaded.api
+        state = self._state(ext_id)
+        if (
+            api.source != source
+            or not api.active
+            or not state
+            or not state.enabled
+            or state.digest != api.digest
+        ):
+            return False
+        try:
+            if digest(api.folder) != api.digest:
+                return False
+        except OSError:
+            return False
+
+        if hasattr(registration, "point"):
+            registered_digest = registration.meta.get("digest")
+            return registered_digest in (None, api.digest) and any(
+                item is registration
+                for item in self.ctx.registry.layers(registration.point, registration.id)
+            )
+
+        if hasattr(registration, "name") and hasattr(registration, "fn"):
+            return any(
+                handler is registration
+                for handler in self.ctx.registry.hooks.handlers(registration.name)
+            )
+        return False
 
     def operation_layers(self, operation: str):
         """Capture only committed wrappers, or fail fast while activation is incomplete."""

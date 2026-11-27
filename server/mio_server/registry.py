@@ -48,6 +48,10 @@ class RegistryError(KeyError):
     pass
 
 
+class InactiveContributionError(RegistryError):
+    pass
+
+
 @dataclass
 class Contribution:
     point: str
@@ -56,6 +60,17 @@ class Contribution:
     source: str = "builtin"
     title: str = ""
     meta: dict = field(default_factory=dict)
+    registry: Registry | None = field(default=None, repr=False, compare=False)
+
+    def invoke(self, callback: Callable, *args, **kwargs):
+        if self.registry is None:
+            return callback(*args, **kwargs)
+        return self.registry.invoke_contribution(self, callback, *args, **kwargs)
+
+    def invoke_method(self, target, method: str, *args, **kwargs):
+        if self.registry is None:
+            return getattr(target, method)(*args, **kwargs)
+        return self.registry.invoke_contribution_method(self, target, method, *args, **kwargs)
 
 
 class Registry:
@@ -64,6 +79,7 @@ class Registry:
         self._items: dict[str, dict[str, Contribution]] = {p: {} for p in POINTS}
         self._layers: dict[str, dict[str, list[Contribution]]] = {p: {} for p in POINTS}
         self._listeners: dict[str, list[Callable[[dict], None]]] = {}
+        self.activation_check: Callable[[Contribution], bool] | None = None
         self.hooks = HookBus()
 
     def register(
@@ -84,7 +100,7 @@ class Registry:
                 raise RegistryError(
                     f"{point}:{id} already registered by {self._items[point][id].source}"
                 )
-            item = Contribution(point, id, value, source, title, meta)
+            item = Contribution(point, id, value, source, title, meta, self)
             layers = self._layers[point].setdefault(id, [])
             layers[:] = [layer for layer in layers if layer.source != source]
             layers.append(item)
@@ -120,6 +136,33 @@ class Registry:
         """Snapshot from original to newest, for explicitly composable extension points."""
         with self._lock:
             return list(self._layers.get(point, {}).get(id, []))
+
+    def contribution(self, point: str, id: str) -> Contribution:
+        with self._lock:
+            try:
+                return self._items[point][id]
+            except KeyError:
+                raise RegistryError(f"{point}:{id} is not registered") from None
+
+    def invoke(self, point: str, id: str, *args, **kwargs):
+        contribution = self.contribution(point, id)
+        return contribution.invoke(contribution.value, *args, **kwargs)
+
+    def invoke_contribution(self, contribution: Contribution, callback: Callable, *args, **kwargs):
+        """Run extension code only while its reviewed registration is still live."""
+        if self.activation_check is not None and not self.activation_check(contribution):
+            raise InactiveContributionError(
+                f"{contribution.point}:{contribution.id} is no longer an active extension"
+            )
+        return callback(*args, **kwargs)
+
+    def invoke_contribution_method(
+        self, contribution: Contribution, target, method: str, *args, **kwargs
+    ):
+        """Recheck before descriptor lookup, which may itself execute extension code."""
+        return self.invoke_contribution(
+            contribution, lambda: getattr(target, method)(*args, **kwargs)
+        )
 
     def unregister_source(self, source: str) -> int:
         """Remove every contribution and hook handler of one source (an extension)."""

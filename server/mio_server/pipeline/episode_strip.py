@@ -45,8 +45,8 @@ def render_snapshot(
     # explicit layout action does that. Missing adopted panels can still be laid out below it.
     rendering = ep.model_copy(deep=True)
     rendering.strip.manual = bool(ep.strip.panel_boxes)
-    strip, scaled = ctx.registry.get("layout", "strip.default")(
-        series, rendering, images, faces, relayout_lettering=stale
+    strip, scaled = ctx.registry.invoke(
+        "layout", "strip.default", series, rendering, images, faces, relayout_lettering=stale
     )
     strip.manual = ep.strip.manual
     strip.height = max(strip.height, ep.strip.height) if stale else SP.content_height(ep.strip)

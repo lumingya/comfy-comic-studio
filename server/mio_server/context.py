@@ -53,6 +53,24 @@ INSTALL_ROOT = Path(__file__).resolve().parents[2]
 log = logging.getLogger("mio")
 
 
+class _LiveTextClient:
+    def __init__(self, contribution, client):
+        self._contribution, self._client = contribution, client
+
+    def chat_json(self, *args, **kwargs):
+        return self._contribution.invoke_method(self._client, "chat_json", *args, **kwargs)
+
+    def vision_json(self, *args, **kwargs):
+        return self._contribution.invoke_method(self._client, "vision_json", *args, **kwargs)
+
+
+def _live_binding_rules(registry):
+    return tuple(
+        (f"{item.source}:{item.id}", lambda graph, item=item: item.invoke(item.value, graph))
+        for item in registry.all("workflow_binding")
+    )
+
+
 def default_data_dir() -> Path:
     return Path(os.environ.get("MIO_V3_DATA", "data/runtime/v3"))
 
@@ -185,9 +203,7 @@ class AppContext:
             ),
         )
         render.hooks = ctx.registry.hooks
-        render.binding_rules = lambda: [
-            (f"{c.source}:{c.id}", c.value) for c in ctx.registry.all("workflow_binding")
-        ]
+        render.binding_rules = lambda: _live_binding_rules(ctx.registry)
         engine.subscribe(lambda event: ctx.hooks.action("job.event", event))
         ctx.tokens = TokenStore(store)
         ctx.updater = Updater(ctx.data_dir, INSTALL_ROOT, startup_enabled=autostart)
@@ -232,10 +248,11 @@ class AppContext:
             from .jobs import JobConflict
 
             raise JobConflict("请先启用提供文本模型的扩展")
-        return providers[-1].value()
+        provider = providers[-1]
+        return _LiveTextClient(provider, provider.invoke(provider.value))
 
     def image_backend(self, channel_id: str = ""):
-        kinds = {c.id: c.value for c in self.registry.all("cloud_adapter")}
+        kinds = {c.id: c for c in self.registry.all("cloud_adapter")}
         return SET.image_backend(self.settings(), self.image_llm_factory, channel_id, kinds=kinds)
 
     def settings(self) -> SET.AppSettings:

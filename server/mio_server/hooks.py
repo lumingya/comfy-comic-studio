@@ -63,6 +63,7 @@ class HookBus:
     def __init__(self):
         self._lock = threading.RLock()
         self._handlers: dict[str, list[Handler]] = {}
+        self.activation_check: Callable[[Handler], bool] | None = None
 
     def add(
         self, name: str, fn: Callable, *, priority: int = 0, source: str = "builtin"
@@ -100,6 +101,8 @@ class HookBus:
 
     def filter(self, name: str, value: Any, **context) -> Any:
         for h in self.handlers(name):
+            if self.activation_check is not None and not self.activation_check(h):
+                continue
             try:
                 result = h.fn(value, **context)
             except Exception:
@@ -111,6 +114,8 @@ class HookBus:
 
     def action(self, name: str, payload: dict) -> None:
         for h in self.handlers(name):
+            if self.activation_check is not None and not self.activation_check(h):
+                continue
             try:
                 h.fn(payload)
             except Exception:

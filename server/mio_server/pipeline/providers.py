@@ -32,6 +32,7 @@ from pydantic import Field, field_validator
 from .. import llm as L
 from ..cloud_options import json_value, validate_options
 from ..models import StrictModel
+from ..registry import Contribution
 from . import cloud_request as CR
 
 NOVELAI_BASE = "https://image.novelai.net"
@@ -399,18 +400,31 @@ KINDS = {"openai_images": OpenAIImages, "novelai": NovelAI}
 class ExtensionChannel:
     """Keep channel identity even when a legacy extension retains no public config."""
 
-    def __init__(self, channel, factory, transport):
+    def __init__(self, channel, factory, transport, contribution=None):
         self.channel, self.factory, self.transport = channel, factory, transport
-        self.client = factory(channel, transport)
+        self.contribution = contribution
+        self.client = self._create(channel)
         self.image_models = (channel.model,) if channel.model else ()
 
+    def _create(self, channel):
+        if self.contribution is None:
+            return self.factory(channel, self.transport)
+        return self.contribution.invoke(self.factory, channel, self.transport)
+
     def generate_image(self, *args, **kwargs):
-        return self.client.generate_image(*args, **kwargs)
+        if self.contribution is None:
+            return self.client.generate_image(*args, **kwargs)
+        return self.contribution.invoke_method(self.client, "generate_image", *args, **kwargs)
 
     def generate_image_request(self, request, refs=(), timeout=360.0, retries=3):
-        bound = CR.bind_request(self, request)
-        client = self.factory(bound.channel, self.transport)
-        return CR.call(client, request, refs, timeout=timeout, retries=retries)
+        def generate():
+            bound = CR.bind_request(self, request)
+            client = self.factory(bound.channel, self.transport)
+            return CR.call(client, request, refs, timeout=timeout, retries=retries)
+
+        if self.contribution is None:
+            return generate()
+        return self.contribution.invoke(generate)
 
 
 def build(channel: ImageChannel, llm_factory, transport=None, kinds: dict | None = None):
@@ -433,9 +447,11 @@ def build(channel: ImageChannel, llm_factory, transport=None, kinds: dict | None
             client.image_models = (channel.model,)
         client._image_channel = channel
         return client
-    cls = (kinds or KINDS).get(channel.kind)
-    if cls is None:
+    entry = (kinds or KINDS).get(channel.kind)
+    if entry is None:
         raise LookupError(f"未知的出图渠道类型：{channel.kind}（扩展未启用？）")
+    contribution = entry if isinstance(entry, Contribution) else None
+    cls = contribution.value if contribution is not None else entry
     if cls not in (OpenAIImages, NovelAI):
-        return ExtensionChannel(channel, cls, transport)
+        return ExtensionChannel(channel, cls, transport, contribution)
     return cls(channel, transport)

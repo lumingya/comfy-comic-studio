@@ -350,12 +350,14 @@ def prepare_snapshot(ctx, series, ep, variant_id=None, *, checkpoint=_noop):
     stale = not ep.strip.panel_boxes or bool(set(assets) - set(ep.strip.panel_boxes))
     rendering = ep.model_copy(deep=True)
     rendering.strip.manual = bool(ep.strip.panel_boxes)
-    layout = ctx.registry.get("layout", "strip.default")
-    if layout is not SP.layout:
+    layout = ctx.registry.contribution("layout", "strip.default")
+    if layout.value is not SP.layout:
         originals, faces = ES.adopted_images(ctx, ep, variant_id)
         images = {}
         try:
-            strip, images = layout(series, rendering, originals, faces, relayout_lettering=stale)
+            strip, images = layout.invoke(
+                layout.value, series, rendering, originals, faces, relayout_lettering=stale
+            )
         finally:
             # Layouts may return original images, so transfer those to the snapshot.
             for image in originals.values():

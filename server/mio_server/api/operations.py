@@ -16,6 +16,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.routing import compile_path
 
 from ..auth import required_scope
+from ..registry import InactiveContributionError
 from .deps import Ctx
 
 
@@ -58,7 +59,13 @@ def wrap_endpoint(endpoint, operation):
                     raise ValueError("an operation wrapper cannot replace its application context")
                 return await call(index - 1, {**arguments, **changes})
 
-            return await invoke(contribution.value, next_operation, **arguments)
+            try:
+                dispatched = contribution.invoke(
+                    invoke, contribution.value, next_operation, **arguments
+                )
+            except InactiveContributionError:
+                return await call(index - 1, arguments)
+            return await dispatched
 
         return await call(len(layers) - 1, values)
 

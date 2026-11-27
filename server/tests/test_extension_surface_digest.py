@@ -1,7 +1,11 @@
 """Panel directories verify their candidates without hashing unrelated extension packages."""
 
 import json
+import os
+import stat
+import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from mio_server.extensions.manifest import ManifestError, digest, read_manifest
@@ -115,6 +119,34 @@ class SurfaceDigestTests(ApiCase):
                 finally:
                     target.write_bytes(original)
 
+    def test_workspace_surface_callback_rechecks_digest_before_execution(self):
+        folder = self.package("workspace-panel", panels=False, workspace=True, enabled=True)
+        called = []
+
+        def surface():
+            called.append(True)
+            return {"entry": "workspace.html", "title": "Workspace"}
+
+        self.ctx.registry.register(
+            "workspace_surface",
+            "workspace-panel-surface",
+            surface,
+            source="ext:workspace-panel",
+            digest=self.ctx.extensions.loaded["workspace-panel"].api.digest,
+        )
+        original_check = self.ctx.registry.activation_check
+
+        def modify_then_check(contribution):
+            if contribution.point == "workspace_surface":
+                (folder / "workspace.html").write_text("changed after review", encoding="utf-8")
+            return original_check(contribution)
+
+        with patch.object(self.ctx.registry, "activation_check", modify_then_check):
+            result = self.ok(self.client.get("/api/extension-surfaces"))
+
+        self.assertEqual(result, {"items": []})
+        self.assertEqual(called, [])
+
     def test_symlinked_child_module_cannot_keep_the_reviewed_digest(self):
         folder = self.package("review-panel", panels=False)
         reviewed = digest(folder)
@@ -129,14 +161,14 @@ class SurfaceDigestTests(ApiCase):
             # Some Windows hosts disallow creating symlinks without elevated privileges.
             # Keep the regression active by simulating the filesystem's symlink report.
             link.mkdir()
-        is_symlink = Path.is_symlink
-        symlink_report = patch.object(
-            Path,
-            "is_symlink",
-            new=lambda path: path == link or is_symlink(path),
-        )
+        original_lstat = Path.lstat
 
-        with symlink_report:
+        def report_symlink(path):
+            if path.name == link.name:
+                return SimpleNamespace(st_mode=stat.S_IFLNK | 0o777)
+            return original_lstat(path)
+
+        with patch.object(Path, "lstat", report_symlink):
             with self.assertRaisesRegex(ManifestError, "symlinked directory"):
                 read_manifest(folder)
             with self.assertRaisesRegex(OSError, "symlinked directory"):
@@ -145,6 +177,39 @@ class SurfaceDigestTests(ApiCase):
             with self.assertRaisesRegex(OSError, "symlinked directory"):
                 digest(folder)
         self.assertEqual(len(reviewed), 64)
+
+    def test_reparse_point_directory_cannot_escape_the_reviewed_digest(self):
+        folder = self.package("reparse-package", panels=False)
+        target = Path(self.tmp) / "external-extension-module"
+        target.mkdir()
+        (target / "helper.py").write_text("VALUE = 'outside'\n", encoding="utf-8")
+        link = folder / "linked-module"
+        if os.name == "nt":
+            subprocess.run(
+                ["cmd.exe", "/d", "/c", "mklink", "/J", str(link), str(target)],
+                check=True,
+                capture_output=True,
+            )
+            try:
+                with self.assertRaisesRegex(OSError, "symlinked directory or junction"):
+                    digest(folder)
+            finally:
+                link.rmdir()
+        else:
+            link.mkdir()
+            original_lstat = Path.lstat
+
+            def report_reparse_point(path):
+                if path == link:
+                    return SimpleNamespace(
+                        st_mode=original_lstat(path).st_mode,
+                        st_file_attributes=0x400,
+                    )
+                return original_lstat(path)
+
+            with patch.object(Path, "lstat", report_reparse_point):
+                with self.assertRaisesRegex(OSError, "symlinked directory or junction"):
+                    digest(folder)
 
     def test_changed_host_slot_declaration_cannot_pollute_output(self):
         folder = self.package("review-panel", enabled=True)

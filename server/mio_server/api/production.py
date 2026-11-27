@@ -138,8 +138,14 @@ def layout_strip(
     images, faces = _adopted_images(ctx, ep, body.variant_id)
     if not images:
         raise ValueError("还没有采用任何一格的图片")
-    strip, _ = ctx.registry.get("layout", body.layout_id)(
-        series, ep, images, faces, relayout_lettering=body.relayout_lettering
+    strip, _ = ctx.registry.invoke(
+        "layout",
+        body.layout_id,
+        series,
+        ep,
+        images,
+        faces,
+        relayout_lettering=body.relayout_lettering,
     )
     strip = Strip.model_validate(strip)
     if body.relayout_lettering:

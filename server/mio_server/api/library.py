@@ -124,7 +124,10 @@ def _analyze(graph: dict) -> dict | None:
 
 
 def _rules(ctx):
-    return tuple((f"{c.source}:{c.id}", c.value) for c in ctx.registry.all("workflow_binding"))
+    return tuple(
+        (f"{item.source}:{item.id}", lambda graph, item=item: item.invoke(item.value, graph))
+        for item in ctx.registry.all("workflow_binding")
+    )
 
 
 # --------------------------------------------------------------- workflows
@@ -324,17 +327,19 @@ def capture_workflow_state(ctx: Ctx, workflow_id: str, instance_id: str = "comfy
     state = {}
     for node_id, item in captured.items():
         try:
-            from ..comfy.contracts import resolve, select
+            from ..comfy.contracts import invoke, select
 
-            adapter = resolve(
+            invoke(
                 ctx.registry,
                 select(
                     ctx.registry,
                     "comfy_state_adapter",
                     doc.config.state_adapters.get(node_id, "parameter-control-panel"),
                 ),
+                "validate",
+                item["state"],
+                nonempty=True,
             )
-            adapter.validate(item["state"], nonempty=True)
         except ComfyError as exc:
             raise ValueError(
                 f"节点 {node_id} 状态不可用：{exc}。请先在 ComfyUI 中打开工作流并保存面板参数。"

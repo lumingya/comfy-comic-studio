@@ -70,6 +70,13 @@ class FrozenRegistry:
     def get(self, point, identifier):
         return self.values[point, identifier].value
 
+    def contribution(self, point, identifier):
+        return self.values[point, identifier]
+
+    def invoke(self, point, identifier, *args, **kwargs):
+        contribution = self.values[point, identifier]
+        return contribution.invoke(contribution.value, *args, **kwargs)
+
 
 class FrozenStore:
     def __init__(self, store, snapshot):
@@ -420,8 +427,14 @@ class ExportService:
             with prepare_snapshot(
                 ctx, series, ep, opts.get("variant_id"), checkpoint=checkpoint
             ) as plan:
-                return writer(
-                    plan, fmt, path=path, checkpoint=checkpoint, progress=progress, **arguments
+                return exporter.invoke(
+                    writer,
+                    plan,
+                    fmt,
+                    path=path,
+                    checkpoint=checkpoint,
+                    progress=progress,
+                    **arguments,
                 )
         # Old strip extensions still receive the documented full PIL canvas.
         from .pipeline.episode_strip import render_snapshot
@@ -429,7 +442,7 @@ class ExportService:
         _, _, strip, image = render_snapshot(ctx, series, ep, opts.get("variant_id"))
         try:
             checkpoint()
-            data, mime, filename = exporter.value(image, strip, fmt, **arguments)
+            data, mime, filename = exporter.invoke(exporter.value, image, strip, fmt, **arguments)
             checkpoint()
             Path(path).write_bytes(data)
             progress(1, 1)
@@ -601,7 +614,10 @@ class ExportService:
             if native:
                 write_album(tpl, books, path, options, spooled, checkpoint=checkpoint)
             else:
-                Path(path).write_text(renderer(tpl, books, options), encoding="utf-8")
+                Path(path).write_text(
+                    ctx.registry.invoke("exporter", "album", tpl, books, options),
+                    encoding="utf-8",
+                )
         title = opts.get("title") or books[0].title
         return "text/html", f"{title}_{tpl.id}.html", {"X-Mio-Export": stats.header()}
 

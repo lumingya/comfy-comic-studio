@@ -205,9 +205,14 @@ def validate_outputs(graph: dict, plans: dict, registry=None) -> None:
         node = graph.get(node_id)
         if not node or node.get("class_type") != frozen["class_type"]:
             raise B.BindingError(f"输出节点 {node_id} 与适配器快照不一致")
-        adapter = AC.resolve(registry, frozen["adapter"])
         expected = AC.json_copy(
-            adapter.freeze(copy.deepcopy(node), AC.json_copy(frozen["options"]))
+            AC.invoke(
+                registry,
+                frozen["adapter"],
+                "freeze",
+                copy.deepcopy(node),
+                AC.json_copy(frozen["options"]),
+            )
         )
         if expected != frozen["plan"]:
             raise B.BindingError(f"输出节点 {node_id} 的解析计划与编译快照不一致")
@@ -275,8 +280,12 @@ def compile_workflow(
             continue
         try:
             ref = AC.select(registry, "comfy_output_adapter", adapter_config.id)
-            plan = AC.resolve(registry, ref).freeze(
-                copy.deepcopy(graph[node_id]), AC.json_copy(adapter_config.options)
+            plan = AC.invoke(
+                registry,
+                ref,
+                "freeze",
+                copy.deepcopy(graph[node_id]),
+                AC.json_copy(adapter_config.options),
             )
             output_adapters[node_id] = {
                 "adapter": ref,

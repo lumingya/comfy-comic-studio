@@ -503,7 +503,7 @@ class ExecutorExtensionTests(ApiCase):
 
     def test_resolve_cannot_bypass_render_permission_for_saved_results(self):
         engine = self.ctx.engine
-        engine.register("demo", Recorder(), source="ext:demo", digest=A)
+        engine.register("demo", Recorder(), source="test:demo", digest=A)
         job = engine.submit("demo", [ItemSpec({})])
         claim(engine, job)
         engine._record_delivery(engine._item_row(job["id"], 0), {"saved": True})
@@ -531,7 +531,7 @@ class ExecutorExtensionTests(ApiCase):
 
     def test_backup_preserves_and_validates_executor_identity(self):
         engine = self.ctx.engine
-        engine.register("demo", Recorder(), source="ext:demo", digest=A)
+        engine.register("demo", Recorder(), source="test:demo", digest=A)
         job = engine.submit("demo", [ItemSpec({})])
         drain(engine, job["id"])
         backup = Backups(self.ctx).export(BackupOptions())
@@ -552,7 +552,7 @@ class ExecutorExtensionTests(ApiCase):
     def test_resolve_resubmit_explicitly_retries_only_the_uncertain_item(self):
         engine = self.ctx.engine
         executor = Recorder(fail=True)
-        engine.register("demo", executor, source="ext:demo", digest=A)
+        engine.register("demo", executor, source="test:demo", digest=A)
         job = engine.submit("demo", [ItemSpec({}), ItemSpec({})])
         self.assertEqual(drain(engine, job["id"])["state"], "blocked")
         token = self.ok(

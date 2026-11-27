@@ -76,6 +76,19 @@ class ExtensionMarketTests(ApiCase):
             result = self.client.post(f"/api/extension-market/{ext_id}/install", json=body)
         return result, fetch
 
+    def test_catalog_reads_installed_extensions_under_operation_lock(self):
+        original_list = self.ctx.extensions.list
+        lock_states = []
+
+        def checked_list():
+            lock_states.append(self.ctx.engine._operation_lock._is_owned())
+            return original_list()
+
+        with patch.object(self.ctx.extensions, "list", side_effect=checked_list):
+            self.ok(self.client.get("/api/extension-market"))
+
+        self.assertEqual(lock_states, [True])
+
     def test_default_directory_only_lists_real_bundled_packages(self):
         with patch("mio_server.extensions.marketplace._download") as fetch:
             result = self.ok(self.client.get("/api/extension-market?refresh=true"))

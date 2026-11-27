@@ -9,6 +9,7 @@ import json
 
 from PIL import Image
 
+from ..registry import InactiveContributionError
 from .client import ComfyError, OutputImage
 
 POINTS = ("comfy_output_adapter", "comfy_state_adapter")
@@ -82,6 +83,25 @@ def resolve(registry, ref):
     raise ComfyError(f"任务依赖的 ComfyUI 适配器不可用：{ref['id']}，请恢复原扩展版本")
 
 
+def invoke(registry, ref, method, *args, **kwargs):
+    """Call a frozen adapter method after rechecking its exact reviewed contribution."""
+    if ref.get("contract") != 1 or ref.get("point") not in POINTS:
+        raise ComfyError("不支持的 ComfyUI 适配器契约")
+    if ref == builtin_ref(ref["point"], ref["id"]) and builtin(ref["point"], ref["id"]):
+        return getattr(builtin(ref["point"], ref["id"]), method)(*args, **kwargs)
+    for item in registry.layers(ref["point"], ref["id"]) if registry else []:
+        if (item.source, item.meta.get("digest"), item.meta.get("contract")) == (
+            ref["source"],
+            ref["digest"],
+            ref["contract"],
+        ):
+            try:
+                return item.invoke_method(item.value, method, *args, **kwargs)
+            except InactiveContributionError as exc:
+                raise ComfyError(str(exc.args[0])) from exc
+    raise ComfyError(f"任务依赖的 ComfyUI 适配器不可用：{ref['id']}，请恢复原扩展版本")
+
+
 def json_copy(value):
     return json.loads(json.dumps(value, ensure_ascii=False, allow_nan=False))
 
@@ -97,10 +117,14 @@ class OutputTransport:
 
 
 def collect(client, node_id, output, frozen, registry):
-    adapter = resolve(registry, frozen["adapter"])
     try:
-        images = adapter.collect(
-            copy.deepcopy(output), json_copy(frozen["plan"]), OutputTransport(client)
+        images = invoke(
+            registry,
+            frozen["adapter"],
+            "collect",
+            copy.deepcopy(output),
+            json_copy(frozen["plan"]),
+            OutputTransport(client),
         )
         result = []
         for index, image in enumerate(images):

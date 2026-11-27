@@ -120,7 +120,10 @@ class ItemContext:
         self.engine._emit(self.job_id, self.idx, "progress", data, persist=False)
 
     def on_abort(self, hook: Callable[[], None]) -> None:
-        self.abort_hooks.append(hook)
+        contribution = getattr(self.executor_binding, "contribution", None)
+        self.abort_hooks.append(
+            (lambda: contribution.invoke(hook)) if contribution is not None else hook
+        )
 
     def raise_if_cancelled(self) -> None:
         if self.cancelled.is_set():

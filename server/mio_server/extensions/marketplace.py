@@ -216,7 +216,8 @@ class Marketplace:
                 {"url": url, "items": entries}, ensure_ascii=False, sort_keys=True
             ).encode("utf-8")
             digest = hashlib.sha256(encoded).hexdigest()
-            installed = {info.id: info for info in self.ctx.extensions.list()}
+            with self.ctx.engine.hold_operation():
+                installed = {info.id: info for info in self.ctx.extensions.list()}
             for item in entries:
                 info = installed.get(item["id"])
                 item["installed"] = (
