@@ -129,6 +129,23 @@ describe('<PromptSurface>', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
+  it('retains the full preset title when the completion source is visually truncated', () => {
+    const title = '长篇角色预设设定集LongPresetTitle'.repeat(4);
+    render(
+      <PromptSurface
+        id="p"
+        value=""
+        onChange={() => {}}
+        known={new Map([['character', true]])}
+        sources={new Map([['character', [{ title, value: 'nanami' }]]])}
+      />,
+    );
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '{' } });
+    const source = screen.getByRole('option').querySelector('.source');
+    expect(source).toHaveTextContent(title);
+    expect(source).toHaveAttribute('title', title);
+  });
+
   it('leaves Enter to an active IME composition even while completion is open', () => {
     render(<Harness />);
     const area = document.getElementById('p') as HTMLTextAreaElement;

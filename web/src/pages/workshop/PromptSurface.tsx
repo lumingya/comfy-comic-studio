@@ -458,7 +458,7 @@ export function PromptSurface({
                   >
                     <span className="key">{`{${item.key}}`}</span>
                     {item.sources.length ? (
-                      <span className="source">
+                      <span className="source" title={conflict ? undefined : item.sources[0].title}>
                         {conflict
                           ? t('ws.prompt.presetCount', { count: item.sources.length })
                           : item.sources[0].title}

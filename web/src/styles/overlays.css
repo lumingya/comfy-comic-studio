@@ -507,7 +507,7 @@
 
 #prompt-completion [role='option'] {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 40%);
   align-items: baseline;
   gap: 2px 12px;
   padding: 7px 10px;
@@ -538,9 +538,12 @@
 }
 
 #prompt-completion .source {
+  min-width: 0;
+  overflow: hidden;
   font-size: 0.75rem;
   color: var(--muted);
   white-space: nowrap;
+  text-overflow: ellipsis;
   text-align: right;
 }
 
