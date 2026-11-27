@@ -47,6 +47,7 @@ import './works-copy.css';
 
 /** Legacy key: the one-line multi-select hint stays hidden once used or dismissed. */
 const HINT_KEY = 'cc-hint-multiselect';
+let shelfReorderRevision = 0;
 
 export default function WorksPage() {
   const { t, i18n } = useTranslation();
@@ -166,13 +167,35 @@ export default function WorksPage() {
   const selectedBookIds = bookIds.filter((id) => selection.has(id));
   /** Legacy reorderCollectionBook: the drop becomes the manual order (and 手动排序 the sort). */
   const moveBook = (source: string, target: string, after: boolean, moving = [source]) => {
-    const previous = { order, sort };
-    setOrder(reorderShelfMany(items, bookIds, order, sort, moving, target, after));
+    const current = useUI.getState();
+    const previous = { order: current.shelfOrder, sort: current.shelfSort };
+    const nextOrder = reorderShelfMany(
+      items,
+      bookIds,
+      previous.order,
+      previous.sort,
+      moving,
+      target,
+      after,
+    );
+    const revision = ++shelfReorderRevision;
+    setOrder(nextOrder);
     setSort('manual');
     toast(t('classic.shelf.reordered'), {
       action: {
         label: t('common.undo'),
         onClick: () => {
+          const latest = useUI.getState();
+          const stillCurrent =
+            revision === shelfReorderRevision &&
+            latest.shelfSort === 'manual' &&
+            latest.shelfOrder.length === nextOrder.length &&
+            latest.shelfOrder.every((id, index) => id === nextOrder[index]);
+          if (!stillCurrent) {
+            toast(t('classic.shelf.reorderUndoStale'));
+            return;
+          }
+          ++shelfReorderRevision;
           setOrder(previous.order);
           setSort(previous.sort);
         },
@@ -339,6 +362,8 @@ export default function WorksPage() {
           onClickCapture={(e) => {
             if (!e.defaultPrevented) shelf.onClickCapture(e);
           }}
+          onKeyDown={reorder.onKeyDown}
+          onBlurCapture={reorder.onBlurCapture}
           onPointerDown={shelf.onPointerDown}
           onDragStartCapture={shelf.onDragStartCapture}
           onContextMenu={shelf.onContextMenu}

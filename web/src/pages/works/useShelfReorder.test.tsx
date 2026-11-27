@@ -41,9 +41,11 @@ function Shelf({ withTargetsRoot = true, onOpen, controller, ...options }: Props
           data-testid="shelf"
           onPointerDownCapture={drag.onPointerDownCapture}
           onClickCapture={drag.onClickCapture}
+          onKeyDown={drag.onKeyDown}
+          onBlurCapture={drag.onBlurCapture}
         >
           {['a', 'b', 'c'].map((id) => (
-            <article key={id} data-shelf-id={id} onPointerDown={drag.onPointerDown}>
+            <article key={id} data-shelf-id={id} tabIndex={0} onPointerDown={drag.onPointerDown}>
               <button className="shelf-cover" data-shelf-open onClick={onOpen}>
                 <img src={`/${id}.png`} alt={`Cover ${id}`} />
               </button>
@@ -266,6 +268,87 @@ describe('useShelfReorder', () => {
     } finally {
       window.removeEventListener('keydown', selectionEscape);
     }
+  });
+
+  it('reorders with Space and arrow keys while preserving focus on the grabbed card', () => {
+    const onDrop = vi.fn();
+    render(<Shelf onDrop={onDrop} />);
+    card().focus();
+
+    fireEvent.keyDown(card(), { key: ' ', shiftKey: true });
+    expect(card()).toHaveAttribute('aria-grabbed', 'true');
+    expect(card()).toHaveClass('is-dragging');
+    expect(card('b')).toHaveClass('is-drop-target');
+    expect(document.querySelector('[data-shelf-reorder-status]')).toHaveAttribute('role', 'status');
+    expect(card()).toHaveFocus();
+
+    fireEvent.keyDown(card(), { key: 'ArrowDown' });
+    expect(card('b')).not.toHaveClass('is-drop-target');
+    expect(card('c')).toHaveClass('is-drop-target');
+    fireEvent.keyDown(card(), { key: ' ', shiftKey: true });
+
+    expect(onDrop).toHaveBeenCalledWith('a', 'c', false, ['a']);
+    expect(card()).toHaveFocus();
+    expect(card()).not.toHaveAttribute('aria-grabbed');
+    expect(card()).not.toHaveClass('is-dragging');
+    expect(document.querySelector('[data-shelf-reorder-status]')).toBeNull();
+  });
+
+  it('announces reorder shortcuts only on the focused card without scanning the shelf', () => {
+    const { rerender } = render(<Shelf />);
+    expect(card()).not.toHaveAttribute('aria-keyshortcuts');
+    expect(card('b')).not.toHaveAttribute('aria-keyshortcuts');
+
+    card().focus();
+    expect(card()).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Shift+Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape',
+    );
+    expect(card('b')).not.toHaveAttribute('aria-keyshortcuts');
+
+    screen.getByRole('button', { name: 'Menu a' }).focus();
+    expect(card()).toHaveAttribute('aria-keyshortcuts');
+    screen.getByRole('button', { name: 'Outside' }).focus();
+    expect(card()).not.toHaveAttribute('aria-keyshortcuts');
+
+    card('b').focus();
+    rerender(<Shelf enabled={false} />);
+    expect(card('b')).not.toHaveAttribute('aria-keyshortcuts');
+  });
+
+  it('cancels a keyboard reorder with Escape without dropping and keeps focus', () => {
+    const onDrop = vi.fn();
+    render(<Shelf onDrop={onDrop} />);
+    card().focus();
+    fireEvent.keyDown(card(), { key: ' ', shiftKey: true });
+    fireEvent.keyDown(card(), { key: 'ArrowRight' });
+    expect(card('c')).toHaveClass('is-drop-target');
+    expect(fireEvent.keyDown(card(), { key: 'Escape' })).toBe(false);
+    expect(onDrop).not.toHaveBeenCalled();
+    expect(card()).toHaveFocus();
+    expect(card()).not.toHaveAttribute('aria-grabbed');
+    expect(card()).not.toHaveClass('is-dragging');
+    expect(document.querySelector('[data-shelf-reorder-status]')).toBeNull();
+  });
+
+  it('handles keys from card controls and cancels if focus leaves the shelf', () => {
+    const onDrop = vi.fn();
+    let controller: Controller;
+    render(<Shelf onDrop={onDrop} controller={(value) => (controller = value)} />);
+    card().focus();
+    fireEvent.keyDown(card(), { key: ' ', shiftKey: true });
+    screen.getByRole('button', { name: 'Menu a' }).focus();
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Menu a' }), { key: 'ArrowDown' });
+    expect(card('c')).toHaveClass('is-drop-target');
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Menu a' }), { key: 'Escape' });
+    expect(controller!.isDragging()).toBe(false);
+    expect(onDrop).not.toHaveBeenCalled();
+
+    card().focus();
+    fireEvent.keyDown(card(), { key: ' ', shiftKey: true });
+    fireEvent.blur(card(), { relatedTarget: screen.getByRole('button', { name: 'Outside' }) });
+    expect(controller!.isDragging()).toBe(false);
+    expect(document.querySelector('[data-shelf-reorder-status]')).toBeNull();
   });
 
   it('supports a pen, ignores other pointers, and cleans up pointer cancellation and blur', () => {

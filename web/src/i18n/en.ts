@@ -1093,6 +1093,10 @@ const en: Widen<Dict> = {
       bulkDeleted: 'Moved {{count}} to the trash',
       bulkExit: 'Leave selection',
       listLabel: 'Album shelf',
+      reorderPickedUp:
+        'Picked up {{title}}. Use arrow keys to move, Shift+Space to drop, or Escape to cancel.',
+      reorderMoving: 'Moving {{title}} to position {{position}} of {{total}}.',
+      reorderUndoStale: 'The album order changed, so this undo was not applied.',
       selectionLabel: 'Album selection',
       selectionMore: 'More…',
       selectFiltered: 'Select filtered albums',

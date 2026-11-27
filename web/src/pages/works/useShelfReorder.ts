@@ -1,17 +1,21 @@
 import {
   useEffect,
   useRef,
+  type FocusEvent as ReactFocusEvent,
   type MouseEvent as ReactMouseEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
 import { shortcutBlocked } from '../../app/shortcuts';
+import { useTranslation } from 'react-i18next';
 
 /** Below this the press is a click; above it the album lifts (legacy THRESHOLD). */
 const THRESHOLD = 6;
 const CARD = '[data-shelf-id]';
 const COLLECTION = '[data-shelf-collection]';
 const CONTROL = 'input,textarea,select,[contenteditable],button,a,[role="button"],summary,label';
+const REORDER_SHORTCUTS = 'Shift+Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape';
 
 interface Gesture {
   id: string;
@@ -29,6 +33,17 @@ interface Gesture {
   sortable: boolean;
 }
 
+interface KeyboardGesture {
+  id: string;
+  moving: string[];
+  source: HTMLElement;
+  target: HTMLElement;
+  after: boolean;
+  slot: number;
+  startSlot: number;
+  status: HTMLElement;
+}
+
 /**
  * Press the cover or card body and move 6px to lift the album. Blank shelf space owns marquee.
  * Selection mode keeps its chosen albums and suppresses a drag's release click, so it
@@ -44,15 +59,182 @@ export function useShelfReorder(options: {
   onDrop: (source: string, target: string, after: boolean, moving?: string[]) => void;
   onCollectionDrop?: (moving: string[], collectionId: string | null) => void;
 }) {
+  const { t } = useTranslation();
   const latest = useRef(options);
   latest.current = options;
   const cleanup = useRef<(() => void) | null>(null);
   const cancelGesture = useRef<(() => void) | null>(null);
+  const keyboardGesture = useRef<KeyboardGesture | null>(null);
   const dragging = useRef(false);
   const suppressClick = useRef(false);
   const findCard = (root: HTMLElement, id: string) =>
     [...root.querySelectorAll<HTMLElement>(CARD)].find((el) => el.dataset.shelfId === id);
-  useEffect(() => () => cleanup.current?.(), []);
+  const finishKeyboard = (restoreFocus: boolean) => {
+    const g = keyboardGesture.current;
+    if (!g) return;
+    g.source.classList.remove('is-dragging');
+    g.source.removeAttribute('aria-grabbed');
+    g.target.classList.remove('is-drop-target', 'is-drop-after');
+    g.status.remove();
+    keyboardGesture.current = null;
+    dragging.current = false;
+    if (restoreFocus && g.source.isConnected) g.source.focus();
+  };
+  useEffect(() => {
+    const root = latest.current.root.current;
+    if (!root) return;
+    const syncShortcut = (target: EventTarget | null, enabled: boolean) => {
+      if (!(target instanceof Element)) return;
+      const card = target.closest<HTMLElement>(CARD);
+      if (!card || !root.contains(card)) return;
+      if (
+        enabled &&
+        latest.current.enabled &&
+        latest.current.canDrag !== false &&
+        latest.current.sortable
+      )
+        card.setAttribute('aria-keyshortcuts', REORDER_SHORTCUTS);
+      else card.removeAttribute('aria-keyshortcuts');
+    };
+    const onFocusIn = (event: FocusEvent) => syncShortcut(event.target, true);
+    const onFocusOut = (event: FocusEvent) => {
+      const oldCard =
+        event.target instanceof Element ? event.target.closest<HTMLElement>(CARD) : null;
+      const newCard =
+        event.relatedTarget instanceof Element
+          ? event.relatedTarget.closest<HTMLElement>(CARD)
+          : null;
+      if (oldCard !== newCard) syncShortcut(event.target, false);
+      if (newCard && oldCard !== newCard) syncShortcut(event.relatedTarget, true);
+    };
+    root.addEventListener('focusin', onFocusIn);
+    root.addEventListener('focusout', onFocusOut);
+    const focused = document.activeElement;
+    syncShortcut(focused, true);
+    return () => {
+      root.removeEventListener('focusin', onFocusIn);
+      root.removeEventListener('focusout', onFocusOut);
+      cleanup.current?.();
+      finishKeyboard(false);
+    };
+  }, []);
+  useEffect(() => {
+    const focused = document.activeElement;
+    const card = focused instanceof Element ? focused.closest<HTMLElement>(CARD) : null;
+    if (!card || !latest.current.root.current?.contains(card)) return;
+    if (options.enabled && options.canDrag !== false && options.sortable)
+      card.setAttribute('aria-keyshortcuts', REORDER_SHORTCUTS);
+    else card.removeAttribute('aria-keyshortcuts');
+  }, [options.enabled, options.canDrag, options.sortable]);
+
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLElement>) => {
+    const root = latest.current.root.current;
+    if (!root) return;
+    const active = keyboardGesture.current;
+    if (!active && (!latest.current.enabled || latest.current.canDrag === false)) return;
+    if (!active) {
+      if (
+        !latest.current.sortable ||
+        (e.key !== ' ' && e.key !== 'Spacebar') ||
+        !e.shiftKey ||
+        e.target !== (e.target instanceof Element ? e.target.closest(CARD) : null) ||
+        shortcutBlocked(e, root)
+      )
+        return;
+      const source = e.target as HTMLElement;
+      if (!source.isConnected || !root.contains(source)) return;
+      const id = source.dataset.shelfId;
+      if (!id) return;
+      const selected = latest.current.selectedIds ?? [];
+      const moving = selected.length > 1 && selected.includes(id) ? [...selected] : [id];
+      const cards = [...root.querySelectorAll<HTMLElement>(CARD)];
+      const remaining = cards.filter((card) => !moving.includes(card.dataset.shelfId ?? ''));
+      if (!remaining.length) return;
+      const sourceIndex = cards.indexOf(source);
+      const slot = cards
+        .slice(0, sourceIndex)
+        .filter((card) => !moving.includes(card.dataset.shelfId ?? '')).length;
+      const target = remaining[Math.min(slot, remaining.length - 1)];
+      const after = slot >= remaining.length;
+      const status = document.createElement('div');
+      status.setAttribute('role', 'status');
+      status.setAttribute('aria-live', 'polite');
+      status.dataset.shelfReorderStatus = '';
+      status.style.cssText =
+        'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0';
+      root.append(status);
+      source.setAttribute('aria-grabbed', 'true');
+      source.classList.add('is-dragging');
+      target.classList.add('is-drop-target');
+      target.classList.toggle('is-drop-after', after);
+      const label =
+        source.getAttribute('aria-label') ||
+        source.querySelector('h1,h2,h3')?.textContent?.trim() ||
+        id;
+      status.textContent = t('classic.shelf.reorderPickedUp', { title: label });
+      keyboardGesture.current = {
+        id,
+        moving,
+        source,
+        target,
+        after,
+        slot,
+        startSlot: slot,
+        status,
+      };
+      dragging.current = true;
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      finishKeyboard(true);
+      return;
+    }
+    if (!(e.target instanceof Node) || !active.source.contains(e.target)) return;
+    if (shortcutBlocked(e, root)) return;
+    if (!latest.current.enabled || latest.current.canDrag === false) return;
+    if ((e.key === ' ' || e.key === 'Spacebar') && e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      const { id, target, after, moving, slot, startSlot } = active;
+      finishKeyboard(true);
+      if (slot !== startSlot) latest.current.onDrop(id, target.dataset.shelfId!, after, moving);
+      return;
+    }
+    const delta =
+      e.key === 'ArrowDown' || e.key === 'ArrowRight'
+        ? 1
+        : e.key === 'ArrowUp' || e.key === 'ArrowLeft'
+          ? -1
+          : 0;
+    if (!delta) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const cards = [...root.querySelectorAll<HTMLElement>(CARD)];
+    const remaining = cards.filter((card) => !active.moving.includes(card.dataset.shelfId ?? ''));
+    const nextSlot = Math.max(0, Math.min(remaining.length, active.slot + delta));
+    if (nextSlot === active.slot) return;
+    active.target.classList.remove('is-drop-target', 'is-drop-after');
+    active.slot = nextSlot;
+    active.target = remaining[Math.min(nextSlot, remaining.length - 1)];
+    active.after = nextSlot >= remaining.length;
+    active.target.classList.add('is-drop-target');
+    active.target.classList.toggle('is-drop-after', active.after);
+    active.status.textContent = t('classic.shelf.reorderMoving', {
+      title: active.source.getAttribute('aria-label') || active.id,
+      position: nextSlot + 1,
+      total: remaining.length + active.moving.length,
+    });
+  };
+
+  const onBlurCapture = (e: ReactFocusEvent<HTMLElement>) => {
+    if (keyboardGesture.current && !e.currentTarget.contains(e.relatedTarget as Node | null))
+      finishKeyboard(false);
+  };
 
   const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
     if (
@@ -276,11 +458,17 @@ export function useShelfReorder(options: {
 
   return {
     cancel: () => {
+      if (keyboardGesture.current) {
+        finishKeyboard(true);
+        return true;
+      }
       if (!cancelGesture.current) return false;
       cancelGesture.current();
       return true;
     },
     isDragging: () => dragging.current,
+    onBlurCapture,
+    onKeyDown,
     onPointerDown,
     onPointerDownCapture: () => {
       suppressClick.current = false;

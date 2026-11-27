@@ -31,7 +31,23 @@ function LocationProbe() {
   );
 }
 
-async function mount(view: 'grid' | 'showcase' = 'grid') {
+function RouteMountProbe() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  return (
+    <>
+      {location.pathname.startsWith('/gallery') ? (
+        <WorksPage />
+      ) : (
+        <button onClick={() => navigate('/gallery')}>重新打开画册集</button>
+      )}
+      <button onClick={() => navigate('/away')}>离开画册集</button>
+      <LocationProbe />
+    </>
+  );
+}
+
+async function mount(view: 'grid' | 'showcase' = 'grid', routeAware = false) {
   useUI.setState({ worksView: view, starred: [] });
   const calls = mockFetch({
     'GET /api/series': books,
@@ -42,10 +58,14 @@ async function mount(view: 'grid' | 'showcase' = 'grid') {
     'DELETE /api/series/book_0': {},
   });
   renderWithProviders(
-    <>
-      <WorksPage />
-      <LocationProbe />
-    </>,
+    routeAware ? (
+      <RouteMountProbe />
+    ) : (
+      <>
+        <WorksPage />
+        <LocationProbe />
+      </>
+    ),
     '/gallery',
   );
   await screen.findByRole('article', { name: '甲册' });
@@ -505,5 +525,83 @@ describe('shelf direct reorder', () => {
     } finally {
       Reflect.deleteProperty(document, 'elementFromPoint');
     }
+  });
+
+  it('does not let an older reorder undo overwrite a newer reorder', async () => {
+    useUI.setState({ shelfSort: 'createdAt', shelfOrder: [] });
+    await mount();
+    positions();
+    let target = cover('乙册');
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => target,
+    });
+
+    fireEvent.pointerDown(cover('甲册'), { ...pointer, clientX: 30, clientY: 110 });
+    movePointer(220, 110);
+    fireEvent.pointerUp(window, pointer);
+    const oldUndo = useToasts.getState().items.at(-1)?.action;
+    expect(screen.getAllByRole('article').map((item) => item.getAttribute('aria-label'))).toEqual([
+      '乙册',
+      '甲册',
+      '丙册',
+    ]);
+
+    target = cover('丙册');
+    fireEvent.pointerDown(cover('乙册'), { ...pointer, clientX: 150, clientY: 110 });
+    movePointer(350, 110);
+    fireEvent.pointerUp(window, pointer);
+    const afterNewerReorder = screen
+      .getAllByRole('article')
+      .map((item) => item.getAttribute('aria-label'));
+    expect(afterNewerReorder).toEqual(['甲册', '丙册', '乙册']);
+
+    act(() => oldUndo?.onClick());
+    expect(screen.getAllByRole('article').map((item) => item.getAttribute('aria-label'))).toEqual(
+      afterNewerReorder,
+    );
+    expect(useUI.getState().shelfSort).toBe('manual');
+    expect(useUI.getState().shelfOrder).toEqual(['book_0', 'book_2', 'book_1']);
+    expect(useToasts.getState().items.at(-1)?.text).toBe('画册顺序已更改，未应用这次撤销。');
+  });
+
+  it('keeps an old undo stale across route unmount/remount when the order changes away and back', async () => {
+    useUI.setState({ shelfSort: 'createdAt', shelfOrder: [] });
+    await mount('grid', true);
+    positions();
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => cover('乙册'),
+    });
+
+    fireEvent.pointerDown(cover('甲册'), { ...pointer, clientX: 30, clientY: 110 });
+    movePointer(220, 110);
+    fireEvent.pointerUp(window, pointer);
+    const oldUndo = useToasts.getState().items.at(-1)?.action;
+    const previousOrder = ['book_1', 'book_0', 'book_2'];
+    expect(useUI.getState().shelfOrder).toEqual(previousOrder);
+
+    fireEvent.click(screen.getByRole('button', { name: '离开画册集' }));
+    expect(screen.queryByRole('article', { name: '甲册' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '重新打开画册集' }));
+    await screen.findByRole('article', { name: '甲册' });
+    positions();
+
+    act(() => useUI.getState().setShelfSort('createdAt'));
+    expect(screen.getAllByRole('article').map((item) => item.getAttribute('aria-label'))).toEqual([
+      '甲册',
+      '乙册',
+      '丙册',
+    ]);
+    fireEvent.pointerDown(cover('甲册'), { ...pointer, clientX: 30, clientY: 110 });
+    movePointer(220, 110);
+    fireEvent.pointerUp(window, pointer);
+    expect(useUI.getState().shelfSort).toBe('manual');
+    expect(useUI.getState().shelfOrder).toEqual(previousOrder);
+
+    act(() => oldUndo?.onClick());
+    expect(useUI.getState().shelfSort).toBe('manual');
+    expect(useUI.getState().shelfOrder).toEqual(previousOrder);
+    expect(useToasts.getState().items.at(-1)?.text).toBe('画册顺序已更改，未应用这次撤销。');
   });
 });
