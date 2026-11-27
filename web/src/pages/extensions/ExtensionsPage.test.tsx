@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
+import { useLocation } from 'react-router-dom';
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import { TrustDialog } from '../settings/ExtensionsSection';
 import type { ExtensionInfo } from '../../api/open';
@@ -7,6 +8,9 @@ import { Toaster } from '../../components/toast';
 import ExtensionsPage from './ExtensionsPage';
 
 afterEach(() => vi.unstubAllGlobals());
+function CurrentSearch() {
+  return <output data-testid="search-params">{useLocation().search}</output>;
+}
 const item = {
   id: 'sample',
   name: '画稿助手',
@@ -47,6 +51,44 @@ it('searches extensions without treating theme contributions as separate package
   expect(screen.getByText('没有匹配搜索的扩展。')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: '清除搜索' }));
   expect(screen.getByRole('textbox', { name: '搜索扩展' })).toHaveFocus();
+});
+it('supports keyboard navigation between linked extension tabs and panels', () => {
+  mockFetch(routes);
+  renderWithProviders(
+    <>
+      <ExtensionsPage />
+      <CurrentSearch />
+    </>,
+  );
+  const marketTab = screen.getByRole('tab', { name: '扩展市场' });
+  const installedTab = screen.getByRole('tab', { name: /已安装/ });
+  const marketPanel = document.getElementById(marketTab.getAttribute('aria-controls')!)!;
+  const installedPanel = document.getElementById(installedTab.getAttribute('aria-controls')!)!;
+
+  expect(marketPanel).toHaveAttribute('role', 'tabpanel');
+  expect(marketPanel).toHaveAttribute('aria-labelledby', marketTab.id);
+  expect(installedPanel).toHaveAttribute('role', 'tabpanel');
+  expect(installedPanel).toHaveAttribute('aria-labelledby', installedTab.id);
+  expect(marketTab).toHaveAttribute('tabindex', '0');
+  expect(installedTab).toHaveAttribute('tabindex', '-1');
+
+  fireEvent.keyDown(marketTab, { key: 'End' });
+  expect(installedTab).toHaveFocus();
+  expect(installedTab).toHaveAttribute('aria-selected', 'true');
+  expect(marketPanel).toHaveAttribute('hidden');
+  expect(installedPanel).not.toHaveAttribute('hidden');
+  expect(screen.getByTestId('search-params')).toHaveTextContent('?tab=installed');
+
+  fireEvent.keyDown(installedTab, { key: 'ArrowRight' });
+  expect(marketTab).toHaveFocus();
+  expect(marketTab).toHaveAttribute('aria-selected', 'true');
+  expect(installedTab).toHaveAttribute('tabindex', '-1');
+  expect(screen.getByTestId('search-params')).toHaveTextContent('');
+
+  fireEvent.keyDown(marketTab, { key: 'ArrowLeft' });
+  expect(installedTab).toHaveFocus();
+  fireEvent.keyDown(installedTab, { key: 'Home' });
+  expect(marketTab).toHaveFocus();
 });
 it('installs only the reviewed catalog package and leaves activation to the user', async () => {
   const calls = mockFetch({

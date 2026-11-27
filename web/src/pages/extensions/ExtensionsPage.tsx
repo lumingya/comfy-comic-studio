@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type KeyboardEvent } from 'react';
 import { Download, ExternalLink, Power, Puzzle, RefreshCw, Search, Settings2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useExtensionMarket, useMarketAction, type MarketItem } from '../../api/extension-market';
@@ -34,6 +34,26 @@ export default function ExtensionsPage() {
   const manage = () => {
     setSelected(null);
     setParams({ tab: 'installed' });
+  };
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const tabs = Array.from(
+      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [],
+    );
+    const index = tabs.indexOf(event.currentTarget);
+    const nextIndex =
+      event.key === 'ArrowRight'
+        ? (index + 1) % tabs.length
+        : event.key === 'ArrowLeft'
+          ? (index - 1 + tabs.length) % tabs.length
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? tabs.length - 1
+              : -1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    tabs[nextIndex].focus();
+    tabs[nextIndex].click();
   };
   const activate = (item: MarketItem) => {
     const ext = local.data?.items.find((entry) => entry.id === item.id);
@@ -89,7 +109,11 @@ export default function ExtensionsPage() {
           <button
             className={!installed ? 'active' : ''}
             role="tab"
+            id="extension-market-tab"
+            aria-controls="extension-market-panel"
             aria-selected={!installed}
+            tabIndex={installed ? -1 : 0}
+            onKeyDown={handleTabKeyDown}
             onClick={() => setParams({})}
           >
             {text.market}
@@ -97,7 +121,11 @@ export default function ExtensionsPage() {
           <button
             className={installed ? 'active' : ''}
             role="tab"
+            id="extension-installed-tab"
+            aria-controls="extension-installed-panel"
             aria-selected={installed}
+            tabIndex={installed ? 0 : -1}
+            onKeyDown={handleTabKeyDown}
             onClick={() => setParams({ tab: 'installed' })}
           >
             {text.installed}
@@ -141,77 +169,92 @@ export default function ExtensionsPage() {
           </>
         )}
       </div>
-      {installed ? (
-        <ExtensionsSection query={query} />
-      ) : (
-        <>
-          {catalog.data?.source.error && (
-            <p className="small warn-text" role="status">
-              {text.sourceError} <span>{catalog.data.source.error}</span>
-            </p>
-          )}
-          {catalog.isPending ? (
-            <Loading />
-          ) : catalog.isError ? (
-            <QueryError error={catalog.error} onRetry={catalog.refetch} />
-          ) : !items.length ? (
-            <Empty
-              action={
-                query ? (
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => {
-                      setQuery('');
-                      searchRef.current?.focus();
-                    }}
-                  >
-                    {text.clearSearch}
-                  </button>
-                ) : undefined
-              }
-            >
-              {query ? text.noMatches : text.empty}
-            </Empty>
-          ) : (
-            <div className="extension-market-grid">
-              {items.map((item) => (
-                <article className="extension-market-card" key={item.id}>
-                  <button
-                    className="extension-card-detail"
-                    onClick={() => setSelected(item)}
-                    aria-label={`${text.details} · ${item.name}`}
-                  >
-                    <span className="extension-emblem">
-                      <Puzzle size={25} />
-                    </span>
-                    <span className="extension-card-heading">
-                      <strong>{item.name}</strong>
-                      <span className="small muted">
-                        {item.author || 'Mio'} · v{item.version}
-                      </span>
-                    </span>
-                    <span className="extension-card-description">{item.description}</span>
-                  </button>
-                  <footer>
-                    <span className="small muted">
-                      {item.source === 'bundled' ? text.bundled : item.tags.join(' · ')}
-                    </span>
-                    <button className="btn sm" disabled={busy} onClick={() => run(item)}>
-                      {item.action === 'enable' ? (
-                        <Power size={14} />
-                      ) : ['install', 'update'].includes(item.action) ? (
-                        <Download size={14} />
-                      ) : null}
-                      {label(item)}
+      <div
+        id="extension-market-panel"
+        role="tabpanel"
+        aria-labelledby="extension-market-tab"
+        tabIndex={0}
+        hidden={installed}
+      >
+        {!installed && (
+          <>
+            {catalog.data?.source.error && (
+              <p className="small warn-text" role="status">
+                {text.sourceError} <span>{catalog.data.source.error}</span>
+              </p>
+            )}
+            {catalog.isPending ? (
+              <Loading />
+            ) : catalog.isError ? (
+              <QueryError error={catalog.error} onRetry={catalog.refetch} />
+            ) : !items.length ? (
+              <Empty
+                action={
+                  query ? (
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => {
+                        setQuery('');
+                        searchRef.current?.focus();
+                      }}
+                    >
+                      {text.clearSearch}
                     </button>
-                  </footer>
-                </article>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+                  ) : undefined
+                }
+              >
+                {query ? text.noMatches : text.empty}
+              </Empty>
+            ) : (
+              <div className="extension-market-grid">
+                {items.map((item) => (
+                  <article className="extension-market-card" key={item.id}>
+                    <button
+                      className="extension-card-detail"
+                      onClick={() => setSelected(item)}
+                      aria-label={`${text.details} · ${item.name}`}
+                    >
+                      <span className="extension-emblem">
+                        <Puzzle size={25} />
+                      </span>
+                      <span className="extension-card-heading">
+                        <strong>{item.name}</strong>
+                        <span className="small muted">
+                          {item.author || 'Mio'} · v{item.version}
+                        </span>
+                      </span>
+                      <span className="extension-card-description">{item.description}</span>
+                    </button>
+                    <footer>
+                      <span className="small muted">
+                        {item.source === 'bundled' ? text.bundled : item.tags.join(' · ')}
+                      </span>
+                      <button className="btn sm" disabled={busy} onClick={() => run(item)}>
+                        {item.action === 'enable' ? (
+                          <Power size={14} />
+                        ) : ['install', 'update'].includes(item.action) ? (
+                          <Download size={14} />
+                        ) : null}
+                        {label(item)}
+                      </button>
+                    </footer>
+                  </article>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <div
+        id="extension-installed-panel"
+        role="tabpanel"
+        aria-labelledby="extension-installed-tab"
+        tabIndex={0}
+        hidden={!installed}
+      >
+        {installed && <ExtensionsSection query={query} />}
+      </div>
       <Modal
         open={sourceOpen}
         onOpenChange={(open) => !busy && setSourceOpen(open)}
