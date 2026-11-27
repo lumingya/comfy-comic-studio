@@ -427,7 +427,7 @@ R4 冻结 HEAD 为 `b78de840044750fd29a214fcdba51ad130f4c925`，五份报告已�
 
 性能席的窄屏菜单观察已由代码路径只读复核：`EpisodeExtensionMenu` 在目录尚无 episode panel 数据时会返回 `null`；后端只公布当前已加载、已审核的面板；窄屏样式仅换行，没有隐藏菜单。由于 R4 记录缺少该轮路由、接口结果与 React Query 状态，失败仍是未分类观察，不记产品 Medium，也不作为性能矩阵通过。若后续重跑，应固定 390px 和已就绪的 episode 路由，同步采集菜单 DOM、目录 API 响应与 query data/error。
 
-当前 HEAD 后续扩展性能阶段已使用 `python tools/check_roadmap_power.py --only extensions --report ...` 重跑：Chrome 158、1440/390 × light/dark/dynamic 共 6 contexts，六个面板在每个 context 中均安装、逐一打开、停用并删除，36/36 菜单/iframe 循环通过；390px 六个面板均在面板目录中成功打开，因此旧菜单缺失在固定 fixture 的重跑中没有复现。无外联请求或 Job；关闭状态 iframe 为 0，关闭主题 retained JS heap 5.79–5.84 MB，全部启用后同屏 6.57–6.62 MB，关闭后 6.02–6.09 MB；单面板隔离 renderer retained JS heap 1.735–1.859 MB，单轮面板就绪观测约 0.49–2.79 秒。单轮结果仅是本机 Chrome 的观察范围，不能从这些数据推断总浏览器 RAM、长期泄漏、GPU/VRAM、功耗或设备通用性；全量脚本仍在继续。
+当前 HEAD 后续扩展性能阶段已使用 `python tools/check_roadmap_power.py --only extensions --report ...` 重跑：Chrome 158、1440/390 × light/dark/dynamic 共 6 contexts；每个 context 一次性安装启用六包、逐一打开面板，最后一起停用并采样。36/36 指六面板在六个上下文中的打开与 heap 观察，不是 36 次逐包安装/停用/删除完整循环；逐包卸载与 iframe 清理断言属于下述专业面板专项的独立证据。390px 六个面板均在面板目录中成功打开，因此旧菜单缺失在固定 fixture 的重跑中没有复现。无外联请求或 Job；关闭主题 retained JS heap 5.79–5.84 MB，全部启用后同屏 6.57–6.62 MB，关闭后 6.02–6.09 MB；单面板隔离 renderer retained JS heap 1.735–1.859 MB，单轮面板就绪观测约 0.49–2.79 秒。单轮结果仅是本机 Chrome 的观察范围，不能从这些数据推断总浏览器 RAM、长期泄漏、GPU/VRAM、功耗或设备通用性；全量脚本仍在继续。
 
 当前 HEAD 全量 `python tools/check_roadmap_power.py --report ...` 随后以 6/6、exit 0 完成，Chrome 158、真实墙钟、隔离 neutral fixture。动态主题两尺寸在自然 idle 30.004s 后视频 paused，随后 5.003s 样本内 decoded frame delta=0，currentTime 不变，trace 未出现 Paint/Raster/Composite/Swap；前景活动样本 5s 解码 151 帧，恢复指针至首帧约 6.8ms（1440）/2.3ms（390）。真实 60/180s 阈值没有等待，只验证设置保存和原生计时器排程。动态主题下 120 幕 / 1,440 个候选（复用 12 个生成图片，不是独立纹理）垂直滚动 1440/390 的 rAF p95 为 25.1/25.0ms、max 41.9/46.0ms、样本中 >50ms 为 0；分割比较平移 p95 为 20.9/12.6ms、max 25.1ms、>50ms 为 0。Chrome renderer retained JS heap 快照：滚动前后 52.086→52.358 MB（1440）、49.440→49.688 MB（390）；对比平移前后 71.772→74.383 MB、69.106→71.734 MB。指标是单机单轮 renderer 观察，脚本明确不支持推断瓦数/GPU；模板性能、pan/divider 多轮尾分位、native blur 和 OS 原生失焦仍未覆盖。
 
@@ -570,7 +570,7 @@ Windows 文件系统复核发现目录 junction 可能不是 `Path.is_symlink()`
 | 架构 / 信任 | 六个专业扩展仍是默认关闭的面板包，面板调用经声明式桥接与摘要校验；生成客户端和 SDK 契约检查通过。权限表漏列三包 `write` 权限已在 7.21 修正 | 当前发行数据检查仍被受保护的本机 seed 差异挡住；通用 Python 扩展为进程内可信代码，不是 OS 进程沙箱 |
 | 视觉 | 当前六面板 84/84 自动矩阵通过；另有 72 张代表性截图人工审阅，没有确认的布局缺陷 | 尚无完整的六面板人工策展签发；动态引导遮挡帮助入口的旧观察未以完整导航复验；实体设备、印刷 / PDF 输出未验证 |
 | 交互 | 书架焦点离开源卡时清理重排状态、动态漫保留原生按钮语义；相关定向测试分别 16/16 与 6/6 | 合成中的 Escape 影响重排仅是未复现条件；真实读屏播报、系统 IME 与部分按键边界未验证 |
-| 性能 / 功耗 | 没有可归因到当前代码的重复性能缺陷；长篇滚动单轮结果不一致，已有 headless pan/divider 样本仅代表回调调度间隔 | 有头桌面合成器 / 原生失焦、重复滚动尾分位、真实 60/180 秒闲置及 GPU / 功耗仍未测量 |
+| 性能 / 功耗 | 没有可归因到当前代码的重复性能缺陷；长篇滚动单轮结果不一致；pan/divider 两轮 headed Chrome rAF 尾样本见 §7.29，仅代表回调调度间隔 | 实体显示帧 / 合成器与 GPU、原生失焦、重复滚动尾分位、真实 60/180 秒闲置及功耗仍未测量 |
 | 混沌 / 安全 | 本轮未复现面板桥功能缺陷，也没有触发外部网络或真实安装 | SSRF 取决于未信任市场源及重定向；同步端点超时风险没有在已发货处理器上复现；对应真实网络 / 慢同步处理矩阵未测 |
 
 因此本轮把可复现交互问题修复、把权限文档差异更正；未将上述条件性风险转成未经证明的实现硬化，也没有将自动矩阵等同人工签发。仍按 §9 的未决项保持综合验收 **NOT VERIFIED PASS**。
@@ -609,7 +609,7 @@ Web 定向 Vitest 七文件、65 项通过：分割比较键盘滑杆/两侧选�
 
 ### 7.29 pan/divider 有头 Chrome 多轮尾样本（2026-11-28）
 
-为补足 §7.27 留下的候选图同步平移和分隔线尾样本，`tools/check_roadmap_browser.py` 增加可选 `--headed`；默认无头行为不变。连续两轮运行 `python tools/check_roadmap_browser.py --browser 'C:\Program Files\Google\Chrome\Application\chrome.exe' --suite candidate-compare --width 1440 --width 390 --theme light --theme dark --headed`，使用 Chrome 158.0.8127.37 和当前 dist SHA-256 `18dba650c8e93807ee02938bd7e4fa53f7beebe344166e48de1fd9c090ae04e2`。隔离 fixture 下，1440×900 与 390×844、浅色与深色每轮 4/4 case 通过；每个 case 各有 20 次 divider 拖动和 20 次同步 pan 拖动。两轮共 160 次拖动，所有样本的 rAF 间隔均无 >50ms 长帧，键盘调节、双图同步变换、采纳请求和 Escape 焦点归还断言通过。
+为补足 §7.27 留下的候选图同步平移和分隔线尾样本，`tools/check_roadmap_browser.py` 增加可选 `--headed`；默认无头行为不变。连续两轮运行 `python tools/check_roadmap_browser.py --browser 'C:\Program Files\Google\Chrome\Application\chrome.exe' --suite candidate-compare --width 1440 --width 390 --theme light --theme dark --headed`，使用 Chrome 158.0.8127.37 和当前 dist SHA-256 `18dba650c8e93807ee02938bd7e4fa53f7beebe344166e48de1fd9c090ae04e2`。隔离 fixture 下，1440×900 与 390×844、浅色与深色每轮 4/4 case 通过；每个 case 各有 20 次 divider 拖动和 20 次同步 pan 拖动。每轮 160 次、两轮共 320 次拖动，所有样本的 rAF 间隔均无 >50ms 长帧，键盘调节、双图同步变换、采纳请求和 Escape 焦点归还断言通过。
 
 两轮中 divider 的 p95 均为 4.3ms；pan 的 p95 分别为：1440px 浅/深 25.0/20.9ms 与 20.9/21.0ms，390px 浅/深 8.3/8.3ms 与 8.4/8.3ms。最大 pan 间隔为 33.4ms。一次更早的探索运行有一个鼠标拖动未开始（值留在 50），随后两轮全矩阵未复现。该数据是有头 Chrome 的 rAF 调度样本，不代表 GPU 利用率、功耗或物理显示器帧率。
 

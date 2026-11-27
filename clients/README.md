@@ -4,7 +4,7 @@
 
 - `/api/v2` 的领域操作都要带令牌：`Authorization: Bearer mio_…`；`/meta` 和 OpenAPI 文档用于公开发现，不返回作品或密钥；
 - 令牌与扩展生命周期管理使用 `admin` 权限；扩展启用仍须提交审核过的内容摘要；
-- 它有自己的 OpenAPI 文档 `/api/v2/openapi.json`（仓库里的快照是 [`openapi-v2.json`](openapi-v2.json)），客户端就是从这份文档生成的。
+- 它有自己的 OpenAPI 文档 `/api/v2/openapi.json`。`python clients/python/generate.py` 从本地 FastAPI 应用读取该文档，同时生成客户端和仓库快照 [`openapi-v2.json`](openapi-v2.json)，无需启动服务器。
 
 本机网页用的 `/api` 不需要令牌，只应该在本机或可信的局域网里访问。
 
